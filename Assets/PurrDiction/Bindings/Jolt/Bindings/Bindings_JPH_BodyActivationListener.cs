@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using AOT;
 using UnityEngine;
 
 namespace Jolt
@@ -41,6 +42,7 @@ namespace Jolt
 
         private delegate void UnsafeBodyDeactivated(IntPtr udata, BodyID bodyID, ulong bodyUserData);
 
+        [MonoPInvokeCallback(typeof(UnsafeBodyActivated))]
         private static void UnsafeBodyActivatedCallback(IntPtr udata, BodyID bodyID, ulong bodyUserData)
         {
             try
@@ -53,6 +55,7 @@ namespace Jolt
             }
         }
 
+        [MonoPInvokeCallback(typeof(UnsafeBodyDeactivated))]
         private static void UnsafeBodyDeactivatedCallback(IntPtr udata, BodyID bodyID, ulong bodyUserData)
         {
             try

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
+using AOT;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -8,7 +9,7 @@ namespace Jolt
 {
     internal static unsafe partial class Bindings
     {
-        private static Dictionary<IntPtr, IContactListener> managedContactListeners = new ();
+        private static readonly Dictionary<IntPtr, IContactListener> managedContactListeners = new ();
 
         public static NativeHandle<JPH_ContactListener> JPH_ContactListener_Create()
         {
@@ -51,6 +52,7 @@ namespace Jolt
 
         private delegate void UnsafeContactRemoved(IntPtr udata, SubShapeIDPair* pair);
 
+        [MonoPInvokeCallback(typeof(UnsafeContactValidate))]
         private static ValidateResult UnsafeContactValidateCallback(IntPtr udata, JPH_Body* bodyA, JPH_Body* bodyB, double3* offset, CollideShapeResult* result)
         {
             try
@@ -65,6 +67,7 @@ namespace Jolt
             return ValidateResult.AcceptContact;
         }
 
+        [MonoPInvokeCallback(typeof(UnsafeContactAdded))]
         private static void UnsafeContactAddedCallback(IntPtr udata, JPH_Body* bodyA, JPH_Body* bodyB)
         {
             try
@@ -77,6 +80,7 @@ namespace Jolt
             }
         }
 
+        [MonoPInvokeCallback(typeof(UnsafeContactRemoved))]
         private static void UnsafeContactRemovedCallback(IntPtr udata, SubShapeIDPair* pair)
         {
             try
@@ -89,6 +93,7 @@ namespace Jolt
             }
         }
 
+        [MonoPInvokeCallback(typeof(UnsafeContactPersisted))]
         private static void UnsafeContactPersistedCallback(IntPtr udata, JPH_Body* bodyA, JPH_Body* bodyB)
         {
             try
