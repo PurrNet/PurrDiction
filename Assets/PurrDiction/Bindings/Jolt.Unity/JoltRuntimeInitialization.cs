@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using AOT;
+using UnityEngine;
 
 namespace Jolt.Unity
 {
@@ -20,6 +21,7 @@ namespace Jolt.Unity
             }
         }
 
+        [MonoPInvokeCallback(typeof(AssertFailureHandler))]
         private static bool OnAssertFailure(string expr, string message, string file, uint line)
         {
             Debug.Log($"Jolt Assertion Failed:\n{expr}\n{message}\n{file}\n{line}");
