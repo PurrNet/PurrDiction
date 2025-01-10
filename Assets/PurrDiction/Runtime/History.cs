@@ -189,6 +189,44 @@ namespace PurrNet.Prediction
 
             return result;
         }
+        
+        public bool TryGetClosest(ulong tick, out T result)
+        {
+            result = default;
+
+            if (m_data.Count == 0)
+                return false;
+
+            if (Find(tick, out var index))
+            {
+                result = this[index];
+                return true;
+            }
+
+            if (index == 0)
+            {
+                result = this[index];
+                return true;
+            }
+
+            if (index == m_data.Count)
+            {
+                result = this[index - 1];
+                return true;
+            }
+
+            var diff1 = tick - m_data[index - 1].Tick;
+            var diff2 = m_data[index].Tick - tick;
+
+            if (diff1 < diff2)
+            {
+                result = this[index - 1];
+                return true;
+            }
+
+            result = this[index];
+            return true;
+        }
 
         /// <summary>
         /// Does a binary search on the internal entries.

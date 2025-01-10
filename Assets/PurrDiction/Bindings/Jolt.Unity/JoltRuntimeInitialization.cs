@@ -12,7 +12,6 @@ namespace Jolt.Unity
 
             if (Jolt.Initialize())
             {
-                Debug.Log("Jolt initialized.");
                 Application.quitting += static () => Jolt.Shutdown();
             }
             else

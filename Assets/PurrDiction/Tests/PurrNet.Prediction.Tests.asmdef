@@ -1,0 +1,17 @@
+{
+    "name": "PurrNet.Prediction.Tests",
+    "rootNamespace": "PurrNet.Prediction.Tests",
+    "references": [
+        "GUID:6e20f757a1bae164fa42750dd2b27dcb",
+        "GUID:4ecd904f72132b747bbe9d8dc699df89"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
