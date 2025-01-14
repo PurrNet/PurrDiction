@@ -1,4 +1,5 @@
 using System;
+using FixMath.NET;
 using JetBrains.Annotations;
 using PurrNet.Modules;
 using PurrNet.Packing;
@@ -6,25 +7,35 @@ using UnityEngine;
 
 namespace PurrNet.Prediction
 {
-    [Serializable]
-    public class PredictionSettings
+    public abstract class PredictedIdentity : MonoBehaviour
     {
-        [Tooltip("Maximum number of inputs to buffer before dropping old ones.")]
-        public int maxInputBufferCount = 4;
+        public abstract void Setup(NetworkManager manager, PredictionManager world);
+
+        protected void Awake()
+        {
+            if (PredictionManager.TryGetInstance(gameObject.scene.handle, out var world))
+                world.RegisterInstance(this);
+        }
+
+        internal abstract void Simulate(ulong tick, Fix64 delta);
+
+        internal abstract void Rollback(ulong tick);
         
-        [Tooltip("The number of seconds to keep in the history for rollback purposes and redundancy.\n" +
-                 "Naturally, this means more memory usage.")]
-        public int secondsToKeepInHistory = 5;
+        internal abstract void UpdateView(float deltaTime);
+        
+        public abstract void WriteState(ulong tick, BitPacker packer);
+
+        public abstract void ReadState(ulong tick, BitPacker packer);
     }
     
-    public abstract class PredictedIdentity<STATE> : MonoBehaviour 
-        where STATE : struct
+    public abstract class PredictedIdentity<STATE> : PredictedIdentity 
+        where STATE : struct, IDisposable
     {
         [SerializeField] PredictionSettings _predictionSettings;
         
         protected PredictionSettings settings => _predictionSettings;
         
-        public PredictedWorld predictedWorld { get; private set; }
+        public PredictionManager predictionManager { get; private set; }
 
         private Interpolated<STATE> _interpolatedState;
         
@@ -34,35 +45,22 @@ namespace PurrNet.Prediction
 
         protected STATE? verifiedState;
         
-        private STATE _initialState;
-        
         protected TickManager tickModule { get; private set; }
         
-        protected float tickDelta { get; private set; }
-
-        /*protected virtual void Start()
+        public override void Setup(NetworkManager manager, PredictionManager world)
         {
-            if (PredictedWorld.TryGetInstance(gameObject.scene.handle, out var world))
-            {
-                world.Register(this);
-            }
-        }*/
-
-        protected virtual void Setup(NetworkManager manager, PredictedWorld world)
-        {
-            predictedWorld = world;
+            predictionManager = world;
             tickModule = manager.tickModule;
             
             if (tickModule == null)
                 return;
             
-            tickDelta = tickModule.tickDelta;
+            predictedState = GetCurrentState();
             
-            predictedState = InitializeState();
+            _predictionSettings ??= new PredictionSettings();
             
-            _interpolatedState = new Interpolated<STATE>(Interpolate, tickDelta, predictedState, settings.maxInputBufferCount);
-            _stateHistory = new History<STATE>(tickModule.tickRate * settings.secondsToKeepInHistory);
-            _initialState = InitializeState();
+            _interpolatedState = new Interpolated<STATE>(Interpolate, (float)world.tickDelta, predictedState, settings.maxInputBufferCount);
+            _stateHistory = new History<STATE>(world.tickRate * settings.secondsToKeepInHistory);
         }
 
         /// <summary>
@@ -70,39 +68,59 @@ namespace PurrNet.Prediction
         /// Future updates will come only through Simulate.
         /// </summary>
         /// <returns>The initial state of the object.</returns>
-        protected abstract STATE InitializeState();
+        protected abstract STATE GetCurrentState();
 
-        public virtual void Simulate()
+        internal override void Simulate(ulong tick, Fix64 delta)
         {
-            Simulate(ref predictedState);
+            Simulate();
+            PostSimulate(tick);
         }
-        
-        protected abstract void Simulate(ref STATE state);
 
-        public virtual void Rollback(ulong tick)
+        protected void PostSimulate(ulong tick)
+        {
+            predictedState = GetCurrentState();
+            _stateHistory.Write(tick, predictedState);
+            _interpolatedState.Add(predictedState);
+        }
+
+        protected abstract void Simulate();
+
+        internal override void Rollback(ulong tick)
         {
             if (!_stateHistory.TryGetClosest(tick, out var state))
-                state = _initialState;
+                state = predictedState;
             
-            predictedState = state;
+            verifiedState = state;
             _stateHistory.ClearFuture(tick);
+            Rollback(state);
         }
+        
+        protected abstract void Rollback(STATE state);
 
         [UsedImplicitly]
-        public virtual void WriteState(ulong tick, BitPacker packer)
+        public override void WriteState(ulong tick, BitPacker packer)
         {
             if (_stateHistory.Read(tick, out var state))
                 Packer<STATE>.Write(packer, state);
         }
 
         [UsedImplicitly]
-        public virtual void ReadState(ulong tick, BitPacker packer)
+        public override void ReadState(ulong tick, BitPacker packer)
         {
             STATE state = default;
             Packer<STATE>.Read(packer, ref state);
             _stateHistory.Write(tick, state);
         }
-        
+
+        internal override void UpdateView(float deltaTime)
+        {
+            if (_interpolatedState == null)
+                return;
+            
+            var interpolatedState = _interpolatedState.Advance(deltaTime);
+            UpdateView(interpolatedState, null);
+        }
+
         public virtual void UpdateView(STATE predicted, STATE? verified) {}
 
         protected virtual STATE Interpolate(STATE from, STATE to, float t)

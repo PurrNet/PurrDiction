@@ -1,35 +1,41 @@
+using System;
 using UnityEngine;
 
 namespace PurrNet.Prediction.Tests
 {
     public class SimpleRotatingPlatform : PredictedIdentity<SimpleRotatingPlatform.State>
     {
+        [SerializeField] private Transform _visuals;
         [SerializeField] private float _rotationSpeed = 1;
         
-        public struct State
+        public struct State : IDisposable
         {
             public Vector3 position;
             public Quaternion rotation;
+            
+            public void Dispose() { }
         }
         
-        protected override State InitializeState()
+        protected override State GetCurrentState() => new()
         {
-            return new State
-            {
-                position = transform.position,
-                rotation = transform.rotation
-            };
+            position = transform.position,
+            rotation = transform.rotation
+        };
+
+        protected override void Simulate()
+        {
+            transform.rotation *= Quaternion.Euler(0, _rotationSpeed, 0);
         }
-        
-        protected override void Simulate(ref State state)
+
+        protected override void Rollback(State state)
         {
-            state.rotation *= Quaternion.Euler(0, _rotationSpeed, 0);
+            transform.SetPositionAndRotation(state.position, state.rotation);
         }
 
         // optional step to update the view
         public override void UpdateView(State predicted, State? verified)
         {
-            transform.SetPositionAndRotation(predicted.position, predicted.rotation);
+            _visuals.SetPositionAndRotation(predicted.position, predicted.rotation);
         }
 
         // optional step to interpolate between states

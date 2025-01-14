@@ -1,33 +1,43 @@
+using System;
+using FixMath.NET;
 using PurrNet.Packing;
 
 namespace PurrNet.Prediction
 {
     public abstract class PredictedIdentity<INPUT, STATE> : PredictedIdentity<STATE> 
-        where STATE : struct 
-        where INPUT : struct
+        where STATE : struct, IDisposable
+        where INPUT : struct, IDisposable
     {
         private History<INPUT> _inputHistory;
 
         protected abstract INPUT GetInput();
 
-        protected override void Setup(NetworkManager manager, PredictedWorld world)
+        public override void Setup(NetworkManager manager, PredictionManager world)
         {
             base.Setup(manager, world);
+
+            _inputHistory = new History<INPUT>(world.tickRate * settings.secondsToKeepInHistory);
+        }
+
+        internal override void Simulate(ulong tick, Fix64 delta)
+        {
+            bool isFuture = tick > _inputHistory.MostRecentTick;
+
+            INPUT input;
             
-            _inputHistory = new History<INPUT>(tickModule.tickRate * settings.secondsToKeepInHistory);
+            if (isFuture)
+                input = GetInput();
+            else if (_inputHistory.TryGetClosest(tick, out var savedInput))
+                input = savedInput;
+            else input = GetInput();
+            
+            _inputHistory.Write(tick, input);
+
+            Simulate(input, delta);
+            PostSimulate(tick);
         }
 
-        public override void Simulate()
-        {
-            Simulate(GetInput(), ref predictedState);
-        }
-
-        protected abstract void Simulate(INPUT input, ref STATE state);
-
-        protected override void Simulate(ref STATE state)
-        {
-            Simulate(default, ref state);
-        }
+        protected abstract void Simulate(INPUT input, Fix64 delta);
 
         public override void WriteState(ulong tick, BitPacker packer)
         {

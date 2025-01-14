@@ -1,0 +1,16 @@
+{
+    "name": "BEPUutilities",
+    "rootNamespace": "",
+    "references": [
+        "GUID:25b66764e5eb9a64dafc43ec782fe09b"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

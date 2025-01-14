@@ -1,8 +1,9 @@
+using System;
 using System.Collections.Generic;
 
 namespace PurrNet.Prediction
 {
-    public sealed class History<T> where T : struct
+    public sealed class History<T> where T : struct, IDisposable
     {
         struct Entry
         {
@@ -16,7 +17,7 @@ namespace PurrNet.Prediction
         readonly int m_maxCount;
 
         readonly int m_limitToCut;
-
+        
         /// <summary>
         /// Access values directly by index
         /// </summary>
@@ -125,6 +126,10 @@ namespace PurrNet.Prediction
 
             // Lets trim to the desired max values
             int toRemove = m_data.Count - m_maxCount;
+            
+            for (int i = 0; i < toRemove; i++)
+                m_data[i].Data.Dispose();
+            
             m_data.RemoveRange(0, toRemove);
         }
 
@@ -139,6 +144,9 @@ namespace PurrNet.Prediction
             {
                 index += 1;
             }
+            
+            for (int i = 0; i < index; i++)
+                m_data[i].Data.Dispose();
 
             m_data.RemoveRange(0, index);
         }
@@ -154,6 +162,9 @@ namespace PurrNet.Prediction
             {
                 index += 1;
             }
+            
+            for (int i = index; i < m_data.Count; i++)
+                m_data[i].Data.Dispose();
 
             m_data.RemoveRange(index, m_data.Count - index);
         }
@@ -188,6 +199,11 @@ namespace PurrNet.Prediction
                 result = this[index];
 
             return result;
+        }
+        
+        public bool TryGet(ulong tick, out T result)
+        {
+            return Read(tick, out result);
         }
         
         public bool TryGetClosest(ulong tick, out T result)
