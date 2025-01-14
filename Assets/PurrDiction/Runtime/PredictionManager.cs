@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using FixMath.NET;
+using PurrNet.Logging;
+using PurrNet.Packing;
 using UnityEngine;
 
 namespace PurrNet.Prediction
@@ -34,13 +36,17 @@ namespace PurrNet.Prediction
 
         public int tickRate { get; private set; }
         
+        public PredictedHierarchy hierarchy { get; private set; }
+        
+        private bool _isServer;
+        
         protected override void OnSpawned()
         {
+            _isServer = networkManager.isServer;
             tickRate = networkManager.tickModule.tickRate;
             tickDelta = 1 / (Fix64)tickRate;
+            hierarchy = RegisterSystem<PredictedHierarchy>();
             
-            RegisterSystem<PredictedHierarchy>();
-
             for (var i = 0; i < _queue.Count; i++)
             {
                 var queued = _queue[i];
@@ -50,10 +56,11 @@ namespace PurrNet.Prediction
             _queue.Clear();
         }
 
-        public void RegisterSystem<T>() where T : PredictedIdentity
+        public T RegisterSystem<T>() where T : PredictedIdentity
         {
             var system = gameObject.AddComponent<T>();
             system.hideFlags = HideFlags.NotEditable;
+            return system;
         }
         
         internal void RegisterInstance(PredictedIdentity system)
@@ -70,14 +77,38 @@ namespace PurrNet.Prediction
 
         public void OnTick(float delta)
         {
+            using var frame = BitPackerPool.Get();
             int count = _systems.Count;
-
+            
             for (var i = 0; i < count; i++)
             {
+                // get input
+                _systems[i].PreSimulate(_localTick);
+                
+                // write state before simulation
+                _systems[i].WriteState(_localTick, frame, _isServer);
+                
+                // simulate
                 _systems[i].Simulate(_localTick, tickDelta);
             }
 
+            if (!_isServer)
+            {
+                PurrLogger.Log($"Sending input to server for tick {_localTick}, systems: {count}, packer: {frame.positionInBits}");
+                SendInputToServer(_localTick, frame);
+            }
             _localTick += 1;
+        }
+        
+        [ServerRpc]
+        private void SendInputToServer(ulong tick, BitPacker packer)
+        {
+            int count = _systems.Count;
+            
+            for (var i = 0; i < count; i++)
+                _systems[i].ReadState(tick, packer, _isServer);
+
+            packer.Dispose();
         }
 
         private void LateUpdate()

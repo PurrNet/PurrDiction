@@ -19,7 +19,7 @@ namespace PurrNet.Prediction
             _inputHistory = new History<INPUT>(world.tickRate * settings.secondsToKeepInHistory);
         }
 
-        internal override void Simulate(ulong tick, Fix64 delta)
+        internal override void PreSimulate(ulong tick)
         {
             bool isFuture = tick > _inputHistory.MostRecentTick;
 
@@ -32,6 +32,12 @@ namespace PurrNet.Prediction
             else input = GetInput();
             
             _inputHistory.Write(tick, input);
+        }
+
+        internal override void Simulate(ulong tick, Fix64 delta)
+        {
+            if (!_inputHistory.Read(tick, out var input))
+                throw new Exception("Input not found for tick " + tick);
 
             Simulate(input, delta);
             PostSimulate(tick);
@@ -39,17 +45,22 @@ namespace PurrNet.Prediction
 
         protected abstract void Simulate(INPUT input, Fix64 delta);
 
-        public override void WriteState(ulong tick, BitPacker packer)
+        protected override void Simulate(Fix64 delta)
         {
-            base.WriteState(tick, packer);
+            Simulate(default, delta);
+        }
+
+        public override void WriteState(ulong tick, BitPacker packer, bool asServer)
+        {
+            base.WriteState(tick, packer, asServer);
             
             if (_inputHistory.Read(tick, out var input))
                 Packer<INPUT>.Write(packer, input);
         }
 
-        public override void ReadState(ulong tick, BitPacker packer)
+        public override void ReadState(ulong tick, BitPacker packer, bool asServer)
         {
-            base.ReadState(tick, packer);
+            base.ReadState(tick, packer, asServer);
             
             INPUT input = default;
             Packer<INPUT>.Read(packer, ref input);

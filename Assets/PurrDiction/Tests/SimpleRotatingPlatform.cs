@@ -1,14 +1,23 @@
 using System;
+using FixMath.NET;
+using PurrNet.Packing;
 using UnityEngine;
 
 namespace PurrNet.Prediction.Tests
 {
-    public class SimpleRotatingPlatform : PredictedIdentity<SimpleRotatingPlatform.State>
+    public class SimpleRotatingPlatform : PredictedIdentity<SimpleRotatingPlatform.Input, SimpleRotatingPlatform.State>
     {
         [SerializeField] private Transform _visuals;
         [SerializeField] private float _rotationSpeed = 1;
+
+        public struct Input : IPackedAuto, IDisposable
+        {
+            public bool stopRotation;
+            
+            public void Dispose() { }
+        }
         
-        public struct State : IDisposable
+        public struct State : IPackedAuto, IDisposable
         {
             public Vector3 position;
             public Quaternion rotation;
@@ -22,18 +31,26 @@ namespace PurrNet.Prediction.Tests
             rotation = transform.rotation
         };
 
-        protected override void Simulate()
+        protected override Input GetInput() => new()
         {
-            transform.rotation *= Quaternion.Euler(0, _rotationSpeed, 0);
-        }
+            stopRotation = UnityEngine.Input.GetKey(KeyCode.Space)
+        };
 
+        protected override void Simulate(Input input, Fix64 delta)
+        {
+            if (input.stopRotation)
+                return;
+            
+            transform.rotation *= Quaternion.Euler(0, _rotationSpeed * (float)delta, 0);
+        }
+        
         protected override void Rollback(State state)
         {
             transform.SetPositionAndRotation(state.position, state.rotation);
         }
 
         // optional step to update the view
-        public override void UpdateView(State predicted, State? verified)
+        protected override void UpdateView(State predicted, State? verified)
         {
             _visuals.SetPositionAndRotation(predicted.position, predicted.rotation);
         }

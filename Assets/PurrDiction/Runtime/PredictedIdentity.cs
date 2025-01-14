@@ -17,15 +17,17 @@ namespace PurrNet.Prediction
                 world.RegisterInstance(this);
         }
 
+        internal abstract void PreSimulate(ulong tick);
+        
         internal abstract void Simulate(ulong tick, Fix64 delta);
 
         internal abstract void Rollback(ulong tick);
         
         internal abstract void UpdateView(float deltaTime);
         
-        public abstract void WriteState(ulong tick, BitPacker packer);
+        public abstract void WriteState(ulong tick, BitPacker packer, bool asServer);
 
-        public abstract void ReadState(ulong tick, BitPacker packer);
+        public abstract void ReadState(ulong tick, BitPacker packer, bool asServer);
     }
     
     public abstract class PredictedIdentity<STATE> : PredictedIdentity 
@@ -61,6 +63,7 @@ namespace PurrNet.Prediction
             
             _interpolatedState = new Interpolated<STATE>(Interpolate, (float)world.tickDelta, predictedState, settings.maxInputBufferCount);
             _stateHistory = new History<STATE>(world.tickRate * settings.secondsToKeepInHistory);
+            _stateHistory.Write(0, predictedState);
         }
 
         /// <summary>
@@ -70,9 +73,11 @@ namespace PurrNet.Prediction
         /// <returns>The initial state of the object.</returns>
         protected abstract STATE GetCurrentState();
 
+        internal override void PreSimulate(ulong tick) { }
+
         internal override void Simulate(ulong tick, Fix64 delta)
         {
-            Simulate();
+            Simulate(delta);
             PostSimulate(tick);
         }
 
@@ -83,7 +88,7 @@ namespace PurrNet.Prediction
             _interpolatedState.Add(predictedState);
         }
 
-        protected abstract void Simulate();
+        protected abstract void Simulate(Fix64 delta);
 
         internal override void Rollback(ulong tick)
         {
@@ -98,15 +103,18 @@ namespace PurrNet.Prediction
         protected abstract void Rollback(STATE state);
 
         [UsedImplicitly]
-        public override void WriteState(ulong tick, BitPacker packer)
+        public override void WriteState(ulong tick, BitPacker packer, bool asServer)
         {
-            if (_stateHistory.Read(tick, out var state))
+            if (asServer && _stateHistory.Read(tick, out var state))
                 Packer<STATE>.Write(packer, state);
         }
 
         [UsedImplicitly]
-        public override void ReadState(ulong tick, BitPacker packer)
+        public override void ReadState(ulong tick, BitPacker packer, bool asServer)
         {
+            if (asServer)
+                return;
+            
             STATE state = default;
             Packer<STATE>.Read(packer, ref state);
             _stateHistory.Write(tick, state);
@@ -121,7 +129,7 @@ namespace PurrNet.Prediction
             UpdateView(interpolatedState, null);
         }
 
-        public virtual void UpdateView(STATE predicted, STATE? verified) {}
+        protected virtual void UpdateView(STATE predicted, STATE? verified) {}
 
         protected virtual STATE Interpolate(STATE from, STATE to, float t)
         {

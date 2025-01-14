@@ -1,14 +1,16 @@
 using System;
 using System.Collections.Generic;
+using FixMath.NET;
+using PurrNet.Packing;
 using PurrNet.Pooling;
 using UnityEngine;
 
 namespace PurrNet.Prediction
 {
-    public struct PredictedHierarchyState : IDisposable
+    public struct PredictedHierarchyState : IPackedAuto, IDisposable
     {
         public DisposableList<PredictedAction> actions;
-        public int nextInstanceId;
+        public readonly int nextInstanceId;
         
         public PredictedHierarchyState(DisposableList<PredictedAction> actions, int nextInstanceId)
         {
@@ -33,32 +35,8 @@ namespace PurrNet.Prediction
             return new PredictedHierarchyState(copy, _nextInstanceId);
         }
 
-        protected override void Simulate() { }
+        protected override void Simulate(Fix64 delta) { }
         
-        public PredictedObjectID Create(int prefabId)
-        {
-            if (!predictionManager.TryGetPrefab(prefabId, out var prefab))
-                throw new InvalidOperationException($"Prefab with id '{prefabId}' not found in prediction manager");
-            
-            return Create(prefab);
-        }
-
-        public PredictedObjectID Create(GameObject prefab)
-        {
-            if (!predictionManager.TryGetPrefab(prefab, out var prefabId))
-                throw new InvalidOperationException($"Prefab '{prefab.name}' not found in prediction manager");
-            
-            var go = predictionManager.Create(prefab);
-            var id = new PredictedObjectID(_nextInstanceId);
-            var action = new PredictedAction(new PredictedInstantiate(prefabId, id));
-            
-            _instanceMap.Add(id, go);
-            _currentActions.Add(action);
-            _nextInstanceId++;
-            
-            return id;
-        }
-
         protected override void Rollback(PredictedHierarchyState state)
         {
             var currentActions = _currentActions.Count;
@@ -79,21 +57,25 @@ namespace PurrNet.Prediction
             
             // we match up to i, so we need to undo the rest of the actions
             int countToUndo = currentActions - i;
-            for (var j = currentActions - 1; j >= i; j--)
-                UndoAction(_currentActions[j]);
-            
-            // clear the undone actions
-            _currentActions.RemoveRange(i, countToUndo);
-            
-            // we need to redo the rest of the actions
-            for (var j = i; j < stateActions; j++)
+
+            if (countToUndo > 0)
             {
-                DoAction(state.actions[j]);
-                
-                // add the action to the current actions
-                _currentActions.Add(state.actions[j]);
+                for (var j = currentActions - 1; j >= i; j--)
+                    UndoAction(_currentActions[j]);
+
+                // clear the undone actions
+                _currentActions.RemoveRange(i, countToUndo);
+
+                // we need to redo the rest of the actions
+                for (var j = i; j < stateActions; j++)
+                {
+                    DoAction(state.actions[j]);
+
+                    // add the action to the current actions
+                    _currentActions.Add(state.actions[j]);
+                }
             }
-            
+
             _nextInstanceId = state.nextInstanceId;
             
             Debug.Assert(_currentActions.Count == state.actions.Count, "Mismatched action count");
@@ -145,6 +127,61 @@ namespace PurrNet.Prediction
                 }
                 default: throw new NotImplementedException();
             }
+        }
+        
+        public PredictedObjectID? Create(int prefabId)
+        {
+            if (!predictionManager.TryGetPrefab(prefabId, out var prefab))
+                return default;
+            
+            return Create(prefab);
+        }
+
+        public PredictedObjectID? Create(GameObject prefab)
+        {
+            if (!predictionManager.TryGetPrefab(prefab, out var prefabId))
+                return default;
+            
+            var go = predictionManager.Create(prefab);
+            var id = new PredictedObjectID(_nextInstanceId);
+            var action = new PredictedAction(new PredictedInstantiate(prefabId, id));
+            
+            _instanceMap.Add(id, go);
+            _currentActions.Add(action);
+            _nextInstanceId++;
+            
+            return id;
+        }
+        
+        public bool TryCreate(int prefabId, out PredictedObjectID id)
+        {
+            var result = Create(prefabId);
+            id = result.GetValueOrDefault();
+            return result.HasValue;
+        }
+        
+        public bool TryCreate(GameObject prefab, out PredictedObjectID id)
+        {
+            var result = Create(prefab);
+            id = result.GetValueOrDefault();
+            return result.HasValue;
+        }
+        
+        public void Delete(PredictedObjectID id)
+        {
+            if (!_instanceMap.Remove(id, out var instance))
+                return;
+            
+            var action = new PredictedAction(new PredictedDestroy(instance.GetInstanceID(), id));
+            _currentActions.Add(action);
+        }
+        
+        public void Delete(PredictedObjectID? id)
+        {
+            if (!id.HasValue)
+                return;
+            
+            Delete(id.Value);
         }
     }
 }

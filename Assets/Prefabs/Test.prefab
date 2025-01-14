@@ -49,7 +49,7 @@ MonoBehaviour:
     maxInputBufferCount: 4
     secondsToKeepInHistory: 5
   _visuals: {fileID: 5855861698602506534}
-  _rotationSpeed: 1
+  _rotationSpeed: 50
 --- !u!1 &4325596775113163761
 GameObject:
   m_ObjectHideFlags: 0

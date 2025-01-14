@@ -157,6 +157,13 @@
         "com.unity.modules.imgui": "1.0.0"
       }
     },
+    "com.veriorpies.parrelsync": {
+      "version": "https://github.com/VeriorPies/ParrelSync.git?path=/ParrelSync",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "d1ef610e9fe3ad0b490cce91594449fc0af809a6"
+    },
     "purrnet": {
       "version": "https://github.com/BlenMiner/PurrNet.git?path=/Assets/PurrNet#dev",
       "depth": 0,
@@ -165,7 +172,7 @@
         "com.unity.nuget.mono-cecil": "1.11.4",
         "com.unity.nuget.newtonsoft-json": "3.2.1"
       },
-      "hash": "c0db544916e299daee600ba8eb37c8ac8742385a"
+      "hash": "842c12a007c0308427a54f8b1d09f6a6939453ee"
     },
     "com.unity.modules.accessibility": {
       "version": "1.0.0",
