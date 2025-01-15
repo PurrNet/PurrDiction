@@ -22,23 +22,19 @@ namespace PurrNet.Prediction
             _inputHistory = new History<INPUT>(world.tickRate * settings.secondsToKeepInHistory);
         }
         
-        internal override void EvaluateLocalInput(ulong localTick)
+        internal override void EvaluateAndRegisterLocalInput(ulong localTick)
         {
             _lastInput = GetInput();
             _inputHistory.Write(localTick, _lastInput);
-        }
-        
-        internal override void WriteLocalInput(BitPacker packet)
-        {
-            Packer<INPUT>.Write(packet, _lastInput);
         }
         
         internal override void SimulateTick(ulong tick, Fix64 delta)
         {
             if (IsOwner())
             {
+
                 if (!_inputHistory.TryGet(tick, out var input))
-                    Simulate(GetInput(), delta);
+                     Simulate(GetInput(), delta);
                 else Simulate(input, delta);
             }
             else

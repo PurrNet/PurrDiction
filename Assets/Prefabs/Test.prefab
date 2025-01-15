@@ -46,7 +46,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _predictionSettings:
-    maxInputBufferCount: 4
+    maxInputBufferCount: 5
     secondsToKeepInHistory: 5
   _visuals: {fileID: 5855861698602506534}
   _rotationSpeed: 60

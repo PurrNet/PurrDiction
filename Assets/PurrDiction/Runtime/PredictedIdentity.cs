@@ -56,10 +56,8 @@ namespace PurrNet.Prediction
             return asServer;
         }
 
-        internal abstract void EvaluateLocalInput(ulong localTick);
+        internal abstract void EvaluateAndRegisterLocalInput(ulong localTick);
         
-        internal abstract void WriteLocalInput(BitPacker packet);
-
         internal abstract void SimulateTick(ulong tick, Fix64 delta);
         
         internal abstract void SimulateLocal(Fix64 delta);
@@ -167,9 +165,7 @@ namespace PurrNet.Prediction
         /// <returns>The initial state of the object.</returns>
         protected abstract STATE GetCurrentState();
 
-        internal override void WriteLocalInput(BitPacker packet) { }
-
-        internal override void EvaluateLocalInput(ulong localTick) { }
+        internal override void EvaluateAndRegisterLocalInput(ulong localTick) { }
 
         internal override void SimulateTick(ulong tick, Fix64 delta)
         {

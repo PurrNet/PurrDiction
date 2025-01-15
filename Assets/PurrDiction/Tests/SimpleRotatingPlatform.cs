@@ -12,6 +12,11 @@ namespace PurrNet.Prediction.Tests
         public struct Input : IPackedAuto, IOptionalDispose
         {
             public bool stopRotation;
+
+            public override string ToString()
+            {
+                return $"stopRotation: {stopRotation}";
+            }
         }
         
         public struct State : IPackedAuto, IOptionalDispose
