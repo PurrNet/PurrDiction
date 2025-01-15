@@ -1,9 +1,8 @@
-using System;
 using System.Collections.Generic;
 
 namespace PurrNet.Prediction
 {
-    public sealed class History<T> where T : struct, IDisposable
+    public sealed class History<T> where T : struct, IOptionalDispose
     {
         struct Entry
         {

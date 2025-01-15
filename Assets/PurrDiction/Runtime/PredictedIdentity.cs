@@ -1,47 +1,94 @@
-using System;
 using FixMath.NET;
 using JetBrains.Annotations;
+using PurrNet.Logging;
 using PurrNet.Modules;
 using PurrNet.Packing;
 using UnityEngine;
 
 namespace PurrNet.Prediction
 {
+    public struct PredictionState : IOptionalDispose
+    {
+        public PlayerID? owner;
+    }
+    
     public abstract class PredictedIdentity : MonoBehaviour
     {
+        public PlayerID? owner;
+
         public abstract void Setup(NetworkManager manager, PredictionManager world);
 
-        protected void Awake()
+        protected void OnEnable()
         {
             if (PredictionManager.TryGetInstance(gameObject.scene.handle, out var world))
                 world.RegisterInstance(this);
         }
 
-        internal abstract void PreSimulate(ulong tick);
+        private void OnDisable()
+        {
+            if (PredictionManager.TryGetInstance(gameObject.scene.handle, out var world))
+                world.UnregisterInstance(this);
+        }
+
+        public bool IsOwner(PlayerID player)
+        {
+            return owner == player;
+        }
+
+        public bool IsOwner(PlayerID player, bool asServer)
+        {
+            if (owner.HasValue)
+                return owner == player;
+            return asServer;
+        }
+
+        internal abstract void EvaluateLocalInput();
         
-        internal abstract void Simulate(ulong tick, Fix64 delta);
+        internal abstract void WriteLocalInput(BitPacker packet);
+
+        internal abstract void SimulateLocal(ulong tick, Fix64 delta);
+
+        internal abstract void SimulateRemote(ulong tick, Fix64 delta);
+        
+        internal abstract void PostSimulate(ulong tick);
 
         internal abstract void Rollback(ulong tick);
         
         internal abstract void UpdateView(float deltaTime);
         
-        public abstract void WriteState(ulong tick, BitPacker packer, bool asServer);
+        public abstract void WriteLatestState(BitPacker packer);
+        
+        public abstract void WriteState(ulong tick, BitPacker packer);
+        
+        public abstract void WriteInput(ulong localTick, BitPacker input);
 
-        public abstract void ReadState(ulong tick, BitPacker packer, bool asServer);
+        public abstract void ReadState(ulong tick, BitPacker packer);
+        
+        public abstract void ReadInput(ulong tick, BitPacker packer);
+        
+        public abstract void QueueInput(ulong tick, BitPacker packer);
     }
     
     public abstract class PredictedIdentity<STATE> : PredictedIdentity 
-        where STATE : struct, IDisposable
+        where STATE : struct, IOptionalDispose
     {
+        struct FULL_STATE : IPackedAuto, IOptionalDispose
+        {
+            public STATE state;
+            public PredictionState prediction;
+            
+            public void Dispose() => state.Dispose();
+        }
+        
         [SerializeField] PredictionSettings _predictionSettings;
         
         protected PredictionSettings settings => _predictionSettings;
         
         public PredictionManager predictionManager { get; private set; }
 
-        private Interpolated<STATE> _interpolatedState;
+        private Interpolated<FULL_STATE> _interpolatedState;
         
-        private History<STATE> _stateHistory;
+        private History<FULL_STATE> _stateHistory;
         
         protected STATE predictedState;
 
@@ -49,8 +96,19 @@ namespace PurrNet.Prediction
         
         protected TickManager tickModule { get; private set; }
         
+        private FULL_STATE FULLInterpolate(FULL_STATE from, FULL_STATE to, float t)
+        {
+            var state = Interpolate(from.state, to.state, t);
+            return new FULL_STATE
+            {
+                state = state,
+                prediction = from.prediction
+            };
+        }
+        
         public override void Setup(NetworkManager manager, PredictionManager world)
         {
+            owner = null;
             predictionManager = world;
             tickModule = manager.tickModule;
             
@@ -59,11 +117,20 @@ namespace PurrNet.Prediction
             
             predictedState = GetCurrentState();
             
+            var predicted = new FULL_STATE
+            {
+                state = predictedState,
+                prediction = new PredictionState
+                {
+                    owner = owner
+                }
+            };
+            
             _predictionSettings ??= new PredictionSettings();
             
-            _interpolatedState = new Interpolated<STATE>(Interpolate, (float)world.tickDelta, predictedState, settings.maxInputBufferCount);
-            _stateHistory = new History<STATE>(world.tickRate * settings.secondsToKeepInHistory);
-            _stateHistory.Write(0, predictedState);
+            _interpolatedState = new Interpolated<FULL_STATE>(FULLInterpolate, (float)world.tickDelta, predicted, settings.maxInputBufferCount);
+            _stateHistory = new History<FULL_STATE>(world.tickRate * settings.secondsToKeepInHistory);
+            _stateHistory.Write(0, predicted);
         }
 
         /// <summary>
@@ -73,52 +140,101 @@ namespace PurrNet.Prediction
         /// <returns>The initial state of the object.</returns>
         protected abstract STATE GetCurrentState();
 
-        internal override void PreSimulate(ulong tick) { }
+        internal override void WriteLocalInput(BitPacker packet) { }
 
-        internal override void Simulate(ulong tick, Fix64 delta)
+        internal override void EvaluateLocalInput() { }
+
+        internal override void SimulateLocal(ulong tick, Fix64 delta)
         {
             Simulate(delta);
-            PostSimulate(tick);
         }
-
-        protected void PostSimulate(ulong tick)
+        
+        internal override void SimulateRemote(ulong tick, Fix64 delta)
         {
-            predictedState = GetCurrentState();
-            _stateHistory.Write(tick, predictedState);
-            _interpolatedState.Add(predictedState);
+            Simulate(delta);
+        }
+        
+        FULL_STATE GetCurrentFullState()
+        {
+            return new FULL_STATE
+            {
+                state = GetCurrentState(),
+                prediction = new PredictionState
+                {
+                    owner = owner
+                }
+            };
+        }
+        
+        internal override void PostSimulate(ulong tick)
+        {
+            var fullState = GetCurrentFullState();
+            
+            _stateHistory.Write(tick, fullState);
+            _interpolatedState.Add(fullState);
         }
 
         protected abstract void Simulate(Fix64 delta);
 
         internal override void Rollback(ulong tick)
         {
-            if (!_stateHistory.TryGetClosest(tick, out var state))
-                state = predictedState;
+            if (!_stateHistory.Read(tick, out var state))
+            {
+                PurrLogger.LogError($"Failed to rollback to tick {tick}, state not found.");
+                return;
+            }
             
-            verifiedState = state;
+            verifiedState = state.state;
             _stateHistory.ClearFuture(tick);
-            Rollback(state);
+            
+            RollbackInternal(state.prediction);
+            Rollback(state.state);
+        }
+        
+        private void RollbackInternal(PredictionState state)
+        {
+            owner = state.owner;
         }
         
         protected abstract void Rollback(STATE state);
 
         [UsedImplicitly]
-        public override void WriteState(ulong tick, BitPacker packer, bool asServer)
+        public override void WriteState(ulong tick, BitPacker packer)
         {
-            if (asServer && _stateHistory.Read(tick, out var state))
-                Packer<STATE>.Write(packer, state);
+            if (_stateHistory.Read(tick, out var state))
+            {
+                Packer<STATE>.Write(packer, state.state);
+                Packer<PredictionState>.Write(packer, state.prediction);
+            }
+        }
+
+        public override void WriteLatestState(BitPacker packer)
+        {
+            var state = GetCurrentFullState();
+            Packer<STATE>.Write(packer, state.state);
+            Packer<PredictionState>.Write(packer, state.prediction);
         }
 
         [UsedImplicitly]
-        public override void ReadState(ulong tick, BitPacker packer, bool asServer)
+        public override void ReadState(ulong tick, BitPacker packer)
         {
-            if (asServer)
-                return;
-            
             STATE state = default;
+            PredictionState prediction = default;
             Packer<STATE>.Read(packer, ref state);
-            _stateHistory.Write(tick, state);
+            Packer<PredictionState>.Read(packer, ref prediction);
+            
+            _stateHistory.Write(tick, new FULL_STATE
+            {
+                state = state,
+                prediction = prediction
+            });
         }
+
+        public override void WriteInput(ulong localTick, BitPacker input) { }
+
+        public override void ReadInput(ulong tick, BitPacker packer) { }
+
+        public override void QueueInput(ulong tick, BitPacker packer) { }
 
         internal override void UpdateView(float deltaTime)
         {
@@ -126,7 +242,7 @@ namespace PurrNet.Prediction
                 return;
             
             var interpolatedState = _interpolatedState.Advance(deltaTime);
-            UpdateView(interpolatedState, null);
+            UpdateView(interpolatedState.state, null);
         }
 
         protected virtual void UpdateView(STATE predicted, STATE? verified) {}

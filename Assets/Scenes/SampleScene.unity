@@ -415,7 +415,10 @@ MonoBehaviour:
   _directChildren: []
   _networkRules: {fileID: 0}
   _visitiblityRules: {fileID: 0}
-  _prefabs: []
+  _settings:
+    maxTickDifference: 10
+  _prefabs:
+  - {fileID: 1497461662857079451, guid: 66e29ce93f591d7489def08cf132d953, type: 3}
 --- !u!4 &1558659896
 Transform:
   m_ObjectHideFlags: 0
@@ -520,7 +523,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1832579195697922280, guid: 66e29ce93f591d7489def08cf132d953, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: -1
       objectReference: {fileID: 0}
     - target: {fileID: 1832579195697922280, guid: 66e29ce93f591d7489def08cf132d953, type: 3}
       propertyPath: m_LocalPosition.z

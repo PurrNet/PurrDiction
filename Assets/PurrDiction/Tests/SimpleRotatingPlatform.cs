@@ -1,4 +1,3 @@
-using System;
 using FixMath.NET;
 using PurrNet.Packing;
 using UnityEngine;
@@ -10,19 +9,15 @@ namespace PurrNet.Prediction.Tests
         [SerializeField] private Transform _visuals;
         [SerializeField] private float _rotationSpeed = 1;
 
-        public struct Input : IPackedAuto, IDisposable
+        public struct Input : IPackedAuto, IOptionalDispose
         {
             public bool stopRotation;
-            
-            public void Dispose() { }
         }
         
-        public struct State : IPackedAuto, IDisposable
+        public struct State : IPackedAuto, IOptionalDispose
         {
             public Vector3 position;
             public Quaternion rotation;
-            
-            public void Dispose() { }
         }
         
         protected override State GetCurrentState() => new()
@@ -36,9 +31,9 @@ namespace PurrNet.Prediction.Tests
             stopRotation = UnityEngine.Input.GetKey(KeyCode.Space)
         };
 
-        protected override void Simulate(Input input, Fix64 delta)
+        protected override void Simulate(Input? input, Fix64 delta)
         {
-            if (input.stopRotation)
+            if (input?.stopRotation == true)
                 return;
             
             transform.rotation *= Quaternion.Euler(0, _rotationSpeed * (float)delta, 0);
