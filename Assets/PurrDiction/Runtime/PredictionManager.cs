@@ -4,6 +4,7 @@ using FixMath.NET;
 using JetBrains.Annotations;
 using PurrNet.Logging;
 using PurrNet.Packing;
+using PurrNet.Pooling;
 using PurrNet.Transports;
 using UnityEngine;
 
@@ -18,7 +19,7 @@ namespace PurrNet.Prediction
     }
     
     [DefaultExecutionOrder(-1000)]
-    public class PredictionManager : NetworkIdentity, ITick
+    public class PredictionManager : NetworkIdentity, ITick, IServerSceneEvents
     {
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterAssembliesLoaded)]
         static void Initialize() => _instances.Clear();
@@ -50,11 +51,26 @@ namespace PurrNet.Prediction
         
         public PredictedHierarchy hierarchy { get; private set; }
         
-        private bool _isServer;
+        readonly Dictionary<PlayerID, PredictedObjectID> _objectIds = new ();
+        
+        public void OnPlayerLoadedScene(PlayerID playerId)
+        {
+            var gid = hierarchy.Create(0);
+            if (gid.HasValue)
+            {
+                _objectIds[playerId] = gid.Value;
+                SetOwnership(gid, playerId);
+            }
+        }
 
+        public void OnPlayerUnloadedScene(PlayerID playerId)
+        {
+            if (_objectIds.Remove(playerId, out var gid))
+                hierarchy.Delete(gid);
+        }
+        
         protected override void OnEarlySpawn()
         {
-            _isServer = networkManager.isServer;
             tickRate = networkManager.tickModule.tickRate;
             tickDelta = 1 / (Fix64)tickRate;
             hierarchy = RegisterSystem<PredictedHierarchy>();
@@ -66,12 +82,6 @@ namespace PurrNet.Prediction
             }
             
             _queue.Clear();
-        }
-
-        protected override void OnSpawned(bool asServer)
-        {
-            if (asServer)
-                hierarchy.Create(0);
         }
 
         public T RegisterSystem<T>() where T : PredictedIdentity
@@ -135,19 +145,20 @@ namespace PurrNet.Prediction
         {
             using var input = BitPackerPool.Get();
             var myPlayer = localPlayer ?? default;
+            var cachedIsServer = isServer;
 
             int count = _systems.Count;
             for (var systemIdx = 0; systemIdx < count; systemIdx++)
             {
                 var system = _systems[systemIdx];
-                bool controller = system.IsOwner(myPlayer, _isServer);
+                bool controller = system.IsOwner(myPlayer, cachedIsServer);
                 
                 // prepare and send input
                 if (controller)
                 {
                     system.EvaluateLocalInput();
 
-                    if (!_isServer)
+                    if (!cachedIsServer)
                     {
                         system.WriteLocalInput(input);
                         if (input.positionInBits > 0)
@@ -157,11 +168,11 @@ namespace PurrNet.Prediction
                         }
                     }
                     
-                    system.SimulateLocal(_localTick, tickDelta);
+                    system.SimulateLocal(tickDelta);
                 }
                 else
                 {
-                    system.SimulateRemote(_localTick, tickDelta);
+                    system.SimulateRemote(tickDelta);
                 }
 
                 // post-simulation update state
@@ -238,6 +249,24 @@ namespace PurrNet.Prediction
         internal void InternalDelete(GameObject instance)
         {
             UnityProxy.DestroyDirectly(instance);
+        }
+        
+        public void SetOwnership(PredictedObjectID? root, PlayerID? player)
+        {
+            if (!hierarchy.TryGetGameObject(root, out var rootGo))
+                return;
+            
+            var children = ListPool<PredictedIdentity>.Instantiate();
+            
+            rootGo.GetComponentsInChildren(true, children);
+            
+            for (var i = 0; i < children.Count; i++)
+            {
+                var child = children[i];
+                child.owner = player;
+            }
+            
+            ListPool<PredictedIdentity>.Destroy(children);
         }
     }
 }

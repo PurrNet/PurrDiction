@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using FixMath.NET;
 using PurrNet.Packing;
@@ -32,25 +31,31 @@ namespace PurrNet.Prediction
             Packer<INPUT>.Write(packet, _lastInput);
         }
 
-        internal override void SimulateLocal(ulong tick, Fix64 delta)
+        internal override void SimulateLocal(Fix64 delta)
         {
             Simulate(_lastInput, delta);
         }
         
-        internal override void SimulateRemote(ulong tick, Fix64 delta)
+        internal override void SimulateRemote(Fix64 delta)
         {
             if (_queuedInputs.Count == 0)
             {
-                Simulate(null, delta);
+                Simulate(_lastInput, delta);
                 return;
             }
+            
+            var input = _queuedInputs[0];
+            _queuedInputs.RemoveAt(0);
+            _lastInput = input.input;
+            
+            Simulate(_lastInput, delta);
         }
 
         protected abstract void Simulate(INPUT? input, Fix64 delta);
-
+        
         protected override void Simulate(Fix64 delta)
         {
-            Simulate(default, delta);
+            Simulate(_lastInput, delta);
         }
 
         public override void WriteInput(ulong localTick, BitPacker input)

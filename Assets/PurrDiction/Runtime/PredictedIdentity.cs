@@ -46,9 +46,9 @@ namespace PurrNet.Prediction
         
         internal abstract void WriteLocalInput(BitPacker packet);
 
-        internal abstract void SimulateLocal(ulong tick, Fix64 delta);
+        internal abstract void SimulateLocal(Fix64 delta);
 
-        internal abstract void SimulateRemote(ulong tick, Fix64 delta);
+        internal abstract void SimulateRemote(Fix64 delta);
         
         internal abstract void PostSimulate(ulong tick);
 
@@ -144,12 +144,12 @@ namespace PurrNet.Prediction
 
         internal override void EvaluateLocalInput() { }
 
-        internal override void SimulateLocal(ulong tick, Fix64 delta)
+        internal override void SimulateLocal(Fix64 delta)
         {
             Simulate(delta);
         }
         
-        internal override void SimulateRemote(ulong tick, Fix64 delta)
+        internal override void SimulateRemote(Fix64 delta)
         {
             Simulate(delta);
         }

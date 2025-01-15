@@ -8,36 +8,63 @@ using UnityEngine;
 
 namespace PurrNet.Prediction
 {
+    public readonly struct InstanceDetails : IPackedAuto, IEquatable<InstanceDetails>
+    {
+        public readonly int prefabId;
+        public readonly PredictedObjectID instanceId;
+        
+        public InstanceDetails(int prefabId, PredictedObjectID instanceId)
+        {
+            this.prefabId = prefabId;
+            this.instanceId = instanceId;
+        }
+
+        public bool Equals(InstanceDetails other)
+        {
+            return prefabId == other.prefabId && instanceId.Equals(other.instanceId);
+        }
+        
+        public override bool Equals(object obj)
+        {
+            return obj is InstanceDetails other && Equals(other);
+        }
+        
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(prefabId, instanceId);
+        }
+    }
+    
     public struct PredictedHierarchyState : IPackedAuto, IOptionalDispose
     {
-        public DisposableList<PredictedAction> actions;
+        public DisposableList<InstanceDetails> spawnedPrefabs;
         public readonly int nextInstanceId;
         
-        public PredictedHierarchyState(DisposableList<PredictedAction> actions, int nextInstanceId)
+        public PredictedHierarchyState(DisposableList<InstanceDetails> spawnedPrefabs, int nextInstanceId)
         {
-            this.actions = actions;
+            this.spawnedPrefabs = spawnedPrefabs;
             this.nextInstanceId = nextInstanceId;
         }
 
-        public void Dispose() => actions.Dispose();
+        public void Dispose() => spawnedPrefabs.Dispose();
 
         public override string ToString()
         {
-            return $"PredictedHierarchyState(actions={actions.Count}, nextInstanceId={nextInstanceId})";
+            return $"PredictedHierarchyState(actions={spawnedPrefabs.Count}, nextInstanceId={nextInstanceId})";
         }
     }
     
     public class PredictedHierarchy : PredictedIdentity<PredictedHierarchyState>
     {
-        readonly List<PredictedAction> _currentActions = new ();
+        readonly List<InstanceDetails> _spawnedPrefabs = new ();
         readonly Dictionary<PredictedObjectID, GameObject> _instanceMap = new ();
         
         private int _nextInstanceId;
         
         protected override PredictedHierarchyState GetCurrentState()
         {
-            var copy = new DisposableList<PredictedAction>(_currentActions.Count);
-            copy.AddRange(_currentActions);
+            var copy = new DisposableList<InstanceDetails>(_spawnedPrefabs.Count);
+            copy.AddRange(_spawnedPrefabs);
             return new PredictedHierarchyState(copy, _nextInstanceId);
         }
 
@@ -45,8 +72,8 @@ namespace PurrNet.Prediction
         
         protected override void Rollback(PredictedHierarchyState state)
         {
-            var currentActions = _currentActions.Count;
-            var stateActions = state.actions.Count;
+            var currentActions = _spawnedPrefabs.Count;
+            var stateActions = state.spawnedPrefabs.Count;
             
             var min = Mathf.Min(currentActions, stateActions);
             
@@ -54,10 +81,10 @@ namespace PurrNet.Prediction
             
             for (i = 0; i < min; i++)
             {
-                var current = _currentActions[i];
-                var target = state.actions[i];
+                var current = _spawnedPrefabs[i];
+                var target = state.spawnedPrefabs[i];
                 
-                if (!current.Matches(target))
+                if (!current.Equals(target))
                     break;
             }
             
@@ -67,73 +94,37 @@ namespace PurrNet.Prediction
             if (countToUndo > 0)
             {
                 for (var j = currentActions - 1; j >= i; j--)
-                    UndoAction(_currentActions[j]);
+                {
+                    var details = _spawnedPrefabs[j];
+                    if (!_instanceMap.Remove(details.instanceId, out var instance))
+                        predictionManager.InternalDelete(instance);
+                }
 
                 // clear the undone actions
-                _currentActions.RemoveRange(i, countToUndo);
+                _spawnedPrefabs.RemoveRange(i, countToUndo);
             }
             
             // we need to redo the rest of the actions
             for (var j = i; j < stateActions; j++)
             {
-                DoAction(state.actions[j]);
-
-                // add the action to the current actions
-                _currentActions.Add(state.actions[j]);
+                var details = state.spawnedPrefabs[j];
+                var pid = details.prefabId;
+                
+                if (predictionManager.TryGetPrefab(pid, out var prefab))
+                {
+                    var go = predictionManager.InternalCreate(prefab);
+                    var id = details.instanceId;
+                    
+                    _instanceMap.Add(id, go);
+                    _spawnedPrefabs.Add(details);
+                }
+                else PurrLogger.LogError($"Mismatch: Failed to find prefab {pid}");
             }
             
             _nextInstanceId = state.nextInstanceId;
 
-            if (_currentActions.Count != state.actions.Count)
-                PurrLogger.LogError($"Mismatched action count {_currentActions.Count} != {state.actions.Count}");
-        }
-        
-        private void DoAction(PredictedAction action)
-        {
-            switch (action.type)
-            {
-                case PredictedActionType.Instantiate:
-                {
-                    if (!predictionManager.TryGetPrefab(action.instantiateAction.prefabId, out var prefab))
-                        throw new InvalidOperationException($"Prefab with id '{action.instantiateAction}' not found");
-
-                    var go = predictionManager.InternalCreate(prefab);
-                    _instanceMap.Add(action.instantiateAction.instanceId, go);
-                    break;
-                }
-                case PredictedActionType.Destroy:
-                {
-                    if (_instanceMap.Remove(action.destroyAction.instanceId, out var instance))
-                        predictionManager.InternalDelete(instance);
-                    else throw new InvalidOperationException($"Instance with id '{action.destroyAction.instanceId}' not found");
-                    break;
-                }
-                default: throw new NotImplementedException();
-            }
-        }
-        
-        private void UndoAction(PredictedAction action)
-        {
-            switch (action.type)
-            {
-                case PredictedActionType.Instantiate:
-                {
-                    if (_instanceMap.Remove(action.instantiateAction.instanceId, out var instance))
-                        predictionManager.InternalDelete(instance);
-                    else throw new InvalidOperationException($"Instance with id '{action.instantiateAction}' not found");
-                    break;
-                }
-                case PredictedActionType.Destroy:
-                {
-                    if (!predictionManager.TryGetPrefab(action.destroyAction.prefabId, out var prefab))
-                        throw new InvalidOperationException($"Prefab with id '{action.destroyAction}' not found");
-                    
-                    var go = predictionManager.InternalCreate(prefab);
-                    _instanceMap.Add(action.destroyAction.instanceId, go);
-                    break;
-                }
-                default: throw new NotImplementedException();
-            }
+            if (_spawnedPrefabs.Count != state.spawnedPrefabs.Count)
+                PurrLogger.LogError($"Mismatch: Action count {_spawnedPrefabs.Count} != {state.spawnedPrefabs.Count}");
         }
         
         public PredictedObjectID? Create(int prefabId)
@@ -151,10 +142,10 @@ namespace PurrNet.Prediction
             
             var go = predictionManager.InternalCreate(prefab);
             var id = new PredictedObjectID(_nextInstanceId);
-            var action = new PredictedAction(new PredictedInstantiate(prefabId, id));
+            var details = new InstanceDetails(prefabId, id);
             
             _instanceMap.Add(id, go);
-            _currentActions.Add(action);
+            _spawnedPrefabs.Add(details);
             _nextInstanceId++;
             
             return id;
@@ -174,13 +165,33 @@ namespace PurrNet.Prediction
             return result.HasValue;
         }
         
+        public bool TryGetGameObject(PredictedObjectID? id, out GameObject go)
+        {
+            if (!id.HasValue)
+            {
+                go = null;
+                return false;
+            }
+            
+            return _instanceMap.TryGetValue(id.Value, out go);
+        }
+        
         public void Delete(PredictedObjectID id)
         {
             if (!_instanceMap.Remove(id, out var instance))
                 return;
+
+            var count = _spawnedPrefabs.Count;
+            for (var i = 0; i < count; i++)
+            {
+                if (_spawnedPrefabs[i].instanceId.Equals(id))
+                {
+                    _spawnedPrefabs.RemoveAt(i);
+                    break;
+                }
+            }
             
-            var action = new PredictedAction(new PredictedDestroy(instance.GetInstanceID(), id));
-            _currentActions.Add(action);
+            predictionManager.InternalDelete(instance);
         }
         
         public void Delete(PredictedObjectID? id)
