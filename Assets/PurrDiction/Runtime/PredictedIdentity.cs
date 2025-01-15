@@ -10,10 +10,14 @@ namespace PurrNet.Prediction
     public struct PredictionState : IOptionalDispose
     {
         public PlayerID? owner;
+        
+        public void Dispose() {}
     }
     
     public abstract class PredictedIdentity : MonoBehaviour
     {
+        public PredictionManager predictionManager { get; protected set; }
+
         public PlayerID? owner;
 
         public abstract void Setup(NetworkManager manager, PredictionManager world);
@@ -29,8 +33,18 @@ namespace PurrNet.Prediction
             if (PredictionManager.TryGetInstance(gameObject.scene.handle, out var world))
                 world.UnregisterInstance(this);
         }
+        
+        public bool IsOwner()
+        {
+            return owner == predictionManager.localPlayer;
+        }
 
         public bool IsOwner(PlayerID player)
+        {
+            return owner == player;
+        }
+        
+        public bool IsOwner(PlayerID? player)
         {
             return owner == player;
         }
@@ -42,10 +56,12 @@ namespace PurrNet.Prediction
             return asServer;
         }
 
-        internal abstract void EvaluateLocalInput();
+        internal abstract void EvaluateLocalInput(ulong localTick);
         
         internal abstract void WriteLocalInput(BitPacker packet);
 
+        internal abstract void SimulateTick(ulong tick, Fix64 delta);
+        
         internal abstract void SimulateLocal(Fix64 delta);
 
         internal abstract void SimulateRemote(Fix64 delta);
@@ -53,6 +69,8 @@ namespace PurrNet.Prediction
         internal abstract void PostSimulate(ulong tick);
 
         internal abstract void Rollback(ulong tick);
+        
+        internal abstract void ResetInterpolation();
         
         internal abstract void UpdateView(float deltaTime);
         
@@ -77,25 +95,34 @@ namespace PurrNet.Prediction
             public STATE state;
             public PredictionState prediction;
             
-            public void Dispose() => state.Dispose();
+            public void Dispose()
+            {
+                state.Dispose();
+                prediction.Dispose();
+            }
         }
         
         [SerializeField] PredictionSettings _predictionSettings;
         
         protected PredictionSettings settings => _predictionSettings;
         
-        public PredictionManager predictionManager { get; private set; }
-
         private Interpolated<FULL_STATE> _interpolatedState;
         
         private History<FULL_STATE> _stateHistory;
+        
+        private bool _resetInterpolation;
         
         protected STATE predictedState;
 
         protected STATE? verifiedState;
         
         protected TickManager tickModule { get; private set; }
-        
+
+        internal override void ResetInterpolation()
+        {
+            _resetInterpolation = true;
+        }
+
         private FULL_STATE FULLInterpolate(FULL_STATE from, FULL_STATE to, float t)
         {
             var state = Interpolate(from.state, to.state, t);
@@ -142,8 +169,13 @@ namespace PurrNet.Prediction
 
         internal override void WriteLocalInput(BitPacker packet) { }
 
-        internal override void EvaluateLocalInput() { }
+        internal override void EvaluateLocalInput(ulong localTick) { }
 
+        internal override void SimulateTick(ulong tick, Fix64 delta)
+        {
+            Simulate(delta);
+        }
+        
         internal override void SimulateLocal(Fix64 delta)
         {
             Simulate(delta);
@@ -153,7 +185,7 @@ namespace PurrNet.Prediction
         {
             Simulate(delta);
         }
-        
+
         FULL_STATE GetCurrentFullState()
         {
             return new FULL_STATE
@@ -166,12 +198,13 @@ namespace PurrNet.Prediction
             };
         }
         
+        FULL_STATE? _lastState;
+        
         internal override void PostSimulate(ulong tick)
         {
-            var fullState = GetCurrentFullState();
-            
-            _stateHistory.Write(tick, fullState);
-            _interpolatedState.Add(fullState);
+            var state = GetCurrentFullState();
+            _stateHistory.Write(tick, state);
+            _lastState = state;
         }
 
         protected abstract void Simulate(Fix64 delta);
@@ -206,6 +239,7 @@ namespace PurrNet.Prediction
                 Packer<STATE>.Write(packer, state.state);
                 Packer<PredictionState>.Write(packer, state.prediction);
             }
+            else PurrLogger.LogError($"Failed to write state at tick {tick}");
         }
 
         public override void WriteLatestState(BitPacker packer)
@@ -240,7 +274,18 @@ namespace PurrNet.Prediction
         {
             if (_interpolatedState == null)
                 return;
-            
+
+            if (_lastState != null)
+            {
+                if (_resetInterpolation)
+                {
+                    _resetInterpolation = false;
+                    _interpolatedState.Teleport(_lastState.Value);
+                }
+                else _interpolatedState.Add(_lastState.Value);
+                _lastState = null;
+            }
+
             var interpolatedState = _interpolatedState.Advance(deltaTime);
             UpdateView(interpolatedState.state, null);
         }

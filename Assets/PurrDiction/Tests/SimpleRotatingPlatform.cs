@@ -17,13 +17,13 @@ namespace PurrNet.Prediction.Tests
         public struct State : IPackedAuto, IOptionalDispose
         {
             public Vector3 position;
-            public Quaternion rotation;
+            public float yRotation;
         }
         
         protected override State GetCurrentState() => new()
         {
             position = transform.position,
-            rotation = transform.rotation
+            yRotation = transform.eulerAngles.y
         };
 
         protected override Input GetInput() => new()
@@ -41,13 +41,13 @@ namespace PurrNet.Prediction.Tests
         
         protected override void Rollback(State state)
         {
-            transform.SetPositionAndRotation(state.position, state.rotation);
+            transform.SetPositionAndRotation(state.position, Quaternion.Euler(0, state.yRotation, 0));
         }
 
         // optional step to update the view
         protected override void UpdateView(State predicted, State? verified)
         {
-            _visuals.SetPositionAndRotation(predicted.position, predicted.rotation);
+            _visuals.SetPositionAndRotation(predicted.position, Quaternion.Euler(0, predicted.yRotation, 0));
         }
 
         // optional step to interpolate between states
@@ -55,7 +55,7 @@ namespace PurrNet.Prediction.Tests
         {
             var result = from;
             
-            result.rotation = Quaternion.Slerp(from.rotation, to.rotation, t);
+            result.yRotation = Mathf.LerpAngle(from.yRotation, to.yRotation, t);
             result.position = Vector3.Lerp(from.position, to.position, t);
             
             return result;

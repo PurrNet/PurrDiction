@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using FixMath.NET;
 using JetBrains.Annotations;
-using PurrNet.Logging;
 using PurrNet.Packing;
 using PurrNet.Pooling;
 using PurrNet.Transports;
@@ -10,14 +9,6 @@ using UnityEngine;
 
 namespace PurrNet.Prediction
 {
-    [Serializable]
-    public class PredictionManagerSettings
-    {
-        [Tooltip("The maximum number of ticks that can be ahead or behind of the server.\n" +
-                 "This is from the prespective of the server, used to validate incoming ticks.")]
-        public uint maxTickDifference = 10;
-    }
-    
     [DefaultExecutionOrder(-1000)]
     public class PredictionManager : NetworkIdentity, ITick, IServerSceneEvents
     {
@@ -26,7 +17,6 @@ namespace PurrNet.Prediction
         
         static readonly Dictionary<int, PredictionManager> _instances = new ();
         
-        [SerializeField] private PredictionManagerSettings _settings;
         [SerializeField] private GameObject[] _prefabs;
         
         readonly List<PredictedIdentity> _queue = new ();
@@ -39,7 +29,6 @@ namespace PurrNet.Prediction
 
         private void Awake()
         {
-            _settings ??= new PredictionManagerSettings();
             _instances[gameObject.scene.handle] = this;
         }
 
@@ -55,6 +44,7 @@ namespace PurrNet.Prediction
         
         public void OnPlayerLoadedScene(PlayerID playerId)
         {
+            // if (playerId == localPlayer) return;
             var gid = hierarchy.Create(0);
             if (gid.HasValue)
             {
@@ -138,79 +128,137 @@ namespace PurrNet.Prediction
                 var system = _systems[systemIdx];
                 system.ReadState(tick, data);
                 system.Rollback(tick);
+                system.ResetInterpolation();
             }
         }
 
         public void OnTick(float delta)
         {
-            using var input = BitPackerPool.Get();
+            using var frame = BitPackerPool.Get();
             var myPlayer = localPlayer ?? default;
             var cachedIsServer = isServer;
-
-            int count = _systems.Count;
-            for (var systemIdx = 0; systemIdx < count; systemIdx++)
+            
+            for (var systemIdx = 0; systemIdx < _systems.Count; systemIdx++)
             {
                 var system = _systems[systemIdx];
                 bool controller = system.IsOwner(myPlayer, cachedIsServer);
                 
-                // prepare and send input
+                // prepare and simulate the system
                 if (controller)
                 {
-                    system.EvaluateLocalInput();
-
-                    if (!cachedIsServer)
-                    {
-                        system.WriteLocalInput(input);
-                        if (input.positionInBits > 0)
-                        {
-                            SendInputToServer(_localTick, (uint)systemIdx, input);
-                            input.ResetPosition();
-                        }
-                    }
-                    
+                    system.EvaluateLocalInput(_localTick);
                     system.SimulateLocal(tickDelta);
                 }
                 else
                 {
                     system.SimulateRemote(tickDelta);
                 }
+            }
 
-                // post-simulation update state
-                system.PostSimulate(_localTick);
+            var count = _systems.Count;
+            
+            if (cachedIsServer)
+            {
+                for (var systemIdx = 0; systemIdx < count; systemIdx++)
+                {
+                    var system = _systems[systemIdx];
+                    system.PostSimulate(_localTick);
+                    system.WriteState(_localTick, frame);
+                }
+                
+                for (var systemIdx = 0; systemIdx < count; systemIdx++)
+                {
+                    var system = _systems[systemIdx];
+                    system.WriteInput(_localTick, frame);
+                }
+            }
+            else
+            {
+                for (var systemIdx = 0; systemIdx < count; systemIdx++)
+                {
+                    var system = _systems[systemIdx];
+                    if (system.IsOwner(myPlayer))
+                        system.WriteInput(_localTick, frame);
+                }
+            }
+
+            if (frame.positionInBits > 0)
+            {
+                if (cachedIsServer)
+                     SendFrameToOthers(_localTick, frame);
+                else SendInputToServer(_localTick, frame);
             }
             
             _localTick += 1;
         }
-        
-        private bool ValidateTick(ulong tick)
+
+        [ObserversRpc(excludeSender: true)]
+        private void SendFrameToOthers(ulong tick, BitPacker frame)
         {
-            return tick <= _localTick + _settings.maxTickDifference;
+            using (frame)
+            {
+                for (var i = 0; i < _systems.Count; i++)
+                {
+                    var system = _systems[i];
+                    system.ReadState(tick, frame);
+                    system.Rollback(tick);
+                }
+                
+                for (var i = 0; i < _systems.Count; i++)
+                {
+                    var system = _systems[i];
+                    system.ReadInput(tick, frame);
+                }
+            }
+            
+            CatchupFromTick(tick);
+        }
+
+        private void CatchupFromTick(ulong tick)
+        {
+            var roundTripTime = networkManager.tickModule.rtt;
+            ulong ticksToCatchUp = (ulong)(roundTripTime / (double)tickDelta);
+
+            for (ulong i = 1; i <= ticksToCatchUp; i++)
+            {
+                var simTick = tick + i;
+                
+                for (var j = 0; j < _systems.Count; j++)
+                    _systems[j].SimulateTick(simTick, tickDelta);
+
+                var count = _systems.Count;
+
+                for (var j = 0; j < count; j++)
+                    _systems[j].PostSimulate(simTick);
+            }
+            
+            _localTick = tick + ticksToCatchUp;
         }
 
         [ServerRpc(Channel.Unreliable)]
-        private void SendInputToServer(ulong clientTick, PackedUint systemIndex, BitPacker inputPacket, RPCInfo info = default)
+        private void SendInputToServer(ulong clientTick, BitPacker inputPacket, RPCInfo info = default)
         {
-            if (ValidateTick(clientTick))
-                HandleIncomingInput(clientTick, systemIndex, inputPacket, info);
+            HandleIncomingInput(clientTick, inputPacket, info);
             inputPacket.Dispose();
         }
 
-        private void HandleIncomingInput(ulong localTick, uint systemIndex, BitPacker inputPacket,
+        private void HandleIncomingInput(ulong localTick, BitPacker inputPacket,
             RPCInfo info = default)
         {
-            if (systemIndex >= _systems.Count)
-                return;
-
-            var system = _systems[(int)systemIndex];
-
             try
             {
-                if (system.IsOwner(info.sender))
-                    system.QueueInput(localTick, inputPacket);
+                bool senderIsServer = info.sender == default;
+                
+                for (var i = 0; i < _systems.Count; i++)
+                {
+                    var system = _systems[i];
+                    if (system.IsOwner(info.sender, senderIsServer))
+                        system.QueueInput(localTick, inputPacket);
+                }
             }
             catch
             {
-                PurrLogger.LogError($"Failed to handle input for system {system.GetType().Name}");
+                // ignored
             }
         }
 
@@ -239,7 +287,6 @@ namespace PurrNet.Prediction
             id = Array.IndexOf(_prefabs, prefab);
             return id != -1;
         }
-
 
         internal GameObject InternalCreate(GameObject prefab)
         {

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using FixMath.NET;
+using PurrNet.Logging;
 using PurrNet.Packing;
 
 namespace PurrNet.Prediction
@@ -21,14 +22,31 @@ namespace PurrNet.Prediction
             _inputHistory = new History<INPUT>(world.tickRate * settings.secondsToKeepInHistory);
         }
         
-        internal override void EvaluateLocalInput()
+        internal override void EvaluateLocalInput(ulong localTick)
         {
             _lastInput = GetInput();
+            _inputHistory.Write(localTick, _lastInput);
         }
         
         internal override void WriteLocalInput(BitPacker packet)
         {
             Packer<INPUT>.Write(packet, _lastInput);
+        }
+        
+        internal override void SimulateTick(ulong tick, Fix64 delta)
+        {
+            if (IsOwner())
+            {
+                if (!_inputHistory.TryGet(tick, out var input))
+                    Simulate(GetInput(), delta);
+                else Simulate(input, delta);
+            }
+            else
+            {
+                if (!_inputHistory.TryGetClosest(tick, out var input))
+                     Simulate(null, delta);
+                else Simulate(input, delta);
+            }
         }
 
         internal override void SimulateLocal(Fix64 delta)
@@ -60,10 +78,11 @@ namespace PurrNet.Prediction
 
         public override void WriteInput(ulong localTick, BitPacker input)
         {
-            if (_inputHistory.Read(localTick, out var savedInput))
-                Packer<INPUT>.Write(input, savedInput);
+            if (_inputHistory.TryGetClosest(localTick, out var savedInput))
+                 Packer<INPUT>.Write(input, savedInput);
+            else Packer<INPUT>.Write(input, default);
         }
-
+        
         public override void ReadInput(ulong tick, BitPacker packer)
         {
             INPUT input = default;

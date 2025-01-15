@@ -50,6 +50,8 @@ namespace PurrNet.Prediction
 
         public override string ToString()
         {
+            if (spawnedPrefabs.isDisposed)
+                return $"PredictedHierarchyState(actions=DISPOSED, nextInstanceId={nextInstanceId})";
             return $"PredictedHierarchyState(actions={spawnedPrefabs.Count}, nextInstanceId={nextInstanceId})";
         }
     }
