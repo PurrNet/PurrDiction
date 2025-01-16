@@ -60,5 +60,22 @@ namespace PurrNet.Prediction.Tests
                 dash = Input.GetKey(KeyCode.LeftShift)
             };
         }
+
+        protected override SimpleCCState? GetDelta(SimpleCCState from, SimpleCCState to)
+        {
+            return new SimpleCCState
+            {
+                position = to.position - from.position,
+                velocity = to.velocity - from.velocity
+            };
+        }
+        
+        protected override SimpleCCState? AddDelta(SimpleCCState state, SimpleCCState delta)
+        {
+            state.position += delta.position;
+            state.velocity += delta.velocity;
+            
+            return state;
+        }
     }
 }
