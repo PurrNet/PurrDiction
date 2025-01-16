@@ -279,7 +279,8 @@ namespace PurrNet.Prediction
             }
 
             var interpolatedState = _interpolatedState.Advance(deltaTime);
-            UpdateView(interpolatedState.state, null);
+            
+            UpdateView(interpolatedState.state, _stateHistory.Count > 0 ? _stateHistory[^1].state : null);
         }
 
         protected virtual void UpdateView(STATE predicted, STATE? verified) {}
