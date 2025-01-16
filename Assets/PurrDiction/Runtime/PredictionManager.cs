@@ -175,7 +175,7 @@ namespace PurrNet.Prediction
                 for (var systemIdx = 0; systemIdx < count; systemIdx++)
                 {
                     var system = _systems[systemIdx];
-                    system.PostSimulate(localTick);
+                    system.SaveStateInHistory(localTick);
                     system.UpdateInterpolationState();
                     system.WriteState(localTick, frame);
                 }

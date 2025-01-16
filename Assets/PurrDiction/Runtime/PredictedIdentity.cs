@@ -64,7 +64,7 @@ namespace PurrNet.Prediction
 
         internal abstract void SimulateRemote(Fix64 delta);
         
-        internal abstract void PostSimulate(ulong tick);
+        internal abstract void SaveStateInHistory(ulong tick);
 
         internal abstract void Rollback(ulong tick);
 
@@ -189,7 +189,7 @@ namespace PurrNet.Prediction
         
         FULL_STATE? _lastState;
         
-        internal override void PostSimulate(ulong tick)
+        internal override void SaveStateInHistory(ulong tick)
         {
             _stateHistory.Write(tick, GetCurrentFullState());
         }
