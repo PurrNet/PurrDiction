@@ -82,7 +82,7 @@ namespace PurrNet.Prediction
         
         public abstract void ReadInput(ulong tick, BitPacker packer);
         
-        public abstract void QueueInput(ulong tick, BitPacker packer);
+        public abstract void QueueInput(BitPacker packer);
     }
     
     public abstract class PredictedIdentity<STATE> : PredictedIdentity 
@@ -167,20 +167,11 @@ namespace PurrNet.Prediction
 
         internal override void EvaluateAndRegisterLocalInput(ulong localTick) { }
 
-        internal override void SimulateTick(ulong tick, Fix64 delta)
-        {
-            Simulate(delta);
-        }
-        
-        internal override void SimulateLocal(Fix64 delta)
-        {
-            Simulate(delta);
-        }
-        
-        internal override void SimulateRemote(Fix64 delta)
-        {
-            Simulate(delta);
-        }
+        internal override void SimulateTick(ulong tick, Fix64 delta) => Simulate(delta);
+
+        internal override void SimulateLocal(Fix64 delta) => Simulate(delta);
+
+        internal override void SimulateRemote(Fix64 delta) => Simulate(delta);
 
         FULL_STATE GetCurrentFullState()
         {
@@ -264,7 +255,7 @@ namespace PurrNet.Prediction
 
         public override void ReadInput(ulong tick, BitPacker packer) { }
 
-        public override void QueueInput(ulong tick, BitPacker packer) { }
+        public override void QueueInput(BitPacker packer) { }
 
         internal override void UpdateView(float deltaTime)
         {

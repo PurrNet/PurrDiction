@@ -32,7 +32,6 @@ namespace PurrNet.Prediction
         {
             if (IsOwner())
             {
-
                 if (!_inputHistory.TryGet(tick, out var input))
                      Simulate(GetInput(), delta);
                 else Simulate(input, delta);
@@ -58,10 +57,7 @@ namespace PurrNet.Prediction
                 return;
             }
             
-            var input = _queuedInputs[0];
-            _queuedInputs.RemoveAt(0);
-            _lastInput = input.input;
-            
+            _lastInput = _queuedInputs.Dequeue();
             Simulate(_lastInput, delta);
         }
 
@@ -86,35 +82,16 @@ namespace PurrNet.Prediction
             _inputHistory.Write(tick, input);
         }
         
-        struct QueuedInput
-        {
-            public ulong tick;
-            public INPUT input;
-        }
-        
-        readonly List<QueuedInput> _queuedInputs = new();
+        readonly Queue<INPUT> _queuedInputs = new();
 
-        public override void QueueInput(ulong tick, BitPacker packer)
+        public override void QueueInput(BitPacker packer)
         {
             INPUT input = default;
             Packer<INPUT>.Read(packer, ref input);
-            
-            int insertPos = 0;
-            
-            for (int i = 0; i < _queuedInputs.Count; i++)
-            {
-                if (_queuedInputs[i].tick < tick)
-                    insertPos = i + 1;
-            }
-            
-            _queuedInputs.Insert(insertPos, new QueuedInput
-            {
-                tick = tick,
-                input = input
-            });
-            
-            if (_queuedInputs.Count > settings.maxInputBufferCount)
-                _queuedInputs.RemoveAt(0);
+            _queuedInputs.Enqueue(input);
+
+            while (_queuedInputs.Count > predictionManager.maxInputQueue)
+                _queuedInputs.Dequeue();
         }
     }
 }

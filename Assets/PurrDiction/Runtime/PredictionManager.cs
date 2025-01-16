@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using FixMath.NET;
 using JetBrains.Annotations;
-using PurrNet.Logging;
 using PurrNet.Packing;
 using PurrNet.Pooling;
 using PurrNet.Transports;
@@ -18,11 +17,14 @@ namespace PurrNet.Prediction
         
         static readonly Dictionary<int, PredictionManager> _instances = new ();
         
+        [SerializeField] private int _maxInputQueue = 4;
         [SerializeField] private GameObject[] _prefabs;
         
         readonly List<PredictedIdentity> _queue = new ();
         readonly List<PredictedIdentity> _systems = new ();
         
+        public int maxInputQueue => _maxInputQueue;
+
         public static bool TryGetInstance(int sceneHandle, out PredictionManager world)
         {
             return _instances.TryGetValue(sceneHandle, out world);
@@ -37,7 +39,7 @@ namespace PurrNet.Prediction
 
         public int tickRate { get; private set; }
         
-        public ulong localTick { get; private set; }
+        public ulong localTick { get; private set; } = 1;
 
         public PredictedHierarchy hierarchy { get; private set; }
         
@@ -124,21 +126,20 @@ namespace PurrNet.Prediction
             }
 
             if (state.positionInBits > 0)
-                SyncFullState(player, localTick, tickRate, tickDelta.RawValue, state);
+                SyncFullState(player, tickRate, tickDelta.RawValue, state);
         }
         
         [TargetRpc]
-        private void SyncFullState([UsedImplicitly] PlayerID target, ulong tick, int tickRate, long delta, BitPacker data)
+        private void SyncFullState([UsedImplicitly] PlayerID target, int tickRate, long delta, BitPacker data)
         {
-            localTick = tick;
             tickDelta = Fix64.FromRaw(delta);
             this.tickRate = tickRate;
             
             for (var systemIdx = 0; systemIdx < _systems.Count; systemIdx++)
             {
                 var system = _systems[systemIdx];
-                system.ReadState(tick, data);
-                system.Rollback(tick);
+                system.ReadState(localTick, data);
+                system.Rollback(localTick);
                 system.ResetInterpolation();
             }
         }
@@ -162,7 +163,7 @@ namespace PurrNet.Prediction
                 }
                 else
                 {
-                    system.SimulateRemote(tickDelta);
+                     system.SimulateRemote(tickDelta);
                 }
             }
 
@@ -195,47 +196,47 @@ namespace PurrNet.Prediction
                 }
             }
 
-            if (frame.positionInBits > 0)
+            if (cachedIsServer)
             {
-                if (cachedIsServer)
-                    SendFrameToOthers(localTick, frame);
-                else SendInputToServer(localTick, frame);
+                if (frame.positionInBits > 0)
+                {
+                    foreach (var (player, queue) in _clientTicks)
+                        SendFrameToRemote(player, queue.Count > 0 ? queue.Dequeue() : 0, frame);
+                }
             }
+            else SendInputToServer(localTick, frame);
             
             localTick += 1;
         }
-
-        [ObserversRpc(excludeSender: true)]
-        private void SendFrameToOthers(ulong tick, BitPacker frame)
+        
+        [TargetRpc]
+        private void SendFrameToRemote([UsedImplicitly] PlayerID player, ulong clientLocalTick, BitPacker frame)
         {
+            if (clientLocalTick == 0)
+                return;
+            
             using (frame)
             {
                 for (var i = 0; i < _systems.Count; i++)
                 {
                     var system = _systems[i];
-                    system.ReadState(tick, frame);
-                    system.Rollback(tick);
+                    system.ReadState(clientLocalTick, frame);
+                    system.Rollback(clientLocalTick);
                 }
                 
                 for (var i = 0; i < _systems.Count; i++)
                 {
-                    var system = _systems[i];
-                    system.ReadInput(tick, frame);
+                    _systems[i].ReadInput(clientLocalTick, frame);
                 }
             }
             
-            CatchupFromTick(tick);
+            CatchupFromTick(clientLocalTick);
         }
 
-        private void CatchupFromTick(ulong tick)
+        private void CatchupFromTick(ulong clientTick)
         {
-            var roundTripTime = networkManager.tickModule.rtt;
-            ulong ticksToCatchUp = (ulong)(roundTripTime / (double)tickDelta) + 1;
-
-            for (ulong i = 1; i <= ticksToCatchUp; i++)
+            for (ulong simTick = clientTick + 1; simTick < localTick; simTick++)
             {
-                var simTick = tick + i;
-                
                 for (var j = 0; j < _systems.Count; j++)
                     _systems[j].SimulateTick(simTick, tickDelta);
 
@@ -244,18 +245,29 @@ namespace PurrNet.Prediction
                 for (var j = 0; j < count; j++)
                     _systems[j].PostSimulate(simTick);
             }
-            
-            localTick = tick + ticksToCatchUp + 1;
         }
 
-        [ServerRpc(Channel.Unreliable)]
+        readonly Dictionary<PlayerID, Queue<ulong>> _clientTicks = new ();
+
+        [ServerRpc(Channel.ReliableOrdered)]
         private void SendInputToServer(ulong clientTick, BitPacker inputPacket, RPCInfo info = default)
         {
-            HandleIncomingInput(clientTick, inputPacket, info);
-            inputPacket.Dispose();
+            using (inputPacket)
+                HandleIncomingInput(inputPacket, info);
+            
+            if (!_clientTicks.TryGetValue(info.sender, out var ticks))
+            {
+                ticks = new Queue<ulong>();
+                _clientTicks[info.sender] = ticks;
+            }
+
+            ticks.Enqueue(clientTick);
+
+            while (ticks.Count > _maxInputQueue)
+                ticks.Dequeue();
         }
 
-        private void HandleIncomingInput(ulong localTick, BitPacker inputPacket,
+        private void HandleIncomingInput(BitPacker inputPacket,
             RPCInfo info = default)
         {
             try
@@ -266,7 +278,7 @@ namespace PurrNet.Prediction
                 {
                     var system = _systems[i];
                     if (system.IsOwner(info.sender, senderIsServer))
-                        system.QueueInput(localTick, inputPacket);
+                        system.QueueInput(inputPacket);
                 }
             }
             catch
