@@ -157,7 +157,6 @@ namespace PurrNet.Prediction
             
             _interpolatedState = new Interpolated<FULL_STATE>(FULLInterpolate, (float)world.tickDelta, predicted, settings.maxInputBufferCount);
             _stateHistory = new History<FULL_STATE>(world.tickRate * settings.secondsToKeepInHistory);
-            _stateHistory.Write(0, predicted);
         }
 
         /// <summary>
@@ -210,8 +209,6 @@ namespace PurrNet.Prediction
             }
             
             verifiedState = state.state;
-            _stateHistory.ClearFuture(tick);
-            
             RollbackInternal(state.prediction);
             Rollback(state.state);
         }

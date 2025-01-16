@@ -203,21 +203,21 @@ namespace PurrNet.Prediction
                 }
             }
 
-            if (cachedIsServer)
+            if (!cachedIsServer)
             {
-                if (frame.positionInBits > 0)
+                SendInputToServer(localTick, frame);
+            }
+            else if (frame.positionInBits > 0)
+            {
+                foreach (var (player, queue) in _clientTicks)
                 {
-                    foreach (var (player, queue) in _clientTicks)
-                    {
-                        if (player == localPlayer)
-                            continue;
-                        
-                        SendFrameToRemote(player, queue.Count > 0 ? queue.Dequeue() : 0, frame);
-                    }
+                    if (player == localPlayer)
+                        continue;
+
+                    SendFrameToRemote(player, queue.Count > 0 ? queue.Dequeue() : 0, frame);
                 }
             }
-            else SendInputToServer(localTick, frame);
-            
+
             localTick += 1;
         }
         

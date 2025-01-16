@@ -9,6 +9,11 @@ namespace PurrNet.Prediction.Tests
         public float vertical;
         public bool jump;
         public bool dash;
+
+        public override string ToString()
+        {
+            return $"(horizontal: {horizontal}, vertical: {vertical}, jump: {jump}, dash: {dash})";
+        }
     }
     
     public struct SimpleCCState : IPackedAuto, IOptionalDispose
