@@ -67,7 +67,9 @@ namespace PurrNet.Prediction
         internal abstract void PostSimulate(ulong tick);
 
         internal abstract void Rollback(ulong tick);
-        
+
+        internal abstract void UpdateInterpolationState();
+
         internal abstract void ResetInterpolation();
         
         internal abstract void UpdateView(float deltaTime);
@@ -189,9 +191,12 @@ namespace PurrNet.Prediction
         
         internal override void PostSimulate(ulong tick)
         {
-            var state = GetCurrentFullState();
-            _stateHistory.Write(tick, state);
-            _lastState = state;
+            _stateHistory.Write(tick, GetCurrentFullState());
+        }
+        
+        internal override void UpdateInterpolationState()
+        {
+            _lastState = GetCurrentFullState();
         }
 
         protected abstract void Simulate(Fix64 delta);

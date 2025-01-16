@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using FixMath.NET;
 using JetBrains.Annotations;
+using PurrNet.Logging;
 using PurrNet.Packing;
 using PurrNet.Pooling;
 using PurrNet.Transports;
@@ -175,6 +176,7 @@ namespace PurrNet.Prediction
                 {
                     var system = _systems[systemIdx];
                     system.PostSimulate(localTick);
+                    system.UpdateInterpolationState();
                     system.WriteState(localTick, frame);
                 }
                 
@@ -189,10 +191,12 @@ namespace PurrNet.Prediction
                 for (var systemIdx = 0; systemIdx < count; systemIdx++)
                 {
                     var system = _systems[systemIdx];
-                    system.PostSimulate(localTick);
-
+                    
                     if (system.IsOwner(myPlayer))
+                    {
+                        system.UpdateInterpolationState();
                         system.WriteInput(localTick, frame);
+                    }
                 }
             }
 
@@ -201,7 +205,12 @@ namespace PurrNet.Prediction
                 if (frame.positionInBits > 0)
                 {
                     foreach (var (player, queue) in _clientTicks)
+                    {
+                        if (player == localPlayer)
+                            continue;
+                        
                         SendFrameToRemote(player, queue.Count > 0 ? queue.Dequeue() : 0, frame);
+                    }
                 }
             }
             else SendInputToServer(localTick, frame);
@@ -222,12 +231,11 @@ namespace PurrNet.Prediction
                     var system = _systems[i];
                     system.ReadState(clientLocalTick, frame);
                     system.Rollback(clientLocalTick);
+                    system.UpdateInterpolationState();
                 }
                 
                 for (var i = 0; i < _systems.Count; i++)
-                {
                     _systems[i].ReadInput(clientLocalTick, frame);
-                }
             }
             
             CatchupFromTick(clientLocalTick);
@@ -243,13 +251,17 @@ namespace PurrNet.Prediction
                 var count = _systems.Count;
 
                 for (var j = 0; j < count; j++)
-                    _systems[j].PostSimulate(simTick);
+                {
+                    var system = _systems[j];
+                    if (system.IsOwner())
+                        system.UpdateInterpolationState();
+                }
             }
         }
 
         readonly Dictionary<PlayerID, Queue<ulong>> _clientTicks = new ();
 
-        [ServerRpc(Channel.ReliableOrdered)]
+        [ServerRpc]
         private void SendInputToServer(ulong clientTick, BitPacker inputPacket, RPCInfo info = default)
         {
             using (inputPacket)

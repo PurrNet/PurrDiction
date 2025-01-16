@@ -32,15 +32,11 @@ namespace PurrNet.Prediction
         {
             if (IsOwner())
             {
-                if (!_inputHistory.TryGet(tick, out var input))
-                     Simulate(GetInput(), delta);
-                else Simulate(input, delta);
+                Simulate(!_inputHistory.TryGet(tick, out var input) ? GetInput() : input, delta);
             }
             else
             {
-                if (!_inputHistory.TryGetClosest(tick, out var input))
-                     Simulate(null, delta);
-                else Simulate(input, delta);
+                Simulate(_inputHistory.TryGetClosest(tick, out var input) ? input : _lastInput, delta);
             }
         }
 
