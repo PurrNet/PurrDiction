@@ -12,5 +12,7 @@ namespace PurrNet.Prediction
         [Tooltip("The number of seconds to keep in the history for rollback purposes and redundancy.\n" +
                  "Naturally, this means more memory usage.")]
         public int secondsToKeepInHistory = 5;
+        
+        public bool interpolate = true;
     }
 }

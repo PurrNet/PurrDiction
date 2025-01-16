@@ -65,9 +65,17 @@ namespace PurrNet.Prediction
         
         protected override PredictedHierarchyState GetCurrentState()
         {
-            var copy = new DisposableList<InstanceDetails>(_spawnedPrefabs.Count);
-            copy.AddRange(_spawnedPrefabs);
+            int count = _spawnedPrefabs.Count;
+            var copy = new DisposableList<InstanceDetails>(count);
+            for (var i = 0; i < count; i++)
+                copy.Add(_spawnedPrefabs[i]);
             return new PredictedHierarchyState(copy, _nextInstanceId);
+        }
+
+        public override void Setup(NetworkManager manager, PredictionManager world)
+        {
+            base.Setup(manager, world);
+            settings.interpolate = false;
         }
 
         protected override void Simulate(Fix64 delta) { }

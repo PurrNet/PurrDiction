@@ -446,7 +446,6 @@ GameObject:
   - component: {fileID: 1793795278}
   - component: {fileID: 1793795277}
   - component: {fileID: 1793795279}
-  - component: {fileID: 1793795280}
   m_Layer: 0
   m_Name: PurrNet
   m_TagString: Untagged
@@ -506,7 +505,7 @@ MonoBehaviour:
   _networkRules: {fileID: 11400000, guid: d8799083b96579a42b8b2d03e4ceae98, type: 2}
   _visibilityRules: {fileID: 11400000, guid: 8f014a5bd8dc68646a2a3c0b18c5bbd8, type: 2}
   _authenticator: {fileID: 0}
-  _tickRate: 45
+  _tickRate: 60
 --- !u!114 &1793795279
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -523,23 +522,6 @@ MonoBehaviour:
   _roomName: ced033a641414480a471dd23796bc59c
   _region: eu-central
   _host: eu1.purrlay.riten.dev
---- !u!114 &1793795280
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1793795275}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ef882a0e84c58df4885b0e1e59320b49, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  checkInterval: 0.33
-  placement: 1
-  displayType: 2
-  fontSize: 13
-  textColor: {r: 1, g: 1, b: 1, a: 1}
 --- !u!1 &1997087625
 GameObject:
   m_ObjectHideFlags: 0

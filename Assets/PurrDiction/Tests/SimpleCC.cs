@@ -30,7 +30,7 @@ namespace PurrNet.Prediction.Tests
         {
             var move = new Vector3(input?.horizontal ?? 0, 0, input?.vertical ?? 0);
             
-            if (move.magnitude > 1)
+            if (move.magnitude > 0)
                 move.Normalize();
             
             var moveVector = move * _speed * (float)delta;

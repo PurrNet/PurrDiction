@@ -7,20 +7,25 @@ using UnityEngine;
 
 namespace PurrNet.Prediction
 {
-    public struct PredictionState : IState
+    public struct PredictionState : IState, IPackedAuto
     {
         public PlayerID? owner;
-
-        public void Dispose() {}
     }
     
     public abstract class PredictedIdentity : MonoBehaviour
     {
+        [SerializeField] PredictionSettings _predictionSettings;
+        
+        protected PredictionSettings settings => _predictionSettings;
+        
         public PredictionManager predictionManager { get; protected set; }
 
         public PlayerID? owner;
 
-        public abstract void Setup(NetworkManager manager, PredictionManager world);
+        public virtual void Setup(NetworkManager manager, PredictionManager world)
+        {
+            _predictionSettings ??= new PredictionSettings();
+        }
 
         protected void OnEnable()
         {
@@ -92,7 +97,7 @@ namespace PurrNet.Prediction
     public abstract class PredictedIdentity<STATE> : PredictedIdentity 
         where STATE : struct, IState
     {
-        struct FULL_STATE : IPackedAuto, IState
+        struct FULL_STATE : IState
         {
             public STATE state;
             public PredictionState prediction;
@@ -100,13 +105,8 @@ namespace PurrNet.Prediction
             public void Dispose()
             {
                 state.Dispose();
-                prediction.Dispose();
             }
         }
-        
-        [SerializeField] PredictionSettings _predictionSettings;
-        
-        protected PredictionSettings settings => _predictionSettings;
         
         private Interpolated<FULL_STATE> _interpolatedState;
         
@@ -137,6 +137,8 @@ namespace PurrNet.Prediction
         
         public override void Setup(NetworkManager manager, PredictionManager world)
         {
+            base.Setup(manager, world);
+            
             owner = null;
             predictionManager = world;
             tickModule = manager.tickModule;
@@ -155,10 +157,9 @@ namespace PurrNet.Prediction
                 }
             };
             
-            _predictionSettings ??= new PredictionSettings();
-            
             _interpolatedState = new Interpolated<FULL_STATE>(FULLInterpolate, (float)world.tickDelta, predicted, settings.maxInputBufferCount);
             _stateHistory = new History<FULL_STATE>(world.tickRate * settings.secondsToKeepInHistory);
+            _stateHistory.Write(0, predicted);
         }
 
         /// <summary>
@@ -197,6 +198,10 @@ namespace PurrNet.Prediction
         
         internal override void UpdateInterpolationState()
         {
+            if (!settings.interpolate)
+                return;
+            
+            _lastState?.Dispose();
             _lastState = GetCurrentFullState();
         }
 
@@ -238,6 +243,7 @@ namespace PurrNet.Prediction
             var state = GetCurrentFullState();
             Packer<STATE>.Write(packer, state.state);
             Packer<PredictionState>.Write(packer, state.prediction);
+            state.Dispose();
         }
 
         [UsedImplicitly]
@@ -265,6 +271,9 @@ namespace PurrNet.Prediction
 
         public override void UpdateExtrapolationState()
         {
+            if (!settings.interpolate)
+                return;
+            
             if (!_lastState.HasValue)
                 return;
 
@@ -274,12 +283,14 @@ namespace PurrNet.Prediction
             var extrapolatedState = GetCurrentFullState();
             
             var targetOffset = GetDelta(nonExtrapolatedState, extrapolatedState);
+            extrapolatedState.Dispose();
             
             if (targetOffset == null)
                 return;
             
             var t = predictionManager.extrapolationFactor * (float)predictionManager.tickDelta;
             _extrapolatedOffset = FULLInterpolate(_extrapolatedOffset.Value, targetOffset.Value, t);
+            
             _lastState = AddDelta(nonExtrapolatedState, _extrapolatedOffset.Value);
         }
 
@@ -296,6 +307,7 @@ namespace PurrNet.Prediction
                     _interpolatedState.Teleport(_lastState.Value);
                 }
                 else _interpolatedState.Add(_lastState.Value);
+                _lastState.Value.Dispose();
                 _lastState = null;
             }
 

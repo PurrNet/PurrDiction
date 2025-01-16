@@ -51,7 +51,7 @@ MonoBehaviour:
     secondsToKeepInHistory: 5
   _controller: {fileID: -740372466936765982}
   _visuals: {fileID: 6680935653974138748}
-  _speed: 5
+  _speed: 10
 --- !u!143 &-740372466936765982
 CharacterController:
   m_ObjectHideFlags: 0
