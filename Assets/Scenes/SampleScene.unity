@@ -416,7 +416,7 @@ MonoBehaviour:
   _networkRules: {fileID: 0}
   _visitiblityRules: {fileID: 0}
   _maxInputQueue: 4
-  _extrapolationFactor: 0.1
+  _extrapolationFactor: 0.2
   _prefabs:
   - {fileID: 2990978637306053845, guid: 14ef4fb9c3d76ce4686663df0c0f2555, type: 3}
 --- !u!4 &1558659896
@@ -497,7 +497,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _stopPlayingOnDisconnect: 0
   _startServerFlags: 9
-  _startClientFlags: 7
+  _startClientFlags: 6
   _cookieScope: 1
   _dontDestroyOnLoad: 0
   _transport: {fileID: 1793795279}

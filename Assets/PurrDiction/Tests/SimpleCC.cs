@@ -54,8 +54,8 @@ namespace PurrNet.Prediction.Tests
         {
             return new SimpleWASDInput
             {
-                horizontal = Input.GetAxis("Horizontal"),
-                vertical = Input.GetAxis("Vertical"),
+                horizontal = Input.GetAxisRaw("Horizontal"),
+                vertical = Input.GetAxisRaw("Vertical"),
                 jump = Input.GetKey(KeyCode.Space),
                 dash = Input.GetKey(KeyCode.LeftShift)
             };
