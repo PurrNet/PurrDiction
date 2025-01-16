@@ -6,9 +6,9 @@ using PurrNet.Packing;
 
 namespace PurrNet.Prediction
 {
-    public abstract class PredictedIdentity<INPUT, STATE> : PredictedIdentity<STATE> 
-        where STATE : struct, IOptionalDispose
-        where INPUT : struct, IOptionalDispose
+    public abstract class PredictedIdentity<INPUT, STATE> : PredictedIdentity<STATE>
+        where STATE : struct, IState
+        where INPUT : struct, IState
     {
         private History<INPUT> _inputHistory;
 

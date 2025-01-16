@@ -17,10 +17,13 @@ namespace PurrNet.Prediction
         static readonly Dictionary<int, PredictionManager> _instances = new ();
         
         [SerializeField] private int _maxInputQueue = 4;
+        [SerializeField] private float _extrapolationFactor = 0.1f;
         [SerializeField] private GameObject[] _prefabs;
         
         readonly List<PredictedIdentity> _queue = new ();
         readonly List<PredictedIdentity> _systems = new ();
+        
+        public float extrapolationFactor => _extrapolationFactor;
         
         public int maxInputQueue => _maxInputQueue;
 
@@ -258,6 +261,7 @@ namespace PurrNet.Prediction
                     var system = _systems[j];
                     if (system.IsOwner())
                         system.UpdateInterpolationState();
+                    else system.UpdateExtrapolationState();
                 }
             }
         }

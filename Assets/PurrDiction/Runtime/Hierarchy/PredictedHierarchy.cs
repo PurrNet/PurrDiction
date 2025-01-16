@@ -35,7 +35,7 @@ namespace PurrNet.Prediction
         }
     }
     
-    public struct PredictedHierarchyState : IPackedAuto, IOptionalDispose
+    public struct PredictedHierarchyState : IPackedAuto, IState
     {
         public DisposableList<InstanceDetails> spawnedPrefabs;
         public readonly int nextInstanceId;

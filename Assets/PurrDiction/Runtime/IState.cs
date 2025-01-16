@@ -4,4 +4,9 @@
     {
         void Dispose() {}
     }
+    
+    public interface IState : IOptionalDispose
+    {
+        
+    }
 }

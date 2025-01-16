@@ -9,7 +9,7 @@ namespace PurrNet.Prediction.Tests
         [SerializeField] private Transform _visuals;
         [SerializeField] private float _rotationSpeed = 1;
 
-        public struct Input : IPackedAuto, IOptionalDispose
+        public struct Input : IPackedAuto, IState
         {
             public bool stopRotation;
 
@@ -19,7 +19,7 @@ namespace PurrNet.Prediction.Tests
             }
         }
         
-        public struct State : IPackedAuto, IOptionalDispose
+        public struct State : IPackedAuto, IState
         {
             public Vector3 position;
             public float yRotation;

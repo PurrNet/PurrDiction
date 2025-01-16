@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace PurrNet.Prediction.Tests
 {
-    public struct SimpleWASDInput : IPackedAuto, IOptionalDispose
+    public struct SimpleWASDInput : IPackedAuto, IState
     {
         public float horizontal;
         public float vertical;
@@ -16,9 +16,27 @@ namespace PurrNet.Prediction.Tests
         }
     }
     
-    public struct SimpleCCState : IPackedAuto, IOptionalDispose
+    public struct SimpleCCState : IPackedAuto, IState
     {
         public Vector3 position;
         public Vector3 velocity;
+        
+        /*public SimpleCCState Add(SimpleCCState a, SimpleCCState b)
+        {
+            return new SimpleCCState
+            {
+                position = a.position + b.position,
+                velocity = a.velocity + b.velocity
+            };
+        }
+
+        public SimpleCCState Subtract(SimpleCCState a, SimpleCCState b)
+        {
+            return new SimpleCCState
+            {
+                position = a.position - b.position,
+                velocity = a.velocity - b.velocity
+            };
+        }*/
     }
 }
