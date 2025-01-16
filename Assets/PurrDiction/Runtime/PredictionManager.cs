@@ -2,10 +2,8 @@ using System;
 using System.Collections.Generic;
 using FixMath.NET;
 using JetBrains.Annotations;
-using PurrNet.Logging;
 using PurrNet.Packing;
 using PurrNet.Pooling;
-using PurrNet.Transports;
 using UnityEngine;
 
 namespace PurrNet.Prediction
@@ -110,6 +108,11 @@ namespace PurrNet.Prediction
         public void UnregisterInstance(PredictedIdentity predictedIdentity)
         {
             _systems.Remove(predictedIdentity);
+        }
+
+        protected override void OnObserverRemoved(PlayerID player)
+        {
+            _clientTicks.Remove(player);
         }
 
         protected override void OnObserverAdded(PlayerID player)

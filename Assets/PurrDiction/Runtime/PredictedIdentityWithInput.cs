@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using FixMath.NET;
-using PurrNet.Logging;
 using PurrNet.Packing;
 
 namespace PurrNet.Prediction
@@ -36,7 +35,7 @@ namespace PurrNet.Prediction
             }
             else
             {
-                Simulate(_inputHistory.TryGetClosest(tick, out var input) ? input : _lastInput, delta);
+                Simulate(_inputHistory.TryGetClosest(tick, out var input) ? input : default, delta);
             }
         }
 
