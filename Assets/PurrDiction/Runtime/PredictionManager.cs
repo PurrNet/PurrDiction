@@ -194,11 +194,11 @@ namespace PurrNet.Prediction
                 for (var systemIdx = 0; systemIdx < count; systemIdx++)
                 {
                     var system = _systems[systemIdx];
-                    
+
                     if (system.IsOwner(myPlayer))
                     {
-                        system.UpdateInterpolationState();
                         system.WriteInput(localTick, frame);
+                        system.UpdateInterpolationState();
                     }
                 }
             }
