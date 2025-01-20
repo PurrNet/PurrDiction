@@ -1,3 +1,4 @@
+using System;
 using FixMath.NET;
 using UnityEngine;
 
@@ -10,7 +11,7 @@ namespace PurrNet.Prediction.Tests
         [SerializeField] private float _speed = 5;
         
         private SimpleCCState _state;
-        
+
         protected override SimpleCCState GetCurrentState()
         {
             _state.position = transform.position;
@@ -43,13 +44,6 @@ namespace PurrNet.Prediction.Tests
             _visuals.position = predicted.position;
         }
 
-        protected override SimpleCCState Interpolate(SimpleCCState from, SimpleCCState to, float t)
-        {
-            var result = from;
-            result.position = Vector3.Lerp(from.position, to.position, t);
-            return result;
-        }
-
         protected override SimpleWASDInput GetInput()
         {
             return new SimpleWASDInput
@@ -59,23 +53,6 @@ namespace PurrNet.Prediction.Tests
                 jump = Input.GetKey(KeyCode.Space),
                 dash = Input.GetKey(KeyCode.LeftShift)
             };
-        }
-
-        protected override SimpleCCState? GetDelta(SimpleCCState from, SimpleCCState to)
-        {
-            return new SimpleCCState
-            {
-                position = to.position - from.position,
-                velocity = to.velocity - from.velocity
-            };
-        }
-        
-        protected override SimpleCCState? AddDelta(SimpleCCState state, SimpleCCState delta)
-        {
-            state.position += delta.position;
-            state.velocity += delta.velocity;
-            
-            return state;
         }
     }
 }

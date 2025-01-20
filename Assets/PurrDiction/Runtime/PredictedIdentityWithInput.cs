@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using FixMath.NET;
 using PurrNet.Logging;
@@ -7,8 +6,8 @@ using PurrNet.Packing;
 namespace PurrNet.Prediction
 {
     public abstract class PredictedIdentity<INPUT, STATE> : PredictedIdentity<STATE>
-        where STATE : struct, IState
-        where INPUT : struct, IState
+        where STATE : struct, IPredictedData<STATE>
+        where INPUT : struct, IPredictedData
     {
         private History<INPUT> _inputHistory;
 

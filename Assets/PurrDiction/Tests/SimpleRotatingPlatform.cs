@@ -1,5 +1,4 @@
 using FixMath.NET;
-using PurrNet.Packing;
 using UnityEngine;
 
 namespace PurrNet.Prediction.Tests
@@ -9,7 +8,7 @@ namespace PurrNet.Prediction.Tests
         [SerializeField] private Transform _visuals;
         [SerializeField] private float _rotationSpeed = 1;
 
-        public struct Input : IPackedAuto, IState
+        public struct Input : IPredictedData
         {
             public bool stopRotation;
 
@@ -19,7 +18,7 @@ namespace PurrNet.Prediction.Tests
             }
         }
         
-        public struct State : IPackedAuto, IState
+        public struct State : IPredictedData<State>
         {
             public Vector3 position;
             public float yRotation;

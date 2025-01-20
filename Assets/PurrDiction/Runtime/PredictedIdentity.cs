@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace PurrNet.Prediction
 {
-    public struct PredictionState : IState, IPackedAuto
+    public struct PredictionState : IPredictedData<PredictionState>
     {
         public PlayerID? owner;
     }
@@ -94,10 +94,9 @@ namespace PurrNet.Prediction
         public abstract void UpdateExtrapolationState();
     }
     
-    public abstract class PredictedIdentity<STATE> : PredictedIdentity 
-        where STATE : struct, IState
+    public abstract class PredictedIdentity<STATE> : PredictedIdentity where STATE : struct, IPredictedData<STATE>
     {
-        struct FULL_STATE : IState
+        struct FULL_STATE : IPredictedData<FULL_STATE>
         {
             public STATE state;
             public PredictionState prediction;
@@ -198,9 +197,6 @@ namespace PurrNet.Prediction
         
         internal override void UpdateInterpolationState()
         {
-            if (!settings.interpolate)
-                return;
-            
             _lastState?.Dispose();
             _lastState = GetCurrentFullState();
         }
@@ -267,7 +263,7 @@ namespace PurrNet.Prediction
 
         public override void QueueInput(BitPacker packer) { }
         
-        FULL_STATE? _extrapolatedOffset;
+        STATE? _extrapolatedOffset;
 
         public override void UpdateExtrapolationState()
         {
@@ -277,21 +273,24 @@ namespace PurrNet.Prediction
             if (!_lastState.HasValue)
                 return;
 
-            _extrapolatedOffset ??= _lastState;
+            _extrapolatedOffset ??= _lastState.Value.state;
             
             var nonExtrapolatedState = _lastState.Value;
             var extrapolatedState = GetCurrentFullState();
             
-            var targetOffset = GetDelta(nonExtrapolatedState, extrapolatedState);
+            var from = _lastState.Value.state;
+            var to = GetCurrentState();
+            
+            var targetOffset = to.Add(to, from.Negate(from));
             extrapolatedState.Dispose();
             
-            if (targetOffset == null)
-                return;
-            
             var t = predictionManager.extrapolationFactor * (float)predictionManager.tickDelta;
-            _extrapolatedOffset = FULLInterpolate(_extrapolatedOffset.Value, targetOffset.Value, t);
+            _extrapolatedOffset = Interpolate(_extrapolatedOffset.Value, targetOffset, t);
             
-            _lastState = AddDelta(nonExtrapolatedState, _extrapolatedOffset.Value);
+            var finalState = _extrapolatedOffset.Value.Add(_extrapolatedOffset.Value, nonExtrapolatedState.state);
+
+            nonExtrapolatedState.state = finalState;
+            _lastState = nonExtrapolatedState;
         }
 
         internal override void UpdateView(float deltaTime)
@@ -299,7 +298,19 @@ namespace PurrNet.Prediction
             if (_interpolatedState == null)
                 return;
 
-            if (_lastState != null)
+            if (!settings.interpolate)
+            {
+                if (_lastState.HasValue)
+                {
+                    UpdateView(_lastState.Value.state, _stateHistory.Count > 0 ? _stateHistory[^1].state : null);
+                    _lastState.Value.Dispose();
+                    _lastState = null;
+                }
+
+                return;
+            }
+
+            if (_lastState.HasValue)
             {
                 if (_resetInterpolation)
                 {
@@ -307,62 +318,22 @@ namespace PurrNet.Prediction
                     _interpolatedState.Teleport(_lastState.Value);
                 }
                 else _interpolatedState.Add(_lastState.Value);
+
                 _lastState.Value.Dispose();
                 _lastState = null;
             }
 
             var interpolatedState = _interpolatedState.Advance(deltaTime);
-            
             UpdateView(interpolatedState.state, _stateHistory.Count > 0 ? _stateHistory[^1].state : null);
         }
 
         protected virtual void UpdateView(STATE predicted, STATE? verified) {}
         
-        /// <summary>
-        /// The delta between the two states. Adding this delta to the `from` state should result in the `to` state.
-        /// </summary>
-        protected virtual STATE? GetDelta(STATE from, STATE to)
-        {
-            return null;
-        }
-        
-        /// <summary>
-        /// Add the delta to the state.
-        /// </summary>
-        protected virtual STATE? AddDelta(STATE state, STATE delta)
-        {
-            return null;
-        }
-        
-        private FULL_STATE? GetDelta(FULL_STATE from, FULL_STATE to)
-        {
-            var delta = GetDelta(from.state, to.state);
-            if (delta == null)
-                return null;
-            
-            return new FULL_STATE
-            {
-                state = delta.Value,
-                prediction = from.prediction
-            };
-        }
-        
-        private FULL_STATE? AddDelta(FULL_STATE state, FULL_STATE delta)
-        {
-            var result = AddDelta(state.state, delta.state);
-            if (result == null)
-                return null;
-            
-            return new FULL_STATE
-            {
-                state = result.Value,
-                prediction = state.prediction
-            };
-        }
-
         protected virtual STATE Interpolate(STATE from, STATE to, float t)
         {
-            return to;
+            var offset = to.Add(to, from.Negate(from));
+            var scaled = offset.Scale(offset, t);
+            return from.Add(from, scaled);
         }
     }
 }

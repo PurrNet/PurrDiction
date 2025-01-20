@@ -1,9 +1,8 @@
-﻿using PurrNet.Packing;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace PurrNet.Prediction.Tests
 {
-    public struct SimpleWASDInput : IPackedAuto, IState
+    public struct SimpleWASDInput : IPredictedData
     {
         public float horizontal;
         public float vertical;
@@ -16,27 +15,14 @@ namespace PurrNet.Prediction.Tests
         }
     }
     
-    public struct SimpleCCState : IPackedAuto, IState
+    public struct SimpleCCState : IPredictedData<SimpleCCState>
     {
         public Vector3 position;
         public Vector3 velocity;
-        
-        /*public SimpleCCState Add(SimpleCCState a, SimpleCCState b)
-        {
-            return new SimpleCCState
-            {
-                position = a.position + b.position,
-                velocity = a.velocity + b.velocity
-            };
-        }
 
-        public SimpleCCState Subtract(SimpleCCState a, SimpleCCState b)
+        public override string ToString()
         {
-            return new SimpleCCState
-            {
-                position = a.position - b.position,
-                velocity = a.velocity - b.velocity
-            };
-        }*/
+            return $"(position: {position}, velocity: {velocity})";
+        }
     }
 }
