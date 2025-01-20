@@ -52,7 +52,17 @@ namespace PurrNet.Prediction
         {
             if (spawnedPrefabs.isDisposed)
                 return $"PredictedHierarchyState(actions=DISPOSED, nextInstanceId={nextInstanceId})";
-            return $"PredictedHierarchyState(actions={spawnedPrefabs.Count}, nextInstanceId={nextInstanceId})";
+            
+            string actions = string.Empty;
+            for (var i = 0; i < spawnedPrefabs.Count; i++)
+            {
+                var details = spawnedPrefabs[i];
+                actions += $"({details.prefabId}, {details.instanceId})";
+                if (i < spawnedPrefabs.Count - 1)
+                    actions += ", ";
+            }
+            
+            return $"PredictedHierarchyState(actions=[{actions}], nextInstanceId={nextInstanceId})";
         }
     }
     
@@ -71,11 +81,19 @@ namespace PurrNet.Prediction
                 copy.Add(_spawnedPrefabs[i]);
             return new PredictedHierarchyState(copy, _nextInstanceId);
         }
+        
+        [ContextMenu("Print State")]
+        private void PrintState()
+        {
+            PurrLogger.Log(GetCurrentState().ToString());
+        }
 
         public override void Setup(NetworkManager manager, PredictionManager world)
         {
             base.Setup(manager, world);
-            settings.interpolate = false;
+            var s = settings;
+            s.interpolate = false;
+            settings = s;
         }
 
         protected override void Simulate(Fix64 delta) { }

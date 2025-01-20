@@ -87,7 +87,7 @@ namespace PurrNet.Prediction
             Packer<INPUT>.Read(packer, ref input);
             _queuedInputs.Enqueue(input);
 
-            while (_queuedInputs.Count > predictionManager.maxInputQueue)
+            while (_queuedInputs.Count > settings.maxInputBufferCount)
                 _queuedInputs.Dequeue();
         }
     }

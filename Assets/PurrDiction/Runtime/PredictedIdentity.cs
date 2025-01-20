@@ -14,18 +14,36 @@ namespace PurrNet.Prediction
     
     public abstract class PredictedIdentity : MonoBehaviour
     {
-        [SerializeField] PredictionSettings _predictionSettings;
+        [SerializeField] private PredictionSettings _predictionSettings = new ()
+        {
+            maxInputBufferCount = 4,
+            secondsToKeepInHistory = 5,
+            positionInterpolation = new PredictedInterpolation
+            {
+                correctionRateMinMax = new Vector2(3.3f, 10f),
+                correctionBlendMinMax = new Vector2(0.2f, 1f),
+                teleportThresholdMinMax = new Vector2(0.025f, 2f)
+            },
+            rotationInterpolation = new PredictedInterpolation
+            {
+                correctionRateMinMax = new Vector2(3.3f, 10f),
+                correctionBlendMinMax = new Vector2(0.1f, 0.5f),
+                teleportThresholdMinMax = new Vector2(0.025f, 0.5f)
+            },
+            interpolate = true
+        };
         
-        protected PredictionSettings settings => _predictionSettings;
-        
+        public PredictionSettings settings
+        {
+            get => _predictionSettings;
+            protected set => _predictionSettings = value;
+        }
+
         public PredictionManager predictionManager { get; protected set; }
 
         public PlayerID? owner;
 
-        public virtual void Setup(NetworkManager manager, PredictionManager world)
-        {
-            _predictionSettings ??= new PredictionSettings();
-        }
+        public abstract void Setup(NetworkManager manager, PredictionManager world);
 
         protected void OnEnable()
         {
@@ -90,8 +108,6 @@ namespace PurrNet.Prediction
         public abstract void ReadInput(ulong tick, BitPacker packer);
         
         public abstract void QueueInput(BitPacker packer);
-        
-        public abstract void UpdateExtrapolationState();
     }
     
     public abstract class PredictedIdentity<STATE> : PredictedIdentity where STATE : struct, IPredictedData<STATE>
@@ -136,8 +152,6 @@ namespace PurrNet.Prediction
         
         public override void Setup(NetworkManager manager, PredictionManager world)
         {
-            base.Setup(manager, world);
-            
             owner = null;
             predictionManager = world;
             tickModule = manager.tickModule;
@@ -263,36 +277,6 @@ namespace PurrNet.Prediction
 
         public override void QueueInput(BitPacker packer) { }
         
-        STATE? _extrapolatedOffset;
-
-        public override void UpdateExtrapolationState()
-        {
-            if (!settings.interpolate)
-                return;
-            
-            if (!_lastState.HasValue)
-                return;
-
-            _extrapolatedOffset ??= _lastState.Value.state;
-            
-            var nonExtrapolatedState = _lastState.Value;
-            var extrapolatedState = GetCurrentFullState();
-            
-            var from = _lastState.Value.state;
-            var to = GetCurrentState();
-            
-            var targetOffset = to.Add(to, from.Negate(from));
-            extrapolatedState.Dispose();
-            
-            var t = predictionManager.extrapolationFactor * (float)predictionManager.tickDelta;
-            _extrapolatedOffset = Interpolate(_extrapolatedOffset.Value, targetOffset, t);
-            
-            var finalState = _extrapolatedOffset.Value.Add(_extrapolatedOffset.Value, nonExtrapolatedState.state);
-
-            nonExtrapolatedState.state = finalState;
-            _lastState = nonExtrapolatedState;
-        }
-
         internal override void UpdateView(float deltaTime)
         {
             if (_interpolatedState == null)
