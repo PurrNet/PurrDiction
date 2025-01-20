@@ -327,7 +327,7 @@ namespace PurrNet.Prediction
             UpdateView(interpolatedState.state, _stateHistory.Count > 0 ? _stateHistory[^1].state : null);
         }
 
-        protected virtual void UpdateView(STATE predicted, STATE? verified) {}
+        protected virtual void UpdateView(STATE interpolatedState, STATE? verified) {}
         
         protected virtual STATE Interpolate(STATE from, STATE to, float t)
         {
