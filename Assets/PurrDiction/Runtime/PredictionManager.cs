@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using FixMath.NET;
 using JetBrains.Annotations;
-using PurrNet.Logging;
 using PurrNet.Packing;
 using PurrNet.Pooling;
 using UnityEngine;
