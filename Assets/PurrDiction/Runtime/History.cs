@@ -51,7 +51,7 @@ namespace PurrNet.Prediction
         /// Value of the most recent received tick
         /// </summary>
         /// <value></value>
-        public ulong MostRecentTick => m_data.Count == 0 ? 0 : m_data[m_data.Count - 1].Tick;
+        public ulong MostRecentTick => m_data.Count == 0 ? 0 : m_data[^1].Tick;
 
         /// <summary>
         /// Oldest tick we have in the set (this will vary as older entries are purged)
