@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using FixMath.NET;
 using PurrNet.Logging;
 using PurrNet.Packing;
 using PurrNet.Pooling;
