@@ -208,24 +208,14 @@ namespace PurrNet.Prediction
                 return;
             
             var initialState = GetInitialState();
+            predictedState.state = initialState;
+            UpdateUnityState();
+
+            var copy = predictedState.DeepCopy();
             
-            predictedState = new FULL_STATE
-            {
-                state = initialState,
-                prediction = new PredictionState
-                {
-                    owner = owner,
-                    transform = settings.autoIncludeTransform ? new PredictionTransformState
-                    {
-                        position = _transform.position,
-                        rotation = _transform.rotation
-                    } : null
-                }
-            };
-            
-            _interpolatedState = new Interpolated<FULL_STATE>(FULLInterpolate, (float)world.tickDelta, predictedState, settings.maxInterpolationQueue);
+            _interpolatedState = new Interpolated<FULL_STATE>(FULLInterpolate, (float)world.tickDelta, copy, settings.maxInterpolationQueue);
             _stateHistory = new History<FULL_STATE>(world.tickRate * settings.secondsToKeepInHistory);
-            _stateHistory.Write(0, predictedState);
+            _stateHistory.Write(0, copy);
         }
 
         /// <summary>
@@ -386,7 +376,10 @@ namespace PurrNet.Prediction
             }
             
             owner = state.prediction.owner;
+            
+            predictedState.Dispose();
             predictedState = state.DeepCopy();
+            
             RollbackInternal(predictedState.prediction);
             RollbackUnityState(predictedState.state);
         }
@@ -428,7 +421,6 @@ namespace PurrNet.Prediction
         {
             Packer<STATE>.Write(packer, predictedState.state);
             Packer<PredictionState>.Write(packer, predictedState.prediction);
-            predictedState.Dispose();
         }
 
         [UsedImplicitly]
