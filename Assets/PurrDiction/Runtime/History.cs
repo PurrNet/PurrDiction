@@ -104,6 +104,8 @@ namespace PurrNet.Prediction
             if (Find(tick, out var index))
             {
                 // Override existing data
+                var old = m_data[index];
+                old.Data.Dispose();
                 m_data[index] = entry;
                 return;
             }
