@@ -1,6 +1,4 @@
-﻿using UnityEngine;
-
-namespace PurrNet.Prediction.Tests
+﻿namespace PurrNet.Prediction.Tests
 {
     public struct SimpleWASDInput : IPredictedData
     {
@@ -17,12 +15,5 @@ namespace PurrNet.Prediction.Tests
     
     public struct SimpleCCState : IPredictedData<SimpleCCState>
     {
-        public Vector3 position;
-        public Vector3 velocity;
-
-        public override string ToString()
-        {
-            return $"(position: {position}, velocity: {velocity})";
-        }
     }
 }

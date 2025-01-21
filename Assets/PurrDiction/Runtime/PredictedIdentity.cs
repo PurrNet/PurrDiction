@@ -7,17 +7,72 @@ using UnityEngine;
 
 namespace PurrNet.Prediction
 {
+    public struct PredictionTransformState : IPredictedData<PredictionTransformState>
+    {
+        public Vector3 position;
+        public Quaternion rotation;
+        
+        public override string ToString()
+        {
+            return $"(position: {position}, rotation: {rotation})";
+        }
+    }
+    
     public struct PredictionState : IPredictedData<PredictionState>
     {
         public PlayerID? owner;
+        public PredictionTransformState? transform;
+        
+        public PredictionState Add(PredictionState a, PredictionState b)
+        {
+            a.transform = a.transform.HasValue && b.transform.HasValue
+                ? new PredictionTransformState
+                {
+                    position = a.transform.Value.position + b.transform.Value.position,
+                    rotation = a.transform.Value.rotation * b.transform.Value.rotation
+                }
+                : null;
+            return a;
+        }
+
+        public PredictionState Negate(PredictionState a)
+        {
+            a.transform = a.transform.HasValue
+                ? new PredictionTransformState
+                {
+                    position = -a.transform.Value.position,
+                    rotation = Quaternion.Inverse(a.transform.Value.rotation)
+                }
+                : null;
+            return a;
+        }
+
+        public PredictionState Scale(PredictionState a, float b)
+        {
+            a.transform = a.transform.HasValue
+                ? new PredictionTransformState
+                {
+                    position = a.transform.Value.position * b,
+                    rotation = Quaternion.Slerp(Quaternion.identity, a.transform.Value.rotation, b)
+                }
+                : null;
+            
+            return a;
+        }
+
+        public override string ToString()
+        {
+            return $"(owner: {owner}, transform: {transform})";
+        }
     }
     
     public abstract class PredictedIdentity : MonoBehaviour
     {
         [SerializeField] private PredictionSettings _predictionSettings = new ()
         {
-            maxInputBufferCount = 4,
+            maxInterpolationQueue = 2,
             secondsToKeepInHistory = 5,
+            autoIncludeTransform = true,
             positionInterpolation = new PredictedInterpolation
             {
                 correctionRateMinMax = new Vector2(3.3f, 10f),
@@ -33,6 +88,11 @@ namespace PurrNet.Prediction
             interpolate = true
         };
         
+        [Tooltip("The view that will be updated with the predicted transform data.")]
+        [SerializeField] internal Transform predictedView;
+        
+        internal bool hasView;
+
         public PredictionSettings settings
         {
             get => _predictionSettings;
@@ -43,15 +103,18 @@ namespace PurrNet.Prediction
 
         public PlayerID? owner;
 
-        public abstract void Setup(NetworkManager manager, PredictionManager world);
+        public virtual void Setup(NetworkManager manager, PredictionManager world)
+        {
+            hasView = predictedView != null;
+        }
 
-        protected void OnEnable()
+        protected virtual void OnEnable()
         {
             if (PredictionManager.TryGetInstance(gameObject.scene.handle, out var world))
                 world.RegisterInstance(this);
         }
 
-        private void OnDisable()
+        protected virtual void OnDisable()
         {
             if (PredictionManager.TryGetInstance(gameObject.scene.handle, out var world))
                 world.UnregisterInstance(this);
@@ -108,11 +171,13 @@ namespace PurrNet.Prediction
         public abstract void ReadInput(ulong tick, BitPacker packer);
         
         public abstract void QueueInput(BitPacker packer);
+
+        public abstract void ClearInput();
     }
     
     public abstract class PredictedIdentity<STATE> : PredictedIdentity where STATE : struct, IPredictedData<STATE>
     {
-        struct FULL_STATE : IPredictedData<FULL_STATE>
+        struct FULL_STATE : IOptionalDispose
         {
             public STATE state;
             public PredictionState prediction;
@@ -143,15 +208,27 @@ namespace PurrNet.Prediction
         private FULL_STATE FULLInterpolate(FULL_STATE from, FULL_STATE to, float t)
         {
             var state = Interpolate(from.state, to.state, t);
+            var internalState = Interpolate(from.prediction, to.prediction, t);
+            
             return new FULL_STATE
             {
                 state = state,
-                prediction = from.prediction
+                prediction = internalState
             };
         }
         
+        private Transform _transform;
+        private CharacterController _unityCtrler;
+        private bool _hasController;
+        
         public override void Setup(NetworkManager manager, PredictionManager world)
         {
+            base.Setup(manager, world);
+            
+            _unityCtrler = GetComponent<CharacterController>();
+            _hasController = _unityCtrler != null;
+            _transform = transform;
+            
             owner = null;
             predictionManager = world;
             tickModule = manager.tickModule;
@@ -159,18 +236,23 @@ namespace PurrNet.Prediction
             if (tickModule == null)
                 return;
             
-            predictedState = GetCurrentState();
+            predictedState = UpdateUnityState();
             
             var predicted = new FULL_STATE
             {
                 state = predictedState,
                 prediction = new PredictionState
                 {
-                    owner = owner
+                    owner = owner,
+                    transform = settings.autoIncludeTransform ? new PredictionTransformState
+                    {
+                        position = _transform.position,
+                        rotation = _transform.rotation
+                    } : null
                 }
             };
             
-            _interpolatedState = new Interpolated<FULL_STATE>(FULLInterpolate, (float)world.tickDelta, predicted, settings.maxInputBufferCount);
+            _interpolatedState = new Interpolated<FULL_STATE>(FULLInterpolate, (float)world.tickDelta, predicted, settings.maxInterpolationQueue);
             _stateHistory = new History<FULL_STATE>(world.tickRate * settings.secondsToKeepInHistory);
             _stateHistory.Write(0, predicted);
         }
@@ -180,7 +262,7 @@ namespace PurrNet.Prediction
         /// Future updates will come only through Simulate.
         /// </summary>
         /// <returns>The initial state of the object.</returns>
-        protected abstract STATE GetCurrentState();
+        protected abstract STATE UpdateUnityState();
 
         internal override void EvaluateAndRegisterLocalInput(ulong localTick) { }
 
@@ -192,12 +274,31 @@ namespace PurrNet.Prediction
 
         FULL_STATE GetCurrentFullState()
         {
+            if (settings.autoIncludeTransform)
+            {
+                _transform.GetPositionAndRotation(out var position, out var rotation);
+                return new FULL_STATE
+                {
+                    state = UpdateUnityState(),
+                    prediction = new PredictionState
+                    {
+                        owner = owner,
+                        transform = new PredictionTransformState
+                        {
+                            position = position,
+                            rotation = rotation
+                        }
+                    }
+                };
+            }
+            
             return new FULL_STATE
             {
-                state = GetCurrentState(),
+                state = UpdateUnityState(),
                 prediction = new PredictionState
                 {
-                    owner = owner
+                    owner = owner,
+                    transform = null
                 }
             };
         }
@@ -227,15 +328,28 @@ namespace PurrNet.Prediction
             
             verifiedState = state.state;
             RollbackInternal(state.prediction);
-            Rollback(state.state);
+            RollbackUnityState(state.state);
         }
         
         private void RollbackInternal(PredictionState state)
         {
             owner = state.owner;
+            var trs = state.transform;
+
+            if (trs.HasValue && _hasController)
+            {
+                bool wasEnabled = _unityCtrler.enabled;
+                _unityCtrler.enabled = false;
+                _transform.SetPositionAndRotation(trs.Value.position, trs.Value.rotation);
+                _unityCtrler.enabled = wasEnabled;
+            }
+            else if (trs.HasValue)
+            {
+                _transform.SetPositionAndRotation(trs.Value.position, trs.Value.rotation);
+            }
         }
         
-        protected abstract void Rollback(STATE state);
+        protected abstract void RollbackUnityState(STATE state);
 
         [UsedImplicitly]
         public override void WriteState(ulong tick, BitPacker packer)
@@ -276,7 +390,9 @@ namespace PurrNet.Prediction
         public override void ReadInput(ulong tick, BitPacker packer) { }
 
         public override void QueueInput(BitPacker packer) { }
-        
+
+        public override void ClearInput() { }
+
         internal override void UpdateView(float deltaTime)
         {
             if (_interpolatedState == null)
@@ -286,7 +402,10 @@ namespace PurrNet.Prediction
             {
                 if (_lastState.HasValue)
                 {
-                    UpdateView(_lastState.Value.state, _stateHistory.Count > 0 ? _stateHistory[^1].state : null);
+                    if (settings.autoIncludeTransform && hasView)
+                        InternalUpdateView(_lastState.Value, _stateHistory.Count > 0 ? _stateHistory[^1] : null);
+                    else UpdateView(_lastState.Value.state, _stateHistory.Count > 0 ? _stateHistory[^1].state : null);
+
                     _lastState.Value.Dispose();
                     _lastState = null;
                 }
@@ -308,7 +427,17 @@ namespace PurrNet.Prediction
             }
 
             var interpolatedState = _interpolatedState.Advance(deltaTime);
-            UpdateView(interpolatedState.state, _stateHistory.Count > 0 ? _stateHistory[^1].state : null);
+            
+            if (settings.autoIncludeTransform && hasView)
+                InternalUpdateView(interpolatedState, _stateHistory.Count > 0 ? _stateHistory[^1] : null);
+            else UpdateView(interpolatedState.state, _stateHistory.Count > 0 ? _stateHistory[^1].state : null);
+        }
+        
+        private void InternalUpdateView(FULL_STATE interpolatedState, FULL_STATE? verified)
+        {
+            var trsData = interpolatedState.prediction.transform!.Value;
+            predictedView.SetPositionAndRotation(trsData.position, trsData.rotation);
+            UpdateView(interpolatedState.state, verified?.state);
         }
 
         protected virtual void UpdateView(STATE interpolatedState, STATE? verified) {}
@@ -318,6 +447,14 @@ namespace PurrNet.Prediction
             var offset = to.Add(to, from.Negate(from));
             var scaled = offset.Scale(offset, t);
             return from.Add(from, scaled);
+        }
+        
+        static PredictionState Interpolate(PredictionState from, PredictionState to, float t)
+        {
+            var offset = to.Add(to, from.Negate(from));
+            var scaled = offset.Scale(offset, t);
+            var result = from.Add(from, scaled);
+            return result;
         }
     }
 }

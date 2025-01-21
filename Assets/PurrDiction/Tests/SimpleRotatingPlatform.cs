@@ -24,7 +24,7 @@ namespace PurrNet.Prediction.Tests
             public float yRotation;
         }
         
-        protected override State GetCurrentState() => new()
+        protected override State UpdateUnityState() => new()
         {
             position = transform.position,
             yRotation = transform.eulerAngles.y
@@ -43,7 +43,7 @@ namespace PurrNet.Prediction.Tests
             transform.rotation *= Quaternion.Euler(0, _rotationSpeed * (float)delta, 0);
         }
         
-        protected override void Rollback(State state)
+        protected override void RollbackUnityState(State state)
         {
             transform.SetPositionAndRotation(state.position, Quaternion.Euler(0, state.yRotation, 0));
         }

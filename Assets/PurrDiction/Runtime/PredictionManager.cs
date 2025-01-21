@@ -8,6 +8,13 @@ using UnityEngine;
 
 namespace PurrNet.Prediction
 {
+    public enum PredictionPhysicsProvider
+    {
+        None,
+        UnityPhysics,
+        BEPUPhysics
+    }
+    
     [DefaultExecutionOrder(-1000)]
     public class PredictionManager : NetworkIdentity, IServerSceneEvents
     {
@@ -15,8 +22,8 @@ namespace PurrNet.Prediction
         static void Initialize() => _instances.Clear();
         
         static readonly Dictionary<int, PredictionManager> _instances = new ();
-        
-        [SerializeField] private int _maxInputQueue = 4;
+
+        [SerializeField] private PredictionPhysicsProvider _physicsProvider;
         [SerializeField] private GameObject[] _prefabs;
         
         readonly List<PredictedIdentity> _queue = new ();
@@ -261,19 +268,28 @@ namespace PurrNet.Prediction
         [ServerRpc]
         private void SendInputToServer(ulong clientTick, BitPacker inputPacket, RPCInfo info = default)
         {
-            using (inputPacket)
-                HandleIncomingInput(inputPacket, info);
-            
             if (!_clientTicks.TryGetValue(info.sender, out var ticks))
             {
                 ticks = new Queue<ulong>();
                 _clientTicks[info.sender] = ticks;
             }
 
-            ticks.Enqueue(clientTick);
+            if (ticks.Count > 4)
+            {
+                ClearAllInputs();
+                ticks.Clear();
+            }
 
-            while (ticks.Count > _maxInputQueue)
-                ticks.Dequeue();
+            ticks.Enqueue(clientTick);
+            
+            using (inputPacket)
+                HandleIncomingInput(inputPacket, info);
+        }
+        
+        private void ClearAllInputs()
+        {
+            for (var i = 0; i < _systems.Count; i++)
+                _systems[i].ClearInput();
         }
 
         private void HandleIncomingInput(BitPacker inputPacket,
@@ -301,7 +317,7 @@ namespace PurrNet.Prediction
             int count = _systems.Count;
             
             for (var i = 0; i < count; i++)
-                _systems[i].UpdateView(Time.deltaTime);
+                _systems[i].UpdateView(Time.unscaledDeltaTime);
         }
 
         public bool TryGetPrefab(int pid, out GameObject prefab)

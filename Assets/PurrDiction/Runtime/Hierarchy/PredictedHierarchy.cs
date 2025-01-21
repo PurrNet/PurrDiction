@@ -73,7 +73,7 @@ namespace PurrNet.Prediction
         
         private int _nextInstanceId;
         
-        protected override PredictedHierarchyState GetCurrentState()
+        protected override PredictedHierarchyState UpdateUnityState()
         {
             int count = _spawnedPrefabs.Count;
             var copy = new DisposableList<InstanceDetails>(count);
@@ -85,7 +85,7 @@ namespace PurrNet.Prediction
         [ContextMenu("Print State")]
         private void PrintState()
         {
-            PurrLogger.Log(GetCurrentState().ToString());
+            PurrLogger.Log(UpdateUnityState().ToString());
         }
 
         public override void Setup(NetworkManager manager, PredictionManager world)
@@ -98,7 +98,7 @@ namespace PurrNet.Prediction
 
         protected override void Simulate(Fix64 delta) { }
         
-        protected override void Rollback(PredictedHierarchyState state)
+        protected override void RollbackUnityState(PredictedHierarchyState state)
         {
             var currentActions = _spawnedPrefabs.Count;
             var stateActions = state.spawnedPrefabs.Count;

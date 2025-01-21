@@ -86,9 +86,11 @@ namespace PurrNet.Prediction
             INPUT input = default;
             Packer<INPUT>.Read(packer, ref input);
             _queuedInputs.Enqueue(input);
+        }
 
-            while (_queuedInputs.Count > settings.maxInputBufferCount)
-                _queuedInputs.Dequeue();
+        public override void ClearInput()
+        {
+            _queuedInputs.Clear();
         }
     }
 }

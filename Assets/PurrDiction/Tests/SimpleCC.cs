@@ -1,4 +1,3 @@
-using System;
 using FixMath.NET;
 using UnityEngine;
 
@@ -7,24 +6,18 @@ namespace PurrNet.Prediction.Tests
     public class SimpleCC : PredictedIdentity<SimpleWASDInput, SimpleCCState>
     {
         [SerializeField] private CharacterController _controller;
-        [SerializeField] private Transform _visuals;
         [SerializeField] private float _speed = 5;
         
         private SimpleCCState _state;
 
-        protected override SimpleCCState GetCurrentState()
+        protected override SimpleCCState UpdateUnityState()
         {
-            _state.position = transform.position;
             return _state;
         }
 
-        protected override void Rollback(SimpleCCState state)
+        protected override void RollbackUnityState(SimpleCCState state)
         {
             _state = state;
-            
-            _controller.enabled = false;
-            transform.position = state.position;
-            _controller.enabled = true;
         }
 
         protected override void Simulate(SimpleWASDInput? input, Fix64 delta)
@@ -37,11 +30,6 @@ namespace PurrNet.Prediction.Tests
             var moveVector = move * _speed * (float)delta;
             
             _controller.Move(moveVector);
-        }
-        
-        protected override void UpdateView(SimpleCCState predicted, SimpleCCState? verified)
-        {
-            _visuals.position = predicted.position;
         }
 
         protected override SimpleWASDInput GetInput()
