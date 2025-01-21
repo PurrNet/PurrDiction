@@ -47,21 +47,20 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _predictionSettings:
-    maxInputBufferCount: 2
+    maxInterpolationQueue: 2
     secondsToKeepInHistory: 5
     autoIncludeTransform: 1
     positionInterpolation:
       correctionRateMinMax: {x: 3.3, y: 10}
-      correctionBlendMinMax: {x: 0.2, y: 1}
+      correctionBlendMinMax: {x: 0.25, y: 1}
       teleportThresholdMinMax: {x: 0.025, y: 2}
     rotationInterpolation:
       correctionRateMinMax: {x: 3.3, y: 10}
-      correctionBlendMinMax: {x: 0.1, y: 0.5}
-      teleportThresholdMinMax: {x: 0.025, y: 0.5}
+      correctionBlendMinMax: {x: 5, y: 30}
+      teleportThresholdMinMax: {x: 1.5, y: 25}
     interpolate: 1
   predictedView: {fileID: 6680935653974138748}
   _controller: {fileID: -740372466936765982}
-  _visuals: {fileID: 6680935653974138748}
   _speed: 5
 --- !u!143 &-740372466936765982
 CharacterController:

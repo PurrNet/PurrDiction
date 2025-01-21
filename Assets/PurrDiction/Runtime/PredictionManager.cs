@@ -158,6 +158,7 @@ namespace PurrNet.Prediction
             using var frame = BitPackerPool.Get();
             var myPlayer = localPlayer ?? default;
             var cachedIsServer = isServer;
+            var cachedIsClient = isClient;
             
             for (var systemIdx = 0; systemIdx < _systems.Count; systemIdx++)
             {
@@ -184,10 +185,15 @@ namespace PurrNet.Prediction
                 {
                     var system = _systems[systemIdx];
                     system.SaveStateInHistory(localTick);
-                    system.UpdateInterpolationState();
                     system.WriteState(localTick, frame);
                 }
-                
+
+                if (cachedIsClient)
+                {
+                    for (var systemIdx = 0; systemIdx < count; systemIdx++)
+                        _systems[systemIdx].UpdateRollbackInterpolationState(tickDelta, false);
+                }
+
                 for (var systemIdx = 0; systemIdx < count; systemIdx++)
                 {
                     var system = _systems[systemIdx];
@@ -199,12 +205,10 @@ namespace PurrNet.Prediction
                 for (var systemIdx = 0; systemIdx < count; systemIdx++)
                 {
                     var system = _systems[systemIdx];
+                    system.UpdateRollbackInterpolationState(tickDelta, false);
 
                     if (system.IsOwner(myPlayer))
-                    {
                         system.WriteInput(localTick, frame);
-                        system.UpdateInterpolationState();
-                    }
                 }
             }
 
@@ -259,7 +263,7 @@ namespace PurrNet.Prediction
             var count = _systems.Count;
 
             for (var j = 0; j < count; j++)
-                _systems[j].UpdateInterpolationState();
+                _systems[j].UpdateRollbackInterpolationState(tickDelta, true);
         }
 
         readonly Dictionary<PlayerID, Queue<ulong>> _clientTicks = new ();

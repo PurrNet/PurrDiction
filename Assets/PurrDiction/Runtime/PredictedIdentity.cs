@@ -76,7 +76,7 @@ namespace PurrNet.Prediction
             positionInterpolation = new PredictedInterpolation
             {
                 correctionRateMinMax = new Vector2(3.3f, 10f),
-                correctionBlendMinMax = new Vector2(0.2f, 1f),
+                correctionBlendMinMax = new Vector2(0.25f, 1f),
                 teleportThresholdMinMax = new Vector2(0.025f, 2f)
             },
             rotationInterpolation = new PredictedInterpolation
@@ -154,7 +154,7 @@ namespace PurrNet.Prediction
 
         internal abstract void Rollback(ulong tick);
 
-        internal abstract void UpdateInterpolationState();
+        public abstract void UpdateRollbackInterpolationState(Fix64 delta, bool accumulateError);
 
         internal abstract void ResetInterpolation();
         
@@ -310,10 +310,103 @@ namespace PurrNet.Prediction
             _stateHistory.Write(tick, GetCurrentFullState());
         }
         
-        internal override void UpdateInterpolationState()
+        Vector3 _accumulatedPositionError;
+        Quaternion _accumulatedRotationError = Quaternion.identity;
+
+        public override void UpdateRollbackInterpolationState(Fix64 delta, bool accumulateError)
         {
+            if (!_lastState.HasValue)
+            {
+                _lastState = GetCurrentFullState();
+                return;
+            }
+
+            if (!settings.autoIncludeTransform)
+            {
+                _lastState?.Dispose();
+                _lastState = GetCurrentFullState();
+                return;
+            }
+            
+            var latestState = GetCurrentFullState();
+
+            if (!latestState.prediction.transform.HasValue ||
+                !_lastState.Value.prediction.transform.HasValue)
+            {
+                _lastState?.Dispose();
+                _lastState = latestState;
+                return;
+            }
+
+            var oldTrs = _lastState.Value.prediction.transform.Value;
+            var newTrs = latestState.prediction.transform.Value;
+
+            if (accumulateError)
+            {
+                _accumulatedPositionError = newTrs.position - oldTrs.position;
+                _accumulatedRotationError = newTrs.rotation * Quaternion.Inverse(oldTrs.rotation);
+            }
+            
+            var positionError = _accumulatedPositionError.magnitude;
+            var rotationError = Quaternion.Angle(Quaternion.identity, _accumulatedRotationError);
+            
+            var posThreshold = settings.positionInterpolation.teleportThresholdMinMax;
+            var rotThreshold = settings.rotationInterpolation.teleportThresholdMinMax;
+            
+            var snapPos = positionError > posThreshold.y;
+            var skipPos = positionError < posThreshold.x;
+            var snapRot = rotationError > rotThreshold.y;  
+            var skipRot = rotationError < rotThreshold.x;
+            
+            if (snapPos)
+            {
+                _accumulatedPositionError = default;
+            }
+            else if (!skipPos)
+            {
+                var posRate = settings.positionInterpolation.correctionRateMinMax;
+                var posBlend = settings.positionInterpolation.correctionBlendMinMax;
+                
+                // Partially correct
+                float posLerp = Mathf.Clamp01(Mathf.InverseLerp(posBlend.x, posBlend.y, positionError));
+                float rate = Mathf.Lerp(posRate.x, posRate.y, posLerp) * (float)delta;
+                var correction = _accumulatedPositionError * rate;
+                
+                float corrMag = correction.magnitude;
+    
+                // Clamp correction to at least posThreshold.x if we have enough error
+                if (corrMag < posThreshold.x && positionError > posThreshold.x)
+                    correction = correction.normalized * posThreshold.x;
+                // Make sure we never exceed the total error
+                else if (corrMag > positionError)
+                    correction = _accumulatedPositionError;
+                
+                newTrs.position = oldTrs.position + correction;
+                _accumulatedPositionError -= correction;
+            }
+            
+            if (snapRot)
+            {
+                _accumulatedRotationError = Quaternion.identity;
+            }
+            else if (!skipRot)
+            {
+                var rotRate = settings.rotationInterpolation.correctionRateMinMax;
+                var rotBlend = settings.rotationInterpolation.correctionBlendMinMax;
+                var rotLerp = Mathf.Clamp01(Mathf.InverseLerp(rotBlend.x, rotBlend.y, rotationError));
+                var rate = Mathf.Lerp(rotRate.x, rotRate.y, rotLerp) * (float)delta;
+                
+                // Partially correction
+                var newRot = Quaternion.Slerp(oldTrs.rotation, newTrs.rotation, rate);
+                var correctionApplied = Quaternion.Inverse(oldTrs.rotation) * newRot;
+                _accumulatedRotationError = Quaternion.Inverse(correctionApplied) * _accumulatedRotationError;
+                newTrs.rotation = newRot;
+            }
+            
+            latestState.prediction.transform = newTrs;
+            
             _lastState?.Dispose();
-            _lastState = GetCurrentFullState();
+            _lastState = latestState;
         }
 
         protected abstract void Simulate(Fix64 delta);
@@ -405,9 +498,6 @@ namespace PurrNet.Prediction
                     if (settings.autoIncludeTransform && hasView)
                         InternalUpdateView(_lastState.Value, _stateHistory.Count > 0 ? _stateHistory[^1] : null);
                     else UpdateView(_lastState.Value.state, _stateHistory.Count > 0 ? _stateHistory[^1].state : null);
-
-                    _lastState.Value.Dispose();
-                    _lastState = null;
                 }
 
                 return;
@@ -421,9 +511,6 @@ namespace PurrNet.Prediction
                     _interpolatedState.Teleport(_lastState.Value);
                 }
                 else _interpolatedState.Add(_lastState.Value);
-
-                _lastState.Value.Dispose();
-                _lastState = null;
             }
 
             var interpolatedState = _interpolatedState.Advance(deltaTime);

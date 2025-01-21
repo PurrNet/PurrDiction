@@ -46,9 +46,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _predictionSettings:
-    maxInputBufferCount: 5
+    maxInterpolationQueue: 2
     secondsToKeepInHistory: 5
-    autoIncludeTransform: 1
+    autoIncludeTransform: 0
     positionInterpolation:
       correctionRateMinMax: {x: 3.3, y: 10}
       correctionBlendMinMax: {x: 0.2, y: 1}
@@ -57,7 +57,8 @@ MonoBehaviour:
       correctionRateMinMax: {x: 3.3, y: 10}
       correctionBlendMinMax: {x: 0.1, y: 0.5}
       teleportThresholdMinMax: {x: 0.025, y: 0.5}
-    interpolate: 1
+    interpolate: 0
+  predictedView: {fileID: 0}
   _visuals: {fileID: 5855861698602506534}
   _rotationSpeed: 500
 --- !u!1 &4325596775113163761

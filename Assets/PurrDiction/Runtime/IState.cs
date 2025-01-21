@@ -1,10 +1,11 @@
-﻿using PurrNet.Packing;
+﻿using System;
+using PurrNet.Packing;
 
 namespace PurrNet.Prediction
 {
-    public interface IOptionalDispose
+    public interface IOptionalDispose : IDisposable
     {
-        void Dispose() {}
+        void IDisposable.Dispose() {}
     }
     
     public interface IPredictedData : IOptionalDispose, IPackedAuto
