@@ -76,8 +76,8 @@ namespace PurrNet.Prediction
             positionInterpolation = new PredictedInterpolation
             {
                 correctionRateMinMax = new Vector2(3.3f, 10f),
-                correctionBlendMinMax = new Vector2(0.25f, 1f),
-                teleportThresholdMinMax = new Vector2(0.025f, 2f)
+                correctionBlendMinMax = new Vector2(0.25f, 4f),
+                teleportThresholdMinMax = new Vector2(0.025f, 5f)
             },
             rotationInterpolation = new PredictedInterpolation
             {

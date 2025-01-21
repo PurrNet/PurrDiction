@@ -418,7 +418,6 @@ MonoBehaviour:
   _physicsProvider: 0
   _prefabs:
   - {fileID: 2990978637306053845, guid: 14ef4fb9c3d76ce4686663df0c0f2555, type: 3}
-  _maxInputQueue: 4
 --- !u!4 &1558659896
 Transform:
   m_ObjectHideFlags: 0
@@ -519,7 +518,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _masterServer: https://purrbalancer.riten.dev:8080/
-  _roomName: ced033a641414480a471dd23796bc59c
+  _roomName: fdesfes
   _region: eu-central
   _host: eu1.purrlay.riten.dev
 --- !u!1 &1997087625
