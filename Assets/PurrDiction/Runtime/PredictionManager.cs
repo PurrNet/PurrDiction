@@ -239,7 +239,6 @@ namespace PurrNet.Prediction
                     var system = _systems[i];
                     system.ReadState(clientLocalTick, frame);
                     system.Rollback(clientLocalTick);
-                    system.UpdateInterpolationState();
                 }
                 
                 for (var i = 0; i < _systems.Count; i++)
@@ -255,12 +254,12 @@ namespace PurrNet.Prediction
             {
                 for (var j = 0; j < _systems.Count; j++)
                     _systems[j].SimulateTick(simTick, tickDelta);
-
-                var count = _systems.Count;
-
-                for (var j = 0; j < count; j++)
-                    _systems[j].UpdateInterpolationState();
             }
+            
+            var count = _systems.Count;
+
+            for (var j = 0; j < count; j++)
+                _systems[j].UpdateInterpolationState();
         }
 
         readonly Dictionary<PlayerID, Queue<ulong>> _clientTicks = new ();
