@@ -23,19 +23,19 @@ namespace PurrNet.Prediction.Tests
             public Vector3 position;
             public float yRotation;
         }
-        
-        protected override State UpdateUnityState() => new()
+
+        protected override void UpdateUnityState(ref State state)
         {
-            position = transform.position,
-            yRotation = transform.eulerAngles.y
-        };
+            state.position = transform.position;
+            state.yRotation = transform.eulerAngles.y;
+        }
 
         protected override Input GetInput() => new()
         {
             stopRotation = UnityEngine.Input.GetKey(KeyCode.Space)
         };
 
-        protected override void Simulate(Input? input, Fix64 delta)
+        protected override void Simulate(Input? input, ref State data, Fix64 delta)
         {
             if (input?.stopRotation == true)
                 return;

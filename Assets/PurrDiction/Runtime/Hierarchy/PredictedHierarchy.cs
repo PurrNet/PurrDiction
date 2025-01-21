@@ -72,20 +72,15 @@ namespace PurrNet.Prediction
         readonly Dictionary<PredictedObjectID, GameObject> _instanceMap = new ();
         
         private int _nextInstanceId;
-        
-        protected override PredictedHierarchyState UpdateUnityState()
+
+        protected override void UpdateUnityState(ref PredictedHierarchyState state)
         {
             int count = _spawnedPrefabs.Count;
             var copy = new DisposableList<InstanceDetails>(count);
             for (var i = 0; i < count; i++)
                 copy.Add(_spawnedPrefabs[i]);
-            return new PredictedHierarchyState(copy, _nextInstanceId);
-        }
-        
-        [ContextMenu("Print State")]
-        private void PrintState()
-        {
-            PurrLogger.Log(UpdateUnityState().ToString());
+            
+            state = new PredictedHierarchyState(copy, _nextInstanceId);
         }
 
         public override void Setup(NetworkManager manager, PredictionManager world)
@@ -93,11 +88,10 @@ namespace PurrNet.Prediction
             base.Setup(manager, world);
             var s = settings;
             s.interpolate = false;
+            s.autoIncludeTransform = false;
             settings = s;
         }
 
-        protected override void Simulate(Fix64 delta) { }
-        
         protected override void RollbackUnityState(PredictedHierarchyState state)
         {
             var currentActions = _spawnedPrefabs.Count;

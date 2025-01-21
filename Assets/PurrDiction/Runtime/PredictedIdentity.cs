@@ -7,65 +7,6 @@ using UnityEngine;
 
 namespace PurrNet.Prediction
 {
-    public struct PredictionTransformState : IPredictedData<PredictionTransformState>
-    {
-        public Vector3 position;
-        public Quaternion rotation;
-        
-        public override string ToString()
-        {
-            return $"(position: {position}, rotation: {rotation})";
-        }
-    }
-    
-    public struct PredictionState : IPredictedData<PredictionState>
-    {
-        public PlayerID? owner;
-        public PredictionTransformState? transform;
-        
-        public PredictionState Add(PredictionState a, PredictionState b)
-        {
-            a.transform = a.transform.HasValue && b.transform.HasValue
-                ? new PredictionTransformState
-                {
-                    position = a.transform.Value.position + b.transform.Value.position,
-                    rotation = a.transform.Value.rotation * b.transform.Value.rotation
-                }
-                : null;
-            return a;
-        }
-
-        public PredictionState Negate(PredictionState a)
-        {
-            a.transform = a.transform.HasValue
-                ? new PredictionTransformState
-                {
-                    position = -a.transform.Value.position,
-                    rotation = Quaternion.Inverse(a.transform.Value.rotation)
-                }
-                : null;
-            return a;
-        }
-
-        public PredictionState Scale(PredictionState a, float b)
-        {
-            a.transform = a.transform.HasValue
-                ? new PredictionTransformState
-                {
-                    position = a.transform.Value.position * b,
-                    rotation = Quaternion.Slerp(Quaternion.identity, a.transform.Value.rotation, b)
-                }
-                : null;
-            
-            return a;
-        }
-
-        public override string ToString()
-        {
-            return $"(owner: {owner}, transform: {transform})";
-        }
-    }
-    
     public abstract class PredictedIdentity : MonoBehaviour
     {
         [SerializeField] private PredictionSettings _predictionSettings = new ()
@@ -159,6 +100,8 @@ namespace PurrNet.Prediction
         internal abstract void ResetInterpolation();
         
         internal abstract void UpdateView(float deltaTime);
+
+        internal abstract void UpdateUnityState();
         
         public abstract void WriteLatestState(BitPacker packer);
         
@@ -173,18 +116,48 @@ namespace PurrNet.Prediction
         public abstract void QueueInput(BitPacker packer);
 
         public abstract void ClearInput();
+
+        public virtual string GetDebugInfo(int tabs)
+        {
+            string tab = new string(' ', tabs * 4);
+            return $"{tab}{{\n" +
+                   $"{tab}    'owner': {owner} ({(IsOwner() ? "Local" : "Remote")})\n" +
+                   $"{tab}}}";
+        }
     }
     
     public abstract class PredictedIdentity<STATE> : PredictedIdentity where STATE : struct, IPredictedData<STATE>
     {
-        struct FULL_STATE : IOptionalDispose
+        internal struct FULL_STATE : IOptionalDispose
         {
             public STATE state;
             public PredictionState prediction;
+
+            public FULL_STATE DeepCopy()
+            {
+                using var packer = BitPackerPool.Get();
+                
+                Packer<STATE>.Write(packer, state);
+                Packer<PredictionState>.Write(packer, prediction);
+                
+                packer.ResetPositionAndMode(true);
+                
+                var data = new FULL_STATE();
+                
+                Packer<STATE>.Read(packer, ref data.state);
+                Packer<PredictionState>.Read(packer, ref data.prediction);
+                
+                return data;
+            }
             
             public void Dispose()
             {
                 state.Dispose();
+            }
+
+            public override string ToString()
+            {
+                return $"{{state: {state}, prediction: {prediction}}}";
             }
         }
         
@@ -193,10 +166,6 @@ namespace PurrNet.Prediction
         private History<FULL_STATE> _stateHistory;
         
         private bool _resetInterpolation;
-        
-        protected STATE predictedState;
-
-        protected STATE? verifiedState;
         
         protected TickManager tickModule { get; private set; }
 
@@ -220,6 +189,8 @@ namespace PurrNet.Prediction
         private Transform _transform;
         private CharacterController _unityCtrler;
         private bool _hasController;
+
+        internal FULL_STATE predictedState;
         
         public override void Setup(NetworkManager manager, PredictionManager world)
         {
@@ -236,11 +207,11 @@ namespace PurrNet.Prediction
             if (tickModule == null)
                 return;
             
-            predictedState = UpdateUnityState();
+            var initialState = GetInitialState();
             
-            var predicted = new FULL_STATE
+            predictedState = new FULL_STATE
             {
-                state = predictedState,
+                state = initialState,
                 prediction = new PredictionState
                 {
                     owner = owner,
@@ -252,9 +223,9 @@ namespace PurrNet.Prediction
                 }
             };
             
-            _interpolatedState = new Interpolated<FULL_STATE>(FULLInterpolate, (float)world.tickDelta, predicted, settings.maxInterpolationQueue);
+            _interpolatedState = new Interpolated<FULL_STATE>(FULLInterpolate, (float)world.tickDelta, predictedState, settings.maxInterpolationQueue);
             _stateHistory = new History<FULL_STATE>(world.tickRate * settings.secondsToKeepInHistory);
-            _stateHistory.Write(0, predicted);
+            _stateHistory.Write(0, predictedState);
         }
 
         /// <summary>
@@ -262,83 +233,78 @@ namespace PurrNet.Prediction
         /// Future updates will come only through Simulate.
         /// </summary>
         /// <returns>The initial state of the object.</returns>
-        protected abstract STATE UpdateUnityState();
+        protected virtual void UpdateUnityState(ref STATE state) {}
+
+        internal override void UpdateUnityState()
+        {
+            InternalUpdateUnityState(ref predictedState.prediction);
+            UpdateUnityState(ref predictedState.state);
+        }
 
         internal override void EvaluateAndRegisterLocalInput(ulong localTick) { }
 
-        internal override void SimulateTick(ulong tick, Fix64 delta) => Simulate(delta);
+        internal override void SimulateTick(ulong tick, Fix64 delta) => Simulate(delta, ref predictedState.state);
 
-        internal override void SimulateLocal(Fix64 delta) => Simulate(delta);
+        internal override void SimulateLocal(Fix64 delta) => Simulate(delta, ref predictedState.state);
 
-        internal override void SimulateRemote(Fix64 delta) => Simulate(delta);
+        internal override void SimulateRemote(Fix64 delta) => Simulate(delta, ref predictedState.state);
 
-        FULL_STATE GetCurrentFullState()
+        private void InternalUpdateUnityState(ref PredictionState state)
         {
+            state.owner = owner;
+            
             if (settings.autoIncludeTransform)
             {
                 _transform.GetPositionAndRotation(out var position, out var rotation);
-                return new FULL_STATE
+                state.transform = new PredictionTransformState
                 {
-                    state = UpdateUnityState(),
-                    prediction = new PredictionState
-                    {
-                        owner = owner,
-                        transform = new PredictionTransformState
-                        {
-                            position = position,
-                            rotation = rotation
-                        }
-                    }
+                    position = position,
+                    rotation = rotation
                 };
+                return;
             }
-            
-            return new FULL_STATE
-            {
-                state = UpdateUnityState(),
-                prediction = new PredictionState
-                {
-                    owner = owner,
-                    transform = null
-                }
-            };
+
+            state.transform = null;
         }
         
-        FULL_STATE? _lastState;
+        FULL_STATE? _latestViewState;
         
         internal override void SaveStateInHistory(ulong tick)
         {
-            _stateHistory.Write(tick, GetCurrentFullState());
+            InternalUpdateUnityState(ref predictedState.prediction);
+            _stateHistory.Write(tick, predictedState);
         }
         
         Vector3 _accumulatedPositionError;
         Quaternion _accumulatedRotationError = Quaternion.identity;
-
+        
         public override void UpdateRollbackInterpolationState(Fix64 delta, bool accumulateError)
         {
-            if (!_lastState.HasValue)
+            if (!_latestViewState.HasValue)
             {
-                _lastState = GetCurrentFullState();
+                InternalUpdateUnityState(ref predictedState.prediction);
+                _latestViewState = predictedState.DeepCopy();
                 return;
             }
 
             if (!settings.autoIncludeTransform)
             {
-                _lastState?.Dispose();
-                _lastState = GetCurrentFullState();
+                _latestViewState?.Dispose();
+                _latestViewState = predictedState.DeepCopy();
                 return;
             }
             
-            var latestState = GetCurrentFullState();
+            var latestState = predictedState.DeepCopy();
 
             if (!latestState.prediction.transform.HasValue ||
-                !_lastState.Value.prediction.transform.HasValue)
+                !_latestViewState.Value.prediction.transform.HasValue)
             {
-                _lastState?.Dispose();
-                _lastState = latestState;
+                _latestViewState?.Dispose();
+                _latestViewState = latestState;
                 return;
             }
 
-            var oldTrs = _lastState.Value.prediction.transform.Value;
+            var oldTrs = _latestViewState.Value.prediction.transform.Value;
             var newTrs = latestState.prediction.transform.Value;
 
             if (accumulateError)
@@ -405,11 +371,13 @@ namespace PurrNet.Prediction
             
             latestState.prediction.transform = newTrs;
             
-            _lastState?.Dispose();
-            _lastState = latestState;
+            _latestViewState?.Dispose();
+            _latestViewState = latestState;
         }
+        
+        protected virtual STATE GetInitialState() => default;
 
-        protected abstract void Simulate(Fix64 delta);
+        protected virtual void Simulate(Fix64 delta, ref STATE state) {}
 
         internal override void Rollback(ulong tick)
         {
@@ -419,7 +387,8 @@ namespace PurrNet.Prediction
                 return;
             }
             
-            verifiedState = state.state;
+            owner = state.prediction.owner;
+            predictedState = state.DeepCopy();
             RollbackInternal(state.prediction);
             RollbackUnityState(state.state);
         }
@@ -442,7 +411,7 @@ namespace PurrNet.Prediction
             }
         }
         
-        protected abstract void RollbackUnityState(STATE state);
+        protected virtual void RollbackUnityState(STATE state) {}
 
         [UsedImplicitly]
         public override void WriteState(ulong tick, BitPacker packer)
@@ -457,10 +426,9 @@ namespace PurrNet.Prediction
 
         public override void WriteLatestState(BitPacker packer)
         {
-            var state = GetCurrentFullState();
-            Packer<STATE>.Write(packer, state.state);
-            Packer<PredictionState>.Write(packer, state.prediction);
-            state.Dispose();
+            Packer<STATE>.Write(packer, predictedState.state);
+            Packer<PredictionState>.Write(packer, predictedState.prediction);
+            predictedState.Dispose();
         }
 
         [UsedImplicitly]
@@ -493,24 +461,24 @@ namespace PurrNet.Prediction
 
             if (!settings.interpolate)
             {
-                if (_lastState.HasValue)
+                if (_latestViewState.HasValue)
                 {
                     if (settings.autoIncludeTransform && hasView)
-                        InternalUpdateView(_lastState.Value, _stateHistory.Count > 0 ? _stateHistory[^1] : null);
-                    else UpdateView(_lastState.Value.state, _stateHistory.Count > 0 ? _stateHistory[^1].state : null);
+                        InternalUpdateView(_latestViewState.Value, _stateHistory.Count > 0 ? _stateHistory[^1] : null);
+                    else UpdateView(_latestViewState.Value.state, _stateHistory.Count > 0 ? _stateHistory[^1].state : null);
                 }
 
                 return;
             }
 
-            if (_lastState.HasValue)
+            if (_latestViewState.HasValue)
             {
                 if (_resetInterpolation)
                 {
                     _resetInterpolation = false;
-                    _interpolatedState.Teleport(_lastState.Value);
+                    _interpolatedState.Teleport(_latestViewState.Value);
                 }
-                else _interpolatedState.Add(_lastState.Value);
+                else _interpolatedState.Add(_latestViewState.Value);
             }
 
             var interpolatedState = _interpolatedState.Advance(deltaTime);
@@ -542,6 +510,18 @@ namespace PurrNet.Prediction
             var scaled = offset.Scale(offset, t);
             var result = from.Add(from, scaled);
             return result;
+        }
+
+        public override string GetDebugInfo(int tabs)
+        {
+            var baseData = base.GetDebugInfo(tabs + 1);
+            string tab = new string(' ', tabs * 4);
+            
+            return $"{tab}{{\n" +
+                   $"{tab}    'base':\n{baseData}\n" +
+                   $"{tab}    'state': {predictedState.state}\n" +
+                   $"{tab}    'prediction': {predictedState.prediction}\n" +
+                   $"{tab}}}";
         }
     }
 }

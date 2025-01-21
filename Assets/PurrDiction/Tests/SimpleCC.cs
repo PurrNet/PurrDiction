@@ -7,20 +7,8 @@ namespace PurrNet.Prediction.Tests
     {
         [SerializeField] private CharacterController _controller;
         [SerializeField] private float _speed = 5;
-        
-        private SimpleCCState _state;
 
-        protected override SimpleCCState UpdateUnityState()
-        {
-            return _state;
-        }
-
-        protected override void RollbackUnityState(SimpleCCState state)
-        {
-            _state = state;
-        }
-
-        protected override void Simulate(SimpleWASDInput? input, Fix64 delta)
+        protected override void Simulate(SimpleWASDInput? input, ref SimpleCCState state, Fix64 delta)
         {
             var move = new Vector3(input?.horizontal ?? 0, 0, input?.vertical ?? 0);
             

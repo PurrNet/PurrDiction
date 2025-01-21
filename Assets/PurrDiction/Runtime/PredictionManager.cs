@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using FixMath.NET;
 using JetBrains.Annotations;
+using PurrNet.Logging;
 using PurrNet.Packing;
 using PurrNet.Pooling;
 using UnityEngine;
@@ -179,11 +180,15 @@ namespace PurrNet.Prediction
 
             var count = _systems.Count;
             
+            // TODO: physics
+            
             if (cachedIsServer)
             {
                 for (var systemIdx = 0; systemIdx < count; systemIdx++)
                 {
                     var system = _systems[systemIdx];
+                    
+                    system.UpdateUnityState();
                     system.SaveStateInHistory(localTick);
                     system.WriteState(localTick, frame);
                 }
@@ -205,13 +210,14 @@ namespace PurrNet.Prediction
                 for (var systemIdx = 0; systemIdx < count; systemIdx++)
                 {
                     var system = _systems[systemIdx];
+                    system.UpdateUnityState();
                     system.UpdateRollbackInterpolationState(tickDelta, false);
 
                     if (system.IsOwner(myPlayer))
                         system.WriteInput(localTick, frame);
                 }
             }
-
+            
             if (!cachedIsServer)
             {
                 SendInputToServer(localTick, frame);
@@ -243,6 +249,7 @@ namespace PurrNet.Prediction
                     var system = _systems[i];
                     system.ReadState(clientLocalTick, frame);
                     system.Rollback(clientLocalTick);
+                    system.UpdateUnityState();
                 }
                 
                 for (var i = 0; i < _systems.Count; i++)
@@ -258,6 +265,11 @@ namespace PurrNet.Prediction
             {
                 for (var j = 0; j < _systems.Count; j++)
                     _systems[j].SimulateTick(simTick, tickDelta);
+
+                // TODO: physics
+                
+                for (var j = 0; j < _systems.Count; j++)
+                    _systems[j].UpdateUnityState();
             }
             
             var count = _systems.Count;

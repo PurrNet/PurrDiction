@@ -32,37 +32,37 @@ namespace PurrNet.Prediction
         {
             if (IsOwner())
             {
-                Simulate(!_inputHistory.TryGet(tick, out var input) ? GetInput() : input, delta);
+                Simulate(!_inputHistory.TryGet(tick, out var input) ? GetInput() : input, ref predictedState.state, delta);
             }
             else if(_inputHistory.TryGetClosest(tick, out var input))
             {
-                Simulate(input, delta);
+                Simulate(input, ref predictedState.state, delta);
             }
             else PurrLogger.LogError("No input found for tick " + tick);
         }
 
         internal override void SimulateLocal(Fix64 delta)
         {
-            Simulate(_lastInput, delta);
+            Simulate(_lastInput, ref predictedState.state, delta);
         }
         
         internal override void SimulateRemote(Fix64 delta)
         {
             if (_queuedInputs.Count == 0)
             {
-                Simulate(_lastInput, delta);
+                Simulate(_lastInput, ref predictedState.state, delta);
                 return;
             }
             
             _lastInput = _queuedInputs.Dequeue();
-            Simulate(_lastInput, delta);
+            Simulate(_lastInput, ref predictedState.state, delta);
         }
 
-        protected abstract void Simulate(INPUT? input, Fix64 delta);
+        protected abstract void Simulate(INPUT? input, ref STATE state, Fix64 delta);
         
-        protected override void Simulate(Fix64 delta)
+        protected override void Simulate(Fix64 delta, ref STATE state)
         {
-            Simulate(_lastInput, delta);
+            Simulate(_lastInput, ref state, delta);
         }
 
         public override void WriteInput(ulong localTick, BitPacker input)
