@@ -242,6 +242,8 @@ namespace PurrNet.Prediction
         {
             switch (_physicsProvider)
             {
+                case PredictionPhysicsProvider.None:
+                    break;
                 case PredictionPhysicsProvider.UnityPhysics:
                     var physicsScene = gameObject.scene.GetPhysicsScene();
                     if (physicsScene.IsValid())
