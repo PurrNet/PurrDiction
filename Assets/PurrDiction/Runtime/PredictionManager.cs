@@ -15,7 +15,7 @@ namespace PurrNet.Prediction
         BEPUPhysics
     }
     
-    [DefaultExecutionOrder(-1000)]
+    [DefaultExecutionOrder(-1000), RegisterNetworkType(typeof(AnimationClip))]
     public class PredictionManager : NetworkIdentity, IServerSceneEvents
     {
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterAssembliesLoaded)]
@@ -248,7 +248,6 @@ namespace PurrNet.Prediction
                     var system = _systems[i];
                     system.ReadState(clientLocalTick, frame);
                     system.Rollback(clientLocalTick);
-                    system.UpdateUnityState();
                 }
                 
                 for (var i = 0; i < _systems.Count; i++)

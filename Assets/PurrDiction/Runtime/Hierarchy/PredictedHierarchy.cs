@@ -117,7 +117,7 @@ namespace PurrNet.Prediction
                 for (var j = currentActions - 1; j >= i; j--)
                 {
                     var details = _spawnedPrefabs[j];
-                    if (!_instanceMap.Remove(details.instanceId, out var instance))
+                    if (_instanceMap.Remove(details.instanceId, out var instance))
                         predictionManager.InternalDelete(instance);
                 }
 

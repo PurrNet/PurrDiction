@@ -271,8 +271,7 @@ namespace PurrNet.Prediction
         
         internal override void SaveStateInHistory(ulong tick)
         {
-            InternalUpdateUnityState(ref predictedState.prediction);
-            _stateHistory.Write(tick, predictedState);
+            _stateHistory.Write(tick, predictedState.DeepCopy());
         }
         
         Vector3 _accumulatedPositionError;
@@ -282,7 +281,6 @@ namespace PurrNet.Prediction
         {
             if (!_latestViewState.HasValue)
             {
-                InternalUpdateUnityState(ref predictedState.prediction);
                 _latestViewState = predictedState.DeepCopy();
                 return;
             }
@@ -389,8 +387,8 @@ namespace PurrNet.Prediction
             
             owner = state.prediction.owner;
             predictedState = state.DeepCopy();
-            RollbackInternal(state.prediction);
-            RollbackUnityState(state.state);
+            RollbackInternal(predictedState.prediction);
+            RollbackUnityState(predictedState.state);
         }
         
         private void RollbackInternal(PredictionState state)
@@ -416,12 +414,14 @@ namespace PurrNet.Prediction
         [UsedImplicitly]
         public override void WriteState(ulong tick, BitPacker packer)
         {
-            if (_stateHistory.Read(tick, out var state))
+            if (!_stateHistory.Read(tick, out var state))
             {
-                Packer<STATE>.Write(packer, state.state);
-                Packer<PredictionState>.Write(packer, state.prediction);
+                PurrLogger.LogError($"Failed to write state at tick {tick}");
+                return;
             }
-            else PurrLogger.LogError($"Failed to write state at tick {tick}");
+            
+            Packer<STATE>.Write(packer, state.state);
+            Packer<PredictionState>.Write(packer, state.prediction);
         }
 
         public override void WriteLatestState(BitPacker packer)
