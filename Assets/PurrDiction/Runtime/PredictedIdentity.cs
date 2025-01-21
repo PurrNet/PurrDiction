@@ -223,12 +223,12 @@ namespace PurrNet.Prediction
         /// Future updates will come only through Simulate.
         /// </summary>
         /// <returns>The initial state of the object.</returns>
-        protected virtual void UpdateUnityState(ref STATE state) {}
+        protected virtual void GetUnityState(ref STATE state) {}
 
         internal override void UpdateUnityState()
         {
             InternalUpdateUnityState(ref predictedState.prediction);
-            UpdateUnityState(ref predictedState.state);
+            GetUnityState(ref predictedState.state);
         }
 
         internal override void EvaluateAndRegisterLocalInput(ulong localTick) { }
@@ -381,7 +381,7 @@ namespace PurrNet.Prediction
             predictedState = state.DeepCopy();
             
             RollbackInternal(predictedState.prediction);
-            RollbackUnityState(predictedState.state);
+            SetUnityState(predictedState.state);
         }
         
         private void RollbackInternal(PredictionState state)
@@ -402,7 +402,7 @@ namespace PurrNet.Prediction
             }
         }
         
-        protected virtual void RollbackUnityState(STATE state) {}
+        protected virtual void SetUnityState(STATE state) {}
 
         [UsedImplicitly]
         public override void WriteState(ulong tick, BitPacker packer)

@@ -72,7 +72,7 @@ namespace PurrNet.Prediction
         
         private int _nextInstanceId;
 
-        protected override void UpdateUnityState(ref PredictedHierarchyState state)
+        protected override void GetUnityState(ref PredictedHierarchyState state)
         {
             int count = _spawnedPrefabs.Count;
             var copy = new DisposableList<InstanceDetails>(count);
@@ -91,7 +91,7 @@ namespace PurrNet.Prediction
             settings = s;
         }
 
-        protected override void RollbackUnityState(PredictedHierarchyState state)
+        protected override void SetUnityState(PredictedHierarchyState state)
         {
             var currentActions = _spawnedPrefabs.Count;
             var stateActions = state.spawnedPrefabs.Count;

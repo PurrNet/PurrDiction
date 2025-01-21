@@ -37,6 +37,9 @@ namespace PurrNet.Prediction
         private void Awake()
         {
             _instances[gameObject.scene.handle] = this;
+            
+            if (_physicsProvider == PredictionPhysicsProvider.UnityPhysics)
+                Physics.simulationMode = SimulationMode.Script;
         }
 
         public Fix64 tickDelta { get; private set; }
@@ -177,9 +180,9 @@ namespace PurrNet.Prediction
                 }
             }
 
+            DoPhysicsPass();
+
             var count = _systems.Count;
-            
-            // TODO: physics
             
             if (cachedIsServer)
             {
@@ -234,7 +237,21 @@ namespace PurrNet.Prediction
 
             localTick += 1;
         }
-        
+
+        private void DoPhysicsPass()
+        {
+            switch (_physicsProvider)
+            {
+                case PredictionPhysicsProvider.UnityPhysics:
+                    var physicsScene = gameObject.scene.GetPhysicsScene();
+                    if (physicsScene.IsValid())
+                        physicsScene.Simulate((float)tickDelta);
+                    break;
+                default:
+                    throw new NotImplementedException();
+            }
+        }
+
         [TargetRpc]
         private void SendFrameToRemote([UsedImplicitly] PlayerID player, ulong clientLocalTick, BitPacker frame)
         {
@@ -250,6 +267,8 @@ namespace PurrNet.Prediction
                     system.Rollback(clientLocalTick);
                 }
                 
+                Physics.SyncTransforms();
+                
                 for (var i = 0; i < _systems.Count; i++)
                     _systems[i].ReadInput(clientLocalTick, frame);
             }
@@ -264,15 +283,16 @@ namespace PurrNet.Prediction
                 for (var j = 0; j < _systems.Count; j++)
                     _systems[j].SimulateTick(simTick, tickDelta);
 
-                // TODO: physics
+                DoPhysicsPass();
                 
-                for (var j = 0; j < _systems.Count; j++)
+                var count = _systems.Count;
+
+                for (var j = 0; j < count; j++)
                     _systems[j].UpdateUnityState();
             }
             
-            var count = _systems.Count;
-
-            for (var j = 0; j < count; j++)
+            var scount = _systems.Count;
+            for (var j = 0; j < scount; j++)
                 _systems[j].UpdateRollbackInterpolationState(tickDelta, true);
         }
 
