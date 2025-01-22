@@ -87,11 +87,13 @@ namespace PurrNet.Prediction
         protected override void OnSpawned()
         {
             networkManager.tickModule.onPreTick += OnTick;
+            networkManager.tickModule.onPostTick += OnPostTick;
         }
 
         protected override void OnDespawned()
         {
             networkManager.tickModule.onPreTick -= OnTick;
+            networkManager.tickModule.onPostTick -= OnPostTick;
         }
 
         public T RegisterSystem<T>() where T : PredictedIdentity
@@ -286,7 +288,7 @@ namespace PurrNet.Prediction
                     _systems[i].ReadInput(clientLocalTick, frame);
             }
             
-            CatchupFromTick(clientLocalTick);
+            _tickToRollbackFrom = clientLocalTick;
         }
 
         private void CatchupFromTick(ulong clientTick)
@@ -309,6 +311,20 @@ namespace PurrNet.Prediction
             var scount = _systems.Count;
             for (var j = 0; j < scount; j++)
                 _systems[j].UpdateRollbackInterpolationState(tickDelta, true);
+        }
+        
+        private ulong? _tickToRollbackFrom;
+        
+        private void OnPostTick()
+        {
+            if (_tickToRollbackFrom.HasValue)
+            {
+                if (_physicsProvider == PredictionPhysicsProvider.UnityPhysics)
+                    Physics.SyncTransforms();
+                
+                CatchupFromTick(_tickToRollbackFrom.Value);
+                _tickToRollbackFrom = null;
+            }
         }
 
         readonly Dictionary<PlayerID, Queue<ulong>> _clientTicks = new ();
