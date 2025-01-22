@@ -173,7 +173,7 @@ namespace PurrNet.Prediction
 
         internal override void ResetInterpolation()
         {
-            _resetInterpolation = true;
+            _interpolatedState.Teleport(predictedState);
         }
 
         private FULL_STATE FULLInterpolate(FULL_STATE from, FULL_STATE to, float t)
