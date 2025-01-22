@@ -29,10 +29,11 @@ namespace PurrNet.Prediction.Tests
                 move.Normalize();
             
             var moveVector = move * _speed;
-            
+
             if (move != Vector3.zero)
-                transform.rotation = Quaternion.LookRotation(move);
+                state.rotation = Mathf.Atan2(move.x, move.z) * Mathf.Rad2Deg;
             
+            _controller.rotation = Quaternion.Euler(0, state.rotation, 0);
             _controller.linearVelocity = moveVector;
 
             if (state.wasShooting != input?.jump)
