@@ -5,6 +5,7 @@ namespace PurrNet.Prediction.Tests
 {
     public class SimpleCC : PredictedIdentity<SimpleWASDInput, SimpleCCState>
     {
+        [SerializeField] private GameObject _projectile;
         [SerializeField] private CharacterController _controller;
         [SerializeField] private float _speed = 5;
 
@@ -17,7 +18,29 @@ namespace PurrNet.Prediction.Tests
             
             var moveVector = move * _speed * (float)delta;
             
+            if (move != Vector3.zero)
+                transform.rotation = Quaternion.LookRotation(move);
+            
             _controller.Move(moveVector);
+            _controller.Move(Physics.gravity * (float)delta);
+
+            if (state.wasShooting != input?.jump)
+            {
+                state.wasShooting = input?.jump ?? false;
+
+                if (state.wasShooting)
+                    Shoot();
+            }
+        }
+        
+        private void Shoot()
+        {
+            var projectileId = hierarchy.Create(_projectile);
+            var projectileRb = hierarchy.GetComponent<Rigidbody>(projectileId);
+            
+            projectileRb.position = transform.position + transform.forward;
+            projectileRb.rotation = transform.rotation;
+            projectileRb.linearVelocity = transform.forward * 10;
         }
 
         protected override SimpleWASDInput GetInput()

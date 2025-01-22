@@ -1,3 +1,4 @@
+using System;
 using FixMath.NET;
 using JetBrains.Annotations;
 using PurrNet.Logging;
@@ -117,6 +118,7 @@ namespace PurrNet.Prediction
 
         public abstract void ClearInput();
 
+        [UsedImplicitly]
         public virtual string GetDebugInfo(int tabs)
         {
             string tab = new string(' ', tabs * 4);
@@ -177,8 +179,7 @@ namespace PurrNet.Prediction
         private FULL_STATE FULLInterpolate(FULL_STATE from, FULL_STATE to, float t)
         {
             var state = Interpolate(from.state, to.state, t);
-            var internalState = Interpolate(from.prediction, to.prediction, t);
-            
+            var internalState = PredictionState.Interpolate(from.prediction, to.prediction, t);
             return new FULL_STATE
             {
                 state = state,
@@ -216,6 +217,11 @@ namespace PurrNet.Prediction
             _interpolatedState = new Interpolated<FULL_STATE>(FULLInterpolate, (float)world.tickDelta, copy, settings.maxInterpolationQueue);
             _stateHistory = new History<FULL_STATE>(world.tickRate * settings.secondsToKeepInHistory);
             _stateHistory.Write(0, copy);
+        }
+
+        protected virtual void Start()
+        {
+            ResetInterpolation();
         }
 
         /// <summary>
@@ -348,13 +354,13 @@ namespace PurrNet.Prediction
                 var rotRate = settings.rotationInterpolation.correctionRateMinMax;
                 var rotBlend = settings.rotationInterpolation.correctionBlendMinMax;
                 var rotLerp = Mathf.Clamp01(Mathf.InverseLerp(rotBlend.x, rotBlend.y, rotationError));
-                var rate = Mathf.Lerp(rotRate.x, rotRate.y, rotLerp) * (float)delta;
+                float rate = Mathf.Lerp(rotRate.x, rotRate.y, rotLerp) * (float)delta;
                 
-                // Partially correction
-                var newRot = Quaternion.Slerp(oldTrs.rotation, newTrs.rotation, rate);
-                var correctionApplied = Quaternion.Inverse(oldTrs.rotation) * newRot;
-                _accumulatedRotationError = Quaternion.Inverse(correctionApplied) * _accumulatedRotationError;
-                newTrs.rotation = newRot;
+                var partialError = Quaternion.Slerp(Quaternion.identity, _accumulatedRotationError, rate);
+                var correctedRot = oldTrs.rotation * partialError;
+                _accumulatedRotationError = Quaternion.Inverse(partialError) * _accumulatedRotationError;
+                
+                newTrs.rotation = correctedRot;
             }
             
             latestState.prediction.transform = newTrs;
@@ -496,14 +502,6 @@ namespace PurrNet.Prediction
             return from.Add(from, scaled);
         }
         
-        static PredictionState Interpolate(PredictionState from, PredictionState to, float t)
-        {
-            var offset = to.Add(to, from.Negate(from));
-            var scaled = offset.Scale(offset, t);
-            var result = from.Add(from, scaled);
-            return result;
-        }
-
         public override string GetDebugInfo(int tabs)
         {
             var baseData = base.GetDebugInfo(tabs + 1);

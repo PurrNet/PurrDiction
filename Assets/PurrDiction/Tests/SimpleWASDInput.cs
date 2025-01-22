@@ -15,5 +15,6 @@
     
     public struct SimpleCCState : IPredictedData<SimpleCCState>
     {
+        public bool wasShooting;
     }
 }

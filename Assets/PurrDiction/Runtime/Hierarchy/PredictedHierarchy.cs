@@ -158,8 +158,14 @@ namespace PurrNet.Prediction
 
         public PredictedObjectID? Create(GameObject prefab)
         {
+            if (!prefab)
+                return null;
+            
             if (!predictionManager.TryGetPrefab(prefab, out var prefabId))
+            {
+                PurrLogger.LogError($"Failed to find prefab '{prefab}' in the prediction manager");
                 return default;
+            }
             
             var go = predictionManager.InternalCreate(prefab);
             var id = new PredictedObjectID(_nextInstanceId);
@@ -184,6 +190,22 @@ namespace PurrNet.Prediction
             var result = Create(prefab);
             id = result.GetValueOrDefault();
             return result.HasValue;
+        }
+        
+        public GameObject GetGameObject(PredictedObjectID? id)
+        {
+            if (!id.HasValue)
+                return null;
+            
+            return _instanceMap.GetValueOrDefault(id.Value);
+        }
+        
+        public T GetComponent<T>(PredictedObjectID? id) where T : Component
+        {
+            if (!id.HasValue)
+                return null;
+            
+            return _instanceMap.GetValueOrDefault(id.Value)?.GetComponent<T>();
         }
         
         public bool TryGetGameObject(PredictedObjectID? id, out GameObject go)

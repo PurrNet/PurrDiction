@@ -6,6 +6,11 @@ namespace PurrNet.Prediction
     {
         public Vector3 linearVelocity;
         public Vector3 angularVelocity;
+
+        public override string ToString()
+        {
+            return $"(linearVelocity: {linearVelocity}, angularVelocity: {angularVelocity})";
+        }
     }
     
     public class PredictedRigidbody : PredictedIdentity<UnityRigidbodyState>

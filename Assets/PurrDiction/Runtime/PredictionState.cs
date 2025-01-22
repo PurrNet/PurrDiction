@@ -7,46 +7,28 @@ namespace PurrNet.Prediction
         public PlayerID? owner;
         public PredictionTransformState? transform;
         
-        public PredictionState Add(PredictionState a, PredictionState b)
+        public static PredictionState Interpolate(PredictionState from, PredictionState to, float t)
         {
-            a.transform = a.transform.HasValue && b.transform.HasValue
-                ? new PredictionTransformState
-                {
-                    position = a.transform.Value.position + b.transform.Value.position,
-                    rotation = a.transform.Value.rotation * b.transform.Value.rotation
-                }
-                : null;
-            return a;
-        }
-
-        public PredictionState Negate(PredictionState a)
-        {
-            a.transform = a.transform.HasValue
-                ? new PredictionTransformState
-                {
-                    position = -a.transform.Value.position,
-                    rotation = Quaternion.Inverse(a.transform.Value.rotation)
-                }
-                : null;
-            return a;
-        }
-
-        public PredictionState Scale(PredictionState a, float b)
-        {
-            a.transform = a.transform.HasValue
-                ? new PredictionTransformState
-                {
-                    position = a.transform.Value.position * b,
-                    rotation = Quaternion.Slerp(Quaternion.identity, a.transform.Value.rotation, b)
-                }
-                : null;
+            var result = from;
             
-            return a;
-        }
+            if (result.transform == null)
+                return result;
+            
+            if (to.transform == null)
+                return result;
 
+            var state = result.transform.Value;
+            var targetState = to.transform.Value;
+            
+            state.position = Vector3.Lerp(state.position, targetState.position, t);
+            state.rotation = Quaternion.Slerp(state.rotation, targetState.rotation, t);
+            result.transform = state;
+            
+            return result;
+        }
         public override string ToString()
         {
-            return $"(owner: {owner}, transform: {transform.HasValue})";
+            return $"(owner: {owner}, transform: {transform?.rotation})";
         }
     }
 }
