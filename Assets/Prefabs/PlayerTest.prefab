@@ -118,7 +118,8 @@ GameObject:
   m_Component:
   - component: {fileID: 6783926950543639956}
   - component: {fileID: 1085109774632596692}
-  - component: {fileID: -740372466936765982}
+  - component: {fileID: 4230114255477379906}
+  - component: {fileID: 3826029466696574374}
   m_Layer: 0
   m_Name: PlayerTest
   m_TagString: Untagged
@@ -169,10 +170,10 @@ MonoBehaviour:
     autoIncludeTransform: 1
   predictedView: {fileID: 6680935653974138748}
   _projectile: {fileID: 208167536026591109, guid: eb91489127ad82e4cbc003840e08c8f8, type: 3}
-  _controller: {fileID: -740372466936765982}
+  _controller: {fileID: 3826029466696574374}
   _speed: 5
---- !u!143 &-740372466936765982
-CharacterController:
+--- !u!136 &4230114255477379906
+CapsuleCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -186,16 +187,41 @@ CharacterController:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
+  m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 3
-  m_Height: 2
+  serializedVersion: 2
   m_Radius: 0.5
-  m_SlopeLimit: 45
-  m_StepOffset: 0.3
-  m_SkinWidth: 0.08
-  m_MinMoveDistance: 0.001
+  m_Height: 2
+  m_Direction: 1
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!54 &3826029466696574374
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2990978637306053845}
+  serializedVersion: 4
+  m_Mass: 1
+  m_Drag: 0
+  m_AngularDrag: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 1
+  m_IsKinematic: 0
+  m_Interpolate: 0
+  m_Constraints: 80
+  m_CollisionDetection: 0
 --- !u!1 &5606003294299210757
 GameObject:
   m_ObjectHideFlags: 0

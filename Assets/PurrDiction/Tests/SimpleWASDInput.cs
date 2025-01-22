@@ -1,4 +1,6 @@
-﻿namespace PurrNet.Prediction.Tests
+﻿using UnityEngine;
+
+namespace PurrNet.Prediction.Tests
 {
     public struct SimpleWASDInput : IPredictedData
     {
@@ -15,6 +17,8 @@
     
     public struct SimpleCCState : IPredictedData<SimpleCCState>
     {
+        public Vector3 linearVelocity;
+        public Vector3 angularVelocity;
         public bool wasShooting;
     }
 }

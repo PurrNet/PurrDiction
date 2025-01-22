@@ -6,9 +6,21 @@ namespace PurrNet.Prediction.Tests
     public class SimpleCC : PredictedIdentity<SimpleWASDInput, SimpleCCState>
     {
         [SerializeField] private GameObject _projectile;
-        [SerializeField] private CharacterController _controller;
+        [SerializeField] private Rigidbody _controller;
         [SerializeField] private float _speed = 5;
-        
+
+        protected override void SetUnityState(SimpleCCState state)
+        {
+            _controller.linearVelocity = state.linearVelocity;
+            _controller.angularVelocity = state.angularVelocity;
+        }
+
+        protected override void GetUnityState(ref SimpleCCState state)
+        {
+            state.linearVelocity = _controller.linearVelocity;
+            state.angularVelocity = _controller.angularVelocity;
+        }
+
         protected override void Simulate(SimpleWASDInput? input, ref SimpleCCState state, Fix64 delta)
         {
             var move = new Vector3(input?.horizontal ?? 0, 0, input?.vertical ?? 0);
@@ -16,13 +28,12 @@ namespace PurrNet.Prediction.Tests
             if (move.magnitude > 0)
                 move.Normalize();
             
-            var moveVector = move * _speed * (float)delta;
+            var moveVector = move * _speed;
             
             if (move != Vector3.zero)
                 transform.rotation = Quaternion.LookRotation(move);
             
-            _controller.Move(moveVector);
-            _controller.Move(Physics.gravity * (float)delta);
+            _controller.linearVelocity = moveVector;
 
             if (state.wasShooting != input?.jump)
             {
