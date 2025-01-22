@@ -8,6 +8,8 @@ namespace PurrNet.Prediction.Tests
         [SerializeField] private GameObject _projectile;
         [SerializeField] private CharacterController _controller;
         [SerializeField] private float _speed = 5;
+        
+        static readonly Collider[] _cache = new Collider[50];
 
         protected override void Simulate(SimpleWASDInput? input, ref SimpleCCState state, Fix64 delta)
         {
@@ -23,6 +25,14 @@ namespace PurrNet.Prediction.Tests
             
             _controller.Move(moveVector);
             _controller.Move(Physics.gravity * (float)delta);
+            
+            var hitNum = Physics.OverlapSphereNonAlloc(transform.position, 4f, _cache);
+            
+            for (var i = 0; i < hitNum; i++)
+            {
+                var hit = _cache[i];
+                hit.attachedRigidbody.WakeUp();
+            }
 
             if (state.wasShooting != input?.jump)
             {
