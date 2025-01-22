@@ -1,4 +1,6 @@
+using System;
 using FixMath.NET;
+using PurrNet.Logging;
 using UnityEngine;
 
 namespace PurrNet.Prediction.Tests
@@ -25,17 +27,6 @@ namespace PurrNet.Prediction.Tests
             
             _controller.Move(moveVector);
             _controller.Move(Physics.gravity * (float)delta);
-            
-            var hitNum = Physics.OverlapSphereNonAlloc(transform.position, 4f, _cache);
-            
-            for (var i = 0; i < hitNum; i++)
-            {
-                var hit = _cache[i];
-                var rb = hit.attachedRigidbody;
-                
-                if (rb)
-                    rb.WakeUp();
-            }
 
             if (state.wasShooting != input?.jump)
             {
@@ -45,7 +36,34 @@ namespace PurrNet.Prediction.Tests
                     Shoot();
             }
         }
-        
+
+        private void OnControllerColliderHit(ControllerColliderHit hit)
+        {
+            Rigidbody body = hit.collider.attachedRigidbody;
+
+            // no rigidbody
+            if (body == null || body.isKinematic)
+            {
+                return;
+            }
+
+            // We dont want to push objects below us
+            if (hit.moveDirection.y < -0.3)
+            {
+                return;
+            }
+
+            // Calculate push direction from move direction,
+            // we only push objects to the sides never up and down
+            Vector3 pushDir = new Vector3(hit.moveDirection.x, 0, hit.moveDirection.z);
+
+            // If you know how fast your character is trying to move,
+            // then you can also multiply the push velocity by that.
+
+            // Apply the push
+            body.linearVelocity = pushDir * 2;
+        }
+
         private void Shoot()
         {
             var projectileId = hierarchy.Create(_projectile);
