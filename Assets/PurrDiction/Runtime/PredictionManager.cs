@@ -240,8 +240,12 @@ namespace PurrNet.Prediction
 
             localTick += 1;
         }
-        
-        public bool isReplaying { get; private set; }
+
+        [UsedImplicitly]
+        public bool isReplaying
+        {
+            get; private set;
+        }
 
         private void DoPhysicsPass()
         {
@@ -253,8 +257,7 @@ namespace PurrNet.Prediction
                     var physicsScene = gameObject.scene.GetPhysicsScene();
                     if (physicsScene.IsValid())
                         physicsScene.Simulate((float)tickDelta);
-                    if (_physicsProvider == PredictionPhysicsProvider.UnityPhysics)
-                        Physics.SyncTransforms();
+                    Physics.SyncTransforms();
                     break;
                 default:
                     throw new NotImplementedException();
