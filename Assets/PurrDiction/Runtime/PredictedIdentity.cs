@@ -1,4 +1,3 @@
-using System;
 using FixMath.NET;
 using JetBrains.Annotations;
 using PurrNet.Logging;
