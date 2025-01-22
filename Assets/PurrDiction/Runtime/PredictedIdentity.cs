@@ -277,8 +277,6 @@ namespace PurrNet.Prediction
         
         public override void UpdateRollbackInterpolationState(Fix64 delta, bool accumulateError)
         {
-            PurrLogger.Log($"Updating rollback interpolation state {delta} {Time.frameCount}", this);
-            
             if (!_latestViewState.HasValue)
             {
                 _latestViewState = predictedState.DeepCopy();
