@@ -25,7 +25,7 @@ namespace PurrNet.Prediction.Tests
         {
             var move = new Vector3(input?.horizontal ?? 0, 0, input?.vertical ?? 0);
             
-            if (move.magnitude > 0)
+            if (move.magnitude > 0.01f)
                 move.Normalize();
             
             var moveVector = move * _speed;
@@ -34,7 +34,11 @@ namespace PurrNet.Prediction.Tests
                 state.rotation = Mathf.Atan2(move.x, move.z) * Mathf.Rad2Deg;
             
             _controller.rotation = Quaternion.Euler(0, state.rotation, 0);
-            _controller.linearVelocity = moveVector;
+
+            var vel = _controller.linearVelocity;
+            vel.x = moveVector.x;
+            vel.z = moveVector.z;
+            _controller.linearVelocity = vel;
 
             if (state.wasShooting != input?.jump)
             {

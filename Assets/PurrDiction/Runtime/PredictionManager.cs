@@ -359,6 +359,9 @@ namespace PurrNet.Prediction
 
         private void LateUpdate()
         {
+            if (!isClient)
+                return;
+            
             int count = _systems.Count;
             
             for (var i = 0; i < count; i++)
