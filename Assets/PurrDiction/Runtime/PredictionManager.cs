@@ -154,8 +154,11 @@ namespace PurrNet.Prediction
                 system.Rollback(localTick);
                 system.ResetInterpolation();
             }
+            
+            if (_physicsProvider == PredictionPhysicsProvider.UnityPhysics)
+                Physics.SyncTransforms();
         }
-
+        
         void OnTick()
         {
             using var frame = BitPackerPool.Get();
@@ -237,6 +240,8 @@ namespace PurrNet.Prediction
 
             localTick += 1;
         }
+        
+        public bool isReplaying { get; private set; }
 
         private void DoPhysicsPass()
         {
@@ -248,6 +253,8 @@ namespace PurrNet.Prediction
                     var physicsScene = gameObject.scene.GetPhysicsScene();
                     if (physicsScene.IsValid())
                         physicsScene.Simulate((float)tickDelta);
+                    if (_physicsProvider == PredictionPhysicsProvider.UnityPhysics)
+                        Physics.SyncTransforms();
                     break;
                 default:
                     throw new NotImplementedException();
@@ -269,7 +276,8 @@ namespace PurrNet.Prediction
                     system.Rollback(clientLocalTick);
                 }
                 
-                Physics.SyncTransforms();
+                if (_physicsProvider == PredictionPhysicsProvider.UnityPhysics)
+                    Physics.SyncTransforms();
                 
                 for (var i = 0; i < _systems.Count; i++)
                     _systems[i].ReadInput(clientLocalTick, frame);
@@ -280,6 +288,7 @@ namespace PurrNet.Prediction
 
         private void CatchupFromTick(ulong clientTick)
         {
+            isReplaying = true;
             for (ulong simTick = clientTick + 1; simTick < localTick; simTick++)
             {
                 for (var j = 0; j < _systems.Count; j++)
@@ -292,6 +301,7 @@ namespace PurrNet.Prediction
                 for (var j = 0; j < count; j++)
                     _systems[j].UpdateUnityState();
             }
+            isReplaying = false;
             
             var scount = _systems.Count;
             for (var j = 0; j < scount; j++)
@@ -372,10 +382,15 @@ namespace PurrNet.Prediction
             id = Array.IndexOf(_prefabs, prefab);
             return id != -1;
         }
-
+        
         internal GameObject InternalCreate(GameObject prefab)
         {
             return UnityProxy.InstantiateDirectly(prefab);
+        }
+
+        internal GameObject InternalCreate(GameObject prefab, Vector3 position, Quaternion rotation)
+        {
+            return UnityProxy.InstantiateDirectly(prefab, position, rotation);
         }
 
         internal void InternalDelete(GameObject instance)

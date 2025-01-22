@@ -1,6 +1,4 @@
-using System;
 using FixMath.NET;
-using PurrNet.Logging;
 using UnityEngine;
 
 namespace PurrNet.Prediction.Tests
@@ -11,8 +9,6 @@ namespace PurrNet.Prediction.Tests
         [SerializeField] private CharacterController _controller;
         [SerializeField] private float _speed = 5;
         
-        static readonly Collider[] _cache = new Collider[50];
-
         protected override void Simulate(SimpleWASDInput? input, ref SimpleCCState state, Fix64 delta)
         {
             var move = new Vector3(input?.horizontal ?? 0, 0, input?.vertical ?? 0);
@@ -31,46 +27,16 @@ namespace PurrNet.Prediction.Tests
             if (state.wasShooting != input?.jump)
             {
                 state.wasShooting = input?.jump ?? false;
-
                 if (state.wasShooting)
                     Shoot();
             }
         }
 
-        private void OnControllerColliderHit(ControllerColliderHit hit)
-        {
-            Rigidbody body = hit.collider.attachedRigidbody;
-
-            // no rigidbody
-            if (body == null || body.isKinematic)
-            {
-                return;
-            }
-
-            // We dont want to push objects below us
-            if (hit.moveDirection.y < -0.3)
-            {
-                return;
-            }
-
-            // Calculate push direction from move direction,
-            // we only push objects to the sides never up and down
-            Vector3 pushDir = new Vector3(hit.moveDirection.x, 0, hit.moveDirection.z);
-
-            // If you know how fast your character is trying to move,
-            // then you can also multiply the push velocity by that.
-
-            // Apply the push
-            body.linearVelocity = pushDir * 2;
-        }
-
         private void Shoot()
         {
-            var projectileId = hierarchy.Create(_projectile);
+            var pos = transform.position + transform.forward;
+            var projectileId = hierarchy.Create(_projectile, pos, transform.rotation);
             var projectileRb = hierarchy.GetComponent<Rigidbody>(projectileId);
-            
-            projectileRb.position = transform.position + transform.forward;
-            projectileRb.rotation = transform.rotation;
             projectileRb.linearVelocity = transform.forward * 10;
         }
 

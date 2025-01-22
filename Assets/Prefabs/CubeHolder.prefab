@@ -71,7 +71,7 @@ MonoBehaviour:
   _predictionSettings:
     maxInterpolationQueue: 2
     secondsToKeepInHistory: 5
-    autoIncludeTransform: 1
+    interpolate: 1
     positionInterpolation:
       correctionRateMinMax: {x: 3.3, y: 10}
       correctionBlendMinMax: {x: 0.25, y: 4}
@@ -80,7 +80,7 @@ MonoBehaviour:
       correctionRateMinMax: {x: 3.3, y: 10}
       correctionBlendMinMax: {x: 0.1, y: 0.5}
       teleportThresholdMinMax: {x: 0.025, y: 0.5}
-    interpolate: 1
+    autoIncludeTransform: 1
   predictedView: {fileID: 8038408506651358186}
   _rigidbody: {fileID: 1844987416951553775}
 --- !u!54 &1844987416951553775

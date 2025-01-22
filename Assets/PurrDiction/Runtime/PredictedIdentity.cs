@@ -34,6 +34,7 @@ namespace PurrNet.Prediction
         [SerializeField] internal Transform predictedView;
         
         internal bool hasView;
+        internal bool _isFreshSpawn = true;
 
         public PredictionSettings settings
         {
@@ -47,6 +48,9 @@ namespace PurrNet.Prediction
 
         public virtual void Setup(NetworkManager manager, PredictionManager world)
         {
+            if (!_isFreshSpawn)
+                return;
+            
             hasView = predictedView != null;
         }
 
@@ -167,7 +171,7 @@ namespace PurrNet.Prediction
         
         private History<FULL_STATE> _stateHistory;
         
-        private bool _resetInterpolation;
+        private bool _resetInterpolation = true;
         
         protected TickManager tickModule { get; private set; }
 
@@ -195,6 +199,9 @@ namespace PurrNet.Prediction
         
         public override void Setup(NetworkManager manager, PredictionManager world)
         {
+            if (!_isFreshSpawn)
+                return;
+            
             base.Setup(manager, world);
             
             _unityCtrler = GetComponent<CharacterController>();
@@ -217,11 +224,6 @@ namespace PurrNet.Prediction
             _interpolatedState = new Interpolated<FULL_STATE>(FULLInterpolate, (float)world.tickDelta, copy, settings.maxInterpolationQueue);
             _stateHistory = new History<FULL_STATE>(world.tickRate * settings.secondsToKeepInHistory);
             _stateHistory.Write(0, copy);
-        }
-
-        protected virtual void Start()
-        {
-            ResetInterpolation();
         }
 
         /// <summary>
@@ -388,6 +390,13 @@ namespace PurrNet.Prediction
             
             RollbackInternal(predictedState.prediction);
             SetUnityState(predictedState.state);
+            
+            if (_isFreshSpawn)
+            {
+                _isFreshSpawn = false;
+                _resetInterpolation = false;
+                _interpolatedState.Teleport(predictedState);
+            }
         }
         
         private void RollbackInternal(PredictionState state)
