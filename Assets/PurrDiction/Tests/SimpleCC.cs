@@ -31,7 +31,10 @@ namespace PurrNet.Prediction.Tests
             for (var i = 0; i < hitNum; i++)
             {
                 var hit = _cache[i];
-                hit.attachedRigidbody.WakeUp();
+                var rb = hit.attachedRigidbody;
+                
+                if (rb)
+                    rb.WakeUp();
             }
 
             if (state.wasShooting != input?.jump)
