@@ -52,16 +52,18 @@ namespace PurrNet.Prediction
             Simulate(_lastInput, ref predictedState.state, delta);
         }
         
-        internal override void SimulateRemote(Fix64 delta)
+        internal override void SimulateRemote(ulong tick, Fix64 delta)
         {
             if (_queuedInputs.Count == 0)
             {
-                Simulate(_lastInput, ref predictedState.state, delta);
+                if (_inputHistory.TryGetClosest(tick, out var input))
+                     Simulate(input, ref predictedState.state, delta);
+                else Simulate(_lastInput, ref predictedState.state, delta);
+                
                 return;
             }
-            
-            _lastInput = _queuedInputs.Dequeue();
-            Simulate(_lastInput, ref predictedState.state, delta);
+
+            Simulate(_queuedInputs.Dequeue(), ref predictedState.state, delta);
         }
 
         protected abstract void Simulate(INPUT? input, ref STATE state, Fix64 delta);

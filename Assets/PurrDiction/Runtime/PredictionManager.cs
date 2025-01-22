@@ -181,7 +181,7 @@ namespace PurrNet.Prediction
                 }
                 else
                 {
-                     system.SimulateRemote(tickDelta);
+                     system.SimulateRemote(localTick, tickDelta);
                 }
             }
 

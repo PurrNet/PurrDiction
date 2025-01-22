@@ -93,7 +93,7 @@ namespace PurrNet.Prediction
         
         internal abstract void SimulateLocal(Fix64 delta);
 
-        internal abstract void SimulateRemote(Fix64 delta);
+        internal abstract void SimulateRemote(ulong tick, Fix64 delta);
         
         internal abstract void SaveStateInHistory(ulong tick);
 
@@ -244,7 +244,7 @@ namespace PurrNet.Prediction
 
         internal override void SimulateLocal(Fix64 delta) => Simulate(delta, ref predictedState.state);
 
-        internal override void SimulateRemote(Fix64 delta) => Simulate(delta, ref predictedState.state);
+        internal override void SimulateRemote(ulong tick, Fix64 delta) => Simulate(delta, ref predictedState.state);
 
         private void InternalUpdateUnityState(ref PredictionState state)
         {
