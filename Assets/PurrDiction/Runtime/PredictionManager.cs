@@ -195,7 +195,7 @@ namespace PurrNet.Prediction
                 {
                     var system = _systems[systemIdx];
                     
-                    system.UpdateUnityState();
+                    system.GetLatestUnityState();
                     system.SaveStateInHistory(localTick);
                     system.WriteState(localTick, frame);
                 }
@@ -217,7 +217,7 @@ namespace PurrNet.Prediction
                 for (var systemIdx = 0; systemIdx < count; systemIdx++)
                 {
                     var system = _systems[systemIdx];
-                    system.UpdateUnityState();
+                    system.GetLatestUnityState();
                     system.UpdateRollbackInterpolationState(tickDelta, false);
 
                     if (system.IsOwner(myPlayer))
@@ -259,7 +259,6 @@ namespace PurrNet.Prediction
                     var physicsScene = gameObject.scene.GetPhysicsScene();
                     if (physicsScene.IsValid())
                         physicsScene.Simulate((float)tickDelta);
-                    Physics.SyncTransforms();
                     break;
                 default:
                     throw new NotImplementedException();
@@ -304,13 +303,15 @@ namespace PurrNet.Prediction
                 var count = _systems.Count;
 
                 for (var j = 0; j < count; j++)
-                    _systems[j].UpdateUnityState();
+                    _systems[j].GetLatestUnityState();
             }
             isReplaying = false;
             
             var scount = _systems.Count;
             for (var j = 0; j < scount; j++)
+            {
                 _systems[j].UpdateRollbackInterpolationState(tickDelta, true);
+            }
         }
         
         private ulong? _tickToRollbackFrom;

@@ -78,8 +78,8 @@ MonoBehaviour:
       teleportThresholdMinMax: {x: 0.025, y: 5}
     rotationInterpolation:
       correctionRateMinMax: {x: 3.3, y: 10}
-      correctionBlendMinMax: {x: 0.1, y: 0.5}
-      teleportThresholdMinMax: {x: 0.025, y: 0.5}
+      correctionBlendMinMax: {x: 5, y: 30}
+      teleportThresholdMinMax: {x: 1.5, y: 25}
     autoIncludeTransform: 1
   predictedView: {fileID: 8038408506651358186}
   _rigidbody: {fileID: 1844987416951553775}

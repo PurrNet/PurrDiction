@@ -12,7 +12,6 @@ namespace PurrNet.Prediction
         [SerializeField] private PredictionSettings _predictionSettings = new ()
         {
             maxInterpolationQueue = 2,
-            secondsToKeepInHistory = 5,
             autoIncludeTransform = true,
             positionInterpolation = new PredictedInterpolation
             {
@@ -23,8 +22,8 @@ namespace PurrNet.Prediction
             rotationInterpolation = new PredictedInterpolation
             {
                 correctionRateMinMax = new Vector2(3.3f, 10f),
-                correctionBlendMinMax = new Vector2(0.1f, 0.5f),
-                teleportThresholdMinMax = new Vector2(0.025f, 0.5f)
+                correctionBlendMinMax = new Vector2(5f, 30f),
+                teleportThresholdMinMax = new Vector2(1.5f, 52f)
             },
             interpolate = true
         };
@@ -105,7 +104,7 @@ namespace PurrNet.Prediction
         
         internal abstract void UpdateView(float deltaTime);
 
-        internal abstract void UpdateUnityState();
+        internal abstract void GetLatestUnityState();
         
         public abstract void WriteLatestState(BitPacker packer);
         
@@ -216,12 +215,12 @@ namespace PurrNet.Prediction
             
             var initialState = GetInitialState();
             predictedState.state = initialState;
-            UpdateUnityState();
+            GetLatestUnityState();
 
             var copy = predictedState.DeepCopy();
             
             _interpolatedState = new Interpolated<FULL_STATE>(FULLInterpolate, (float)world.tickDelta, copy, settings.maxInterpolationQueue);
-            _stateHistory = new History<FULL_STATE>(world.tickRate * settings.secondsToKeepInHistory);
+            _stateHistory = new History<FULL_STATE>(world.tickRate * 5);
             _stateHistory.Write(0, copy);
         }
 
@@ -232,7 +231,7 @@ namespace PurrNet.Prediction
         /// <returns>The initial state of the object.</returns>
         protected virtual void GetUnityState(ref STATE state) {}
 
-        internal override void UpdateUnityState()
+        internal override void GetLatestUnityState()
         {
             InternalUpdateUnityState(ref predictedState.prediction);
             GetUnityState(ref predictedState.state);
@@ -276,13 +275,7 @@ namespace PurrNet.Prediction
         
         public override void UpdateRollbackInterpolationState(Fix64 delta, bool accumulateError)
         {
-            if (!_latestViewState.HasValue)
-            {
-                _latestViewState = predictedState.DeepCopy();
-                return;
-            }
-
-            if (!settings.autoIncludeTransform)
+            if (!_latestViewState.HasValue || !settings.autoIncludeTransform)
             {
                 _latestViewState?.Dispose();
                 _latestViewState = predictedState.DeepCopy();
@@ -316,7 +309,8 @@ namespace PurrNet.Prediction
             
             var snapPos = positionError > posThreshold.y;
             var skipPos = positionError < posThreshold.x;
-            var snapRot = rotationError > rotThreshold.y;  
+            
+            var snapRot = rotationError > rotThreshold.y;
             var skipRot = rotationError < rotThreshold.x;
             
             if (snapPos)
@@ -334,10 +328,12 @@ namespace PurrNet.Prediction
                 var correction = _accumulatedPositionError * rate;
                 
                 float corrMag = correction.magnitude;
+
+                float minMove = posThreshold.x;// / (float)delta;
     
                 // Clamp correction to at least posThreshold.x if we have enough error
-                if (corrMag < posThreshold.x && positionError > posThreshold.x)
-                    correction = correction.normalized * posThreshold.x;
+                if (corrMag < minMove && positionError > minMove)
+                    correction = correction.normalized * minMove;
                 // Make sure we never exceed the total error
                 else if (corrMag > positionError)
                     correction = _accumulatedPositionError;
