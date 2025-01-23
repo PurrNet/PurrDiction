@@ -98,7 +98,7 @@ namespace PurrNet.Prediction
 
         internal abstract void Rollback(ulong tick);
 
-        public abstract void UpdateRollbackInterpolationState(ulong tick, Fix64 delta, bool accumulateError);
+        public abstract void UpdateRollbackInterpolationState(Fix64 delta, bool accumulateError);
 
         internal abstract void ResetInterpolation();
         
@@ -275,7 +275,7 @@ namespace PurrNet.Prediction
         Vector3 _accumulatedPositionError;
         Quaternion _accumulatedRotationError = Quaternion.identity;
         
-        public override void UpdateRollbackInterpolationState(ulong tick, Fix64 delta, bool accumulateError)
+        public override void UpdateRollbackInterpolationState(Fix64 delta, bool accumulateError)
         {
             if (!settings.autoIncludeTransform || !settings.interpolate || !_viewState.HasValue || 
                 !predictedState.prediction.transform.HasValue|| 
@@ -311,12 +311,12 @@ namespace PurrNet.Prediction
             var snapRot = rotationError > rotThreshold.y;
             var skipRot = rotationError < rotThreshold.x;
             
-            if (snapPos)
+            if (snapPos || skipPos)
             {
                 newView.position = lastPrediction.position;
                 _accumulatedPositionError = default;
             }
-            else if (!skipPos)
+            else
             {
                 newView.position = lastPrediction.position - _accumulatedPositionError;
 
@@ -340,25 +340,23 @@ namespace PurrNet.Prediction
 
                 _accumulatedPositionError -= correction;
             }
-            else newView.position = lastPrediction.position;
             
-            if (snapRot)
+            if (snapRot || skipRot)
             {
                 _accumulatedRotationError = Quaternion.identity;
                 newView.rotation = lastPrediction.rotation;
             }
-            else if (!skipRot)
+            else
             {
-                newView.rotation = _accumulatedRotationError * lastPrediction.rotation;
+                newView.rotation = Quaternion.Inverse(_accumulatedRotationError) * lastPrediction.rotation;
                 
                 var rotRate = settings.rotationInterpolation.correctionRateMinMax;
                 var rotBlend = settings.rotationInterpolation.correctionBlendMinMax;
                 var rotLerp = Mathf.Clamp01(Mathf.InverseLerp(rotBlend.x, rotBlend.y, rotationError));
                 float rate = Mathf.Lerp(rotRate.x, rotRate.y, rotLerp) * (float)delta;
                 
-                _accumulatedRotationError = Quaternion.Slerp(Quaternion.identity, _accumulatedRotationError, rate);
+                _accumulatedRotationError = Quaternion.Slerp(_accumulatedRotationError, Quaternion.identity, rate);
             }
-            else newView.rotation = lastPrediction.rotation;
             
             _viewState?.Dispose();
             var copy = predictedState.DeepCopy();

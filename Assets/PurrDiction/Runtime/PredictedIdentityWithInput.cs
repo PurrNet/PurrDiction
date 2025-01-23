@@ -63,7 +63,9 @@ namespace PurrNet.Prediction
                 return;
             }
 
-            Simulate(_queuedInputs.Dequeue(), ref predictedState.state, delta);
+            var dequeuedInput = _queuedInputs.Dequeue();
+            _inputHistory.Write(tick, dequeuedInput);
+            Simulate(dequeuedInput, ref predictedState.state, delta);
         }
 
         protected abstract void Simulate(INPUT? input, ref STATE state, Fix64 delta);

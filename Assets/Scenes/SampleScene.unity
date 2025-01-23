@@ -808,7 +808,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _predictionSettings:
     autoIncludeTransform: 1
-    interpolate: 0
+    interpolate: 1
     positionInterpolation:
       correctionRateMinMax: {x: 3.3, y: 10}
       correctionBlendMinMax: {x: 0.25, y: 4}
@@ -816,7 +816,7 @@ MonoBehaviour:
     rotationInterpolation:
       correctionRateMinMax: {x: 3.3, y: 10}
       correctionBlendMinMax: {x: 5, y: 30}
-      teleportThresholdMinMax: {x: 1.5, y: 25}
+      teleportThresholdMinMax: {x: 1.5, y: 45}
     maxInterpolationQueue: 2
   predictedView: {fileID: 1302462934}
   _rigidbody: {fileID: 2041834274}

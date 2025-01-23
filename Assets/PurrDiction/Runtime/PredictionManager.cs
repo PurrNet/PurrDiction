@@ -203,7 +203,7 @@ namespace PurrNet.Prediction
                 if (cachedIsClient)
                 {
                     for (var systemIdx = 0; systemIdx < count; systemIdx++)
-                        _systems[systemIdx].UpdateRollbackInterpolationState(localTick, tickDelta, false);
+                        _systems[systemIdx].UpdateRollbackInterpolationState(tickDelta, false);
                 }
 
                 for (var systemIdx = 0; systemIdx < count; systemIdx++)
@@ -218,7 +218,7 @@ namespace PurrNet.Prediction
                 {
                     var system = _systems[systemIdx];
                     system.GetLatestUnityState();
-                    system.UpdateRollbackInterpolationState(localTick, tickDelta, false);
+                    system.UpdateRollbackInterpolationState(tickDelta, false);
 
                     if (system.IsOwner(myPlayer))
                         system.WriteInput(localTick, frame);
@@ -273,7 +273,7 @@ namespace PurrNet.Prediction
             
             using (frame)
             {
-                for (var i = 0; i < _systems.Count; i++)
+                for (var i = 0; i < _systems.Count; ++i)
                 {
                     var system = _systems[i];
                     system.ReadState(clientLocalTick, frame);
@@ -282,8 +282,9 @@ namespace PurrNet.Prediction
                 
                 if (_physicsProvider == PredictionPhysicsProvider.UnityPhysics)
                     Physics.SyncTransforms();
-                
-                for (var i = 0; i < _systems.Count; i++)
+
+                var sysCount = _systems.Count;
+                for (var i = 0; i < sysCount; ++i)
                     _systems[i].ReadInput(clientLocalTick, frame);
             }
             
@@ -309,7 +310,7 @@ namespace PurrNet.Prediction
             
             var scount = _systems.Count;
             for (var j = 0; j < scount; j++)
-                _systems[j].UpdateRollbackInterpolationState(localTick, tickDelta, true);
+                _systems[j].UpdateRollbackInterpolationState(tickDelta, true);
         }
         
         private ulong? _tickToRollbackFrom;

@@ -47,7 +47,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _predictionSettings:
     autoIncludeTransform: 1
-    interpolate: 0
+    interpolate: 1
     positionInterpolation:
       correctionRateMinMax: {x: 3.3, y: 10}
       correctionBlendMinMax: {x: 0.2, y: 1}
