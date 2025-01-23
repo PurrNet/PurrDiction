@@ -52,16 +52,8 @@ MonoBehaviour:
   _updateView: 1
   _maxInterpolationBuffer: 2
   _graphics: {fileID: 729962719845460985}
-  _smoothCorrections: 1
   _characterControllerPatch: 1
-  positionInterpolation:
-    correctionRateMinMax: {x: 3.3, y: 10}
-    correctionBlendMinMax: {x: 0.25, y: 4}
-    teleportThresholdMinMax: {x: 0.025, y: 5}
-  rotationInterpolation:
-    correctionRateMinMax: {x: 3.3, y: 10}
-    correctionBlendMinMax: {x: 5, y: 30}
-    teleportThresholdMinMax: {x: 1.5, y: 52}
+  _interpolationSettings: {fileID: 11400000, guid: 4a8aa8e44e23cfd4a8d4387ef3f36173, type: 2}
 --- !u!114 &418667658902119586
 MonoBehaviour:
   m_ObjectHideFlags: 0
