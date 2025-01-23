@@ -277,7 +277,7 @@ namespace PurrNet.Prediction
         
         public override void UpdateRollbackInterpolationState(ulong tick, Fix64 delta, bool accumulateError)
         {
-            if (!settings.autoIncludeTransform || !_viewState.HasValue || 
+            if (!settings.autoIncludeTransform || !settings.interpolate || !_viewState.HasValue || 
                 !predictedState.prediction.transform.HasValue|| 
                 !_viewState.Value.prediction.transform.HasValue)
             {
