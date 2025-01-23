@@ -47,6 +47,15 @@ namespace PurrNet.Prediction
             _hasView = _graphics;
         }
 
+        protected override PredictedTransformState GetInitialState()
+        {
+            return new PredictedTransformState
+            {
+                position = transform.position,
+                rotation = transform.rotation
+            };
+        }
+
         protected override void GetUnityState(ref PredictedTransformState state)
         {
             if (_hasRigidbody)

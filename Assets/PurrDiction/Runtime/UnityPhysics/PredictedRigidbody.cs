@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 
 namespace PurrNet.Prediction
@@ -16,7 +17,22 @@ namespace PurrNet.Prediction
     public class PredictedRigidbody : PredictedIdentity<UnityRigidbodyState>
     {
         [SerializeField] private Rigidbody _rigidbody;
-        
+
+        private void Reset()
+        {
+            _updateView = false;
+            _rigidbody = GetComponent<Rigidbody>();
+        }
+
+        protected override UnityRigidbodyState GetInitialState()
+        {
+            return new UnityRigidbodyState
+            {
+                linearVelocity = _rigidbody.linearVelocity,
+                angularVelocity = _rigidbody.angularVelocity
+            };
+        }
+
         protected override void GetUnityState(ref UnityRigidbodyState state)
         {
             state.linearVelocity = _rigidbody.linearVelocity;

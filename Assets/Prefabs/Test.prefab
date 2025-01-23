@@ -74,7 +74,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 939517533de889a4f948d4e2041fb798, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _updateView: 1
+  _updateView: 0
   _maxInterpolationBuffer: 2
   _rigidbody: {fileID: 4128616344664541717}
 --- !u!54 &4128616344664541717
