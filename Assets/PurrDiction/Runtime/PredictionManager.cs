@@ -203,7 +203,7 @@ namespace PurrNet.Prediction
                 if (cachedIsClient)
                 {
                     for (var systemIdx = 0; systemIdx < count; systemIdx++)
-                        _systems[systemIdx].UpdateRollbackInterpolationState(tickDelta, false);
+                        _systems[systemIdx].UpdateRollbackInterpolationState(localTick, tickDelta, false);
                 }
 
                 for (var systemIdx = 0; systemIdx < count; systemIdx++)
@@ -218,7 +218,7 @@ namespace PurrNet.Prediction
                 {
                     var system = _systems[systemIdx];
                     system.GetLatestUnityState();
-                    system.UpdateRollbackInterpolationState(tickDelta, false);
+                    system.UpdateRollbackInterpolationState(localTick, tickDelta, false);
 
                     if (system.IsOwner(myPlayer))
                         system.WriteInput(localTick, frame);
@@ -309,9 +309,7 @@ namespace PurrNet.Prediction
             
             var scount = _systems.Count;
             for (var j = 0; j < scount; j++)
-            {
-                _systems[j].UpdateRollbackInterpolationState(tickDelta, true);
-            }
+                _systems[j].UpdateRollbackInterpolationState(localTick, tickDelta, true);
         }
         
         private ulong? _tickToRollbackFrom;
