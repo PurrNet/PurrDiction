@@ -11,7 +11,7 @@ namespace PurrNet.Prediction
         readonly Dictionary<PredictedObjectID, GameObject> _instanceMap = new ();
         
         private int _nextInstanceId;
-
+        
         protected override void GetUnityState(ref PredictedHierarchyState state)
         {
             int count = _spawnedPrefabs.Count;
@@ -20,15 +20,6 @@ namespace PurrNet.Prediction
                 copy.Add(_spawnedPrefabs[i]);
             
             state = new PredictedHierarchyState(copy, _nextInstanceId);
-        }
-
-        public override void Setup(NetworkManager manager, PredictionManager world)
-        {
-            base.Setup(manager, world);
-            var s = settings;
-            s.interpolate = false;
-            s.autoIncludeTransform = false;
-            settings = s;
         }
 
         protected override void SetUnityState(PredictedHierarchyState state)

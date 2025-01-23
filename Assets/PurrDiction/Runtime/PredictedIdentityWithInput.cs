@@ -38,18 +38,18 @@ namespace PurrNet.Prediction
         {
             if (IsOwner())
             {
-                Simulate(!_inputHistory.TryGet(tick, out var input) ? GetInput() : input, ref predictedState.state, delta);
+                Simulate(!_inputHistory.TryGet(tick, out var input) ? GetInput() : input, ref fullPredictedState.state, delta);
             }
             else if(_inputHistory.TryGetClosest(tick, out var input))
             {
-                Simulate(input, ref predictedState.state, delta);
+                Simulate(input, ref fullPredictedState.state, delta);
             }
             else PurrLogger.LogError("No input found for tick " + tick);
         }
 
         internal override void SimulateLocal(Fix64 delta)
         {
-            Simulate(_lastInput, ref predictedState.state, delta);
+            Simulate(_lastInput, ref fullPredictedState.state, delta);
         }
         
         internal override void SimulateRemote(ulong tick, Fix64 delta)
@@ -57,15 +57,15 @@ namespace PurrNet.Prediction
             if (_queuedInputs.Count == 0)
             {
                 if (_inputHistory.TryGetClosest(tick, out var input))
-                     Simulate(input, ref predictedState.state, delta);
-                else Simulate(_lastInput, ref predictedState.state, delta);
+                     Simulate(input, ref fullPredictedState.state, delta);
+                else Simulate(_lastInput, ref fullPredictedState.state, delta);
                 
                 return;
             }
 
             var dequeuedInput = _queuedInputs.Dequeue();
             _inputHistory.Write(tick, dequeuedInput);
-            Simulate(dequeuedInput, ref predictedState.state, delta);
+            Simulate(dequeuedInput, ref fullPredictedState.state, delta);
         }
 
         protected abstract void Simulate(INPUT? input, ref STATE state, Fix64 delta);

@@ -197,7 +197,7 @@ namespace PurrNet.Prediction
                     
                     system.GetLatestUnityState();
                     system.SaveStateInHistory(localTick);
-                    system.WriteState(localTick, frame);
+                    system.WriteLatestState(frame);
                 }
 
                 if (cachedIsClient)

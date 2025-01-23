@@ -9,9 +9,10 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 4222582337972404343}
-  - component: {fileID: 4586963088393127143}
+  - component: {fileID: 1404138192845168407}
   - component: {fileID: 4498091266971106606}
   - component: {fileID: 1844987416951553775}
+  - component: {fileID: 4586963088393127143}
   m_Layer: 0
   m_Name: CubeHolder
   m_TagString: Untagged
@@ -35,27 +36,31 @@ Transform:
   - {fileID: 8038408506651358186}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!65 &4586963088393127143
-BoxCollider:
+--- !u!114 &1404138192845168407
+MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 208167536026591109}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 1, y: 1, z: 1}
-  m_Center: {x: 0, y: 0, z: 0}
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 98dbb08343eac044895b9b52872bcb49, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _updateView: 1
+  _maxInterpolationBuffer: 2
+  _graphics: {fileID: 8038408506651358186}
+  _smoothCorrections: 1
+  _characterControllerPatch: 1
+  positionInterpolation:
+    correctionRateMinMax: {x: 3.3, y: 10}
+    correctionBlendMinMax: {x: 0.25, y: 4}
+    teleportThresholdMinMax: {x: 0.025, y: 5}
+  rotationInterpolation:
+    correctionRateMinMax: {x: 3.3, y: 10}
+    correctionBlendMinMax: {x: 5, y: 30}
+    teleportThresholdMinMax: {x: 1.5, y: 52}
 --- !u!114 &4498091266971106606
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -68,19 +73,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 939517533de889a4f948d4e2041fb798, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _predictionSettings:
-    autoIncludeTransform: 1
-    interpolate: 1
-    positionInterpolation:
-      correctionRateMinMax: {x: 3.3, y: 10}
-      correctionBlendMinMax: {x: 0.25, y: 4}
-      teleportThresholdMinMax: {x: 0.025, y: 5}
-    rotationInterpolation:
-      correctionRateMinMax: {x: 3.3, y: 10}
-      correctionBlendMinMax: {x: 5, y: 30}
-      teleportThresholdMinMax: {x: 1.5, y: 25}
-    maxInterpolationQueue: 2
-  predictedView: {fileID: 8038408506651358186}
+  _updateView: 1
+  _maxInterpolationBuffer: 2
   _rigidbody: {fileID: 1844987416951553775}
 --- !u!54 &1844987416951553775
 Rigidbody:
@@ -109,6 +103,27 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!65 &4586963088393127143
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 208167536026591109}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1, y: 1, z: 1}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &1096194966585776966
 GameObject:
   m_ObjectHideFlags: 0
