@@ -1,19 +1,9 @@
-using System;
 using UnityEngine;
 
 namespace PurrNet.Prediction
 {
-    public struct UnityRigidbodyState : IPredictedData<UnityRigidbodyState>
-    {
-        public Vector3 linearVelocity;
-        public Vector3 angularVelocity;
-
-        public override string ToString()
-        {
-            return $"(linearVelocity: {linearVelocity}, angularVelocity: {angularVelocity})";
-        }
-    }
-    
+    [RequireComponent(typeof(Rigidbody))]
+    [RequireComponent(typeof(PredictedTransform))]
     public class PredictedRigidbody : PredictedIdentity<UnityRigidbodyState>
     {
         [SerializeField] private Rigidbody _rigidbody;
