@@ -583,7 +583,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _stopPlayingOnDisconnect: 0
   _startServerFlags: 9
-  _startClientFlags: 7
+  _startClientFlags: 6
   _cookieScope: 1
   _dontDestroyOnLoad: 0
   _transport: {fileID: 1793795279}
@@ -816,7 +816,7 @@ MonoBehaviour:
     rotationInterpolation:
       correctionRateMinMax: {x: 3.3, y: 10}
       correctionBlendMinMax: {x: 5, y: 30}
-      teleportThresholdMinMax: {x: 1.5, y: 52}
+      teleportThresholdMinMax: {x: 1.5, y: 25}
     maxInterpolationQueue: 2
   predictedView: {fileID: 1302462934}
   _rigidbody: {fileID: 2041834274}
@@ -871,7 +871,7 @@ HingeJoint:
     spring: 0
     damper: 0
     targetPosition: 0
-  m_UseMotor: 1
+  m_UseMotor: 0
   m_Motor:
     targetVelocity: 50
     force: 100
