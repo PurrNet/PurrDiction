@@ -48,6 +48,8 @@ namespace PurrNet.Prediction
         public int tickRate { get; private set; }
         
         public ulong localTick { get; private set; } = 1;
+        
+        public ulong localTickInContext { get; private set; } = 1;
 
         public PredictedHierarchy hierarchy { get; private set; }
         
@@ -280,6 +282,7 @@ namespace PurrNet.Prediction
             }
 
             localTick += 1;
+            localTickInContext = localTick;
         }
 
         [UsedImplicitly]
@@ -319,9 +322,6 @@ namespace PurrNet.Prediction
                     system.Rollback(clientLocalTick);
                 }
                 
-                if (_physicsProvider == PredictionPhysicsProvider.UnityPhysics)
-                    Physics.SyncTransforms();
-
                 var sysCount = _systems.Count;
                 for (var i = 0; i < sysCount; ++i)
                     _systems[i].ReadInput(clientLocalTick, frame);
@@ -335,6 +335,8 @@ namespace PurrNet.Prediction
             isReplaying = true;
             for (ulong simTick = clientTick + 1; simTick < localTick; simTick++)
             {
+                localTickInContext = simTick;
+                
                 for (var j = 0; j < _systems.Count; j++)
                     _systems[j].SimulateTick(simTick, tickDelta);
 
@@ -345,6 +347,8 @@ namespace PurrNet.Prediction
                 for (var j = 0; j < count; j++)
                     _systems[j].GetLatestUnityState();
             }
+            
+            localTickInContext = localTick;
             isReplaying = false;
             
             var scount = _systems.Count;

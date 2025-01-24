@@ -1,5 +1,4 @@
 using FixMath.NET;
-using PurrNet.Logging;
 using UnityEngine;
 
 namespace PurrNet.Prediction.Tests
@@ -40,7 +39,7 @@ namespace PurrNet.Prediction.Tests
             vel.x = moveVector.x;
             vel.z = moveVector.z;
             _controller.linearVelocity = vel;
-
+            
             if (state.wasShooting != input?.jump)
             {
                 state.wasShooting = input?.jump ?? false;
@@ -52,6 +51,7 @@ namespace PurrNet.Prediction.Tests
         private void Shoot()
         {
             var pos = transform.position + transform.forward;
+            
             var projectileId = hierarchy.Create(_projectile, pos, transform.rotation);
             var projectileRb = hierarchy.GetComponent<Rigidbody>(projectileId);
             projectileRb.linearVelocity = transform.forward * 10;

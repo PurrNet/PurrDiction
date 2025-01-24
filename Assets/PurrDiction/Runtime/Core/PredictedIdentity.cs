@@ -9,22 +9,14 @@ namespace PurrNet.Prediction
 {
     public abstract class PredictedIdentity : MonoBehaviour
     {
-        [SerializeField] protected bool _updateView = true;
         [SerializeField] protected int _maxInterpolationBuffer = 2;
+        [SerializeField] protected bool _updateView = true;
         
-        internal bool _isFreshSpawn = true;
-
         public PredictionManager predictionManager { get; protected set; }
 
         public PlayerID? owner;
 
         public abstract void Setup(NetworkManager manager, PredictionManager world);
-
-        /*protected virtual void OnEnable()
-        {
-            if (PredictionManager.TryGetInstance(gameObject.scene.handle, out var world))
-                world.RegisterInstance(this);
-        }*/
 
         protected virtual void OnDisable()
         {
@@ -152,9 +144,6 @@ namespace PurrNet.Prediction
         
         public override void Setup(NetworkManager manager, PredictionManager world)
         {
-            if (!_isFreshSpawn)
-                return;
-            
             owner = null;
             predictionManager = world;
             tickModule = manager.tickModule;
@@ -226,25 +215,11 @@ namespace PurrNet.Prediction
                 return;
             }
             
-            owner = state.prediction.owner;
-            
             fullPredictedState.Dispose();
             fullPredictedState = state.DeepCopy();
             
-            RollbackInternal(fullPredictedState.prediction);
+            owner = fullPredictedState.prediction.owner;
             SetUnityState(fullPredictedState.state);
-            
-            if (_isFreshSpawn)
-            {
-                _isFreshSpawn = false;
-                _resetInterpolation = false;
-                _interpolatedState.Teleport(fullPredictedState);
-            }
-        }
-        
-        private void RollbackInternal(PredictedIdentityState state)
-        {
-            owner = state.owner;
         }
         
         protected virtual void SetUnityState(STATE state) {}

@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using FixMath.NET;
 using PurrNet.Logging;
 using PurrNet.Packing;
+using UnityEngine;
 
 namespace PurrNet.Prediction
 {
@@ -9,6 +10,8 @@ namespace PurrNet.Prediction
         where STATE : struct, IPredictedData<STATE>
         where INPUT : struct, IPredictedData
     {
+        [SerializeField] private bool _extrapolateInput = true;
+        
         private History<INPUT> _inputHistory;
 
         protected abstract INPUT GetInput();
@@ -19,9 +22,6 @@ namespace PurrNet.Prediction
 
         public override void Setup(NetworkManager manager, PredictionManager world)
         {
-            if (!_isFreshSpawn)
-                return;
-            
             base.Setup(manager, world);
 
             hierarchy = world.hierarchy;
@@ -38,13 +38,28 @@ namespace PurrNet.Prediction
         {
             if (IsOwner())
             {
-                Simulate(!_inputHistory.TryGet(tick, out var input) ? GetInput() : input, ref fullPredictedState.state, delta);
+                if (!_inputHistory.TryGet(tick, out var input))
+                {
+                    Simulate(GetInput(), ref fullPredictedState.state, delta);
+                    PurrLogger.LogError("No local input found for tick" + tick + " using current input but this is likely a bug");
+                }
+                else Simulate(input, ref fullPredictedState.state, delta);
             }
-            else if(_inputHistory.TryGetClosest(tick, out var input))
+            else
             {
-                Simulate(input, ref fullPredictedState.state, delta);
+                switch (_extrapolateInput)
+                {
+                    case true when _inputHistory.TryGetClosest(tick, out var extrainput):
+                        Simulate(extrainput, ref fullPredictedState.state, delta);
+                        break;
+                    case false when _inputHistory.TryGet(tick, out var input):
+                        Simulate(input, ref fullPredictedState.state, delta);
+                        break;
+                    default:
+                        Simulate(null, ref fullPredictedState.state, delta);
+                        break;
+                }
             }
-            else PurrLogger.LogError("No input found for tick " + tick);
         }
 
         internal override void SimulateLocal(Fix64 delta)

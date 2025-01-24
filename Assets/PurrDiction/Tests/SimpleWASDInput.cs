@@ -21,5 +21,10 @@ namespace PurrNet.Prediction.Tests
         public Vector3 angularVelocity;
         public float rotation;
         public bool wasShooting;
+
+        public override string ToString()
+        {
+            return "Was shooting: " + wasShooting;
+        }
     }
 }

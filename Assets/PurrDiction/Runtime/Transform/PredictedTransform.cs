@@ -50,6 +50,7 @@ namespace PurrNet.Prediction
             {
                 _unityRigidbody.position = state.position;
                 _unityRigidbody.rotation = state.rotation;
+                transform.SetPositionAndRotation(state.position, state.rotation);
             }
             else if (_hasController && _characterControllerPatch)
             {
