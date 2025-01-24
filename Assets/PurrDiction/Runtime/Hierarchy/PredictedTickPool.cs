@@ -28,12 +28,10 @@ namespace PurrNet.Prediction
                 var instance = _pool[i];
                 
                 float posError = Vector3.Distance(instance.spawnPosition, id.spawnPosition);
-                float rotError = Quaternion.Angle(instance.spawnRotation, id.spawnRotation);
-                float error = posError + rotError;
                 
-                if (error < closestError)
+                if (posError < closestError)
                 {
-                    closestError = error;
+                    closestError = posError;
                     closestIndex = i;
                 }
             }
