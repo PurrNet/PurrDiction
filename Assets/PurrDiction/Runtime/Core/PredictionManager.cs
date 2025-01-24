@@ -17,7 +17,7 @@ namespace PurrNet.Prediction
     }
     
     [DefaultExecutionOrder(-1000), RegisterNetworkType(typeof(AnimationClip))]
-    public class PredictionManager : NetworkIdentity, IServerSceneEvents
+    public class PredictionManager : NetworkIdentity
     {
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterAssembliesLoaded)]
         static void Initialize() => _instances.Clear();
@@ -52,25 +52,6 @@ namespace PurrNet.Prediction
         public ulong localTickInContext { get; private set; } = 1;
 
         public PredictedHierarchy hierarchy { get; private set; }
-        
-        readonly Dictionary<PlayerID, PredictedObjectID> _objectIds = new ();
-        
-        public void OnPlayerLoadedScene(PlayerID playerId)
-        {
-            // if (playerId == localPlayer) return;
-            var gid = hierarchy.Create(0);
-            if (gid.HasValue)
-            {
-                _objectIds[playerId] = gid.Value;
-                SetOwnership(gid, playerId);
-            }
-        }
-
-        public void OnPlayerUnloadedScene(PlayerID playerId)
-        {
-            if (_objectIds.Remove(playerId, out var gid))
-                hierarchy.Delete(gid);
-        }
         
         protected override void OnEarlySpawn()
         {
