@@ -141,8 +141,12 @@ namespace PurrNet.Prediction
         
         internal FULL_STATE fullPredictedState;
         
-        public STATE currentState => fullPredictedState.state; 
-        
+        public STATE currentState
+        {
+            get => fullPredictedState.state;
+            set => fullPredictedState.state = value;
+        }
+
         public override void Setup(NetworkManager manager, PredictionManager world)
         {
             if (!isFreshSpawn)
