@@ -8,6 +8,7 @@ namespace PurrNet.Prediction.Tests
         [SerializeField] private GameObject _projectile;
         [SerializeField] private Rigidbody _controller;
         [SerializeField] private float _speed = 5;
+        
         protected override void Simulate(SimpleWASDInput? input, ref SimpleCCState state, Fix64 delta)
         {
             var move = new Vector3(input?.horizontal ?? 0, 0, input?.vertical ?? 0);
