@@ -144,6 +144,17 @@ namespace PurrNet.Prediction
             ListPool<PredictedIdentity>.Destroy(components);
         }
         
+        public void UnregisterInstance(GameObject go)
+        {
+            var components = ListPool<PredictedIdentity>.Instantiate();
+            go.GetComponentsInChildren(true, components);
+            
+            for (var i = 0; i < components.Count; i++)
+                UnregisterInstance(components[i]);
+            
+            ListPool<PredictedIdentity>.Destroy(components);
+        }
+        
         internal void RegisterInstance(PredictedIdentity system)
         {
             if (!isSpawned)

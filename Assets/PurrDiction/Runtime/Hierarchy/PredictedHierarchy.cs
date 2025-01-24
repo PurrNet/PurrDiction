@@ -49,9 +49,7 @@ namespace PurrNet.Prediction
                 {
                     var details = _spawnedPrefabs[j];
                     if (_instanceMap.Remove(details.instanceId, out var instance) && instance)
-                    {
-                        predictionManager.InternalDelete(instance);
-                    }
+                        Delete(details, instance);
                 }
 
                 // clear the undone actions
@@ -94,6 +92,52 @@ namespace PurrNet.Prediction
             
             return Create(prefab, position, rotation);
         }
+        
+        // TOOD: make a list of pools per prefab with the key not including instance id?
+        //readonly Dictionary<PredictedObjectID, GameObject> _pool = new ();
+
+
+        readonly Dictionary<int, PredictedTickPool> _prefabToPool = new ();
+        
+        private PredictedTickPool GetPool(int prefabId)
+        {
+            if (_prefabToPool.TryGetValue(prefabId, out var pool))
+                return pool;
+            
+            pool = new PredictedTickPool(new List<PooledInstance>(10));
+            _prefabToPool.Add(prefabId, pool);
+            return pool;
+        }
+
+        protected override void UpdateView(PredictedHierarchyState interpolatedState, PredictedHierarchyState? verified)
+        {
+            ClearPool();
+        }
+
+        protected override void OnDestroy()
+        {
+            base.OnDestroy();
+            ClearPool();
+        }
+
+        private void ClearPool()
+        {
+            foreach (var (_, pool) in _prefabToPool)
+                pool.Clear(predictionManager);
+            _prefabToPool.Clear();
+        }
+        
+        private void Delete(InstanceDetails details, GameObject go)
+        {
+            var pool = GetPool(details.prefabId);
+            
+            if (pool.Put(details, go))
+            {
+                go.SetActive(false);
+                predictionManager.UnregisterInstance(go);
+            }
+            else predictionManager.InternalDelete(go);
+        }
 
         public PredictedObjectID? Create(GameObject prefab, Vector3 position, Quaternion rotation)
         {
@@ -107,11 +151,23 @@ namespace PurrNet.Prediction
             }
             
             var id = new PredictedObjectID(_nextInstanceId);
-            var go = predictionManager.InternalCreate(prefab, position, rotation);
-            var details = new InstanceDetails(prefabId, id, position, rotation);
+            var key = new InstanceDetails(prefabId, id, position, rotation);
+
+            GameObject go;
+            
+            var pool = GetPool(prefabId);
+
+            if (pool.TryTake(key, out var instance))
+            {
+                go = instance;
+                go.transform.SetPositionAndRotation(position, rotation);
+                predictionManager.RegisterInstance(go);
+                go.SetActive(true);
+            }
+            else go = predictionManager.InternalCreate(prefab, position, rotation);
             
             _instanceMap.Add(id, go);
-            _spawnedPrefabs.Add(details);
+            _spawnedPrefabs.Add(key);
             _nextInstanceId++;
             
             return id;

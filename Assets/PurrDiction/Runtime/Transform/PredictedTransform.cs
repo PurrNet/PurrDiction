@@ -76,6 +76,7 @@ namespace PurrNet.Prediction
             if (!_viewState.HasValue)
             {
                 _viewState = state;
+                _oldPrediction = state;
                 return;
             }
             

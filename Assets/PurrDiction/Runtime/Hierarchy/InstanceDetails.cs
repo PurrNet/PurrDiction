@@ -15,6 +15,20 @@ namespace PurrNet.Prediction
             this.gameObject = gameObject;
         }
     }
+
+    public readonly struct PooledInstance
+    {
+        public readonly GameObject gameObject;
+        public readonly Vector3 spawnPosition;
+        public readonly Quaternion spawnRotation;
+        
+        public PooledInstance(GameObject gameObject, Vector3 spawnPosition, Quaternion spawnRotation)
+        {
+            this.gameObject = gameObject;
+            this.spawnPosition = spawnPosition;
+            this.spawnRotation = spawnRotation;
+        }
+    }
     
     public readonly struct InstanceDetails : IPackedAuto, IEquatable<InstanceDetails>
     {
@@ -45,7 +59,7 @@ namespace PurrNet.Prediction
         
         public override int GetHashCode()
         {
-            return HashCode.Combine(prefabId, instanceId);
+            return HashCode.Combine(prefabId, instanceId, spawnPosition, spawnRotation);
         }
     }
 }

@@ -15,10 +15,12 @@ namespace PurrNet.Prediction
         public PredictionManager predictionManager { get; protected set; }
 
         public PlayerID? owner;
+        
+        internal bool isFreshSpawn = true;
 
         public abstract void Setup(NetworkManager manager, PredictionManager world);
 
-        protected virtual void OnDisable()
+        protected virtual void OnDestroy()
         {
             if (predictionManager)
                 predictionManager.UnregisterInstance(this);
@@ -119,7 +121,6 @@ namespace PurrNet.Prediction
         
         private Interpolated<FULL_STATE> _interpolatedState;
         private History<FULL_STATE> _stateHistory;
-        private bool _resetInterpolation = true;
         
         protected TickManager tickModule { get; private set; }
 
@@ -144,6 +145,11 @@ namespace PurrNet.Prediction
         
         public override void Setup(NetworkManager manager, PredictionManager world)
         {
+            if (!isFreshSpawn)
+                return;
+            
+            isFreshSpawn = false;
+            
             owner = null;
             predictionManager = world;
             tickModule = manager.tickModule;
@@ -264,7 +270,7 @@ namespace PurrNet.Prediction
         public override void QueueInput(BitPacker packer) { }
 
         public override void ClearInput() { }
-
+        
         internal override void UpdateView(float deltaTime)
         {
             if (!_updateView)
@@ -274,14 +280,7 @@ namespace PurrNet.Prediction
                 return;
 
             if (_viewState.HasValue)
-            {
-                if (_resetInterpolation)
-                {
-                    _resetInterpolation = false;
-                    _interpolatedState.Teleport(_viewState.Value);
-                }
-                else _interpolatedState.Add(_viewState.Value);
-            }
+                _interpolatedState.Add(_viewState.Value);
 
             UpdateView(_interpolatedState.Advance(deltaTime).state, _stateHistory.Count > 0 ? _stateHistory[^1].state : null);
         }
