@@ -11,8 +11,10 @@ namespace PurrNet.Prediction
         [SerializeField] private TransformInterpolationSettings _interpolationSettings;
 
         private Rigidbody _unityRigidbody;
+        private Rigidbody2D _unity2dRigidbody;
         private CharacterController _unityCtrler;
         private bool _hasController;
+        private bool _hasRigidbody2d;
         private bool _hasRigidbody;
         private bool _hasView;
         
@@ -20,8 +22,10 @@ namespace PurrNet.Prediction
         {
             _unityCtrler = GetComponent<CharacterController>();
             _unityRigidbody = GetComponent<Rigidbody>();
+            _unity2dRigidbody = GetComponent<Rigidbody2D>();
             _hasController = _unityCtrler != null;
             _hasRigidbody = _unityRigidbody != null;
+            _hasRigidbody2d = _unity2dRigidbody != null;
             _hasView = _graphics;
         }
 
@@ -46,7 +50,13 @@ namespace PurrNet.Prediction
         
         protected override void SetUnityState(PredictedTransformState state)
         {
-            if (_hasRigidbody)
+            if (_hasRigidbody2d)
+            {
+                _unity2dRigidbody.position = state.position;
+                _unity2dRigidbody.rotation = state.rotation.eulerAngles.z;
+                transform.SetPositionAndRotation(state.position, state.rotation);
+            }
+            else if (_hasRigidbody)
             {
                 _unityRigidbody.position = state.position;
                 _unityRigidbody.rotation = state.rotation;
