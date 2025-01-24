@@ -20,16 +20,22 @@ namespace PurrNet.Prediction
     {
         public readonly int prefabId;
         public readonly PredictedObjectID instanceId;
+        public readonly Vector3 spawnPosition;
+        public readonly Quaternion spawnRotation;
         
-        public InstanceDetails(int prefabId, PredictedObjectID instanceId)
+        public InstanceDetails(int prefabId, PredictedObjectID instanceId, Vector3 spawnPosition, Quaternion spawnRotation)
         {
             this.prefabId = prefabId;
             this.instanceId = instanceId;
+            this.spawnPosition = spawnPosition;
+            this.spawnRotation = spawnRotation;
         }
-
+        
         public bool Equals(InstanceDetails other)
         {
-            return prefabId == other.prefabId && instanceId.Equals(other.instanceId);
+            return prefabId == other.prefabId && instanceId.Equals(other.instanceId) &&
+                   spawnPosition.Equals(other.spawnPosition) &&
+                   spawnRotation.Equals(other.spawnRotation);
         }
         
         public override bool Equals(object obj)

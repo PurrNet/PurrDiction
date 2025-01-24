@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using FixMath.NET;
 using JetBrains.Annotations;
+using PurrNet.Modules;
 using PurrNet.Packing;
 using PurrNet.Pooling;
 using UnityEngine;
@@ -71,10 +72,12 @@ namespace PurrNet.Prediction
         
         protected override void OnEarlySpawn()
         {
+            RegisterScene();
+
             tickRate = networkManager.tickModule.tickRate;
             tickDelta = 1 / (Fix64)tickRate;
             hierarchy = RegisterSystem<PredictedHierarchy>();
-            
+
             for (var i = 0; i < _queue.Count; i++)
             {
                 var queued = _queue[i];
@@ -82,6 +85,30 @@ namespace PurrNet.Prediction
             }
             
             _queue.Clear();
+        }
+
+        private void RegisterScene()
+        {
+            var identities = ListPool<PredictedIdentity>.Instantiate();
+            var rootGameObjects = gameObject.scene.GetRootGameObjects();
+
+            foreach (var rootObject in rootGameObjects)
+            {
+                rootObject.GetComponentsInChildren(true, identities);
+                
+                if (identities.Count == 0) continue;
+                
+                rootObject.MakeSureAwakeIsCalled();
+
+                int count = identities.Count;
+                for (var i = 0; i < count; ++i)
+                {
+                    var pid = identities[i];
+                    _queue.Add(pid);
+                }
+            }
+            
+            ListPool<PredictedIdentity>.Destroy(identities);
         }
 
         protected override void OnSpawned()
@@ -100,7 +127,19 @@ namespace PurrNet.Prediction
         {
             var system = gameObject.AddComponent<T>();
             system.hideFlags = HideFlags.NotEditable;
+            RegisterInstance(system);
             return system;
+        }
+
+        public void RegisterInstance(GameObject go)
+        {
+            var components = ListPool<PredictedIdentity>.Instantiate();
+            go.GetComponentsInChildren(true, components);
+            
+            for (var i = 0; i < components.Count; i++)
+                RegisterInstance(components[i]);
+            
+            ListPool<PredictedIdentity>.Destroy(components);
         }
         
         internal void RegisterInstance(PredictedIdentity system)
@@ -407,17 +446,21 @@ namespace PurrNet.Prediction
         
         internal GameObject InternalCreate(GameObject prefab)
         {
-            return UnityProxy.InstantiateDirectly(prefab);
+            var go = UnityProxy.InstantiateDirectly(prefab);
+            RegisterInstance(go);
+            return go;
         }
 
         internal GameObject InternalCreate(GameObject prefab, Vector3 position, Quaternion rotation)
         {
-            return UnityProxy.InstantiateDirectly(prefab, position, rotation);
+            var go = UnityProxy.InstantiateDirectly(prefab, position, rotation);
+            RegisterInstance(go);
+            return go;
         }
 
         internal void InternalDelete(GameObject instance)
         {
-            UnityProxy.DestroyDirectly(instance);
+            UnityProxy.DestroyImmediateDirectly(instance);
         }
         
         public void SetOwnership(PredictedObjectID? root, PlayerID? player)

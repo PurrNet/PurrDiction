@@ -20,16 +20,16 @@ namespace PurrNet.Prediction
 
         public abstract void Setup(NetworkManager manager, PredictionManager world);
 
-        protected virtual void OnEnable()
+        /*protected virtual void OnEnable()
         {
             if (PredictionManager.TryGetInstance(gameObject.scene.handle, out var world))
                 world.RegisterInstance(this);
-        }
+        }*/
 
         protected virtual void OnDisable()
         {
-            if (PredictionManager.TryGetInstance(gameObject.scene.handle, out var world))
-                world.UnregisterInstance(this);
+            if (predictionManager)
+                predictionManager.UnregisterInstance(this);
         }
         
         public bool IsOwner()

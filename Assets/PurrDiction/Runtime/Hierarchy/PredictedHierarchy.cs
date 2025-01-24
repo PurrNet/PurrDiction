@@ -50,8 +50,7 @@ namespace PurrNet.Prediction
                     var details = _spawnedPrefabs[j];
                     if (_instanceMap.Remove(details.instanceId, out var instance) && instance)
                     {
-                        PutInCache(details.instanceId, instance);
-                        // predictionManager.InternalDelete(instance);
+                        predictionManager.InternalDelete(instance);
                     }
                 }
 
@@ -64,48 +63,20 @@ namespace PurrNet.Prediction
             {
                 var details = state.spawnedPrefabs[j];
                 var pid = details.prefabId;
+                var id = details.instanceId;
                 
-                if (predictionManager.TryGetPrefab(pid, out var prefab))
-                {
-                    var id = details.instanceId;
+                _nextInstanceId = id.instanceId;
+                
+                var goId = Create(pid, details.spawnPosition, details.spawnRotation);
 
-                    GameObject go;
-
-                    if (TryTakeFromCache(id, out var cached))
-                    {
-                        cached.SetActive(true);
-                        go = cached;
-                    }
-                    else
-                    {
-                        go = predictionManager.InternalCreate(prefab);
-                    }
-                    
-                    _instanceMap.Add(id, go);
-                    _spawnedPrefabs.Add(details);
-                }
-                else PurrLogger.LogError($"Mismatch: Failed to find prefab {pid}");
+                if (!goId.HasValue)
+                    PurrLogger.LogError($"Mismatch: Failed to create prefab {pid}");
             }
             
             _nextInstanceId = state.nextInstanceId;
 
             if (_spawnedPrefabs.Count != state.spawnedPrefabs.Count)
                 PurrLogger.LogError($"Mismatch: Action count {_spawnedPrefabs.Count} != {state.spawnedPrefabs.Count}");
-        }
-        
-        readonly Dictionary<PredictedObjectID, CachedGameObject> _tempMap = new ();
-
-        private void Update()
-        {
-            foreach (var cached in _tempMap)
-            {
-                if (Time.time - cached.Value.time > 2f)
-                {
-                    predictionManager.InternalDelete(cached.Value.gameObject);
-                    _tempMap.Remove(cached.Key);
-                    break;
-                }
-            }
         }
 
         public PredictedObjectID? Create(int prefabId)
@@ -116,8 +87,14 @@ namespace PurrNet.Prediction
             return Create(prefab);
         }
         
-        static readonly List<PredictedIdentity> _tempList = new();
-        
+        public PredictedObjectID? Create(int prefabId, Vector3 position, Quaternion rotation)
+        {
+            if (!predictionManager.TryGetPrefab(prefabId, out var prefab))
+                return default;
+            
+            return Create(prefab, position, rotation);
+        }
+
         public PredictedObjectID? Create(GameObject prefab, Vector3 position, Quaternion rotation)
         {
             if (!prefab)
@@ -130,25 +107,9 @@ namespace PurrNet.Prediction
             }
             
             var id = new PredictedObjectID(_nextInstanceId);
-            GameObject go;
+            var go = predictionManager.InternalCreate(prefab, position, rotation);
+            var details = new InstanceDetails(prefabId, id, position, rotation);
             
-            // check if we have a cached object
-            if (TryTakeFromCache(id, out var cached))
-            {
-                cached.SetActive(true);
-                cached.transform.SetPositionAndRotation(position, rotation);
-                go = cached;
-            }
-            else
-            {
-                go = predictionManager.InternalCreate(prefab, position, rotation);
-                go.GetComponentsInChildren<PredictedIdentity>(true, _tempList);
-
-                foreach (var item in _tempList)
-                    item._isFreshSpawn = false;
-            }
-
-            var details = new InstanceDetails(prefabId, id);
             _instanceMap.Add(id, go);
             _spawnedPrefabs.Add(details);
             _nextInstanceId++;
@@ -219,26 +180,7 @@ namespace PurrNet.Prediction
                 }
             }
             
-            // cache the object
-            PutInCache(id, instance);
-        }
-
-        private void PutInCache(PredictedObjectID id, GameObject instance)
-        {
-            instance.SetActive(false);
-            _tempMap.Add(id, new CachedGameObject(Time.time, instance));
-        }
-        
-        private bool TryTakeFromCache(PredictedObjectID id, out GameObject go)
-        {
-            if (_tempMap.Remove(id, out var cached))
-            {
-                go = cached.gameObject;
-                return true;
-            }
-            
-            go = null;
-            return false;
+            predictionManager.InternalDelete(instance);
         }
 
         public void Delete(PredictedObjectID? id)
