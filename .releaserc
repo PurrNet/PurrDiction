@@ -1,0 +1,49 @@
+{
+  "branches": [
+    {
+      "name": "release",
+      "channel": "latest",
+      "type": "release"
+    },
+    {
+      "name": "main",
+      "prerelease": "beta"
+    }
+  ],
+  "plugins": [
+    "@semantic-release/commit-analyzer", 
+    "@semantic-release/release-notes-generator",
+    ["semantic-release-replace-plugin", {
+        "replacements": [
+          {
+            "files": ["Assets/PurrDiction/package.json"],
+            "from": "\"version\": \".*?\"",
+            "to": "\"version\": \"${nextRelease.version}\"",
+            "results": [
+              {
+                "file": "Assets/PurrDiction/package.json",
+                "hasChanged": true,
+                "numMatches": 1,
+                "numReplacements": 1
+              }
+            ],
+            "countMatches": true
+          }
+        ]
+    }],
+    ["@iam1337/create-unitypackage", {
+      "packageRoot": "Assets/PurrDiction",
+      "projectRoot": "./",
+      "output": "PurrDiction_${nextRelease.version}.unitypackage"
+    }],
+    ["@semantic-release/git", {
+        "assets": ["Assets/PurrDiction/package.json"],
+        "message": "ci(release): ${nextRelease.version} [skip ci]\n\n${nextRelease.notes}"
+    }],
+    ["@semantic-release/github", {
+      "assets": [
+        {"path": "PurrDiction_${nextRelease.version}.unitypackage", "label": "PurrDiction_${nextRelease.version}.unitypackage"}
+      ]
+    }]
+  ]
+}

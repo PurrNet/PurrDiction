@@ -1,0 +1,48 @@
+name: Release CI
+on:
+  push:
+    branches: [ dev, release ]
+  workflow_dispatch:
+env:
+  GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [ 18.x ]
+    steps:
+      # Step 1: Checkout the code
+      - uses: actions/checkout@v3
+      
+      # Step 2: Setup Node.js
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+      
+      # Step 3: Install dependencies
+      - run: npm ci
+      - run: npm i @iam1337/create-unitypackage
+      - run: npm i semantic-release-replace-plugin -D
+      - run: npm i @semantic-release/git -D
+      
+      # Step 4: Run Semantic Release and capture output
+      - name: Run Semantic Release
+        id: release
+        run: |
+          npx semantic-release > output.log || true
+          if grep -q "Publishing version" output.log; then
+            echo "new-release=true" >> $GITHUB_ENV
+            VERSION=$(grep "Publishing version" output.log | sed -n 's/.*Publishing version \(.*\)$/\1/p')
+            echo "released-version=$VERSION" >> $GITHUB_ENV
+          else
+            echo "new-release=false" >> $GITHUB_ENV
+          fi
+      
+      # Step 5: Print the new release version if available
+      - name: Print New Release Info
+        if: env.new-release == 'true'
+        run: |
+          echo "New release created: version ${{ env.released-version }}"
