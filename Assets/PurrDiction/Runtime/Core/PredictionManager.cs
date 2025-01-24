@@ -12,7 +12,8 @@ namespace PurrNet.Prediction
     public enum PredictionPhysicsProvider
     {
         None,
-        UnityPhysics,
+        UnityPhysics3D,
+        UnityPhysics2D,
         BEPUPhysics
     }
     
@@ -38,9 +39,16 @@ namespace PurrNet.Prediction
         private void Awake()
         {
             _instances[gameObject.scene.handle] = this;
-            
-            if (_physicsProvider == PredictionPhysicsProvider.UnityPhysics)
-                Physics.simulationMode = SimulationMode.Script;
+
+            switch (_physicsProvider)
+            {
+                case PredictionPhysicsProvider.UnityPhysics3D:
+                    Physics.simulationMode = SimulationMode.Script;
+                    break;
+                case PredictionPhysicsProvider.UnityPhysics2D:
+                    Physics2D.simulationMode = SimulationMode2D.Script;
+                    break;
+            }
         }
 
         public Fix64 tickDelta { get; private set; }
@@ -49,6 +57,7 @@ namespace PurrNet.Prediction
         
         public ulong localTick { get; private set; } = 1;
         
+        [UsedImplicitly]
         public ulong localTickInContext { get; private set; } = 1;
 
         public PredictedHierarchy hierarchy { get; private set; }
@@ -189,9 +198,16 @@ namespace PurrNet.Prediction
                 system.Rollback(localTick);
                 system.ResetInterpolation();
             }
-            
-            if (_physicsProvider == PredictionPhysicsProvider.UnityPhysics)
-                Physics.SyncTransforms();
+
+            switch (_physicsProvider)
+            {
+                case PredictionPhysicsProvider.UnityPhysics3D:
+                    Physics.SyncTransforms();
+                    break;
+                case PredictionPhysicsProvider.UnityPhysics2D:
+                    Physics2D.SyncTransforms();
+                    break;
+            }
         }
         
         void OnTick()
@@ -289,11 +305,20 @@ namespace PurrNet.Prediction
             {
                 case PredictionPhysicsProvider.None:
                     break;
-                case PredictionPhysicsProvider.UnityPhysics:
+                case PredictionPhysicsProvider.UnityPhysics3D:
+                {
                     var physicsScene = gameObject.scene.GetPhysicsScene();
                     if (physicsScene.IsValid())
                         physicsScene.Simulate((float)tickDelta);
                     break;
+                }
+                case PredictionPhysicsProvider.UnityPhysics2D:
+                {
+                    var physicsScene = gameObject.scene.GetPhysicsScene2D();
+                    if (physicsScene.IsValid())
+                        physicsScene.Simulate((float)tickDelta);
+                    break;
+                }
                 default:
                     throw new NotImplementedException();
             }
@@ -354,8 +379,15 @@ namespace PurrNet.Prediction
         {
             if (_tickToRollbackFrom.HasValue)
             {
-                if (_physicsProvider == PredictionPhysicsProvider.UnityPhysics)
-                    Physics.SyncTransforms();
+                switch (_physicsProvider)
+                {
+                    case PredictionPhysicsProvider.UnityPhysics3D:
+                        Physics.SyncTransforms();
+                        break;
+                    case PredictionPhysicsProvider.UnityPhysics2D:
+                        Physics2D.SyncTransforms();
+                        break;
+                }
                 
                 CatchupFromTick(_tickToRollbackFrom.Value);
                 _tickToRollbackFrom = null;
