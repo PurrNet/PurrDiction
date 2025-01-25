@@ -1,7 +1,7 @@
 using PurrNet.Prediction;
 using UnityEngine;
 
-namespace PurrDash
+namespace PurrNet.Prediction
 {
     public struct UnityRigidbody2DState : IPredictedData<UnityRigidbody2DState>
     {
