@@ -1,7 +1,7 @@
 name: Release CI
 on:
   push:
-    branches: [ main, release ]
+    branches: [ dev, release ]
   workflow_dispatch:
 env:
   GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
