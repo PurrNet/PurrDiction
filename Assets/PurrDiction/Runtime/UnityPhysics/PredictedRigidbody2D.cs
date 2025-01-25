@@ -1,7 +1,7 @@
 using PurrNet.Prediction;
 using UnityEngine;
 
-namespace PurrDash
+namespace PurrNet.Prediction
 {
     [RequireComponent(typeof(Rigidbody2D))]
     [RequireComponent(typeof(PredictedTransform))]
