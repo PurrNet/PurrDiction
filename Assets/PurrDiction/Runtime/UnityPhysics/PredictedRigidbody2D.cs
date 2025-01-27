@@ -5,7 +5,7 @@ namespace PurrNet.Prediction
 {
     [RequireComponent(typeof(Rigidbody2D))]
     [RequireComponent(typeof(PredictedTransform))]
-    public class PredictedRigidbody : PredictedIdentity<UnityRigidbody2DState>
+    public class PredictedRigidbody2D : PredictedIdentity<UnityRigidbody2DState>
     {
         [SerializeField] private Rigidbody2D _rigidbody;
 
