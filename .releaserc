@@ -6,7 +6,7 @@
       "type": "release"
     },
     {
-      "name": "main",
+      "name": "dev",
       "prerelease": "beta"
     }
   ],
