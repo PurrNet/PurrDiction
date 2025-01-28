@@ -396,7 +396,7 @@ namespace PurrNet.Prediction
 
         readonly Dictionary<PlayerID, Queue<ulong>> _clientTicks = new ();
 
-        [ServerRpc]
+        [ServerRpc(requireOwnership: false)]
         private void SendInputToServer(ulong clientTick, BitPacker inputPacket, RPCInfo info = default)
         {
             if (!_clientTicks.TryGetValue(info.sender, out var ticks))
@@ -443,7 +443,7 @@ namespace PurrNet.Prediction
             }
         }
 
-        private void LateUpdate()
+        private void Update()
         {
             if (!isClient)
                 return;
