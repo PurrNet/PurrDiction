@@ -325,37 +325,35 @@ namespace PurrNet.Prediction
                     throw new NotImplementedException();
             }
         }
+        
+        BitPacker _lastFrame;
 
         [TargetRpc]
         private void SendFrameToRemote([UsedImplicitly] PlayerID player, ulong clientLocalTick, BitPacker frame)
         {
+            _lastFrame?.Dispose();
+            _lastFrame = frame;
+
             if (clientLocalTick == 0)
                 return;
-            
-            using (frame)
-            {
-                for (var i = 0; i < _systems.Count; ++i)
-                {
-                    var system = _systems[i];
-                    system.ReadState(clientLocalTick, frame);
-                    // system.Rollback(clientLocalTick);
-                }
-                
-                var sysCount = _systems.Count;
-                for (var i = 0; i < sysCount; ++i)
-                    _systems[i].ReadInput(clientLocalTick, frame);
-            }
             
             _tickToRollbackFrom = clientLocalTick;
         }
 
         private void CatchupFromTick(ulong clientTick)
         {
-            // rollback to the tick
-            for (var i = 0; i < _systems.Count; i++)
-                _systems[i].Rollback(clientTick);
-            
             isReplaying = true;
+
+            for (var i = 0; i < _systems.Count; ++i)
+            {
+                var system = _systems[i];
+                system.ReadState(clientTick, _lastFrame);
+                system.Rollback(clientTick);
+            }
+            var sysCount = _systems.Count;
+            for (var i = 0; i < sysCount; ++i)
+                _systems[i].ReadInput(clientTick, _lastFrame);
+            
             for (ulong simTick = clientTick + 1; simTick < localTick; simTick++)
             {
                 localTickInContext = simTick;
