@@ -9,6 +9,7 @@ namespace PurrNet.Prediction
     {
         readonly List<InstanceDetails> _spawnedPrefabs = new ();
         readonly Dictionary<PredictedObjectID, GameObject> _instanceMap = new ();
+        readonly Dictionary<GameObject, PredictedObjectID> _goToId = new ();
         
         private uint _nextInstanceId;
         
@@ -167,6 +168,7 @@ namespace PurrNet.Prediction
             else go = predictionManager.InternalCreate(prefab, position, rotation);
             
             _instanceMap.Add(instanceId, go);
+            _goToId.Add(go, instanceId);
             _spawnedPrefabs.Add(key);
             _nextInstanceId++;
             
@@ -210,6 +212,14 @@ namespace PurrNet.Prediction
             return _instanceMap.GetValueOrDefault(id.Value)?.GetComponent<T>();
         }
         
+        public bool TryGetId(GameObject go, out PredictedObjectID id)
+        {
+            if (!_goToId.TryGetValue(go, out id))
+                return false;
+            
+            return true;
+        }
+        
         public bool TryGetGameObject(PredictedObjectID? id, out GameObject go)
         {
             if (!id.HasValue)
@@ -225,6 +235,8 @@ namespace PurrNet.Prediction
         {
             if (!_instanceMap.Remove(id, out var instance))
                 return;
+            
+            _goToId.Remove(instance);
 
             var count = _spawnedPrefabs.Count;
             for (var i = 0; i < count; i++)

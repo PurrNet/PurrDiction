@@ -445,7 +445,7 @@ namespace PurrNet.Prediction
             }
         }
 
-        private void Update()
+        private void LateUpdate()
         {
             if (!isClient)
                 return;
