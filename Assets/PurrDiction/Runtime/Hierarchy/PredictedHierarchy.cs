@@ -10,7 +10,7 @@ namespace PurrNet.Prediction
         readonly List<InstanceDetails> _spawnedPrefabs = new ();
         readonly Dictionary<PredictedObjectID, GameObject> _instanceMap = new ();
         
-        private int _nextInstanceId;
+        private uint _nextInstanceId;
         
         protected override void GetUnityState(ref PredictedHierarchyState state)
         {
@@ -61,9 +61,9 @@ namespace PurrNet.Prediction
             {
                 var details = state.spawnedPrefabs[j];
                 var pid = details.prefabId;
-                var id = details.instanceId;
+                var instanceId = details.instanceId;
                 
-                _nextInstanceId = id.instanceId;
+                _nextInstanceId = instanceId.instanceId;
                 
                 var goId = Create(pid, details.spawnPosition, details.spawnRotation);
 
@@ -150,8 +150,8 @@ namespace PurrNet.Prediction
                 return default;
             }
             
-            var id = new PredictedObjectID(_nextInstanceId);
-            var key = new InstanceDetails(prefabId, id, position, rotation);
+            var instanceId = new PredictedObjectID(_nextInstanceId);
+            var key = new InstanceDetails(prefabId, instanceId, position, rotation);
 
             GameObject go;
             
@@ -166,11 +166,11 @@ namespace PurrNet.Prediction
             }
             else go = predictionManager.InternalCreate(prefab, position, rotation);
             
-            _instanceMap.Add(id, go);
+            _instanceMap.Add(instanceId, go);
             _spawnedPrefabs.Add(key);
             _nextInstanceId++;
             
-            return id;
+            return instanceId;
         }
 
         public PredictedObjectID? Create(GameObject prefab)

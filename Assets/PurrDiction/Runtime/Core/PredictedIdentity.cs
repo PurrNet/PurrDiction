@@ -1,3 +1,4 @@
+using System;
 using FixMath.NET;
 using JetBrains.Annotations;
 using PurrNet.Logging;
@@ -7,6 +8,31 @@ using UnityEngine;
 
 namespace PurrNet.Prediction
 {
+    public readonly struct PredictedID : IPackedAuto, IEquatable<PredictedID>
+    {
+        public readonly PackedUInt id;
+        
+        public PredictedID(uint id)
+        {
+            this.id = id;
+        }
+
+        public bool Equals(PredictedID other)
+        {
+            return id == other.id;
+        }
+
+        public override bool Equals(object obj)
+        {
+            return obj is PredictedID other && Equals(other);
+        }
+
+        public override int GetHashCode()
+        {
+            return (int)id.value;
+        }
+    }
+    
     public abstract class PredictedIdentity : MonoBehaviour
     {
         [SerializeField] protected int _maxInterpolationBuffer = 2;
@@ -15,10 +41,16 @@ namespace PurrNet.Prediction
         public PredictionManager predictionManager { get; protected set; }
 
         public PlayerID? owner;
+
+        /// <summary>
+        /// The unique identifier for this object.
+        /// Can be used to identify the object across the network.
+        /// </summary>
+        public PredictedID id;
         
         internal bool isFreshSpawn = true;
 
-        public abstract void Setup(NetworkManager manager, PredictionManager world);
+        public abstract void Setup(NetworkManager manager, PredictionManager world, uint id);
 
         protected virtual void OnDestroy()
         {
@@ -147,7 +179,7 @@ namespace PurrNet.Prediction
             set => fullPredictedState.state = value;
         }
 
-        public override void Setup(NetworkManager manager, PredictionManager world)
+        public override void Setup(NetworkManager manager, PredictionManager world, uint id)
         {
             if (!isFreshSpawn)
                 return;
@@ -155,6 +187,8 @@ namespace PurrNet.Prediction
             isFreshSpawn = false;
             
             owner = null;
+            this.id = new PredictedID(id);
+            
             predictionManager = world;
             tickModule = manager.tickModule;
             
@@ -182,6 +216,7 @@ namespace PurrNet.Prediction
         internal override void GetLatestUnityState()
         {
             fullPredictedState.prediction.owner = owner;
+            fullPredictedState.prediction.predictedID = id;
             GetUnityState(ref fullPredictedState.state);
         }
 
@@ -229,6 +264,7 @@ namespace PurrNet.Prediction
             fullPredictedState = state.DeepCopy();
             
             owner = fullPredictedState.prediction.owner;
+            id = fullPredictedState.prediction.predictedID;
             SetUnityState(fullPredictedState.state);
         }
         

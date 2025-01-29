@@ -145,7 +145,9 @@ namespace PurrNet.Prediction
             ListPool<PredictedIdentity>.Destroy(components);
         }
         
-        internal void RegisterInstance(PredictedIdentity system)
+        private uint _nextInstanceId;
+
+        private void RegisterInstance(PredictedIdentity system)
         {
             if (!isSpawned)
             {
@@ -153,7 +155,7 @@ namespace PurrNet.Prediction
                 return;
             }
             
-            system.Setup(networkManager, this);
+            system.Setup(networkManager, this, _nextInstanceId++);
             _systems.Add(system);
         }
         

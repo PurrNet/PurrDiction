@@ -5,9 +5,9 @@ namespace PurrNet.Prediction
     public struct PredictedHierarchyState : IPredictedData<PredictedHierarchyState>
     {
         public DisposableList<InstanceDetails> spawnedPrefabs;
-        public readonly int nextInstanceId;
+        public readonly uint nextInstanceId;
         
-        public PredictedHierarchyState(DisposableList<InstanceDetails> spawnedPrefabs, int nextInstanceId)
+        public PredictedHierarchyState(DisposableList<InstanceDetails> spawnedPrefabs, uint nextInstanceId)
         {
             this.spawnedPrefabs = spawnedPrefabs;
             this.nextInstanceId = nextInstanceId;
