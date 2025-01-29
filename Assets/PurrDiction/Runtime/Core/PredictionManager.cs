@@ -147,6 +147,18 @@ namespace PurrNet.Prediction
         
         private uint _nextInstanceId;
 
+        readonly Dictionary<uint, PredictedIdentity> _instanceMap = new ();
+        
+        public bool TryGetIdentity(uint id, out PredictedIdentity instance)
+        {
+            return _instanceMap.TryGetValue(id, out instance);
+        }
+        
+        public PredictedIdentity GetIdentity(uint id)
+        {
+            return _instanceMap[id];
+        }
+
         private void RegisterInstance(PredictedIdentity system)
         {
             if (!isSpawned)
@@ -155,12 +167,14 @@ namespace PurrNet.Prediction
                 return;
             }
             
+            _instanceMap[_nextInstanceId] = system;
             system.Setup(networkManager, this, _nextInstanceId++);
             _systems.Add(system);
         }
         
         public void UnregisterInstance(PredictedIdentity predictedIdentity)
         {
+            _instanceMap.Remove(predictedIdentity.id.value);
             _systems.Remove(predictedIdentity);
         }
 

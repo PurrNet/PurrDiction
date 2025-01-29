@@ -10,16 +10,38 @@ namespace PurrNet.Prediction
 {
     public readonly struct PredictedID : IPackedAuto, IEquatable<PredictedID>
     {
-        public readonly PackedUInt id;
+        public readonly PackedUInt value;
+        
+        public PredictedIdentity GetIdentity(PredictionManager manager)
+        {
+            return manager.GetIdentity(value);
+        }
+        
+        public T GetIdentity<T>(PredictionManager manager) where T : PredictedIdentity
+        {
+            return (T)manager.GetIdentity(value);
+        }
+        
+        public bool TryGetIdentity(PredictionManager manager, out PredictedIdentity identity)
+        {
+            identity = manager.GetIdentity(value);
+            return identity != null;
+        }
+        
+        public bool TryGetIdentity<T>(PredictionManager manager, out T identity) where T : PredictedIdentity
+        {
+            identity = (T)manager.GetIdentity(value);
+            return identity != null;
+        }
         
         public PredictedID(uint id)
         {
-            this.id = id;
+            this.value = id;
         }
 
         public bool Equals(PredictedID other)
         {
-            return id == other.id;
+            return value == other.value;
         }
 
         public override bool Equals(object obj)
@@ -29,7 +51,7 @@ namespace PurrNet.Prediction
 
         public override int GetHashCode()
         {
-            return (int)id.value;
+            return (int)value.value;
         }
     }
     
