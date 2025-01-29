@@ -350,9 +350,20 @@ namespace PurrNet.Prediction
                 system.ReadState(clientTick, _lastFrame);
                 system.Rollback(clientTick);
             }
+            
             var sysCount = _systems.Count;
             for (var i = 0; i < sysCount; ++i)
                 _systems[i].ReadInput(clientTick, _lastFrame);
+            
+            switch (_physicsProvider)
+            {
+                case PredictionPhysicsProvider.UnityPhysics3D:
+                    Physics.SyncTransforms();
+                    break;
+                case PredictionPhysicsProvider.UnityPhysics2D:
+                    Physics2D.SyncTransforms();
+                    break;
+            }
             
             for (ulong simTick = clientTick + 1; simTick < localTick; simTick++)
             {
@@ -383,16 +394,6 @@ namespace PurrNet.Prediction
         {
             if (_tickToRollbackFrom.HasValue)
             {
-                switch (_physicsProvider)
-                {
-                    case PredictionPhysicsProvider.UnityPhysics3D:
-                        Physics.SyncTransforms();
-                        break;
-                    case PredictionPhysicsProvider.UnityPhysics2D:
-                        Physics2D.SyncTransforms();
-                        break;
-                }
-                
                 CatchupFromTick(_tickToRollbackFrom.Value);
                 _tickToRollbackFrom = null;
             }
