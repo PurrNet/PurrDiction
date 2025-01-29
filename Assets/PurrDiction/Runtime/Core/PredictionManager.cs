@@ -338,7 +338,7 @@ namespace PurrNet.Prediction
                 {
                     var system = _systems[i];
                     system.ReadState(clientLocalTick, frame);
-                    system.Rollback(clientLocalTick);
+                    // system.Rollback(clientLocalTick);
                 }
                 
                 var sysCount = _systems.Count;
@@ -351,6 +351,10 @@ namespace PurrNet.Prediction
 
         private void CatchupFromTick(ulong clientTick)
         {
+            // rollback to the tick
+            for (var i = 0; i < _systems.Count; i++)
+                _systems[i].Rollback(clientTick);
+            
             isReplaying = true;
             for (ulong simTick = clientTick + 1; simTick < localTick; simTick++)
             {

@@ -462,6 +462,7 @@ GameObject:
   - component: {fileID: 1793795277}
   - component: {fileID: 1793795279}
   - component: {fileID: 1793795280}
+  - component: {fileID: 1793795281}
   m_Layer: 0
   m_Name: PurrNet
   m_TagString: Untagged
@@ -516,7 +517,7 @@ MonoBehaviour:
   _startClientFlags: 7
   _cookieScope: 1
   _dontDestroyOnLoad: 0
-  _transport: {fileID: 1793795277}
+  _transport: {fileID: 1793795281}
   _networkPrefabs: {fileID: 11400000, guid: 2190589f99f9abe479a1c7890b05f51f, type: 2}
   _networkRules: {fileID: 11400000, guid: d8799083b96579a42b8b2d03e4ceae98, type: 2}
   _visibilityRules: {fileID: 11400000, guid: 8f014a5bd8dc68646a2a3c0b18c5bbd8, type: 2}
@@ -555,6 +556,27 @@ MonoBehaviour:
   displayType: 2
   fontSize: 13
   textColor: {r: 1, g: 1, b: 1, a: 1}
+--- !u!114 &1793795281
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1793795275}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: de4778b5edf2476448bcb3ac3d9c35d5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _serverPort: 5001
+  _maxConnections: 100
+  _address: 127.0.0.1
+  _query: 
+  _path: 
+  _enableSSL: 0
+  _certPath: 
+  _certPassword: 
+  _sslProtocols: 0
 --- !u!1 &1997087625
 GameObject:
   m_ObjectHideFlags: 0

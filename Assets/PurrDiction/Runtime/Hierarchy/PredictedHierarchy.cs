@@ -50,7 +50,10 @@ namespace PurrNet.Prediction
                 {
                     var details = _spawnedPrefabs[j];
                     if (_instanceMap.Remove(details.instanceId, out var instance) && instance)
+                    {
+                        _goToId.Remove(instance);
                         Delete(details, instance);
+                    }
                 }
 
                 // clear the undone actions
