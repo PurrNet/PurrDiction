@@ -35,6 +35,7 @@ namespace PurrNet.Prediction
     
     public abstract class PredictedIdentity : MonoBehaviour
     {
+        [Header("Predicted State")]
         [SerializeField] protected int _maxInterpolationBuffer = 2;
         [SerializeField] protected bool _updateView = true;
         

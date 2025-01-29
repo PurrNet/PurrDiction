@@ -28,9 +28,9 @@ namespace PurrNet.Prediction.Tests
             vel.z = moveVector.z;
             _controller.linearVelocity = vel;
             
-            if (state.wasShooting != input?.jump)
+            if (input.HasValue && state.wasShooting != input.Value.jump)
             {
-                state.wasShooting = input?.jump ?? false;
+                state.wasShooting = input.Value.jump;
                 if (state.wasShooting)
                     Shoot();
             }

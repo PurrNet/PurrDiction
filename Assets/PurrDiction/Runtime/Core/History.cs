@@ -244,6 +244,64 @@ namespace PurrNet.Prediction
             result = this[index];
             return true;
         }
+        
+        public bool TryGetClosest(ulong tick, out T result, out ulong tickDifference)
+        {
+            result = default;
+
+            if (m_data.Count == 0)
+            {
+                tickDifference = 0;
+                return false;
+            }
+
+            if (Find(tick, out var index))
+            {
+                result = this[index];
+                tickDifference = 0;
+                return true;
+            }
+
+            if (index == 0)
+            {
+                result = this[index];
+                var resultTick = m_data[index].Tick;
+                if (resultTick > tick)
+                     tickDifference = resultTick - tick;
+                else tickDifference = tick - resultTick;
+                return true;
+            }
+
+            if (index == m_data.Count)
+            {
+                result = this[index - 1];
+                var resultTick = m_data[index - 1].Tick;
+                if (resultTick > tick)
+                     tickDifference = resultTick - tick;
+                else tickDifference = tick - resultTick;
+                return true;
+            }
+
+            var diff1 = tick - m_data[index - 1].Tick;
+            var diff2 = m_data[index].Tick - tick;
+
+            if (diff1 < diff2)
+            {
+                result = this[index - 1];
+                var resultTick = m_data[index - 1].Tick;
+                if (resultTick > tick)
+                     tickDifference = resultTick - tick;
+                else tickDifference = tick - resultTick;
+                return true;
+            }
+
+            result = this[index];
+            var resultTick2 = m_data[index].Tick;
+            if (resultTick2 > tick)
+                 tickDifference = resultTick2 - tick;
+            else tickDifference = tick - resultTick2;
+            return true;
+        }
 
         /// <summary>
         /// Does a binary search on the internal entries.

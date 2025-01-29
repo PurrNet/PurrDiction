@@ -10,8 +10,10 @@ namespace PurrNet.Prediction
         where STATE : struct, IPredictedData<STATE>
         where INPUT : struct, IPredictedData
     {
-        [SerializeField] private bool _extrapolateInput = true;
-        
+        [Header("Predicted Input")]
+        [SerializeField] protected float _repeatInputFactor = 0.8f;
+        [SerializeField] protected bool _extrapolateInput = true;
+
         private History<INPUT> _inputHistory;
 
         protected abstract INPUT GetInput();
@@ -52,8 +54,11 @@ namespace PurrNet.Prediction
             {
                 switch (_extrapolateInput)
                 {
-                    case true when _inputHistory.TryGetClosest(tick, out var extrainput):
-                        Simulate(extrainput, ref fullPredictedState.state, delta);
+                    case true when _inputHistory.TryGetClosest(tick, out var extrainput, out var distanceInTicks):
+                        uint maxInputs = (uint)Mathf.CeilToInt(_repeatInputFactor * 10 / ((float)delta * 60));
+                        if (distanceInTicks <= maxInputs)
+                             Simulate(extrainput, ref fullPredictedState.state, delta);
+                        else Simulate(null, ref fullPredictedState.state, delta);
                         break;
                     case false when _inputHistory.TryGet(tick, out var input):
                         Simulate(input, ref fullPredictedState.state, delta);
