@@ -103,7 +103,7 @@ namespace PurrNet.Prediction
                 newPlayer = predictionManager.hierarchy.Create(_playerPrefab);
             }
 
-            predictionManager.SetOwnership(newPlayer, predictionManager.localPlayer);
+            predictionManager.SetOwnership(newPlayer, player);
         }
     }
 }
