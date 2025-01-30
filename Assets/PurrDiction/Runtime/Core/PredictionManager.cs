@@ -183,24 +183,32 @@ namespace PurrNet.Prediction
             _clientTicks.Remove(player);
         }
 
+        private BitPacker _lastServerFrame;
+
         protected override void OnObserverAdded(PlayerID player)
         {
             if (player == localPlayer)
                 return;
-            
-            using var state = BitPackerPool.Get();
-            int count = _systems.Count;
 
-            for (var systemIdx = 0; systemIdx < count; systemIdx++)
-            {
-                var system = _systems[systemIdx];
-                system.WriteLatestState(state);
-            }
-
-            if (state.positionInBits > 0)
-                SyncFullState(player, tickRate, tickDelta.RawValue, state);
+            MakeSureWeHaveLastFrame();
+            SyncFullState(player, tickRate, tickDelta.RawValue, _lastServerFrame);
         }
-        
+
+        private void MakeSureWeHaveLastFrame()
+        {
+            if (_lastServerFrame == null)
+            {
+                _lastServerFrame = BitPackerPool.Get();
+                int count = _systems.Count;
+
+                for (var systemIdx = 0; systemIdx < count; systemIdx++)
+                    _systems[systemIdx].WriteLatestState(_lastServerFrame);
+
+                for (var systemIdx = 0; systemIdx < count; systemIdx++)
+                    _systems[systemIdx].WriteInput(localTick, _lastServerFrame);
+            }
+        }
+
         [TargetRpc]
         private void SyncFullState([UsedImplicitly] PlayerID target, int tickRate, long delta, BitPacker data)
         {
@@ -215,6 +223,10 @@ namespace PurrNet.Prediction
                 system.ResetInterpolation();
             }
 
+            int count = _systems.Count;
+            for (var systemIdx = 0; systemIdx < count; systemIdx++)
+                _systems[systemIdx].ReadInput(localTick, data);
+
             switch (_physicsProvider)
             {
                 case PredictionPhysicsProvider.UnityPhysics3D:
@@ -224,11 +236,13 @@ namespace PurrNet.Prediction
                     Physics2D.SyncTransforms();
                     break;
             }
+            
+            _lastFrame?.Dispose();
+            _lastFrame = data;
         }
         
         void OnTick()
         {
-            using var frame = BitPackerPool.Get();
             var myPlayer = localPlayer ?? default;
             var cachedIsServer = isServer;
             var cachedIsClient = isClient;
@@ -256,6 +270,8 @@ namespace PurrNet.Prediction
             
             if (cachedIsServer)
             {
+                var frame = BitPackerPool.Get();
+
                 for (var systemIdx = 0; systemIdx < count; systemIdx++)
                 {
                     var system = _systems[systemIdx];
@@ -276,9 +292,28 @@ namespace PurrNet.Prediction
                     var system = _systems[systemIdx];
                     system.WriteInput(localTick, frame);
                 }
+                
+                MakeSureWeHaveLastFrame();
+                
+                using var delta = BitPackerPool.Get();
+                BitPackerDeltaUtils.CreateDelta(_lastServerFrame, frame, delta);
+                
+                var deltaLen = delta.ToByteData().length;
+                foreach (var (player, queue) in _clientTicks)
+                {
+                    if (player == localPlayer)
+                        continue;
+
+                    SendFrameToRemote(player, queue.Count > 0 ? queue.Dequeue() : 0, delta, deltaLen);
+                }
+                
+                _lastServerFrame?.Dispose();
+                _lastServerFrame = frame;
             }
             else
             {
+                using var frame = BitPackerPool.Get();
+
                 for (var systemIdx = 0; systemIdx < count; systemIdx++)
                 {
                     var system = _systems[systemIdx];
@@ -288,21 +323,8 @@ namespace PurrNet.Prediction
                     if (system.IsOwner(myPlayer))
                         system.WriteInput(localTick, frame);
                 }
-            }
-            
-            if (!cachedIsServer)
-            {
+                
                 SendInputToServer(localTick, frame);
-            }
-            else if (frame.positionInBits > 0)
-            {
-                foreach (var (player, queue) in _clientTicks)
-                {
-                    if (player == localPlayer)
-                        continue;
-
-                    SendFrameToRemote(player, queue.Count > 0 ? queue.Dequeue() : 0, frame);
-                }
             }
 
             localTick += 1;
@@ -343,20 +365,29 @@ namespace PurrNet.Prediction
         BitPacker _lastFrame;
 
         [TargetRpc]
-        private void SendFrameToRemote([UsedImplicitly] PlayerID player, ulong clientLocalTick, BitPacker frame)
+        private void SendFrameToRemote([UsedImplicitly] PlayerID player, ulong clientLocalTick, BitPacker delta, int deltaLen)
         {
-            _lastFrame?.Dispose();
-            _lastFrame = frame;
+            using (delta)
+            {
+                var result = BitPackerPool.Get();
+                delta.SkipBytes(deltaLen);
 
-            if (clientLocalTick == 0)
-                return;
-            
-            _tickToRollbackFrom = clientLocalTick;
+                BitPackerDeltaUtils.ApplyDelta(_lastFrame, delta, result);
+
+                _lastFrame?.Dispose();
+                _lastFrame = result;
+
+                if (clientLocalTick == 0)
+                    return;
+
+                _tickToRollbackFrom = clientLocalTick;
+            }
         }
 
         private void CatchupFromTick(ulong clientTick)
         {
             isReplaying = true;
+            _lastFrame.ResetPositionAndMode(true);
 
             for (var i = 0; i < _systems.Count; ++i)
             {
