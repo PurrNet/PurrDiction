@@ -22,7 +22,7 @@
             "results": [
               {
                 "file": "Assets/PurrDiction/package.json",
-                "hasChanged": true,
+                "hasChanged": false,
                 "numMatches": 1,
                 "numReplacements": 1
               }
