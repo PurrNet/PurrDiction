@@ -84,6 +84,14 @@ namespace PurrNet.Prediction
                 RegisterInstance(queued);
             }
             
+            switch (_physicsProvider)
+            {
+                case PredictionPhysicsProvider.UnityPhysics3D:
+                case PredictionPhysicsProvider.UnityPhysics2D:
+                    Time.fixedDeltaTime = (float)tickDelta;
+                    break;
+            }
+            
             _queue.Clear();
         }
 
