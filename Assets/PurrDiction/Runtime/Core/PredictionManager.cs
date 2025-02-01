@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace PurrNet.Prediction
 {
-    public enum PredictionPhysicsProvider
+    public enum PredictionPhysicsProvider : byte
     {
         None,
         UnityPhysics3D,
@@ -17,7 +17,14 @@ namespace PurrNet.Prediction
         BEPUPhysics
     }
     
-    [DefaultExecutionOrder(-1000), RegisterNetworkType(typeof(AnimationClip))]
+    public enum UpdateViewMode : byte
+    {
+        None,
+        Update,
+        LateUpdate
+    }
+    
+    [DefaultExecutionOrder(1000)]
     public class PredictionManager : NetworkIdentity
     {
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterAssembliesLoaded)]
@@ -26,6 +33,7 @@ namespace PurrNet.Prediction
         static readonly Dictionary<int, PredictionManager> _instances = new ();
 
         [SerializeField] private PredictionPhysicsProvider _physicsProvider;
+        [SerializeField] private UpdateViewMode _updateViewMode = UpdateViewMode.Update;
         [SerializeField] private GameObject[] _prefabs;
         
         readonly List<PredictedIdentity> _queue = new ();
@@ -493,13 +501,32 @@ namespace PurrNet.Prediction
             }
         }
 
-        private void LateUpdate()
+        private void Update()
         {
+            if (_updateViewMode != UpdateViewMode.Update)
+                return;
+            
             if (!isClient)
                 return;
             
-            int count = _systems.Count;
+            UpdateView();
+        }
+
+        private void LateUpdate()
+        {
+            if (_updateViewMode != UpdateViewMode.LateUpdate)
+                return;
             
+            if (!isClient)
+                return;
+            
+            UpdateView();
+        }
+
+        private void UpdateView()
+        {
+            int count = _systems.Count;
+
             for (var i = 0; i < count; i++)
                 _systems[i].UpdateView(Time.unscaledDeltaTime);
         }

@@ -417,6 +417,7 @@ MonoBehaviour:
   _networkRules: {fileID: 0}
   _visitiblityRules: {fileID: 0}
   _physicsProvider: 1
+  _updateViewMode: 1
   _prefabs:
   - {fileID: 2990978637306053845, guid: 14ef4fb9c3d76ce4686663df0c0f2555, type: 3}
   - {fileID: 208167536026591109, guid: eb91489127ad82e4cbc003840e08c8f8, type: 3}
@@ -517,12 +518,12 @@ MonoBehaviour:
   _startClientFlags: 7
   _cookieScope: 1
   _dontDestroyOnLoad: 0
-  _transport: {fileID: 1793795282}
+  _transport: {fileID: 1793795277}
   _networkPrefabs: {fileID: 11400000, guid: 2190589f99f9abe479a1c7890b05f51f, type: 2}
   _networkRules: {fileID: 11400000, guid: d8799083b96579a42b8b2d03e4ceae98, type: 2}
   _visibilityRules: {fileID: 11400000, guid: 8f014a5bd8dc68646a2a3c0b18c5bbd8, type: 2}
   _authenticator: {fileID: 0}
-  _tickRate: 60
+  _tickRate: 30
 --- !u!114 &1793795280
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -575,8 +576,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _masterServer: https://purrbalancer.riten.dev:8080/
   _roomName: fdesfes
-  _region: eu-france
-  _host: fr.purrlay.riten.dev
+  _region: eu-central
+  _host: eu1.purrlay.riten.dev
 --- !u!1 &1997087625
 GameObject:
   m_ObjectHideFlags: 0
