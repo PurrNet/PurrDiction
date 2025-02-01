@@ -157,7 +157,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 98dbb08343eac044895b9b52872bcb49, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _maxInterpolationBuffer: 2
+  _maxInterpolationBuffer: 3
   _updateView: 1
   _graphics: {fileID: 6680935653974138748}
   _characterControllerPatch: 1
@@ -191,6 +191,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _maxInterpolationBuffer: 2
   _updateView: 1
+  _repeatInputFactor: 0.8
   _extrapolateInput: 1
   _projectile: {fileID: 208167536026591109, guid: eb91489127ad82e4cbc003840e08c8f8, type: 3}
   _controller: {fileID: 3826029466696574374}

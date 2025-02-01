@@ -48,8 +48,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 98dbb08343eac044895b9b52872bcb49, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _maxInterpolationBuffer: 3
   _updateView: 1
-  _maxInterpolationBuffer: 2
   _graphics: {fileID: 8038408506651358186}
   _characterControllerPatch: 1
   _interpolationSettings: {fileID: 11400000, guid: 4a8aa8e44e23cfd4a8d4387ef3f36173, type: 2}
@@ -65,8 +65,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 939517533de889a4f948d4e2041fb798, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _updateView: 1
   _maxInterpolationBuffer: 2
+  _updateView: 1
   _rigidbody: {fileID: 1844987416951553775}
 --- !u!54 &1844987416951553775
 Rigidbody:
