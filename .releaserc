@@ -18,16 +18,7 @@
           {
             "files": ["Assets/PurrDiction/package.json"],
             "from": "\"version\": \".*?\"",
-            "to": "\"version\": \"${nextRelease.version}\"",
-            "results": [
-              {
-                "file": "Assets/PurrDiction/package.json",
-                "hasChanged": false,
-                "numMatches": 1,
-                "numReplacements": 1
-              }
-            ],
-            "countMatches": true
+            "to": "\"version\": \"${nextRelease.version}\""
           }
         ]
     }],
