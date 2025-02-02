@@ -22,12 +22,12 @@ namespace PurrNet.Prediction
         
         public PredictedHierarchy hierarchy { get; private set; }
 
-        public override void Setup(NetworkManager manager, PredictionManager world, uint id, bool isSceneObject)
+        public override void Setup(NetworkManager manager, PredictionManager world, uint id)
         {
             if (!isFreshSpawn)
                 return;
             
-            base.Setup(manager, world, id, isSceneObject);
+            base.Setup(manager, world, id);
 
             hierarchy = world.hierarchy;
             _inputHistory = new History<INPUT>(world.tickRate * 5);
@@ -93,7 +93,7 @@ namespace PurrNet.Prediction
 
         protected abstract void Simulate(INPUT? input, ref STATE state, Fix64 delta);
         
-        protected override void Simulate(Fix64 delta, ref STATE state)
+        protected override void Simulate(ref STATE state, Fix64 delta)
         {
             Simulate(_lastInput, ref state, delta);
         }

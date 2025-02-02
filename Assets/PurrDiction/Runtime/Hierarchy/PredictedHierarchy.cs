@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using FixMath.NET;
 using PurrNet.Logging;
 using PurrNet.Pooling;
 using UnityEngine;
@@ -10,6 +11,8 @@ namespace PurrNet.Prediction
         readonly List<InstanceDetails> _spawnedPrefabs = new ();
         readonly Dictionary<PredictedObjectID, GameObject> _instanceMap = new ();
         readonly Dictionary<GameObject, PredictedObjectID> _goToId = new ();
+        
+        readonly List<PredictedObjectID> _toDelete = new ();
         
         private uint _nextInstanceId;
         
@@ -88,72 +91,17 @@ namespace PurrNet.Prediction
             
             return Create(prefab);
         }
-        
-        public PredictedObjectID? Create(int prefabId, Vector3 position, Quaternion rotation)
-        {
-            if (!predictionManager.TryGetPrefab(prefabId, out var prefab))
-                return default;
-            
-            return Create(prefab, position, rotation);
-        }
-        
-        // TOOD: make a list of pools per prefab with the key not including instance id?
-        //readonly Dictionary<PredictedObjectID, GameObject> _pool = new ();
-
-
-        readonly Dictionary<int, PredictedTickPool> _prefabToPool = new ();
-        
-        private PredictedTickPool GetPool(int prefabId)
-        {
-            if (_prefabToPool.TryGetValue(prefabId, out var pool))
-                return pool;
-            
-            pool = new PredictedTickPool(new List<PooledInstance>(10));
-            _prefabToPool.Add(prefabId, pool);
-            return pool;
-        }
-
-        protected override void UpdateView(PredictedHierarchyState interpolatedState, PredictedHierarchyState? verified)
-        {
-            ClearPool();
-        }
-
-        protected override void OnDestroy()
-        {
-            base.OnDestroy();
-            ClearPool();
-        }
-
-        private void ClearPool()
-        {
-            foreach (var (_, pool) in _prefabToPool)
-                pool.Clear(predictionManager);
-            _prefabToPool.Clear();
-        }
-        
-        private void Delete(InstanceDetails details, GameObject go)
-        {
-            var pool = GetPool(details.prefabId);
-            
-            if (pool.Put(details, go))
-            {
-                go.SetActive(false);
-                predictionManager.UnregisterInstance(go);
-            }
-            else predictionManager.InternalDelete(go);
-        }
 
         public PredictedObjectID? Create(GameObject prefab, Vector3 position, Quaternion rotation)
         {
-            if (!prefab)
-                return null;
-            
-            if (!predictionManager.TryGetPrefab(prefab, out var prefabId))
-            {
-                PurrLogger.LogError($"Failed to find prefab '{prefab}' in the prediction manager");
+            if (!predictionManager.TryGetPrefab(prefab, out var pid))
                 return default;
-            }
             
+            return Create(pid, position, rotation);
+        }
+        
+        public PredictedObjectID? Create(int prefabId, Vector3 position, Quaternion rotation)
+        {
             var instanceId = new PredictedObjectID(_nextInstanceId);
             var key = new InstanceDetails(prefabId, instanceId, position, rotation);
 
@@ -168,7 +116,16 @@ namespace PurrNet.Prediction
                 predictionManager.RegisterInstance(go);
                 go.SetActive(true);
             }
-            else go = predictionManager.InternalCreate(prefab, position, rotation);
+            else
+            {
+                if (!predictionManager.TryGetPrefab(prefabId, out var prefab))
+                {
+                    PurrLogger.LogError($"Failed to get prefab {prefabId}");
+                    return default;
+                }
+                
+                go = predictionManager.InternalCreate(prefab, position, rotation);
+            }
             
             _instanceMap.Add(instanceId, go);
             _goToId.Add(go, instanceId);
@@ -177,12 +134,83 @@ namespace PurrNet.Prediction
             
             return instanceId;
         }
+        
+        readonly Dictionary<int, PredictedTickPool> _prefabToPool = new ();
+        
+        private PredictedTickPool GetPool(int prefabId)
+        {
+            if (_prefabToPool.TryGetValue(prefabId, out var pool))
+                return pool;
+            
+            pool = new PredictedTickPool(new List<PooledInstance>(10));
+            _prefabToPool.Add(prefabId, pool);
+            return pool;
+        }
+        protected override void Simulate(ref PredictedHierarchyState state, Fix64 delta)
+        {
+            for (var o = 0; o < _toDelete.Count; o++)
+            {
+                var toDelete = _toDelete[o];
+                DeleteNow(toDelete);
+            }
+            
+            _toDelete.Clear();
+        }
+
+        private void LateUpdate()
+        {
+            ClearPool();
+        }
+
+        protected override void OnDestroy()
+        {
+            base.OnDestroy();
+            ClearPool();
+        }
+
+        private void ClearPool()
+        {
+            foreach (var (pid, pool) in _prefabToPool)
+            {
+                if (pid < 0)
+                    return;
+                
+                pool.Clear(predictionManager);
+            }
+        }
+        
+        private void Delete(InstanceDetails details, GameObject go)
+        {
+            var pool = GetPool(details.prefabId);
+            
+            if (pool.Put(details, go))
+            {
+                go.SetActive(false);
+                predictionManager.UnregisterInstance(go);
+            }
+            else predictionManager.InternalDelete(go);
+        }
+        
+        internal void RegisterSceneObject(GameObject root, int pid)
+        {
+            var instanceId = new PredictedObjectID(_nextInstanceId);
+            var key = new InstanceDetails(pid, instanceId, root.transform.position, root.transform.rotation);
+
+            _instanceMap.Add(instanceId, root);
+            _goToId.Add(root, instanceId);
+            _spawnedPrefabs.Add(key);
+            _nextInstanceId++;
+        }
 
         public PredictedObjectID? Create(GameObject prefab)
         {
             var trs = prefab.transform;
             trs.GetPositionAndRotation(out var position, out var rotation);
-            return Create(prefab, position, rotation);
+            
+            if (!predictionManager.TryGetPrefab(prefab, out var pid))
+                return default;
+            
+            return Create(pid, position, rotation);
         }
         
         public bool TryCreate(int prefabId, out PredictedObjectID id)
@@ -234,7 +262,7 @@ namespace PurrNet.Prediction
             return _instanceMap.TryGetValue(id.Value, out go);
         }
         
-        public void Delete(PredictedObjectID id)
+        private void DeleteNow(PredictedObjectID id)
         {
             if (!_instanceMap.Remove(id, out var instance))
                 return;
@@ -244,14 +272,33 @@ namespace PurrNet.Prediction
             var count = _spawnedPrefabs.Count;
             for (var i = 0; i < count; i++)
             {
-                if (_spawnedPrefabs[i].instanceId.Equals(id))
+                var details = _spawnedPrefabs[i];
+                if (details.instanceId.Equals(id))
                 {
                     _spawnedPrefabs.RemoveAt(i);
+
+                    if (details.prefabId < 0)
+                    {
+                        Delete(details, instance);
+                        return;
+                    }
+                    
                     break;
                 }
             }
-            
+
             predictionManager.InternalDelete(instance);
+        }
+        
+        public void Delete(PredictedIdentity pid)
+        {
+            if (!pid)
+                return;
+            
+            if (!_goToId.TryGetValue(pid.gameObject, out var poid))
+                return;
+            
+            _toDelete.Add(poid);
         }
 
         public void Delete(PredictedObjectID? id)
@@ -259,7 +306,7 @@ namespace PurrNet.Prediction
             if (!id.HasValue)
                 return;
             
-            Delete(id.Value);
+            _toDelete.Add(id.Value);
         }
     }
 }

@@ -78,12 +78,22 @@ namespace PurrNet.Prediction
             tickDelta = 1 / (Fix64)tickRate;
             hierarchy = RegisterSystem<PredictedHierarchy>();
 
+            var roots = HashSetPool<GameObject>.Instantiate();
+            var pid = -1;
+            
             for (var i = 0; i < _queue.Count; i++)
             {
                 var queued = _queue[i];
-                RegisterInstance(queued, true);
+                var root = queued.GetRoot();
+
+                if (roots.Add(root))
+                    hierarchy.RegisterSceneObject(root, pid--);
+                
+                RegisterInstance(queued);
             }
             
+            _queue.Clear();
+
             switch (_physicsProvider)
             {
                 case PredictionPhysicsProvider.UnityPhysics3D:
@@ -92,7 +102,6 @@ namespace PurrNet.Prediction
                     break;
             }
             
-            _queue.Clear();
         }
 
         private void RegisterScene()
@@ -135,7 +144,7 @@ namespace PurrNet.Prediction
         {
             var system = gameObject.AddComponent<T>();
             system.hideFlags = HideFlags.NotEditable;
-            RegisterInstance(system, false);
+            RegisterInstance(system);
             return system;
         }
 
@@ -145,7 +154,7 @@ namespace PurrNet.Prediction
             go.GetComponentsInChildren(true, components);
             
             for (var i = 0; i < components.Count; i++)
-                RegisterInstance(components[i], false);
+                RegisterInstance(components[i]);
             
             ListPool<PredictedIdentity>.Destroy(components);
         }
@@ -175,7 +184,7 @@ namespace PurrNet.Prediction
             return _instanceMap[id];
         }
 
-        private void RegisterInstance(PredictedIdentity system, bool isSceneObject)
+        private void RegisterInstance(PredictedIdentity system)
         {
             if (!isSpawned)
             {
@@ -184,7 +193,7 @@ namespace PurrNet.Prediction
             }
             
             _instanceMap[_nextInstanceId] = system;
-            system.Setup(networkManager, this, _nextInstanceId++, isSceneObject);
+            system.Setup(networkManager, this, _nextInstanceId++);
             _systems.Add(system);
         }
         
@@ -216,6 +225,8 @@ namespace PurrNet.Prediction
             {
                 _lastServerFrame = BitPackerPool.Get();
                 int count = _systems.Count;
+                
+                Packer<PackedInt>.Write(_lastServerFrame, count);
 
                 for (var systemIdx = 0; systemIdx < count; systemIdx++)
                     _systems[systemIdx].WriteLatestState(_lastServerFrame);
@@ -230,8 +241,12 @@ namespace PurrNet.Prediction
         {
             tickDelta = Fix64.FromRaw(delta);
             this.tickRate = tickRate;
+
+            PackedInt _count = default;
+            Packer<PackedInt>.Read(data, ref _count);
+            int count = _count;
             
-            for (var systemIdx = 0; systemIdx < _systems.Count; systemIdx++)
+            for (var systemIdx = 0; systemIdx < count; systemIdx++)
             {
                 var system = _systems[systemIdx];
                 system.ReadState(localTick, data);
@@ -239,7 +254,6 @@ namespace PurrNet.Prediction
                 system.ResetInterpolation();
             }
 
-            int count = _systems.Count;
             for (var systemIdx = 0; systemIdx < count; systemIdx++)
                 _systems[systemIdx].ReadInput(localTick, data);
 
@@ -281,12 +295,15 @@ namespace PurrNet.Prediction
             }
 
             DoPhysicsPass();
-
-            var count = _systems.Count;
             
             if (cachedIsServer)
             {
+                MakeSureWeHaveLastFrame();
+
                 var frame = BitPackerPool.Get();
+
+                var count = _systems.Count;
+                Packer<PackedInt>.Write(_lastServerFrame, count);
 
                 for (var systemIdx = 0; systemIdx < count; systemIdx++)
                 {
@@ -309,8 +326,6 @@ namespace PurrNet.Prediction
                     system.WriteInput(localTick, frame);
                 }
                 
-                MakeSureWeHaveLastFrame();
-                
                 using var delta = BitPackerPool.Get();
                 BitPackerDeltaUtils.CreateDelta(_lastServerFrame, frame, delta);
                 
@@ -330,7 +345,7 @@ namespace PurrNet.Prediction
             {
                 using var frame = BitPackerPool.Get();
 
-                for (var systemIdx = 0; systemIdx < count; systemIdx++)
+                for (var systemIdx = 0; systemIdx < _systems.Count; systemIdx++)
                 {
                     var system = _systems[systemIdx];
                     system.GetLatestUnityState();
@@ -404,16 +419,19 @@ namespace PurrNet.Prediction
         {
             isReplaying = true;
             _lastFrame.ResetPositionAndMode(true);
+            
+            PackedInt _count = default;
+            Packer<PackedInt>.Read(_lastFrame, ref _count);
+            int count = _count;
 
-            for (var i = 0; i < _systems.Count; ++i)
+            for (var i = 0; i < count; ++i)
             {
                 var system = _systems[i];
                 system.ReadState(clientTick, _lastFrame);
                 system.Rollback(clientTick);
             }
             
-            var sysCount = _systems.Count;
-            for (var i = 0; i < sysCount; ++i)
+            for (var i = 0; i < count; ++i)
                 _systems[i].ReadInput(clientTick, _lastFrame);
             
             switch (_physicsProvider)
@@ -435,9 +453,7 @@ namespace PurrNet.Prediction
 
                 DoPhysicsPass();
                 
-                var count = _systems.Count;
-
-                for (var j = 0; j < count; j++)
+                for (var j = 0; j < _systems.Count; j++)
                     _systems[j].GetLatestUnityState();
             }
             

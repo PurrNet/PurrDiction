@@ -20,13 +20,11 @@ namespace PurrNet.Prediction
     {
         public readonly GameObject gameObject;
         public readonly Vector3 spawnPosition;
-        public readonly Quaternion spawnRotation;
-        
-        public PooledInstance(GameObject gameObject, Vector3 spawnPosition, Quaternion spawnRotation)
+
+        public PooledInstance(GameObject gameObject, Vector3 spawnPosition)
         {
             this.gameObject = gameObject;
             this.spawnPosition = spawnPosition;
-            this.spawnRotation = spawnRotation;
         }
     }
     

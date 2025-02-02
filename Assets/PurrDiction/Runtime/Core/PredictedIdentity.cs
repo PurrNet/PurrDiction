@@ -73,9 +73,7 @@ namespace PurrNet.Prediction
         
         internal bool isFreshSpawn = true;
 
-        public bool isSceneObject { get; private set; }
-
-        public virtual void Setup(NetworkManager manager, PredictionManager world, uint id, bool isSceneObject)
+        public virtual void Setup(NetworkManager manager, PredictionManager world, uint id)
         {
             if (!isFreshSpawn)
                 return;
@@ -84,8 +82,6 @@ namespace PurrNet.Prediction
             
             owner = null;
             this.id = new PredictedID(id);
-            this.isSceneObject = isSceneObject;
-
             predictionManager = world;
         }
 
@@ -232,12 +228,12 @@ namespace PurrNet.Prediction
             set => fullPredictedState.state = value;
         }
 
-        public override void Setup(NetworkManager manager, PredictionManager world, uint id, bool isSceneObject)
+        public override void Setup(NetworkManager manager, PredictionManager world, uint id)
         {
             if (!isFreshSpawn)
                 return;
             
-            base.Setup(manager, world, id, isSceneObject);
+            base.Setup(manager, world, id);
             
             tickModule = manager.tickModule;
 
@@ -271,11 +267,11 @@ namespace PurrNet.Prediction
 
         internal override void EvaluateAndRegisterLocalInput(ulong localTick) { }
 
-        internal override void SimulateTick(ulong tick, Fix64 delta) => Simulate(delta, ref fullPredictedState.state);
+        internal override void SimulateTick(ulong tick, Fix64 delta) => Simulate(ref fullPredictedState.state, delta);
 
-        internal override void SimulateLocal(Fix64 delta) => Simulate(delta, ref fullPredictedState.state);
+        internal override void SimulateLocal(Fix64 delta) => Simulate(ref fullPredictedState.state, delta);
 
-        internal override void SimulateRemote(ulong tick, Fix64 delta) => Simulate(delta, ref fullPredictedState.state);
+        internal override void SimulateRemote(ulong tick, Fix64 delta) => Simulate(ref fullPredictedState.state, delta);
 
         internal override void SaveStateInHistory(ulong tick)
         {
@@ -299,7 +295,7 @@ namespace PurrNet.Prediction
         
         protected virtual STATE GetInitialState() => default;
 
-        protected virtual void Simulate(Fix64 delta, ref STATE state) {}
+        protected virtual void Simulate(ref STATE state, Fix64 delta) {}
 
         internal override void Rollback(ulong tick)
         {

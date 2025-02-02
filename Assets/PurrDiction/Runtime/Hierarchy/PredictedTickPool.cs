@@ -14,7 +14,7 @@ namespace PurrNet.Prediction
             
         public bool Put(InstanceDetails id, GameObject go)
         {
-            _pool.Add(new PooledInstance(go, id.spawnPosition, id.spawnRotation));
+            _pool.Add(new PooledInstance(go, id.spawnPosition));
             return true;
         }
             
