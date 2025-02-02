@@ -151,6 +151,22 @@ namespace PurrNet.Prediction
         public abstract void QueueInput(BitPacker packer);
 
         public abstract void ClearInput();
+
+        public GameObject GetRoot()
+        {
+            // get the farthest root with a predicted identity
+            var current = transform;
+            
+            while (current.parent != null)
+            {
+                if (current.parent.GetComponent<PredictedIdentity>() == null)
+                    break;
+                
+                current = current.parent;
+            }
+            
+            return current.gameObject;
+        }
     }
     
     public abstract class PredictedIdentity<STATE> : PredictedIdentity where STATE : struct, IPredictedData<STATE>
