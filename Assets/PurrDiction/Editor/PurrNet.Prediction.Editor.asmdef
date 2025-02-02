@@ -1,0 +1,16 @@
+{
+    "name": "PurrDiction.Editor",
+    "rootNamespace": "PurrNet.Prediction.Editor",
+    "references": [
+        "GUID:4ecd904f72132b747bbe9d8dc699df89"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
