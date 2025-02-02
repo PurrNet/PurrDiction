@@ -303,7 +303,7 @@ namespace PurrNet.Prediction
                 var frame = BitPackerPool.Get();
 
                 var count = _systems.Count;
-                Packer<PackedInt>.Write(_lastServerFrame, count);
+                Packer<PackedInt>.Write(frame, count);
 
                 for (var systemIdx = 0; systemIdx < count; systemIdx++)
                 {

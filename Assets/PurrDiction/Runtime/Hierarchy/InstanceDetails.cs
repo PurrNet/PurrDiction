@@ -59,5 +59,10 @@ namespace PurrNet.Prediction
         {
             return HashCode.Combine(prefabId, instanceId, spawnPosition, spawnRotation);
         }
+
+        public override string ToString()
+        {
+            return $"PrefabId: {prefabId}, InstanceId: {instanceId}, SpawnPosition: {spawnPosition}, SpawnRotation: {spawnRotation}";
+        }
     }
 }

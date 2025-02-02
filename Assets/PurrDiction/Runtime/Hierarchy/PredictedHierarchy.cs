@@ -73,7 +73,6 @@ namespace PurrNet.Prediction
                 _nextInstanceId = instanceId.instanceId;
                 
                 var goId = Create(pid, details.spawnPosition, details.spawnRotation);
-
                 if (!goId.HasValue)
                     PurrLogger.LogError($"Mismatch: Failed to create prefab {pid}");
             }
