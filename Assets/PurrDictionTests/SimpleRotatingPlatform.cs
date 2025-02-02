@@ -1,68 +1,30 @@
+using System;
 using FixMath.NET;
 using UnityEngine;
 
 namespace PurrNet.Prediction.Tests
 {
-    public class SimpleRotatingPlatform : PredictedIdentity<SimpleRotatingPlatform.Input, SimpleRotatingPlatform.State>
+    public class SimpleRotatingPlatform : PredictedIdentity<SimpleRotatingPlatform.State>
     {
-        [SerializeField] private Transform _visuals;
-        [SerializeField] private float _rotationSpeed = 1;
-
-        public struct Input : IPredictedData
-        {
-            public bool stopRotation;
-
-            public override string ToString()
-            {
-                return $"stopRotation: {stopRotation}";
-            }
-        }
-        
         public struct State : IPredictedData<State>
         {
-            public Vector3 position;
-            public float yRotation;
+            public bool markedForDeletion;
         }
 
-        protected override void GetUnityState(ref State state)
+        protected override void Simulate(Fix64 delta, ref State data)
         {
-            state.position = transform.position;
-            state.yRotation = transform.eulerAngles.y;
-        }
-
-        protected override Input GetInput() => new()
-        {
-            stopRotation = UnityEngine.Input.GetKey(KeyCode.Space)
-        };
-
-        protected override void Simulate(Input? input, ref State data, Fix64 delta)
-        {
-            if (input?.stopRotation == true)
+            if (!data.markedForDeletion)
                 return;
             
-            transform.rotation *= Quaternion.Euler(0, _rotationSpeed * (float)delta, 0);
-        }
-        
-        protected override void SetUnityState(State state)
-        {
-            transform.SetPositionAndRotation(state.position, Quaternion.Euler(0, state.yRotation, 0));
+            predictionManager.hierarchy.Delete(this);
         }
 
-        // optional step to update the view
-        protected override void UpdateView(State predicted, State? verified)
-        {
-            _visuals.SetPositionAndRotation(predicted.position, Quaternion.Euler(0, predicted.yRotation, 0));
-        }
 
-        // optional step to interpolate between states
-        protected override State Interpolate(State from, State to, float t)
+        private void OnCollisionEnter(Collision other)
         {
-            var result = from;
-            
-            result.yRotation = Mathf.LerpAngle(from.yRotation, to.yRotation, t);
-            result.position = Vector3.Lerp(from.position, to.position, t);
-            
-            return result;
+            var copy = currentState;
+            copy.markedForDeletion = true;
+            currentState = copy;
         }
     }
 }

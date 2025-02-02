@@ -8,8 +8,11 @@ namespace PurrNet.Prediction
     public class PredictedPlayerSpawner : PurrMonoBehaviour
     {
         [SerializeField] private GameObject _playerPrefab;
+        [SerializeField] private bool _destroyOnDisconnect;
         [SerializeField] private List<Transform> spawnPoints = new List<Transform>();
+
         private int _currentSpawnPoint;
+        readonly Dictionary<PlayerID, PredictedObjectID> _players = new ();
 
         private void Awake() => CleanupSpawnPoints();
 
@@ -35,6 +38,7 @@ namespace PurrNet.Prediction
             if (asServer && manager.TryGetModule(out ScenePlayersModule scenePlayersModule, true))
             {
                 scenePlayersModule.onPlayerLoadedScene += OnPlayerLoadedScene;
+                scenePlayersModule.onPlayerUnloadedScene += OnPlayerUnloadedScene;
 
                 if (!manager.TryGetModule(out ScenesModule scenes, true))
                     return;
@@ -53,13 +57,51 @@ namespace PurrNet.Prediction
         public override void Unsubscribe(NetworkManager manager, bool asServer)
         {
             if (asServer && manager.TryGetModule(out ScenePlayersModule scenePlayersModule, true))
+            {
                 scenePlayersModule.onPlayerLoadedScene -= OnPlayerLoadedScene;
+                scenePlayersModule.onPlayerUnloadedScene -= OnPlayerUnloadedScene;
+            }
         }
 
         private void OnDestroy()
         {
-            if(NetworkManager.main && NetworkManager.main.TryGetModule(out ScenePlayersModule scenePlayersModule, true))
+            if (NetworkManager.main &&
+                NetworkManager.main.TryGetModule(out ScenePlayersModule scenePlayersModule, true))
+            {
                 scenePlayersModule.onPlayerLoadedScene -= OnPlayerLoadedScene;
+                scenePlayersModule.onPlayerUnloadedScene -= OnPlayerUnloadedScene;
+            }
+        }
+
+        private void OnPlayerUnloadedScene(PlayerID player, SceneID scene, bool asServer)
+        {
+            if (!_destroyOnDisconnect)
+                return;
+            
+            var main = NetworkManager.main;
+            
+            if (!main || !main.TryGetModule(out ScenesModule scenes, true))
+                return;
+
+            var unityScene = gameObject.scene;
+            
+            if (!scenes.TryGetSceneID(unityScene, out var sceneID))
+                return;
+            
+            if (sceneID != scene)
+                return;
+
+            if (!asServer)
+                return;
+            
+            if (!PredictionManager.TryGetInstance(gameObject.scene.handle, out var predictionManager))
+                return;
+
+            if (_players.TryGetValue(player, out var playerID))
+            {
+                predictionManager.hierarchy.Delete(playerID);
+                _players.Remove(player);
+            }
         }
 
         private void OnPlayerLoadedScene(PlayerID player, SceneID scene, bool asServer)
@@ -82,6 +124,9 @@ namespace PurrNet.Prediction
             
             if (!PredictionManager.TryGetInstance(gameObject.scene.handle, out var predictionManager))
                 return;
+            
+            if (_players.ContainsKey(player))
+                return;
 
             bool isDestroyOnDisconnectEnabled = main.networkRules.ShouldDespawnOnOwnerDisconnect();
             if (!isDestroyOnDisconnectEnabled && main.TryGetModule(out GlobalOwnershipModule ownership, true) && 
@@ -102,7 +147,11 @@ namespace PurrNet.Prediction
             {
                 newPlayer = predictionManager.hierarchy.Create(_playerPrefab);
             }
-
+            
+            if (!newPlayer.HasValue)
+                return;
+            
+            _players[player] = newPlayer.Value;
             predictionManager.SetOwnership(newPlayer, player);
         }
     }
