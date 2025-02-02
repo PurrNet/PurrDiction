@@ -73,7 +73,21 @@ namespace PurrNet.Prediction
         
         internal bool isFreshSpawn = true;
 
-        public abstract void Setup(NetworkManager manager, PredictionManager world, uint id);
+        public bool isSceneObject { get; private set; }
+
+        public virtual void Setup(NetworkManager manager, PredictionManager world, uint id, bool isSceneObject)
+        {
+            if (!isFreshSpawn)
+                return;
+            
+            isFreshSpawn = false;
+            
+            owner = null;
+            this.id = new PredictedID(id);
+            this.isSceneObject = isSceneObject;
+
+            predictionManager = world;
+        }
 
         protected virtual void OnDestroy()
         {
@@ -202,19 +216,15 @@ namespace PurrNet.Prediction
             set => fullPredictedState.state = value;
         }
 
-        public override void Setup(NetworkManager manager, PredictionManager world, uint id)
+        public override void Setup(NetworkManager manager, PredictionManager world, uint id, bool isSceneObject)
         {
             if (!isFreshSpawn)
                 return;
             
-            isFreshSpawn = false;
+            base.Setup(manager, world, id, isSceneObject);
             
-            owner = null;
-            this.id = new PredictedID(id);
-            
-            predictionManager = world;
             tickModule = manager.tickModule;
-            
+
             if (tickModule == null)
                 return;
             

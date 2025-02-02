@@ -81,7 +81,7 @@ namespace PurrNet.Prediction
             for (var i = 0; i < _queue.Count; i++)
             {
                 var queued = _queue[i];
-                RegisterInstance(queued);
+                RegisterInstance(queued, true);
             }
             
             switch (_physicsProvider)
@@ -135,7 +135,7 @@ namespace PurrNet.Prediction
         {
             var system = gameObject.AddComponent<T>();
             system.hideFlags = HideFlags.NotEditable;
-            RegisterInstance(system);
+            RegisterInstance(system, false);
             return system;
         }
 
@@ -145,7 +145,7 @@ namespace PurrNet.Prediction
             go.GetComponentsInChildren(true, components);
             
             for (var i = 0; i < components.Count; i++)
-                RegisterInstance(components[i]);
+                RegisterInstance(components[i], false);
             
             ListPool<PredictedIdentity>.Destroy(components);
         }
@@ -175,7 +175,7 @@ namespace PurrNet.Prediction
             return _instanceMap[id];
         }
 
-        private void RegisterInstance(PredictedIdentity system)
+        private void RegisterInstance(PredictedIdentity system, bool isSceneObject)
         {
             if (!isSpawned)
             {
@@ -184,7 +184,7 @@ namespace PurrNet.Prediction
             }
             
             _instanceMap[_nextInstanceId] = system;
-            system.Setup(networkManager, this, _nextInstanceId++);
+            system.Setup(networkManager, this, _nextInstanceId++, isSceneObject);
             _systems.Add(system);
         }
         

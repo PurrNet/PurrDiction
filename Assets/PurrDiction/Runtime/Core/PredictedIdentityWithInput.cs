@@ -22,12 +22,12 @@ namespace PurrNet.Prediction
         
         public PredictedHierarchy hierarchy { get; private set; }
 
-        public override void Setup(NetworkManager manager, PredictionManager world, uint id)
+        public override void Setup(NetworkManager manager, PredictionManager world, uint id, bool isSceneObject)
         {
             if (!isFreshSpawn)
                 return;
             
-            base.Setup(manager, world, id);
+            base.Setup(manager, world, id, isSceneObject);
 
             hierarchy = world.hierarchy;
             _inputHistory = new History<INPUT>(world.tickRate * 5);
