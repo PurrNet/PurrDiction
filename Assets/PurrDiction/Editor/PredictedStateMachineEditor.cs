@@ -106,7 +106,10 @@ namespace PurrNet.Prediction.Editor
         {
             var nodeType = stateNode.GetType();
             var genericInterface = nodeType.GetInterfaces()[0];
-            var dataType = genericInterface.GetGenericArguments()[0];
+            var dataTypes = genericInterface.GetGenericArguments();
+            if(dataTypes.Length == 0)
+                return;
+            var dataType = dataTypes[0];
 
             var fields = dataType.GetFields(BindingFlags.Public | BindingFlags.Instance);
             var properties = dataType.GetProperties(BindingFlags.Public | BindingFlags.Instance);

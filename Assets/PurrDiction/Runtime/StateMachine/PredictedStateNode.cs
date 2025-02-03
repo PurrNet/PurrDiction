@@ -1,3 +1,4 @@
+using FixMath.NET;
 using PurrNet.Logging;
 using UnityEngine;
 
@@ -7,15 +8,12 @@ namespace PurrNet.Prediction.StateMachine
     {
         void Setup(PredictedStateMachine stateMachine);
         void Enter();
+        void StateSimulate(Fix64 delta);
         void Exit();
     }
-    
-    public interface IPredictedStateNodeBase<T> : IPredictedStateNodeBase where T : struct, IPredictedData<T>
-    {
-        void Enter(T data);
-    }
 
-    public abstract class PredictedStateNode<T> : PredictedIdentity<T>, IPredictedStateNodeBase where T : struct, IPredictedData<T>
+    public abstract class PredictedStateNode<T> : PredictedIdentity<T>, IPredictedStateNodeBase 
+        where T : struct, IPredictedData<T>
     {
         protected PredictedStateMachine machine { get; private set; }
 
@@ -26,17 +24,23 @@ namespace PurrNet.Prediction.StateMachine
         
         public virtual void Enter() {}
 
+        public virtual void StateSimulate(Fix64 delta) { }
+        
         public virtual void Exit() {}
     }
-
-    public abstract class PredictedStateNode<T, TData> : PredictedStateNode<T>, IPredictedStateNodeBase<TData>
-        where T : struct, IPredictedData<T> where TData : struct, IPredictedData<TData>
+    
+    public abstract class PredictedStateNode<TInput, T> : PredictedIdentity<TInput, T>, IPredictedStateNodeBase 
+        where T : struct, IPredictedData<T> 
+        where TInput : struct, IPredictedData
     {
-        public virtual void Enter(TData data) {}
-
-        public override void Enter()
+        protected PredictedStateMachine machine { get; private set; }
+        public void Setup(PredictedStateMachine stateMachine)
         {
-            PurrLogger.LogError($"Attempted to enter state {GetType().Name} without required data and no other override");
+            machine = stateMachine;
         }
+
+        public virtual void Enter() { }
+        public virtual void StateSimulate(Fix64 delta) { }
+        public virtual void Exit() { }
     }
 }

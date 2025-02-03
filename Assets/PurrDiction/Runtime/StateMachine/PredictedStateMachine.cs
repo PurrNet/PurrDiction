@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using FixMath.NET;
 using UnityEngine;
 
 namespace PurrNet.Prediction.StateMachine
@@ -9,12 +10,25 @@ namespace PurrNet.Prediction.StateMachine
         [SerializeField] private List<SerializableInterface<IPredictedStateNodeBase>> _wrappedStates = 
             new List<SerializableInterface<IPredictedStateNodeBase>>();
         private List<IPredictedStateNodeBase> _states;
-        public IReadOnlyList<IPredictedStateNodeBase> States => _states;
+        public IReadOnlyList<IPredictedStateNodeBase> states => _states;
 
+        public IPredictedStateNodeBase currentStateNode
+        {
+            get
+            {
+                if(currentState.stateIndex < 0 || currentState.stateIndex >= _states.Count)
+                    return null;
+                
+                return _states[currentState.stateIndex];
+            }
+        }
+
+        
+        
 #if UNITY_EDITOR
         public IPredictedStateNodeBase _previousStateNode;
-        public IPredictedStateNodeBase _currentStateNode;
         public IPredictedStateNodeBase _nextStateNode;
+        public IPredictedStateNodeBase _currentStateNode;
 #endif
     
         private void Awake()
@@ -30,68 +44,69 @@ namespace PurrNet.Prediction.StateMachine
             }
         }
 
+        protected override void Simulate(ref SMState state, Fix64 delta)
+        {
+            base.Simulate(ref state, delta);
+            
+            if (_states.Count <= 0 || state.wantedState <= -1)
+                return;
+            
+            if(state.stateIndex > -1 && _states[state.stateIndex] != null)
+                _states[state.stateIndex].StateSimulate(delta);
+            
+            if(state.wantedState != state.stateIndex)
+            {
+#if UNITY_EDITOR
+                _previousStateNode = _currentStateNode;
+                _nextStateNode = _states[(state.wantedState + 1) % _states.Count];
+                _currentStateNode = _states[state.wantedState];
+#endif
+                if(state.stateIndex > -1)
+                    _states[state.stateIndex].Exit();
+                state.stateIndex = state.wantedState;
+                _states[state.stateIndex].Enter();
+            }
+        }
+
         protected override SMState GetInitialState()
         {
-            Debug.Log(_states.Count);
-            if(_states.Count > 0)
-                SetState(_states[0]);
+            var state = new SMState()
+            {
+                wantedState = 0,
+                stateIndex = -1
+            };
             
-            return base.GetInitialState();
+            return state;
         }
 
         public void Next()
         {
             if (_states.Count == 0) return;
             var nextIndex = (currentState.stateIndex + 1) % _states.Count;
-            SetState(_states[nextIndex]);
-        }
-
-        public void Next<TData>(TData data) where TData : struct, IPredictedData<TData>
-        {
-            if (_states.Count == 0) return;
-            var nextIndex = (currentState.stateIndex + 1) % _states.Count;
-            SetState<TData>(_states[nextIndex] as IPredictedStateNodeBase<TData>, data);
+            Debug.Log($"Wanted: {currentState.wantedState} | Current: {currentState.stateIndex} | Next: {nextIndex}");
+            SetState(nextIndex);
         }
 
         public void Previous()
         {
             if (_states.Count == 0) return;
             var previousIndex = (currentState.stateIndex - 1 + _states.Count) % _states.Count;
-            SetState(_states[previousIndex]);
+            SetState(previousIndex);
         }
 
-        public void Previous<TData>(TData data) where TData : struct, IPredictedData<TData>
+        public void SetState(int stateIndex)
         {
-            if (_states.Count == 0) return;
-            var previousIndex = (currentState.stateIndex - 1 + _states.Count) % _states.Count;
-            SetState<TData>(_states[previousIndex] as IPredictedStateNodeBase<TData>, data);
-        }
-
-        public void SetState(IPredictedStateNodeBase state)
-        {
-            Debug.Log($" {state.GetType().Name}");
 #if UNITY_EDITOR
             _previousStateNode = _currentStateNode;
-            _currentStateNode = state;
             _nextStateNode = _states[(currentState.stateIndex + 1) % _states.Count];
 #endif
-            
-            _states[currentState.stateIndex].Exit();
-            SetStateIndex(_states.IndexOf(state));
-            state.Enter();
-        }
-
-        public void SetState<TData>(IPredictedStateNodeBase<TData> state, TData data) where TData : struct, IPredictedData<TData>
-        {
-            _states[currentState.stateIndex].Exit();
-            SetStateIndex(_states.IndexOf(state));
-            state.Enter(data);
+            SetWantedStateIndex(stateIndex);
         }
         
-        private void SetStateIndex(int index)
+        private void SetWantedStateIndex(int index)
         {
             var copy = currentState;
-            copy.stateIndex = index;
+            copy.wantedState = index;
             currentState = copy;
         }
     }
@@ -117,6 +132,7 @@ namespace PurrNet.Prediction.StateMachine
     
     public struct SMState : IPredictedData<SMState>
     {
+        public int wantedState;
         public int stateIndex;
     }
 }
