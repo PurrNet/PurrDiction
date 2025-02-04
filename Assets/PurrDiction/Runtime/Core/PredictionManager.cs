@@ -101,7 +101,6 @@ namespace PurrNet.Prediction
                     Time.fixedDeltaTime = (float)tickDelta;
                     break;
             }
-            
         }
 
         private void RegisterScene()
@@ -138,6 +137,27 @@ namespace PurrNet.Prediction
         {
             networkManager.tickModule.onPreTick -= OnTick;
             networkManager.tickModule.onPostTick -= OnPostTick;
+            
+            _lastServerFrame?.Dispose();
+            _lastServerFrame = null;
+            
+            CleanupAllSystems();
+        }
+
+        private void CleanupAllSystems()
+        {
+            hierarchy.Cleanup();
+
+            for (var i = 0; i < _systems.Count; i++)
+            {
+                if (_systems[i])
+                    DestroyImmediate(_systems[i]);
+            }
+            
+            _nextInstanceId = 0;
+            _instanceMap.Clear();
+            _queue.Clear();
+            _systems.Clear();
         }
 
         public T RegisterSystem<T>() where T : PredictedIdentity

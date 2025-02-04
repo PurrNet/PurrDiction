@@ -13,6 +13,7 @@ namespace PurrNet.Prediction
         readonly Dictionary<GameObject, PredictedObjectID> _goToId = new ();
         
         readonly List<PredictedObjectID> _toDelete = new ();
+        readonly HashSet<PredictedObjectID> _isSceneObject = new ();
         
         private uint _nextInstanceId;
         
@@ -195,6 +196,7 @@ namespace PurrNet.Prediction
             var instanceId = new PredictedObjectID(_nextInstanceId);
             var key = new InstanceDetails(pid, instanceId, root.transform.position, root.transform.rotation);
 
+            _isSceneObject.Add(instanceId);
             _instanceMap.Add(instanceId, root);
             _goToId.Add(root, instanceId);
             _spawnedPrefabs.Add(key);
@@ -306,6 +308,26 @@ namespace PurrNet.Prediction
                 return;
             
             _toDelete.Add(id.Value);
+        }
+
+        public void Cleanup()
+        {
+            foreach (var (poid, go) in _instanceMap)
+            {
+                if (_isSceneObject.Contains(poid))
+                {
+                    predictionManager.UnregisterInstance(go);
+                    continue;
+                }
+                
+                predictionManager.InternalDelete(go);
+            }
+            
+            _instanceMap.Clear();
+            _goToId.Clear();
+            _spawnedPrefabs.Clear();
+            _toDelete.Clear();
+            _isSceneObject.Clear();
         }
     }
 }
