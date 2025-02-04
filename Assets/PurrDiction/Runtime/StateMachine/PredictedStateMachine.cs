@@ -102,6 +102,15 @@ namespace PurrNet.Prediction.StateMachine
 #endif
             SetWantedStateIndex(stateIndex);
         }
+
+        public void SetState(IPredictedStateNodeBase state)
+        {
+            var index = _states.IndexOf(state);
+            if (index == -1)
+                return;
+            
+            SetState(index);
+        }
         
         private void SetWantedStateIndex(int index)
         {
