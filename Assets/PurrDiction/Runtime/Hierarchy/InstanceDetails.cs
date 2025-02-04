@@ -4,18 +4,6 @@ using UnityEngine;
 
 namespace PurrNet.Prediction
 {
-    public readonly struct CachedGameObject
-    {
-        public readonly float time;
-        public readonly GameObject gameObject;
-        
-        public CachedGameObject(float time, GameObject gameObject)
-        {
-            this.time = time;
-            this.gameObject = gameObject;
-        }
-    }
-
     public readonly struct PooledInstance
     {
         public readonly GameObject gameObject;
