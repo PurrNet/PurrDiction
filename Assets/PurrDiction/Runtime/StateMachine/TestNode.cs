@@ -12,7 +12,7 @@ namespace PurrNet.Prediction
             Debug.Log($"Entered state {gameObject.name}", machine);
         }
 
-        public override void StateSimulate(Fix64 delta)
+        public override void StateSimulate(FP delta)
         {
             //Happens within simulation
         }

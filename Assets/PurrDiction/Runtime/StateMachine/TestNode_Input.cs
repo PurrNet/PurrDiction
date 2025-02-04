@@ -1,4 +1,3 @@
-using System;
 using FixMath.NET;
 using PurrNet.Prediction.StateMachine;
 using UnityEngine;
@@ -29,7 +28,7 @@ namespace PurrNet.Prediction
             return input;
         }
 
-        public override void StateSimulate(Fix64 delta)
+        public override void StateSimulate(FP delta)
         {
             base.StateSimulate(delta);
 
@@ -37,7 +36,7 @@ namespace PurrNet.Prediction
             currentState = state;
         }
 
-        protected override void Simulate(TestNodeInput? input, ref TestNodeData state, Fix64 delta)
+        protected override void Simulate(TestNodeInput? input, ref TestNodeData state, FP delta)
         {
             if (!input.HasValue)
                 return;
