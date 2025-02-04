@@ -28,19 +28,19 @@ namespace BEPUphysics.CollisionTests.Manifolds
             }
         }
 
-        protected internal override int FindOverlappingTriangles(Fix64 dt)
+        protected internal override int FindOverlappingTriangles(FP dt)
         {
-            BoundingBox boundingBox;
+            FPBoundingBox boundingBox;
             convex.Shape.GetLocalBoundingBox(ref convex.worldTransform, ref terrain.worldTransform, out boundingBox);
 
 
             if (convex.entity != null)
             {
-                Vector3 transformedVelocity;
+                FPVector3 transformedVelocity;
                 Matrix3x3 inverse;
                 Matrix3x3.Invert(ref terrain.worldTransform.LinearTransform, out inverse);
                 Matrix3x3.Transform(ref convex.entity.linearVelocity, ref inverse, out transformedVelocity);
-                Vector3.Multiply(ref transformedVelocity, dt, out transformedVelocity);
+                FPVector3.Multiply(ref transformedVelocity, dt, out transformedVelocity);
 
 
                 if (transformedVelocity.X > F64.C0)
@@ -105,16 +105,16 @@ namespace BEPUphysics.CollisionTests.Manifolds
             //If the candidates list is empty, then let's see if the convex is in the 'thickness' of the terrain.
             if (candidates.Count == 0 & terrain.thickness > F64.C0)
             {
-                RayHit rayHit;
-                Ray ray = new Ray { Position = convex.worldTransform.Position, Direction = terrain.worldTransform.LinearTransform.Up };
+                FPRayHit rayHit;
+                FPRay ray = new FPRay { Position = convex.worldTransform.Position, Direction = terrain.worldTransform.LinearTransform.Up };
                 ray.Direction.Normalize();
                 //The raycast has to use doublesidedness, since we're casting from the bottom up.
                 if (terrain.Shape.RayCast(ref ray, terrain.thickness, ref terrain.worldTransform, TriangleSidedness.DoubleSided, out rayHit))
                 {
                     //Found a hit!
                     rayHit.Normal.Normalize();
-                    Fix64 dot;
-                    Vector3.Dot(ref ray.Direction, ref rayHit.Normal, out dot);
+                    FP dot;
+                    FPVector3.Dot(ref ray.Direction, ref rayHit.Normal, out dot);
 
                     var newContact = new ContactData
                     {
@@ -134,7 +134,7 @@ namespace BEPUphysics.CollisionTests.Manifolds
                             contacts.Elements[i].Position = newContact.Position;
                             contacts.Elements[i].PenetrationDepth = newContact.PenetrationDepth;
                             supplementData.Elements[i].BasePenetrationDepth = newContact.PenetrationDepth;
-                            supplementData.Elements[i].LocalOffsetA = new Vector3();
+                            supplementData.Elements[i].LocalOffsetA = new FPVector3();
                             supplementData.Elements[i].LocalOffsetB = ray.Position; //convex local position in mesh.
                             found = true;
                             break;

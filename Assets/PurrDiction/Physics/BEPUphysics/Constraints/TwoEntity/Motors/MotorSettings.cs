@@ -31,7 +31,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Motors
     {
         internal SolverUpdateable motor;
 
-        internal Fix64 maximumForce = Fix64.MaxValue;
+        internal FP maximumForce = FP.MaxValue;
         internal MotorMode mode = MotorMode.VelocityMotor;
 
         protected MotorSettings(SolverUpdateable motor)
@@ -43,7 +43,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Motors
         /// Gets and sets the maximum impulse that the constraint will attempt to apply when satisfying its requirements.
         /// This field can be used to simulate friction in a constraint.
         /// </summary>
-        public Fix64 MaximumForce
+        public FP MaximumForce
         {
             get
             {
@@ -192,17 +192,17 @@ namespace BEPUphysics.Constraints.TwoEntity.Motors
         /// <summary>
         /// Speed at which the servo will try to achieve its goal.
         /// </summary>
-        internal Fix64 baseCorrectiveSpeed;
+        internal FP baseCorrectiveSpeed;
 
         /// <summary>
         /// Maximum extra velocity that the constraint will apply in an effort to correct constraint error.
         /// </summary>
-        internal Fix64 maxCorrectiveVelocity = Fix64.MaxValue;
+        internal FP maxCorrectiveVelocity = FP.MaxValue;
 
         /// <summary>
         /// Squared maximum extra velocity that the constraint will apply in an effort to correct constraint error.
         /// </summary>
-        internal Fix64 maxCorrectiveVelocitySquared = Fix64.MaxValue;
+        internal FP maxCorrectiveVelocitySquared = FP.MaxValue;
 
         /// <summary>
         /// Spring settings define how a constraint responds to velocity and position error.
@@ -218,7 +218,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Motors
         /// Gets and sets the speed at which the servo will try to achieve its goal.
         /// This is inactive if the constraint is not in servo mode.
         /// </summary>
-        public Fix64 BaseCorrectiveSpeed
+        public FP BaseCorrectiveSpeed
         {
             get { return baseCorrectiveSpeed; }
             set
@@ -235,7 +235,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Motors
         /// <summary>
         /// Gets or sets the maximum extra velocity that the constraint will apply in an effort to correct any constraint error.
         /// </summary>
-        public Fix64 MaxCorrectiveVelocity
+        public FP MaxCorrectiveVelocity
         {
             get { return maxCorrectiveVelocity; }
             set
@@ -244,9 +244,9 @@ namespace BEPUphysics.Constraints.TwoEntity.Motors
                 if (maxCorrectiveVelocity != value)
                 {
                     maxCorrectiveVelocity = value;
-                    if (maxCorrectiveVelocity >= Fix64.MaxValue)
+                    if (maxCorrectiveVelocity >= FP.MaxValue)
                     {
-                        maxCorrectiveVelocitySquared = Fix64.MaxValue;
+                        maxCorrectiveVelocitySquared = FP.MaxValue;
                     }
                     else
                     {
@@ -279,7 +279,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Motors
     /// </summary>
     public class ServoSettings1D : ServoSettings
     {
-        internal Fix64 goal;
+        internal FP goal;
 
         internal ServoSettings1D(MotorSettings motorSettings)
             : base(motorSettings)
@@ -289,7 +289,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Motors
         /// <summary>
         /// Gets or sets the goal position of the servo.
         /// </summary>
-        public Fix64 Goal
+        public FP Goal
         {
             get { return goal; }
             set
@@ -311,7 +311,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Motors
     /// </summary>
     public class ServoSettings3D : ServoSettings
     {
-        internal Vector3 goal;
+        internal FPVector3 goal;
 
         internal ServoSettings3D(MotorSettings motorSettings)
             : base(motorSettings)
@@ -321,7 +321,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Motors
         /// <summary>
         /// Gets or sets the goal position of the servo.
         /// </summary>
-        public Vector3 Goal
+        public FPVector3 Goal
         {
             get { return goal; }
             set
@@ -341,7 +341,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Motors
     /// </summary>
     public class ServoSettingsOrientation : ServoSettings
     {
-        internal Quaternion goal;
+        internal FPQuaternion goal;
 
         internal ServoSettingsOrientation(MotorSettings motorSettings)
             : base(motorSettings)
@@ -351,7 +351,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Motors
         /// <summary>
         /// Gets or sets the goal orientation of the servo.
         /// </summary>
-        public Quaternion Goal
+        public FPQuaternion Goal
         {
             get { return goal; }
             set
@@ -379,7 +379,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Motors
         /// Must be greater than zero.
         /// Sometimes, if a joint system is unstable, increasing the softness of the involved constraints will make it settle down.
         /// </summary>
-        internal Fix64 softness = (Fix64).0001m;
+        internal FP softness = (FP).0001m;
 
         internal VelocityMotorSettings(MotorSettings motorSettings)
         {
@@ -393,7 +393,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Motors
         /// Sometimes, if a joint system is unstable, increasing the softness of the involved constraints will make it settle down.
         /// For motors, softness can be used to implement damping.  For a damping constant k, the appropriate softness is 1/k.
         /// </summary>
-        public Fix64 Softness
+        public FP Softness
         {
             get { return softness; }
             set
@@ -414,7 +414,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Motors
     /// </summary>
     public class VelocityMotorSettings1D : VelocityMotorSettings
     {
-        internal Fix64 goalVelocity;
+        internal FP goalVelocity;
 
         internal VelocityMotorSettings1D(MotorSettings motorSettings)
             : base(motorSettings)
@@ -424,7 +424,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Motors
         /// <summary>
         /// Gets or sets the goal velocity of the motor.
         /// </summary>
-        public Fix64 GoalVelocity
+        public FP GoalVelocity
         {
             get { return goalVelocity; }
             set
@@ -444,7 +444,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Motors
     /// </summary>
     public class VelocityMotorSettings3D : VelocityMotorSettings
     {
-        internal Vector3 goalVelocity;
+        internal FPVector3 goalVelocity;
 
         internal VelocityMotorSettings3D(MotorSettings motorSettings)
             : base(motorSettings)
@@ -454,7 +454,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Motors
         /// <summary>
         /// Gets or sets the goal position of the servo.
         /// </summary>
-        public Vector3 GoalVelocity
+        public FPVector3 GoalVelocity
         {
             get { return goalVelocity; }
             set

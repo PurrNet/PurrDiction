@@ -131,7 +131,7 @@ namespace BEPUphysics.NarrowPhaseSystems.Pairs
         /// Updates the pair handler.
         ///</summary>
         ///<param name="dt">Timestep duration.</param>
-        public override void UpdateCollision(Fix64 dt)
+        public override void UpdateCollision(FP dt)
         {
             //Cache some properties.
             var a = CollidableA;

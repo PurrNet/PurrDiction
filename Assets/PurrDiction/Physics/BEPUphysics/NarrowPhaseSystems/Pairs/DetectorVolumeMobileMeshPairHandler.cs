@@ -65,7 +65,7 @@ namespace BEPUphysics.NarrowPhaseSystems.Pairs
 
         RawList<int> overlaps = new RawList<int>(8);
 
-        public override void UpdateCollision(Fix64 dt)
+        public override void UpdateCollision(FP dt)
         {
             WasContaining = Containing;
             WasTouching = Touching;
@@ -81,8 +81,8 @@ namespace BEPUphysics.NarrowPhaseSystems.Pairs
 
             var meshData = mesh.Shape.TriangleMesh.Data;
             RigidTransform mobileTriangleTransform, detectorTriangleTransform;
-            mobileTriangleTransform.Orientation = Quaternion.Identity;
-            detectorTriangleTransform.Orientation = Quaternion.Identity;
+            mobileTriangleTransform.Orientation = FPQuaternion.Identity;
+            detectorTriangleTransform.Orientation = FPQuaternion.Identity;
             for (int i = 0; i < meshData.Indices.Length; i += 3)
             {
                 //Grab a triangle associated with the mobile mesh.
@@ -90,27 +90,27 @@ namespace BEPUphysics.NarrowPhaseSystems.Pairs
                 RigidTransform.Transform(ref mobileTriangle.vA, ref mesh.worldTransform, out mobileTriangle.vA);
                 RigidTransform.Transform(ref mobileTriangle.vB, ref mesh.worldTransform, out mobileTriangle.vB);
                 RigidTransform.Transform(ref mobileTriangle.vC, ref mesh.worldTransform, out mobileTriangle.vC);
-                Vector3.Add(ref mobileTriangle.vA, ref mobileTriangle.vB, out mobileTriangleTransform.Position);
-                Vector3.Add(ref mobileTriangle.vC, ref mobileTriangleTransform.Position, out mobileTriangleTransform.Position);
-                Vector3.Multiply(ref mobileTriangleTransform.Position, F64.OneThird, out mobileTriangleTransform.Position);
-                Vector3.Subtract(ref mobileTriangle.vA, ref mobileTriangleTransform.Position, out mobileTriangle.vA);
-                Vector3.Subtract(ref mobileTriangle.vB, ref mobileTriangleTransform.Position, out mobileTriangle.vB);
-                Vector3.Subtract(ref mobileTriangle.vC, ref mobileTriangleTransform.Position, out mobileTriangle.vC);
+                FPVector3.Add(ref mobileTriangle.vA, ref mobileTriangle.vB, out mobileTriangleTransform.Position);
+                FPVector3.Add(ref mobileTriangle.vC, ref mobileTriangleTransform.Position, out mobileTriangleTransform.Position);
+                FPVector3.Multiply(ref mobileTriangleTransform.Position, F64.OneThird, out mobileTriangleTransform.Position);
+                FPVector3.Subtract(ref mobileTriangle.vA, ref mobileTriangleTransform.Position, out mobileTriangle.vA);
+                FPVector3.Subtract(ref mobileTriangle.vB, ref mobileTriangleTransform.Position, out mobileTriangle.vB);
+                FPVector3.Subtract(ref mobileTriangle.vC, ref mobileTriangleTransform.Position, out mobileTriangle.vC);
 
                 //Go through all the detector volume triangles which are near the mobile mesh triangle.
                 bool triangleTouching, triangleContaining;
-                BoundingBox mobileBoundingBox;
+                FPBoundingBox mobileBoundingBox;
                 mobileTriangle.GetBoundingBox(ref mobileTriangleTransform, out mobileBoundingBox);
                 DetectorVolume.TriangleMesh.Tree.GetOverlaps(mobileBoundingBox, overlaps);
                 for (int j = 0; j < overlaps.Count; j++)
                 {
                     DetectorVolume.TriangleMesh.Data.GetTriangle(overlaps.Elements[j], out detectorTriangle.vA, out detectorTriangle.vB, out detectorTriangle.vC);
-                    Vector3.Add(ref detectorTriangle.vA, ref detectorTriangle.vB, out detectorTriangleTransform.Position);
-                    Vector3.Add(ref detectorTriangle.vC, ref detectorTriangleTransform.Position, out detectorTriangleTransform.Position);
-                    Vector3.Multiply(ref detectorTriangleTransform.Position, F64.OneThird, out detectorTriangleTransform.Position);
-                    Vector3.Subtract(ref detectorTriangle.vA, ref detectorTriangleTransform.Position, out detectorTriangle.vA);
-                    Vector3.Subtract(ref detectorTriangle.vB, ref detectorTriangleTransform.Position, out detectorTriangle.vB);
-                    Vector3.Subtract(ref detectorTriangle.vC, ref detectorTriangleTransform.Position, out detectorTriangle.vC);
+                    FPVector3.Add(ref detectorTriangle.vA, ref detectorTriangle.vB, out detectorTriangleTransform.Position);
+                    FPVector3.Add(ref detectorTriangle.vC, ref detectorTriangleTransform.Position, out detectorTriangleTransform.Position);
+                    FPVector3.Multiply(ref detectorTriangleTransform.Position, F64.OneThird, out detectorTriangleTransform.Position);
+                    FPVector3.Subtract(ref detectorTriangle.vA, ref detectorTriangleTransform.Position, out detectorTriangle.vA);
+                    FPVector3.Subtract(ref detectorTriangle.vB, ref detectorTriangleTransform.Position, out detectorTriangle.vB);
+                    FPVector3.Subtract(ref detectorTriangle.vC, ref detectorTriangleTransform.Position, out detectorTriangle.vC);
 
                     //If this triangle collides with the convex, we can stop immediately since we know we're touching and not containing.)))
                     //[MPR is used here in lieu of GJK because the MPR implementation tends to finish quicker than GJK when objects are overlapping.  The GJK implementation does better on separated objects.]
@@ -168,11 +168,11 @@ namespace BEPUphysics.NarrowPhaseSystems.Pairs
                 //are in the mobile mesh.
 
                 //This *could* fail if the mobile mesh is actually multiple pieces, but that's not a common or really supported case for solids.
-                Vector3 vertex;
+                FPVector3 vertex;
                 DetectorVolume.TriangleMesh.Data.GetVertexPosition(0, out vertex);
-                Ray ray;
-                ray.Direction = Vector3.Up;
-                RayHit hit;
+                FPRay ray;
+                ray.Direction = FPVector3.Up;
+                FPRayHit hit;
                 RigidTransform.TransformByInverse(ref vertex, ref mesh.worldTransform, out ray.Position);
                 if (mesh.Shape.IsLocalRayOriginInMesh(ref ray, out hit))
                 {

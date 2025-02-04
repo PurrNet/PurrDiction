@@ -39,6 +39,8 @@ namespace PurrNet.Prediction
         readonly List<PredictedIdentity> _queue = new ();
         readonly List<PredictedIdentity> _systems = new ();
         
+        public BEPUphysics.Space physics { get; private set; }
+        
         public static bool TryGetInstance(int sceneHandle, out PredictionManager world)
         {
             return _instances.TryGetValue(sceneHandle, out world);
@@ -56,10 +58,19 @@ namespace PurrNet.Prediction
                 case PredictionPhysicsProvider.UnityPhysics2D:
                     Physics2D.simulationMode = SimulationMode2D.Script;
                     break;
+                case PredictionPhysicsProvider.BEPUPhysics:
+                    physics = new BEPUphysics.Space
+                    {
+                        ForceUpdater =
+                        {
+                            Gravity = new BEPUutilities.FPVector3(0, -9.81M, 0)
+                        }
+                    };
+                    break;
             }
         }
 
-        public Fix64 tickDelta { get; private set; }
+        public FP tickDelta { get; private set; }
 
         public int tickRate { get; private set; }
         
@@ -75,7 +86,7 @@ namespace PurrNet.Prediction
             RegisterScene();
 
             tickRate = networkManager.tickModule.tickRate;
-            tickDelta = 1 / (Fix64)tickRate;
+            tickDelta = 1 / (FP)tickRate;
             hierarchy = RegisterSystem<PredictedHierarchy>();
 
             var roots = HashSetPool<GameObject>.Instantiate();
@@ -259,7 +270,7 @@ namespace PurrNet.Prediction
         [TargetRpc]
         private void SyncFullState([UsedImplicitly] PlayerID target, int tickRate, long delta, BitPacker data)
         {
-            tickDelta = Fix64.FromRaw(delta);
+            tickDelta = FP.FromRaw(delta);
             this.tickRate = tickRate;
 
             PackedInt _count = default;
@@ -393,6 +404,9 @@ namespace PurrNet.Prediction
             switch (_physicsProvider)
             {
                 case PredictionPhysicsProvider.None:
+                    break;
+                case PredictionPhysicsProvider.BEPUPhysics:
+                    physics.Update(tickDelta);
                     break;
                 case PredictionPhysicsProvider.UnityPhysics3D:
                 {

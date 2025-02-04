@@ -25,19 +25,19 @@ namespace BEPUphysics.CollisionTests
             {
                 contacts.Elements[k].Validate();
                 ContactSupplementData data = supplementData.Elements[k];
-                Vector3 newPosA, newPosB;
+                FPVector3 newPosA, newPosB;
                 RigidTransform.Transform(ref data.LocalOffsetA, ref transformA, out newPosA);
                 RigidTransform.Transform(ref data.LocalOffsetB, ref transformB, out newPosB);
 
                 //ab - (ab*n)*n
                 //Compute the horizontal offset.
-                Vector3 ab;
-                Vector3.Subtract(ref newPosB, ref newPosA, out ab);
-                Fix64 dot;
-                Vector3.Dot(ref ab, ref contacts.Elements[k].Normal, out dot);
-                Vector3 temp;
-                Vector3.Multiply(ref contacts.Elements[k].Normal, dot, out temp);
-                Vector3.Subtract(ref ab, ref temp, out temp);
+                FPVector3 ab;
+                FPVector3.Subtract(ref newPosB, ref newPosA, out ab);
+                FP dot;
+                FPVector3.Dot(ref ab, ref contacts.Elements[k].Normal, out dot);
+                FPVector3 temp;
+                FPVector3.Multiply(ref contacts.Elements[k].Normal, dot, out temp);
+                FPVector3.Subtract(ref ab, ref temp, out temp);
                 dot = temp.LengthSquared();
                 if (dot > CollisionDetectionSettings.ContactInvalidationLengthSquared)
                 {
@@ -47,16 +47,16 @@ namespace BEPUphysics.CollisionTests
                 {
                     //Depth refresh:
                     //Find deviation ((Ra-Rb)*N) and add to base depth.
-                    Vector3.Dot(ref ab, ref contacts.Elements[k].Normal, out dot);
+                    FPVector3.Dot(ref ab, ref contacts.Elements[k].Normal, out dot);
                     contacts.Elements[k].PenetrationDepth = data.BasePenetrationDepth - dot;
                     if (contacts.Elements[k].PenetrationDepth < -CollisionDetectionSettings.maximumContactDistance)
                         toRemove.Add(k);
                     else
                     {
                         //Refresh position and ra/rb.
-                        Vector3 newPos;
-                        Vector3.Add(ref newPosB, ref newPosA, out newPos);
-                        Vector3.Multiply(ref newPos, F64.C0p5, out newPos);
+                        FPVector3 newPos;
+                        FPVector3.Add(ref newPosB, ref newPosA, out newPos);
+                        FPVector3.Multiply(ref newPos, F64.C0p5, out newPos);
                         contacts.Elements[k].Position = newPos;
                         //This is an interesting idea, but has very little effect one way or the other.
                         //data.BasePenetrationDepth = contacts.Elements[k].PenetrationDepth;

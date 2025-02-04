@@ -71,7 +71,7 @@ namespace BEPUphysics.Paths.PathFollowing
         /// <summary>
         /// Gets or sets the point in the entity's local space that will be moved towards the target position.
         /// </summary>
-        public Vector3 LocalOffset
+        public FPVector3 LocalOffset
         {
             get { return LinearMotor.LocalPoint; }
             set { LinearMotor.LocalPoint = value; }
@@ -80,7 +80,7 @@ namespace BEPUphysics.Paths.PathFollowing
         /// <summary>
         /// Gets or sets the point attached to the entity in world space that will be moved towards the target position.
         /// </summary>
-        public Vector3 Offset
+        public FPVector3 Offset
         {
             get { return LinearMotor.Point; }
             set { LinearMotor.Point = value; }
@@ -89,7 +89,7 @@ namespace BEPUphysics.Paths.PathFollowing
         /// <summary>
         /// Gets or sets the target location of the entity mover.
         /// </summary>
-        public Vector3 TargetPosition { get; set; }
+        public FPVector3 TargetPosition { get; set; }
 
         /// <summary>
         /// Gets the angular velocity necessary to change an entity's orientation from
@@ -99,11 +99,11 @@ namespace BEPUphysics.Paths.PathFollowing
         /// <param name="end">Final position.</param>
         /// <param name="dt">Time over which the angular velocity is to be applied.</param>
         /// <returns>Angular velocity to reach the goal in time.</returns>
-        public static Vector3 GetLinearVelocity(Vector3 start, Vector3 end, Fix64 dt)
+        public static FPVector3 GetLinearVelocity(FPVector3 start, FPVector3 end, FP dt)
         {
-            Vector3 offset;
-            Vector3.Subtract(ref end, ref start, out offset);
-            Vector3.Divide(ref offset, dt, out offset);
+            FPVector3 offset;
+            FPVector3.Subtract(ref end, ref start, out offset);
+            FPVector3.Divide(ref offset, dt, out offset);
             return offset;
         }
 
@@ -127,7 +127,7 @@ namespace BEPUphysics.Paths.PathFollowing
         /// Called automatically by the space.
         /// </summary>
         /// <param name="dt">Simulation timestep.</param>
-        void IDuringForcesUpdateable.Update(Fix64 dt)
+        void IDuringForcesUpdateable.Update(FP dt)
         {
             if (Entity != LinearMotor.Entity)
                 throw new InvalidOperationException(
@@ -141,8 +141,8 @@ namespace BEPUphysics.Paths.PathFollowing
             else
             {
                 LinearMotor.IsActive = false;
-                Vector3 worldMovedPoint = Matrix3x3.Transform(LocalOffset, entity.orientationMatrix);
-                Vector3.Add(ref worldMovedPoint, ref entity.position, out worldMovedPoint);
+                FPVector3 worldMovedPoint = Matrix3x3.Transform(LocalOffset, entity.orientationMatrix);
+                FPVector3.Add(ref worldMovedPoint, ref entity.position, out worldMovedPoint);
                 Entity.LinearVelocity = GetLinearVelocity(worldMovedPoint, TargetPosition, dt);
             }
         }

@@ -43,11 +43,11 @@ namespace BEPUphysics.BroadPhaseEntries
         private Action collisionRulesUpdatedDelegate;
         protected abstract void CollisionRulesUpdated();
 
-        protected internal BoundingBox boundingBox;
+        protected internal FPBoundingBox boundingBox;
         /// <summary>
         /// Gets or sets the bounding box of the entry.
         /// </summary>
-        public BoundingBox BoundingBox
+        public FPBoundingBox BoundingBox
         {
             get { return boundingBox; }
             set
@@ -89,7 +89,7 @@ namespace BEPUphysics.BroadPhaseEntries
         /// <param name="maximumLength">Maximum length, in units of the ray's direction's length, to test.</param>
         /// <param name="rayHit">Hit location of the ray on the entry, if any.</param>
         /// <returns>Whether or not the ray hit the entry.</returns>
-        public abstract bool RayCast(Ray ray, Fix64 maximumLength, out RayHit rayHit);
+        public abstract bool RayCast(FPRay ray, FP maximumLength, out FPRayHit rayHit);
 
         /// <summary>
         /// Tests a ray against the entry.
@@ -100,11 +100,11 @@ namespace BEPUphysics.BroadPhaseEntries
         /// in the entry, this filter will be passed into inner ray casts.</param>
         /// <param name="rayHit">Hit location of the ray on the entry, if any.</param>
         /// <returns>Whether or not the ray hit the entry.</returns>
-        public virtual bool RayCast(Ray ray, Fix64 maximumLength, Func<BroadPhaseEntry, bool> filter, out RayHit rayHit)
+        public virtual bool RayCast(FPRay ray, FP maximumLength, Func<BroadPhaseEntry, bool> filter, out FPRayHit rayHit)
         {
             if (filter(this))
                 return RayCast(ray, maximumLength, out rayHit);
-            rayHit = new RayHit();
+            rayHit = new FPRayHit();
             return false;
         }
 
@@ -118,7 +118,7 @@ namespace BEPUphysics.BroadPhaseEntries
         /// <param name="sweep">Sweep motion to apply to the cast shape.</param>
         /// <param name="hit">Hit data of the cast on the entry, if any.</param>
         /// <returns>Whether or not the cast hit the entry.</returns>
-        public abstract bool ConvexCast(ConvexShape castShape, ref RigidTransform startingTransform, ref Vector3 sweep, out RayHit hit);
+        public abstract bool ConvexCast(ConvexShape castShape, ref RigidTransform startingTransform, ref FPVector3 sweep, out FPRayHit hit);
 
         /// <summary>
         /// Sweeps a convex shape against the entry.
@@ -130,11 +130,11 @@ namespace BEPUphysics.BroadPhaseEntries
         /// in the entry, this filter will be passed into inner ray casts.</param>
         /// <param name="hit">Hit data of the cast on the entry, if any.</param>
         /// <returns>Whether or not the cast hit the entry.</returns>
-        public virtual bool ConvexCast(ConvexShape castShape, ref RigidTransform startingTransform, ref Vector3 sweep, Func<BroadPhaseEntry, bool> filter, out RayHit hit)
+        public virtual bool ConvexCast(ConvexShape castShape, ref RigidTransform startingTransform, ref FPVector3 sweep, Func<BroadPhaseEntry, bool> filter, out FPRayHit hit)
         {
             if (filter(this))
                 return ConvexCast(castShape, ref startingTransform, ref sweep, out hit);
-            hit = new RayHit();
+            hit = new FPRayHit();
             return false;
         }
 

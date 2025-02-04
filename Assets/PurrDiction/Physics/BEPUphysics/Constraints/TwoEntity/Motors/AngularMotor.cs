@@ -14,12 +14,12 @@ namespace BEPUphysics.Constraints.TwoEntity.Motors
         private readonly JointBasis3D basis = new JointBasis3D();
 
         private readonly MotorSettingsOrientation settings;
-        private Vector3 accumulatedImpulse;
+        private FPVector3 accumulatedImpulse;
 
 
-        private Fix64 angle;
-        private Vector3 axis;
-        private Vector3 biasVelocity;
+        private FP angle;
+        private FPVector3 axis;
+        private FPVector3 biasVelocity;
         private Matrix3x3 effectiveMassMatrix;
 
         /// <summary>
@@ -46,9 +46,9 @@ namespace BEPUphysics.Constraints.TwoEntity.Motors
             settings = new MotorSettingsOrientation(this);
 
             //Compute the rotation from A to B in A's local space.
-            Quaternion orientationAConjugate;
-            Quaternion.Conjugate(ref connectionA.orientation, out orientationAConjugate);
-            Quaternion.Concatenate(ref connectionB.orientation, ref orientationAConjugate, out settings.servo.goal);
+            FPQuaternion orientationAConjugate;
+            FPQuaternion.Conjugate(ref connectionA.orientation, out orientationAConjugate);
+            FPQuaternion.Concatenate(ref connectionB.orientation, ref orientationAConjugate, out settings.servo.goal);
 
         }
 
@@ -74,7 +74,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Motors
         /// <summary>
         /// Gets the current relative velocity between the connected entities with respect to the constraint.
         /// </summary>
-        public Vector3 RelativeVelocity
+        public FPVector3 RelativeVelocity
         {
             get { return connectionA.angularVelocity - connectionB.angularVelocity; }
         }
@@ -82,7 +82,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Motors
         /// <summary>
         /// Gets the total impulse applied by this constraint.
         /// </summary>
-        public Vector3 TotalImpulse
+        public FPVector3 TotalImpulse
         {
             get { return accumulatedImpulse; }
         }
@@ -91,7 +91,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Motors
         /// Gets the current constraint error.
         /// If the motor is in velocity only mode, error is zero.
         /// </summary>
-        public Vector3 Error
+        public FPVector3 Error
         {
             get { return axis * angle; }
         }
@@ -106,7 +106,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Motors
         /// <param name="jacobianX">First linear jacobian entry for the first connected entity.</param>
         /// <param name="jacobianY">Second linear jacobian entry for the first connected entity.</param>
         /// <param name="jacobianZ">Third linear jacobian entry for the first connected entity.</param>
-        public void GetLinearJacobianA(out Vector3 jacobianX, out Vector3 jacobianY, out Vector3 jacobianZ)
+        public void GetLinearJacobianA(out FPVector3 jacobianX, out FPVector3 jacobianY, out FPVector3 jacobianZ)
         {
             jacobianX = Toolbox.ZeroVector;
             jacobianY = Toolbox.ZeroVector;
@@ -119,7 +119,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Motors
         /// <param name="jacobianX">First linear jacobian entry for the second connected entity.</param>
         /// <param name="jacobianY">Second linear jacobian entry for the second connected entity.</param>
         /// <param name="jacobianZ">Third linear jacobian entry for the second connected entity.</param>
-        public void GetLinearJacobianB(out Vector3 jacobianX, out Vector3 jacobianY, out Vector3 jacobianZ)
+        public void GetLinearJacobianB(out FPVector3 jacobianX, out FPVector3 jacobianY, out FPVector3 jacobianZ)
         {
             jacobianX = Toolbox.ZeroVector;
             jacobianY = Toolbox.ZeroVector;
@@ -132,7 +132,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Motors
         /// <param name="jacobianX">First angular jacobian entry for the first connected entity.</param>
         /// <param name="jacobianY">Second angular jacobian entry for the first connected entity.</param>
         /// <param name="jacobianZ">Third angular jacobian entry for the first connected entity.</param>
-        public void GetAngularJacobianA(out Vector3 jacobianX, out Vector3 jacobianY, out Vector3 jacobianZ)
+        public void GetAngularJacobianA(out FPVector3 jacobianX, out FPVector3 jacobianY, out FPVector3 jacobianZ)
         {
             jacobianX = Toolbox.RightVector;
             jacobianY = Toolbox.UpVector;
@@ -145,7 +145,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Motors
         /// <param name="jacobianX">First angular jacobian entry for the second connected entity.</param>
         /// <param name="jacobianY">Second angular jacobian entry for the second connected entity.</param>
         /// <param name="jacobianZ">Third angular jacobian entry for the second connected entity.</param>
-        public void GetAngularJacobianB(out Vector3 jacobianX, out Vector3 jacobianY, out Vector3 jacobianZ)
+        public void GetAngularJacobianB(out FPVector3 jacobianX, out FPVector3 jacobianY, out FPVector3 jacobianZ)
         {
             jacobianX = Toolbox.RightVector;
             jacobianY = Toolbox.UpVector;
@@ -166,31 +166,31 @@ namespace BEPUphysics.Constraints.TwoEntity.Motors
         /// <summary>
         /// Applies the corrective impulses required by the constraint.
         /// </summary>
-        public override Fix64 SolveIteration()
+        public override FP SolveIteration()
         {
 #if !WINDOWS
-            Vector3 lambda = new Vector3();
+            FPVector3 lambda = new FPVector3();
 #else
             Vector3 lambda;
 #endif
-            Vector3 aVel = connectionA.angularVelocity;
-            Vector3 bVel = connectionB.angularVelocity;
+            FPVector3 aVel = connectionA.angularVelocity;
+            FPVector3 bVel = connectionB.angularVelocity;
             lambda.X = bVel.X - aVel.X - biasVelocity.X - usedSoftness * accumulatedImpulse.X;
             lambda.Y = bVel.Y - aVel.Y - biasVelocity.Y - usedSoftness * accumulatedImpulse.Y;
             lambda.Z = bVel.Z - aVel.Z - biasVelocity.Z - usedSoftness * accumulatedImpulse.Z;
 
             Matrix3x3.Transform(ref lambda, ref effectiveMassMatrix, out lambda);
 
-            Vector3 previousAccumulatedImpulse = accumulatedImpulse;
+            FPVector3 previousAccumulatedImpulse = accumulatedImpulse;
             accumulatedImpulse.X += lambda.X;
             accumulatedImpulse.Y += lambda.Y;
             accumulatedImpulse.Z += lambda.Z;
-            Fix64 sumLengthSquared = accumulatedImpulse.LengthSquared();
+            FP sumLengthSquared = accumulatedImpulse.LengthSquared();
 
             if (sumLengthSquared > maxForceDtSquared)
             {
                 //max / impulse gives some value 0 < x < 1.  Basically, normalize the vector (divide by the length) and scale by the maximum.
-                Fix64 multiplier = maxForceDt / Fix64.Sqrt(sumLengthSquared);
+                FP multiplier = maxForceDt / FP.Sqrt(sumLengthSquared);
                 accumulatedImpulse.X *= multiplier;
                 accumulatedImpulse.Y *= multiplier;
                 accumulatedImpulse.Z *= multiplier;
@@ -208,24 +208,24 @@ namespace BEPUphysics.Constraints.TwoEntity.Motors
             }
             if (connectionB.isDynamic)
             {
-                Vector3 torqueB;
-                Vector3.Negate(ref lambda, out torqueB);
+                FPVector3 torqueB;
+                FPVector3.Negate(ref lambda, out torqueB);
                 connectionB.ApplyAngularImpulse(ref torqueB);
             }
 
-            return (Fix64.Abs(lambda.X) + Fix64.Abs(lambda.Y) + Fix64.Abs(lambda.Z));
+            return (FP.Abs(lambda.X) + FP.Abs(lambda.Y) + FP.Abs(lambda.Z));
         }
 
         /// <summary>
         /// Initializes the constraint for the current frame.
         /// </summary>
         /// <param name="dt">Time between frames.</param>
-        public override void Update(Fix64 dt)
+        public override void Update(FP dt)
         {
             basis.rotationMatrix = connectionA.orientationMatrix;
             basis.ComputeWorldSpaceAxes();
 
-            Fix64 inverseDt = F64.C1 / dt;
+            FP inverseDt = F64.C1 / dt;
             if (settings.mode == MotorMode.Servomechanism) //Only need to do the bulk of this work if it's a servo.
             {
 
@@ -238,27 +238,27 @@ namespace BEPUphysics.Constraints.TwoEntity.Motors
                 //Error = (GoalRelativeOrientation * ConnectionA.Orientation)^-1 * ConnectionB.Orientation
 
                 //ConnectionA.Orientation is replaced in the above by the world space basis orientation.
-                Quaternion worldBasis = Quaternion.CreateFromRotationMatrix(basis.WorldTransform);
+                FPQuaternion worldBasis = FPQuaternion.CreateFromRotationMatrix(basis.WorldTransform);
 
-                Quaternion bTarget;
-                Quaternion.Concatenate(ref settings.servo.goal, ref worldBasis, out bTarget);
-                Quaternion bTargetConjugate;
-                Quaternion.Conjugate(ref bTarget, out bTargetConjugate);
+                FPQuaternion bTarget;
+                FPQuaternion.Concatenate(ref settings.servo.goal, ref worldBasis, out bTarget);
+                FPQuaternion bTargetConjugate;
+                FPQuaternion.Conjugate(ref bTarget, out bTargetConjugate);
 
-                Quaternion error;
-                Quaternion.Concatenate(ref bTargetConjugate, ref connectionB.orientation, out error);
+                FPQuaternion error;
+                FPQuaternion.Concatenate(ref bTargetConjugate, ref connectionB.orientation, out error);
 
 
-                Fix64 errorReduction;
+                FP errorReduction;
                 settings.servo.springSettings.ComputeErrorReductionAndSoftness(dt, inverseDt, out errorReduction, out usedSoftness);
 
                 //Turn this into an axis-angle representation.
-                Quaternion.GetAxisAngleFromQuaternion(ref error, out axis, out angle);
+                FPQuaternion.GetAxisAngleFromQuaternion(ref error, out axis, out angle);
 
                 //Scale the axis by the desired velocity if the angle is sufficiently large (epsilon).
                 if (angle > Toolbox.BigEpsilon)
                 {
-                    Fix64 velocity = -(MathHelper.Min(settings.servo.baseCorrectiveSpeed, angle * inverseDt) + angle * errorReduction);
+                    FP velocity = -(MathHelper.Min(settings.servo.baseCorrectiveSpeed, angle * inverseDt) + angle * errorReduction);
 
                     biasVelocity.X = axis.X * velocity;
                     biasVelocity.Y = axis.Y * velocity;
@@ -266,10 +266,10 @@ namespace BEPUphysics.Constraints.TwoEntity.Motors
 
 
                     //Ensure that the corrective velocity doesn't exceed the max.
-                    Fix64 length = biasVelocity.LengthSquared();
+                    FP length = biasVelocity.LengthSquared();
                     if (length > settings.servo.maxCorrectiveVelocitySquared)
                     {
-                        Fix64 multiplier = settings.servo.maxCorrectiveVelocity / Fix64.Sqrt(length);
+                        FP multiplier = settings.servo.maxCorrectiveVelocity / FP.Sqrt(length);
                         biasVelocity.X *= multiplier;
                         biasVelocity.Y *= multiplier;
                         biasVelocity.Z *= multiplier;
@@ -318,8 +318,8 @@ namespace BEPUphysics.Constraints.TwoEntity.Motors
             }
             if (connectionB.isDynamic)
             {
-                Vector3 torqueB;
-                Vector3.Negate(ref accumulatedImpulse, out torqueB);
+                FPVector3 torqueB;
+                FPVector3.Negate(ref accumulatedImpulse, out torqueB);
                 connectionB.ApplyAngularImpulse(ref torqueB);
             }
         }

@@ -47,8 +47,8 @@ namespace BEPUphysics.BroadPhaseSystems.SortAndSweep
         {
             base.Add(entry);
             //Entities do not set up their own bounding box before getting stuck in here.  If they're all zeroed out, the tree will be horrible.
-            Vector3 offset;
-            Vector3.Subtract(ref entry.boundingBox.Max, ref entry.boundingBox.Min, out offset);
+            FPVector3 offset;
+            FPVector3.Subtract(ref entry.boundingBox.Max, ref entry.boundingBox.Min, out offset);
             if (offset.X * offset.Y * offset.Z == F64.C0)
                 entry.UpdateBoundingBox();
             //binary search for the approximately correct location.  This helps prevent large first-frame sort times.
@@ -159,7 +159,7 @@ namespace BEPUphysics.BroadPhaseSystems.SortAndSweep
             //Sweep the list looking for overlaps.
             for (int i = 0; i < entries.Count; i++)
             {
-                BoundingBox a = entries.Elements[i].boundingBox;
+                FPBoundingBox a = entries.Elements[i].boundingBox;
                 for (int j = i + 1; j < entries.Count && a.Max.X >= entries.Elements[j].boundingBox.Min.X; j++)
                 {
                     if (!(a.Min.Y > entries.Elements[j].boundingBox.Max.Y || a.Max.Y < entries.Elements[j].boundingBox.Min.Y ||
@@ -185,7 +185,7 @@ namespace BEPUphysics.BroadPhaseSystems.SortAndSweep
                 end = intervalLength * (segment + 1);
             for (int i = intervalLength * segment; i < end; i++)
             {
-                BoundingBox a = entries.Elements[i].boundingBox;
+                FPBoundingBox a = entries.Elements[i].boundingBox;
                 for (int j = i + 1; j < entries.Count && a.Max.X >= entries.Elements[j].boundingBox.Min.X; j++)
                 {
                     if (!(a.Min.Y > entries.Elements[j].boundingBox.Max.Y || a.Max.Y < entries.Elements[j].boundingBox.Min.Y ||

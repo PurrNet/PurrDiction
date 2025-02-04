@@ -24,9 +24,9 @@ namespace BEPUphysics.Constraints.SolverGroups
             Add(NoRotationJoint);
         }
 
-        private static Vector3 GetAnchorGuess(Entity connectionA, Entity connectionB)
+        private static FPVector3 GetAnchorGuess(Entity connectionA, Entity connectionB)
         {
-            var anchor = new Vector3();
+            var anchor = new FPVector3();
             if (connectionA != null)
                 anchor += connectionA.position;
             if (connectionB != null)
@@ -53,7 +53,7 @@ namespace BEPUphysics.Constraints.SolverGroups
         /// <param name="connectionA">First entity of the constraint pair.</param>
         /// <param name="connectionB">Second entity of the constraint pair.</param>
         /// <param name="anchor">The location of the weld.</param>
-        public WeldJoint(Entity connectionA, Entity connectionB, Vector3 anchor)
+        public WeldJoint(Entity connectionA, Entity connectionB, FPVector3 anchor)
         {
             if (connectionA == null)
                 connectionA = TwoEntityConstraint.WorldEntity;

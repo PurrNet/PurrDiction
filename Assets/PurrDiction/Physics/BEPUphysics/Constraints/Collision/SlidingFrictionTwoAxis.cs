@@ -24,14 +24,14 @@ namespace BEPUphysics.Constraints.Collision
                 return contactManifoldConstraint;
             }
         }
-        internal Vector2 accumulatedImpulse;
+        internal FPVector2 accumulatedImpulse;
         internal Matrix2x3 angularA, angularB;
         private int contactCount;
-        private Fix64 friction;
+        private FP friction;
         internal Matrix2x3 linearA;
         private Entity entityA, entityB;
         private bool entityADynamic, entityBDynamic;
-        private Vector3 ra, rb;
+        private FPVector3 ra, rb;
         private Matrix2x2 velocityToImpulse;
 
 
@@ -39,18 +39,18 @@ namespace BEPUphysics.Constraints.Collision
         /// Gets the first direction in which the friction force acts.
         /// This is one of two directions that are perpendicular to each other and the normal of a collision between two entities.
         /// </summary>
-        public Vector3 FrictionDirectionX
+        public FPVector3 FrictionDirectionX
         {
-            get { return new Vector3(linearA.M11, linearA.M12, linearA.M13); }
+            get { return new FPVector3(linearA.M11, linearA.M12, linearA.M13); }
         }
 
         /// <summary>
         /// Gets the second direction in which the friction force acts.
         /// This is one of two directions that are perpendicular to each other and the normal of a collision between two entities.
         /// </summary>
-        public Vector3 FrictionDirectionY
+        public FPVector3 FrictionDirectionY
         {
-            get { return new Vector3(linearA.M21, linearA.M22, linearA.M23); }
+            get { return new FPVector3(linearA.M21, linearA.M22, linearA.M23); }
         }
 
         /// <summary>
@@ -58,7 +58,7 @@ namespace BEPUphysics.Constraints.Collision
         /// The X component of this vector is the force applied along the frictionDirectionX,
         /// while the Y component is the force applied along the frictionDirectionY.
         /// </summary>
-        public Vector2 TotalImpulse
+        public FPVector2 TotalImpulse
         {
             get { return accumulatedImpulse; }
         }
@@ -66,7 +66,7 @@ namespace BEPUphysics.Constraints.Collision
         ///<summary>
         /// Gets the tangential relative velocity between the associated entities at the contact point.
         ///</summary>
-        public Vector2 RelativeVelocity
+        public FPVector2 RelativeVelocity
         {
             get
             {
@@ -93,7 +93,7 @@ namespace BEPUphysics.Constraints.Collision
 
                 //Re-using information version:
                 //TODO: va + wa x ra - vb - wb x rb, dotted against each axis, is it faster?
-                Fix64 dvx = F64.C0, dvy = F64.C0, dvz = F64.C0;
+                FP dvx = F64.C0, dvy = F64.C0, dvz = F64.C0;
                 if (entityA != null)
                 {
                     dvx = entityA.linearVelocity.X + (entityA.angularVelocity.Y * ra.Z) - (entityA.angularVelocity.Z * ra.Y);
@@ -117,7 +117,7 @@ namespace BEPUphysics.Constraints.Collision
                 //            - entityB.linearVelocity.Z - (entityB.angularVelocity.X * rb.Y) + (entityB.angularVelocity.Y * rb.X);
 
 #if !WINDOWS
-                Vector2 lambda = new Vector2();
+                FPVector2 lambda = new FPVector2();
 #else
                 Vector2 lambda;
 #endif
@@ -153,23 +153,23 @@ namespace BEPUphysics.Constraints.Collision
         /// Computes one iteration of the constraint to meet the solver updateable's goal.
         /// </summary>
         /// <returns>The rough applied impulse magnitude.</returns>
-        public override Fix64 SolveIteration()
+        public override FP SolveIteration()
         {
 
-            Vector2 lambda = RelativeVelocity;
+            FPVector2 lambda = RelativeVelocity;
 
             //Convert to impulse
             //Matrix2x2.Transform(ref lambda, ref velocityToImpulse, out lambda);
-            Fix64 x = lambda.X;
+            FP x = lambda.X;
             lambda.X = x * velocityToImpulse.M11 + lambda.Y * velocityToImpulse.M21;
             lambda.Y = x * velocityToImpulse.M12 + lambda.Y * velocityToImpulse.M22;
 
             //Accumulate and clamp
-            Vector2 previousAccumulatedImpulse = accumulatedImpulse;
+            FPVector2 previousAccumulatedImpulse = accumulatedImpulse;
             accumulatedImpulse.X += lambda.X;
             accumulatedImpulse.Y += lambda.Y;
-            Fix64 length = accumulatedImpulse.LengthSquared();
-            Fix64 maximumFrictionForce = F64.C0;
+            FP length = accumulatedImpulse.LengthSquared();
+            FP maximumFrictionForce = F64.C0;
             for (int i = 0; i < contactCount; i++)
             {
                 maximumFrictionForce += contactManifoldConstraint.penetrationConstraints.Elements[i].accumulatedImpulse;
@@ -177,7 +177,7 @@ namespace BEPUphysics.Constraints.Collision
             maximumFrictionForce *= friction;
             if (length > maximumFrictionForce * maximumFrictionForce)
             {
-                length = maximumFrictionForce / Fix64.Sqrt(length);
+                length = maximumFrictionForce / FP.Sqrt(length);
                 accumulatedImpulse.X *= length;
                 accumulatedImpulse.Y *= length;
             }
@@ -199,8 +199,8 @@ namespace BEPUphysics.Constraints.Collision
 
             //Apply impulse
 #if !WINDOWS
-            Vector3 linear = new Vector3();
-            Vector3 angular = new Vector3();
+            FPVector3 linear = new FPVector3();
+            FPVector3 angular = new FPVector3();
 #else
             Vector3 linear, angular;
 #endif
@@ -231,16 +231,16 @@ namespace BEPUphysics.Constraints.Collision
             }
 
 
-            return Fix64.Abs(lambda.X) + Fix64.Abs(lambda.Y);
+            return FP.Abs(lambda.X) + FP.Abs(lambda.Y);
         }
 
-        internal Vector3 manifoldCenter, relativeVelocity;
+        internal FPVector3 manifoldCenter, relativeVelocity;
 
         ///<summary>
         /// Performs the frame's configuration step.
         ///</summary>
         ///<param name="dt">Timestep duration.</param>
-        public override void Update(Fix64 dt)
+        public override void Update(FP dt)
         {
 
             entityADynamic = entityA != null && entityA.isDynamic;
@@ -253,7 +253,7 @@ namespace BEPUphysics.Constraints.Collision
                     manifoldCenter = contactManifoldConstraint.penetrationConstraints.Elements[0].contact.Position;
                     break;
                 case 2:
-                    Vector3.Add(ref contactManifoldConstraint.penetrationConstraints.Elements[0].contact.Position,
+                    FPVector3.Add(ref contactManifoldConstraint.penetrationConstraints.Elements[0].contact.Position,
                                 ref contactManifoldConstraint.penetrationConstraints.Elements[1].contact.Position,
                                 out manifoldCenter);
                     manifoldCenter.X *= F64.C0p5;
@@ -261,10 +261,10 @@ namespace BEPUphysics.Constraints.Collision
                     manifoldCenter.Z *= F64.C0p5;
                     break;
                 case 3:
-                    Vector3.Add(ref contactManifoldConstraint.penetrationConstraints.Elements[0].contact.Position,
+                    FPVector3.Add(ref contactManifoldConstraint.penetrationConstraints.Elements[0].contact.Position,
                                 ref contactManifoldConstraint.penetrationConstraints.Elements[1].contact.Position,
                                 out manifoldCenter);
-                    Vector3.Add(ref contactManifoldConstraint.penetrationConstraints.Elements[2].contact.Position,
+                    FPVector3.Add(ref contactManifoldConstraint.penetrationConstraints.Elements[2].contact.Position,
                                 ref manifoldCenter,
                                 out manifoldCenter);
                     manifoldCenter.X *= F64.OneThird;
@@ -273,13 +273,13 @@ namespace BEPUphysics.Constraints.Collision
                     break;
                 case 4:
                     //This isn't actually the center of the manifold.  Is it good enough?  Sure seems like it.
-                    Vector3.Add(ref contactManifoldConstraint.penetrationConstraints.Elements[0].contact.Position,
+                    FPVector3.Add(ref contactManifoldConstraint.penetrationConstraints.Elements[0].contact.Position,
                                 ref contactManifoldConstraint.penetrationConstraints.Elements[1].contact.Position,
                                 out manifoldCenter);
-                    Vector3.Add(ref contactManifoldConstraint.penetrationConstraints.Elements[2].contact.Position,
+                    FPVector3.Add(ref contactManifoldConstraint.penetrationConstraints.Elements[2].contact.Position,
                                 ref manifoldCenter,
                                 out manifoldCenter);
-                    Vector3.Add(ref contactManifoldConstraint.penetrationConstraints.Elements[3].contact.Position,
+                    FPVector3.Add(ref contactManifoldConstraint.penetrationConstraints.Elements[3].contact.Position,
                                 ref manifoldCenter,
                                 out manifoldCenter);
                     manifoldCenter.X *= F64.C0p25;
@@ -294,38 +294,38 @@ namespace BEPUphysics.Constraints.Collision
             //Compute the three dimensional relative velocity at the point.
 
 
-            Vector3 velocityA, velocityB;
+            FPVector3 velocityA, velocityB;
             if (entityA != null)
             {
-                Vector3.Subtract(ref manifoldCenter, ref entityA.position, out ra);
-                Vector3.Cross(ref entityA.angularVelocity, ref ra, out velocityA);
-                Vector3.Add(ref velocityA, ref entityA.linearVelocity, out velocityA);
+                FPVector3.Subtract(ref manifoldCenter, ref entityA.position, out ra);
+                FPVector3.Cross(ref entityA.angularVelocity, ref ra, out velocityA);
+                FPVector3.Add(ref velocityA, ref entityA.linearVelocity, out velocityA);
             }
             else
-                velocityA = new Vector3();
+                velocityA = new FPVector3();
             if (entityB != null)
             {
-                Vector3.Subtract(ref manifoldCenter, ref entityB.position, out rb);
-                Vector3.Cross(ref entityB.angularVelocity, ref rb, out velocityB);
-                Vector3.Add(ref velocityB, ref entityB.linearVelocity, out velocityB);
+                FPVector3.Subtract(ref manifoldCenter, ref entityB.position, out rb);
+                FPVector3.Cross(ref entityB.angularVelocity, ref rb, out velocityB);
+                FPVector3.Add(ref velocityB, ref entityB.linearVelocity, out velocityB);
             }
             else
-                velocityB = new Vector3();
-            Vector3.Subtract(ref velocityA, ref velocityB, out relativeVelocity);
+                velocityB = new FPVector3();
+            FPVector3.Subtract(ref velocityA, ref velocityB, out relativeVelocity);
 
             //Get rid of the normal velocity.
-            Vector3 normal = contactManifoldConstraint.penetrationConstraints.Elements[0].contact.Normal;
-            Fix64 normalVelocityScalar = normal.X * relativeVelocity.X + normal.Y * relativeVelocity.Y + normal.Z * relativeVelocity.Z;
+            FPVector3 normal = contactManifoldConstraint.penetrationConstraints.Elements[0].contact.Normal;
+            FP normalVelocityScalar = normal.X * relativeVelocity.X + normal.Y * relativeVelocity.Y + normal.Z * relativeVelocity.Z;
             relativeVelocity.X -= normalVelocityScalar * normal.X;
             relativeVelocity.Y -= normalVelocityScalar * normal.Y;
             relativeVelocity.Z -= normalVelocityScalar * normal.Z;
 
             //Create the jacobian entry and decide the friction coefficient.
-            Fix64 length = relativeVelocity.LengthSquared();
+            FP length = relativeVelocity.LengthSquared();
             if (length > Toolbox.Epsilon)
             {
-                length = Fix64.Sqrt(length);
-                Fix64 inverseLength = F64.C1 / length;
+                length = FP.Sqrt(length);
+                FP inverseLength = F64.C1 / length;
                 linearA.M11 = relativeVelocity.X * inverseLength;
                 linearA.M12 = relativeVelocity.Y * inverseLength;
                 linearA.M13 = relativeVelocity.Z * inverseLength;
@@ -345,20 +345,20 @@ namespace BEPUphysics.Constraints.Collision
                 {
                     //Otherwise, just redo it all.
                     //Create arbitrary axes.
-                    Vector3 axis1;
-                    Vector3.Cross(ref normal, ref Toolbox.RightVector, out axis1);
+                    FPVector3 axis1;
+                    FPVector3.Cross(ref normal, ref Toolbox.RightVector, out axis1);
                     length = axis1.LengthSquared();
                     if (length > Toolbox.Epsilon)
                     {
-                        length = Fix64.Sqrt(length);
-                        Fix64 inverseLength = F64.C1 / length;
+                        length = FP.Sqrt(length);
+                        FP inverseLength = F64.C1 / length;
                         linearA.M11 = axis1.X * inverseLength;
                         linearA.M12 = axis1.Y * inverseLength;
                         linearA.M13 = axis1.Z * inverseLength;
                     }
                     else
                     {
-                        Vector3.Cross(ref normal, ref Toolbox.UpVector, out axis1);
+                        FPVector3.Cross(ref normal, ref Toolbox.UpVector, out axis1);
                         axis1.Normalize();
                         linearA.M11 = axis1.X;
                         linearA.M12 = axis1.Y;
@@ -450,8 +450,8 @@ namespace BEPUphysics.Constraints.Collision
 
             //Warm starting
 #if !WINDOWS
-            Vector3 linear = new Vector3();
-            Vector3 angular = new Vector3();
+            FPVector3 linear = new FPVector3();
+            FPVector3 angular = new FPVector3();
 #else
             Vector3 linear, angular;
 #endif
@@ -495,7 +495,7 @@ namespace BEPUphysics.Constraints.Collision
 
         internal void CleanUp()
         {
-            accumulatedImpulse = new Vector2();
+            accumulatedImpulse = new FPVector2();
             contactManifoldConstraint = null;
             entityA = null;
             entityB = null;

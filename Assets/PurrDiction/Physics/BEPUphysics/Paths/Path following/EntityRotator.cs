@@ -70,7 +70,7 @@ namespace BEPUphysics.Paths.PathFollowing
         /// <summary>
         /// Gets or sets the target orientation of the entity rotator.
         /// </summary>
-        public Quaternion TargetOrientation { get; set; }
+        public FPQuaternion TargetOrientation { get; set; }
 
         /// <summary>
         /// Gets the angular velocity necessary to change an entity's orientation from
@@ -80,18 +80,18 @@ namespace BEPUphysics.Paths.PathFollowing
         /// <param name="end">Final orientation.</param>
         /// <param name="dt">Time over which the angular velocity is to be applied.</param>
         /// <returns>Angular velocity to reach the goal in time.</returns>
-        public static Vector3 GetAngularVelocity(Quaternion start, Quaternion end, Fix64 dt)
+        public static FPVector3 GetAngularVelocity(FPQuaternion start, FPQuaternion end, FP dt)
         {
             //Compute the relative orientation R' between R and the target relative orientation.
-            Quaternion errorOrientation;
-            Quaternion.Conjugate(ref start, out errorOrientation);
-            Quaternion.Multiply(ref end, ref errorOrientation, out errorOrientation);
+            FPQuaternion errorOrientation;
+            FPQuaternion.Conjugate(ref start, out errorOrientation);
+            FPQuaternion.Multiply(ref end, ref errorOrientation, out errorOrientation);
 
-            Vector3 axis;
-			Fix64 angle;
+            FPVector3 axis;
+			FP angle;
             //Turn this into an axis-angle representation.
-            Quaternion.GetAxisAngleFromQuaternion(ref errorOrientation, out axis, out angle);
-            Vector3.Multiply(ref axis, angle / dt, out axis);
+            FPQuaternion.GetAxisAngleFromQuaternion(ref errorOrientation, out axis, out angle);
+            FPVector3.Multiply(ref axis, angle / dt, out axis);
             return axis;
         }
 
@@ -115,7 +115,7 @@ namespace BEPUphysics.Paths.PathFollowing
         /// Called automatically by the space.
         /// </summary>
         /// <param name="dt">Simulation timestep.</param>
-        void IDuringForcesUpdateable.Update(Fix64 dt)
+        void IDuringForcesUpdateable.Update(FP dt)
         {
             if (Entity != AngularMotor.Entity)
                 throw new InvalidOperationException(

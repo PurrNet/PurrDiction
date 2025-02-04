@@ -99,7 +99,7 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
             var triangles = CommonResources.GetIntList();
             ConvexHullHelper.GetConvexHull(samples, triangles);
 
-            Fix64 volume;
+            FP volume;
             InertiaHelper.ComputeShapeDistribution(samples, triangles, out volume, out volumeDistribution);
             Volume = volume;
 
@@ -118,9 +118,9 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
         ///</summary>
         ///<param name="direction">Direction to find the extreme point in.</param>
         ///<param name="extremePoint">Extreme point on the shape.</param>
-        public override void GetLocalExtremePointWithoutMargin(ref Vector3 direction, out Vector3 extremePoint)
+        public override void GetLocalExtremePointWithoutMargin(ref FPVector3 direction, out FPVector3 extremePoint)
         {
-            Vector3 d;
+            FPVector3 d;
             Matrix3x3.TransformTranspose(ref direction, ref transform, out d);
             shape.GetLocalExtremePoint(d, out extremePoint);
             Matrix3x3.Transform(ref extremePoint, ref transform, out extremePoint);
@@ -133,14 +133,14 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
         /// it is simply an approximation that avoids underestimating.
         /// </summary>
         /// <returns>Maximum radius of the shape.</returns>
-        public Fix64 ComputeMaximumRadius()
+        public FP ComputeMaximumRadius()
         {
             //This will overestimate the actual maximum radius, but such is the defined behavior of the ComputeMaximumRadius function.  It's not exact; it's an upper bound on the actual maximum.
             RigidTransform identity = RigidTransform.Identity;
-            BoundingBox boundingBox;
+            FPBoundingBox boundingBox;
             GetBoundingBox(ref identity, out boundingBox);
-            Vector3 diameter;
-            Vector3.Subtract(ref boundingBox.Max, ref boundingBox.Min, out diameter);
+            FPVector3 diameter;
+            FPVector3.Subtract(ref boundingBox.Max, ref boundingBox.Min, out diameter);
             return diameter.Length();
 
         }

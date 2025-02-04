@@ -15,7 +15,7 @@ namespace BEPUphysics.UpdateableSystems.ForceFields
     {
         private readonly Action<int> subfunction;
         private IList<Entity> affectedEntities;
-        private Fix64 currentTimestep;
+        private FP currentTimestep;
         private ForceFieldShape shape;
 
 
@@ -86,7 +86,7 @@ namespace BEPUphysics.UpdateableSystems.ForceFields
         /// Called automatically when needed by the owning Space.
         /// </summary>
         /// <param name="dt">Time since the last frame in simulation seconds.</param>
-        void IDuringForcesUpdateable.Update(Fix64 dt)
+        void IDuringForcesUpdateable.Update(FP dt)
         {
             PreUpdate();
             affectedEntities = Shape.GetPossiblyAffectedEntities();
@@ -113,7 +113,7 @@ namespace BEPUphysics.UpdateableSystems.ForceFields
         /// <param name="e">Affected entity.</param>
         /// <param name="dt">Duration between simulation updates.</param>
         /// <param name="impulse">Impulse to apply to the entity.</param>
-        protected abstract void CalculateImpulse(Entity e, Fix64 dt, out Vector3 impulse);
+        protected abstract void CalculateImpulse(Entity e, FP dt, out FPVector3 impulse);
 
         private void CalculateImpulsesSubfunction(int index)
         {
@@ -122,7 +122,7 @@ namespace BEPUphysics.UpdateableSystems.ForceFields
             {
                 if (ForceWakeUp)
                     e.activityInformation.Activate();
-                Vector3 impulse;
+                FPVector3 impulse;
                 CalculateImpulse(e, currentTimestep, out impulse);
                 e.ApplyLinearImpulse(ref impulse);
             }

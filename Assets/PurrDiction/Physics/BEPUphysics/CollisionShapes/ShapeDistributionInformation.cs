@@ -16,11 +16,11 @@ namespace BEPUphysics.CollisionShapes
         /// <summary>
         /// The center of a shape.
         /// </summary>
-        public Vector3 Center;
+        public FPVector3 Center;
         /// <summary>
         /// The volume of a shape.
         /// </summary>
-        public Fix64 Volume;
+        public FP Volume;
 
     }
 }

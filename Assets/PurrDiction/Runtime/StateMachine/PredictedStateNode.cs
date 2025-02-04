@@ -8,7 +8,7 @@ namespace PurrNet.Prediction.StateMachine
     {
         void Setup(PredictedStateMachine stateMachine);
         void Enter();
-        void StateSimulate(Fix64 delta);
+        void StateSimulate(FP delta);
         void Exit();
     }
 
@@ -24,7 +24,7 @@ namespace PurrNet.Prediction.StateMachine
         
         public virtual void Enter() {}
 
-        public virtual void StateSimulate(Fix64 delta) { }
+        public virtual void StateSimulate(FP delta) { }
         
         public virtual void Exit() {}
     }
@@ -40,7 +40,7 @@ namespace PurrNet.Prediction.StateMachine
         }
 
         public virtual void Enter() { }
-        public virtual void StateSimulate(Fix64 delta) { }
+        public virtual void StateSimulate(FP delta) { }
         public virtual void Exit() { }
     }
 }

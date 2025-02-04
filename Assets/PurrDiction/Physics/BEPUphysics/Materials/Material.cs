@@ -8,12 +8,12 @@ namespace BEPUphysics.Materials
     ///</summary>
     public class Material
     {
-        internal Fix64 kineticFriction = MaterialManager.DefaultKineticFriction;
+        internal FP kineticFriction = MaterialManager.DefaultKineticFriction;
         ///<summary>
         /// Gets or sets the friction coefficient used when the object is sliding quickly and
         /// no special material relationship is defined between the colliding objects.
         ///</summary>
-        public Fix64 KineticFriction
+        public FP KineticFriction
         {
             get
             {
@@ -27,12 +27,12 @@ namespace BEPUphysics.Materials
             }
         }
 
-        internal Fix64 staticFriction = MaterialManager.DefaultStaticFriction;
+        internal FP staticFriction = MaterialManager.DefaultStaticFriction;
         ///<summary>
         /// Gets or sets the friction coefficient used when the object is sliding slowly and
         /// no special material relationship is defined between the colliding objects.
         ///</summary>
-        public Fix64 StaticFriction
+        public FP StaticFriction
         {
             get
             {
@@ -47,12 +47,12 @@ namespace BEPUphysics.Materials
         }
 
 
-        internal Fix64 bounciness = MaterialManager.DefaultBounciness;
+        internal FP bounciness = MaterialManager.DefaultBounciness;
         ///<summary>
         /// Gets or sets the coefficient of restitution between the objects when
         /// no special material relationship is defined between the colliding objects.
         ///</summary>
-        public Fix64 Bounciness
+        public FP Bounciness
         {
             get
             {
@@ -85,7 +85,7 @@ namespace BEPUphysics.Materials
         ///<param name="staticFriction">Static friction to use.</param>
         ///<param name="kineticFriction">Kinetic friction to use.</param>
         ///<param name="bounciness">Bounciness to use.</param>
-        public Material(Fix64 staticFriction, Fix64 kineticFriction, Fix64 bounciness)
+        public Material(FP staticFriction, FP kineticFriction, FP bounciness)
             : this()
         {
             this.staticFriction = staticFriction;

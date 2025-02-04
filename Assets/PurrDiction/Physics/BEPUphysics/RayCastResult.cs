@@ -11,7 +11,7 @@ namespace BEPUphysics
         ///<summary>
         /// Position, normal, and t paramater of the hit.
         ///</summary>
-        public RayHit HitData;
+        public FPRayHit HitData;
         /// <summary>
         /// Object hit by the ray.
         /// </summary>
@@ -22,7 +22,7 @@ namespace BEPUphysics
         ///</summary>
         ///<param name="hitData">Ray cast hit data.</param>
         ///<param name="hitObject">Object hit by the ray.</param>
-        public RayCastResult(RayHit hitData, BroadPhaseEntry hitObject)
+        public RayCastResult(FPRayHit hitData, BroadPhaseEntry hitObject)
         {
             HitData = hitData;
             HitObject = hitObject;

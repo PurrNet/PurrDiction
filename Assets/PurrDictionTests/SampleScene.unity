@@ -480,7 +480,7 @@ MonoBehaviour:
   _directChildren: []
   _networkRules: {fileID: 0}
   _visitiblityRules: {fileID: 0}
-  _physicsProvider: 1
+  _physicsProvider: 3
   _updateViewMode: 1
   _prefabs:
   - {fileID: 2990978637306053845, guid: 14ef4fb9c3d76ce4686663df0c0f2555, type: 3}
@@ -583,7 +583,7 @@ MonoBehaviour:
   _startClientFlags: 7
   _cookieScope: 1
   _dontDestroyOnLoad: 0
-  _transport: {fileID: 1793795282}
+  _transport: {fileID: 1793795277}
   _networkPrefabs: {fileID: 11400000, guid: 2190589f99f9abe479a1c7890b05f51f, type: 2}
   _networkRules: {fileID: 11400000, guid: d8799083b96579a42b8b2d03e4ceae98, type: 2}
   _visibilityRules: {fileID: 11400000, guid: 8f014a5bd8dc68646a2a3c0b18c5bbd8, type: 2}
@@ -643,6 +643,53 @@ MonoBehaviour:
   _roomName: fdesfes
   _region: eu-central
   _host: eu1.purrlay.riten.dev
+--- !u!1 &1936988191
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1936988193}
+  - component: {fileID: 1936988192}
+  m_Layer: 0
+  m_Name: GameObject
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1936988192
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1936988191}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef978d1ab6f2cb8429879e1a2e303a2c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _maxInterpolationBuffer: 2
+  _updateView: 1
+  _colliders: []
+--- !u!4 &1936988193
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1936988191}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -3.630714, y: 8.752601, z: -8.753296}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1997087625
 GameObject:
   m_ObjectHideFlags: 0
@@ -823,3 +870,4 @@ SceneRoots:
   - {fileID: 1997087629}
   - {fileID: 2041834271}
   - {fileID: 1119166739}
+  - {fileID: 1936988193}

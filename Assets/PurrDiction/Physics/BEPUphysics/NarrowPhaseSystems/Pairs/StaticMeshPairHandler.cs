@@ -112,7 +112,7 @@ namespace BEPUphysics.NarrowPhaseSystems.Pairs
         ///</summary>
         ///<param name="requester">Collidable requesting the update.</param>
         ///<param name="dt">Timestep duration.</param>
-        public override void UpdateTimeOfImpact(Collidable requester, Fix64 dt)
+        public override void UpdateTimeOfImpact(Collidable requester, FP dt)
         {
             //Notice that we don't test for convex entity null explicitly.  The convex.IsActive property does that for us.
             if (convex.IsActive && convex.entity.PositionUpdateMode == PositionUpdateMode.Continuous)
@@ -121,9 +121,9 @@ namespace BEPUphysics.NarrowPhaseSystems.Pairs
                 //CCD events are awfully rare under normal circumstances, so this isn't usually an issue.
 
                 //Only perform the test if the minimum radii are small enough relative to the size of the velocity.
-                Vector3 velocity;
-                Vector3.Multiply(ref convex.entity.linearVelocity, dt, out velocity);
-                Fix64 velocitySquared = velocity.LengthSquared();
+                FPVector3 velocity;
+                FPVector3.Multiply(ref convex.entity.linearVelocity, dt, out velocity);
+                FP velocitySquared = velocity.LengthSquared();
 
                 var minimumRadius = convex.Shape.MinimumRadius * MotionSettings.CoreShapeScaling;
                 timeOfImpact = F64.C1;
@@ -136,23 +136,23 @@ namespace BEPUphysics.NarrowPhaseSystems.Pairs
                     {
                         mesh.Shape.TriangleMeshData.GetTriangle(MeshManifold.overlappedTriangles.Elements[i], out triangle.vA, out triangle.vB, out triangle.vC);
                         //Put the triangle into 'localish' space of the convex.
-                        Vector3.Subtract(ref triangle.vA, ref convex.worldTransform.Position, out triangle.vA);
-                        Vector3.Subtract(ref triangle.vB, ref convex.worldTransform.Position, out triangle.vB);
-                        Vector3.Subtract(ref triangle.vC, ref convex.worldTransform.Position, out triangle.vC);
+                        FPVector3.Subtract(ref triangle.vA, ref convex.worldTransform.Position, out triangle.vA);
+                        FPVector3.Subtract(ref triangle.vB, ref convex.worldTransform.Position, out triangle.vB);
+                        FPVector3.Subtract(ref triangle.vC, ref convex.worldTransform.Position, out triangle.vC);
 
-                        RayHit rayHit;
-                        if (GJKToolbox.CCDSphereCast(new Ray(Toolbox.ZeroVector, velocity), minimumRadius, triangle, ref Toolbox.RigidIdentity, timeOfImpact, out rayHit) &&
+                        FPRayHit rayHit;
+                        if (GJKToolbox.CCDSphereCast(new FPRay(Toolbox.ZeroVector, velocity), minimumRadius, triangle, ref Toolbox.RigidIdentity, timeOfImpact, out rayHit) &&
                             rayHit.T > Toolbox.BigEpsilon)
                         {
                             if (mesh.sidedness != TriangleSidedness.DoubleSided)
                             {
-                                Vector3 AB, AC;
-                                Vector3.Subtract(ref triangle.vB, ref triangle.vA, out AB);
-                                Vector3.Subtract(ref triangle.vC, ref triangle.vA, out AC);
-                                Vector3 normal;
-                                Vector3.Cross(ref AB, ref AC, out normal);
-                                Fix64 dot;
-                                Vector3.Dot(ref normal, ref rayHit.Normal, out dot);
+                                FPVector3 AB, AC;
+                                FPVector3.Subtract(ref triangle.vB, ref triangle.vA, out AB);
+                                FPVector3.Subtract(ref triangle.vC, ref triangle.vA, out AC);
+                                FPVector3 normal;
+                                FPVector3.Cross(ref AB, ref AC, out normal);
+                                FP dot;
+                                FPVector3.Dot(ref normal, ref rayHit.Normal, out dot);
                                 //Only perform sweep if the object is in danger of hitting the object.
                                 //Triangles can be one sided, so check the impact normal against the triangle normal.
                                 if (mesh.sidedness == TriangleSidedness.Counterclockwise && dot < F64.C0 ||
@@ -197,12 +197,12 @@ namespace BEPUphysics.NarrowPhaseSystems.Pairs
             //Compute relative velocity
             if (convex.entity != null)
             {
-                Vector3 velocity;
-                Vector3.Subtract(ref info.Contact.Position, ref convex.entity.position, out velocity);
-                Vector3.Cross(ref convex.entity.angularVelocity, ref velocity, out velocity);
-                Vector3.Add(ref velocity, ref convex.entity.linearVelocity, out info.RelativeVelocity);
+                FPVector3 velocity;
+                FPVector3.Subtract(ref info.Contact.Position, ref convex.entity.position, out velocity);
+                FPVector3.Cross(ref convex.entity.angularVelocity, ref velocity, out velocity);
+                FPVector3.Add(ref velocity, ref convex.entity.linearVelocity, out info.RelativeVelocity);
             }
-            else info.RelativeVelocity = new Vector3();
+            else info.RelativeVelocity = new FPVector3();
 
             info.Pair = this;
         }

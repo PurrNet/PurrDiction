@@ -46,7 +46,7 @@ namespace BEPUutilities
         /// Removes redundant points.  Two points are redundant if they occupy the same hash grid cell of size 0.001.
         /// </summary>
         /// <param name="points">List of points to prune.</param>
-        public static void RemoveRedundantPoints(IList<Vector3> points)
+        public static void RemoveRedundantPoints(IList<FPVector3> points)
         {
             RemoveRedundantPoints(points, F64.C0p001);
         }
@@ -56,7 +56,7 @@ namespace BEPUutilities
         /// </summary>
         /// <param name="points">List of points to prune.</param>
         /// <param name="cellSize">Size of cells to determine redundancy.</param>
-        public static void RemoveRedundantPoints(IList<Vector3> points, Fix64 cellSize)
+        public static void RemoveRedundantPoints(IList<FPVector3> points, FP cellSize)
         {
             var rawPoints = CommonResources.GetVectorList();
             rawPoints.AddRange(points);
@@ -73,7 +73,7 @@ namespace BEPUutilities
         /// Removes redundant points.  Two points are redundant if they occupy the same hash grid cell of size 0.001.
         /// </summary>
         /// <param name="points">List of points to prune.</param>
-        public static void RemoveRedundantPoints(RawList<Vector3> points)
+        public static void RemoveRedundantPoints(RawList<FPVector3> points)
         {
             RemoveRedundantPoints(points, F64.C0p001);
         }
@@ -83,7 +83,7 @@ namespace BEPUutilities
         /// </summary>
         /// <param name="points">List of points to prune.</param>
         /// <param name="cellSize">Size of cells to determine redundancy.</param>
-        public static void RemoveRedundantPoints(RawList<Vector3> points, Fix64 cellSize)
+        public static void RemoveRedundantPoints(RawList<FPVector3> points, FP cellSize)
         {
             var set = BlockedCellSets.Take();
             for (int i = points.Count - 1; i >= 0; --i)
@@ -91,9 +91,9 @@ namespace BEPUutilities
                 var element = points.Elements[i];
                 var cell = new BlockedCell
                 {
-                    X = (int)Fix64.Floor(element.X / cellSize),
-                    Y = (int)Fix64.Floor(element.Y / cellSize),
-                    Z = (int)Fix64.Floor(element.Z / cellSize) 
+                    X = (int)FP.Floor(element.X / cellSize),
+                    Y = (int)FP.Floor(element.Y / cellSize),
+                    Z = (int)FP.Floor(element.Z / cellSize) 
                 };
                 if (set.Contains(cell))
                 {

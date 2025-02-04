@@ -11,7 +11,7 @@ namespace BEPUphysics.OtherSpaceStages
         /// Applies forces to the object.
         ///</summary>
         ///<param name="dt">Time step duration.</param>
-        void UpdateForForces(Fix64 dt);
+        void UpdateForForces(FP dt);
 
         ///<summary>
         /// Force updater that owns this object.

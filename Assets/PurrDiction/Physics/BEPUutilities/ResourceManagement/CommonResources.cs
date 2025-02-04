@@ -19,23 +19,23 @@ namespace BEPUutilities.ResourceManagement
         {
             SubPoolIntList = new LockingResourcePool<RawList<int>>();
             SubPoolIntSet = new LockingResourcePool<HashSet<int>>();
-            SubPoolFloatList = new LockingResourcePool<RawList<Fix64>>();
-            SubPoolVectorList = new LockingResourcePool<RawList<Vector3>>();
-            SubPoolRayHitList = new LockingResourcePool<RawList<RayHit>>();
+            SubPoolFloatList = new LockingResourcePool<RawList<FP>>();
+            SubPoolVectorList = new LockingResourcePool<RawList<FPVector3>>();
+            SubPoolRayHitList = new LockingResourcePool<RawList<FPRayHit>>();
 
         }
 
-        static LockingResourcePool<RawList<RayHit>> SubPoolRayHitList;
+        static LockingResourcePool<RawList<FPRayHit>> SubPoolRayHitList;
         static LockingResourcePool<RawList<int>> SubPoolIntList;
         static LockingResourcePool<HashSet<int>> SubPoolIntSet;
-        static LockingResourcePool<RawList<Fix64>> SubPoolFloatList;
-        static LockingResourcePool<RawList<Vector3>> SubPoolVectorList;
+        static LockingResourcePool<RawList<FP>> SubPoolFloatList;
+        static LockingResourcePool<RawList<FPVector3>> SubPoolVectorList;
 
         /// <summary>
         /// Retrieves a ray hit list from the resource pool.
         /// </summary>
         /// <returns>Empty ray hit list.</returns>
-        public static RawList<RayHit> GetRayHitList()
+        public static RawList<FPRayHit> GetRayHitList()
         {
             return SubPoolRayHitList.Take();
         }
@@ -44,7 +44,7 @@ namespace BEPUutilities.ResourceManagement
         /// Returns a resource to the pool.
         /// </summary>
         /// <param name="list">List to return.</param>
-        public static void GiveBack(RawList<RayHit> list)
+        public static void GiveBack(RawList<FPRayHit> list)
         {
             list.Clear();
             SubPoolRayHitList.GiveBack(list);
@@ -94,7 +94,7 @@ namespace BEPUutilities.ResourceManagement
         /// Retrieves a float list from the resource pool.
         /// </summary>
         /// <returns>Empty float list.</returns>
-        public static RawList<Fix64> GetFloatList()
+        public static RawList<FP> GetFloatList()
         {
             return SubPoolFloatList.Take();
         }
@@ -103,7 +103,7 @@ namespace BEPUutilities.ResourceManagement
         /// Returns a resource to the pool.
         /// </summary>
         /// <param name="list">List to return.</param>
-        public static void GiveBack(RawList<Fix64> list)
+        public static void GiveBack(RawList<FP> list)
         {
             list.Clear();
             SubPoolFloatList.GiveBack(list);
@@ -113,7 +113,7 @@ namespace BEPUutilities.ResourceManagement
         /// Retrieves a Vector3 list from the resource pool.
         /// </summary>
         /// <returns>Empty Vector3 list.</returns>
-        public static RawList<Vector3> GetVectorList()
+        public static RawList<FPVector3> GetVectorList()
         {
             return SubPoolVectorList.Take();
         }
@@ -122,7 +122,7 @@ namespace BEPUutilities.ResourceManagement
         /// Returns a resource to the pool.
         /// </summary>
         /// <param name="list">List to return.</param>
-        public static void GiveBack(RawList<Vector3> list)
+        public static void GiveBack(RawList<FPVector3> list)
         {
             list.Clear();
             SubPoolVectorList.GiveBack(list);

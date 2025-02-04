@@ -147,7 +147,7 @@ namespace BEPUphysics.BroadPhaseEntries.MobileCollidables
         ///</summary>
         ///<param name="children">Data representing the children of the compound collidable.</param>
         ///<param name="center">Location computed to be the center of the compound object.</param>
-        public CompoundCollidable(IList<CompoundChildData> children, out Vector3 center)
+        public CompoundCollidable(IList<CompoundChildData> children, out FPVector3 center)
         {
             Events = new CompoundEventManager();
 
@@ -210,7 +210,7 @@ namespace BEPUphysics.BroadPhaseEntries.MobileCollidables
         ///</summary>
         ///<param name="position">Position to use for the calculation.</param>
         ///<param name="orientation">Orientation to use for the calculation.</param>
-        public override void UpdateWorldTransform(ref Vector3 position, ref Quaternion orientation)
+        public override void UpdateWorldTransform(ref FPVector3 position, ref FPQuaternion orientation)
         {
             base.UpdateWorldTransform(ref position, ref orientation);
             var shapeList = Shape.shapes;
@@ -222,7 +222,7 @@ namespace BEPUphysics.BroadPhaseEntries.MobileCollidables
             }
         }
 
-        protected internal override void UpdateBoundingBoxInternal(Fix64 dt)
+        protected internal override void UpdateBoundingBoxInternal(FP dt)
         {
             for (int i = 0; i < children.Count; i++)
             {
@@ -241,7 +241,7 @@ namespace BEPUphysics.BroadPhaseEntries.MobileCollidables
         /// <param name="maximumLength">Maximum length, in units of the ray's direction's length, to test.</param>
         /// <param name="rayHit">Hit location of the ray on the collidable, if any.</param>
         /// <returns>Whether or not the ray hit the collidable.</returns>
-        public override bool RayCast(Ray ray, Fix64 maximumLength, out RayHit rayHit)
+        public override bool RayCast(FPRay ray, FP maximumLength, out FPRayHit rayHit)
         {
             CompoundChild hitChild;
             bool hit = RayCast(ray, maximumLength, out rayHit, out hitChild);
@@ -255,9 +255,9 @@ namespace BEPUphysics.BroadPhaseEntries.MobileCollidables
         /// <param name="maximumLength">Maximum length, in units of the ray's direction's length, to test.</param>
         /// <param name="rayHit">Hit data and the hit child collidable, if any.</param>
         /// <returns>Whether or not the ray hit the entry.</returns>
-        public bool RayCast(Ray ray, Fix64 maximumLength, out RayCastResult rayHit)
+        public bool RayCast(FPRay ray, FP maximumLength, out RayCastResult rayHit)
         {
-            RayHit hitData;
+            FPRayHit hitData;
             CompoundChild hitChild;
             bool hit = RayCast(ray, maximumLength, out hitData, out hitChild);
             rayHit = new RayCastResult { HitData = hitData, HitObject = hitChild.CollisionInformation };
@@ -272,18 +272,18 @@ namespace BEPUphysics.BroadPhaseEntries.MobileCollidables
         /// <param name="rayHit">Hit data, if any.</param>
         /// <param name="hitChild">Child collidable hit by the ray, if any.</param>
         /// <returns>Whether or not the ray hit the entry.</returns>
-        public bool RayCast(Ray ray, Fix64 maximumLength, out RayHit rayHit, out CompoundChild hitChild)
+        public bool RayCast(FPRay ray, FP maximumLength, out FPRayHit rayHit, out CompoundChild hitChild)
         {
-            rayHit = new RayHit();
+            rayHit = new FPRayHit();
             hitChild = null;
             var hitElements = PhysicsResources.GetCompoundChildList();
             if (hierarchy.Tree.GetOverlaps(ray, maximumLength, hitElements))
             {
-                rayHit.T = Fix64.MaxValue;
+                rayHit.T = FP.MaxValue;
                 for (int i = 0; i < hitElements.Count; i++)
                 {
                     EntityCollidable candidate = hitElements.Elements[i].CollisionInformation;
-                    RayHit tempHit;
+                    FPRayHit tempHit;
                     if (candidate.RayCast(ray, maximumLength, out tempHit) && tempHit.T < rayHit.T)
                     {
                         rayHit = tempHit;
@@ -291,7 +291,7 @@ namespace BEPUphysics.BroadPhaseEntries.MobileCollidables
                     }
                 }
                 PhysicsResources.GiveBack(hitElements);
-                return rayHit.T != Fix64.MaxValue;
+                return rayHit.T != FP.MaxValue;
             }
             PhysicsResources.GiveBack(hitElements);
             return false;
@@ -306,7 +306,7 @@ namespace BEPUphysics.BroadPhaseEntries.MobileCollidables
         /// in the entry, this filter will be passed into inner ray casts.</param>
         /// <param name="rayHit">Hit location of the ray on the collidable, if any.</param>
         /// <returns>Whether or not the ray hit the collidable.</returns>
-        public override bool RayCast(Ray ray, Fix64 maximumLength, Func<BroadPhaseEntry, bool> filter, out RayHit rayHit)
+        public override bool RayCast(FPRay ray, FP maximumLength, Func<BroadPhaseEntry, bool> filter, out FPRayHit rayHit)
         {
             CompoundChild hitChild;
             bool hit = RayCast(ray, maximumLength, filter, out rayHit, out hitChild);
@@ -322,9 +322,9 @@ namespace BEPUphysics.BroadPhaseEntries.MobileCollidables
         /// <param name="filter">Test to apply to the entry. If it returns true, the entry is processed, otherwise the entry is ignored. If a collidable hierarchy is present
         /// in the entry, this filter will be passed into inner ray casts.</param>
         /// <returns>Whether or not the ray hit the entry.</returns>
-        public bool RayCast(Ray ray, Fix64 maximumLength, Func<BroadPhaseEntry, bool> filter, out RayCastResult rayHit)
+        public bool RayCast(FPRay ray, FP maximumLength, Func<BroadPhaseEntry, bool> filter, out RayCastResult rayHit)
         {
-            RayHit hitData;
+            FPRayHit hitData;
             CompoundChild hitChild;
             bool hit = RayCast(ray, maximumLength, filter, out hitData, out hitChild);
             rayHit = new RayCastResult { HitData = hitData, HitObject = hitChild.CollisionInformation };
@@ -341,19 +341,19 @@ namespace BEPUphysics.BroadPhaseEntries.MobileCollidables
         /// <param name="rayHit">Hit location of the ray on the collidable, if any.</param>
         /// <param name="hitChild">Child hit by the ray.</param>
         /// <returns>Whether or not the ray hit the collidable.</returns>
-        public bool RayCast(Ray ray, Fix64 maximumLength, Func<BroadPhaseEntry, bool> filter, out RayHit rayHit, out CompoundChild hitChild)
+        public bool RayCast(FPRay ray, FP maximumLength, Func<BroadPhaseEntry, bool> filter, out FPRayHit rayHit, out CompoundChild hitChild)
         {
-            rayHit = new RayHit();
+            rayHit = new FPRayHit();
             hitChild = null;
             if (filter(this))
             {
                 var hitElements = PhysicsResources.GetCompoundChildList();
                 if (hierarchy.Tree.GetOverlaps(ray, maximumLength, hitElements))
                 {
-                    rayHit.T = Fix64.MaxValue;
+                    rayHit.T = FP.MaxValue;
                     for (int i = 0; i < hitElements.Count; i++)
                     {
-                        RayHit tempHit;
+                        FPRayHit tempHit;
                         if (hitElements.Elements[i].CollisionInformation.RayCast(ray, maximumLength, filter, out tempHit) && tempHit.T < rayHit.T)
                         {
                             rayHit = tempHit;
@@ -361,7 +361,7 @@ namespace BEPUphysics.BroadPhaseEntries.MobileCollidables
                         }
                     }
                     PhysicsResources.GiveBack(hitElements);
-                    return rayHit.T != Fix64.MaxValue;
+                    return rayHit.T != FP.MaxValue;
                 }
                 PhysicsResources.GiveBack(hitElements);
             }
@@ -377,7 +377,7 @@ namespace BEPUphysics.BroadPhaseEntries.MobileCollidables
         /// <param name="sweep">Sweep to apply to the shape.</param>
         /// <param name="rayHit">Hit data, if any.</param>
         /// <returns>Whether or not the cast hit anything.</returns>
-        public override bool ConvexCast(CollisionShapes.ConvexShapes.ConvexShape castShape, ref RigidTransform startingTransform, ref Vector3 sweep, out RayHit rayHit)
+        public override bool ConvexCast(CollisionShapes.ConvexShapes.ConvexShape castShape, ref RigidTransform startingTransform, ref FPVector3 sweep, out FPRayHit rayHit)
         {
             CompoundChild hitChild;
             bool hit = ConvexCast(castShape, ref startingTransform, ref sweep, out rayHit, out hitChild);
@@ -393,10 +393,10 @@ namespace BEPUphysics.BroadPhaseEntries.MobileCollidables
         /// <param name="sweep">Sweep to apply to the shape.</param>
         /// <param name="result">Data and hit object from the first impact, if any.</param>
         /// <returns>Whether or not the cast hit anything.</returns>
-        public bool ConvexCast(CollisionShapes.ConvexShapes.ConvexShape castShape, ref RigidTransform startingTransform, ref Vector3 sweep, out RayCastResult result)
+        public bool ConvexCast(CollisionShapes.ConvexShapes.ConvexShape castShape, ref RigidTransform startingTransform, ref FPVector3 sweep, out RayCastResult result)
         {
             CompoundChild hitChild;
-            RayHit rayHit;
+            FPRayHit rayHit;
             bool hit = ConvexCast(castShape, ref startingTransform, ref sweep, out rayHit, out hitChild);
             result = new RayCastResult { HitData = rayHit, HitObject = hitChild.CollisionInformation };
             return hit;
@@ -412,20 +412,20 @@ namespace BEPUphysics.BroadPhaseEntries.MobileCollidables
         /// <param name="hit">Hit data, if any.</param>
         /// <param name="hitChild">Child hit by the cast.</param>
         /// <returns>Whether or not the cast hit anything.</returns>
-        public bool ConvexCast(CollisionShapes.ConvexShapes.ConvexShape castShape, ref RigidTransform startingTransform, ref Vector3 sweep, out RayHit hit, out CompoundChild hitChild)
+        public bool ConvexCast(CollisionShapes.ConvexShapes.ConvexShape castShape, ref RigidTransform startingTransform, ref FPVector3 sweep, out FPRayHit hit, out CompoundChild hitChild)
         {
-            hit = new RayHit();
+            hit = new FPRayHit();
             hitChild = null;
-            BoundingBox boundingBox;
+            FPBoundingBox boundingBox;
             castShape.GetSweptBoundingBox(ref startingTransform, ref sweep, out boundingBox);
             var hitElements = PhysicsResources.GetCompoundChildList();
             if (hierarchy.Tree.GetOverlaps(boundingBox, hitElements))
             {
-                hit.T = Fix64.MaxValue;
+                hit.T = FP.MaxValue;
                 for (int i = 0; i < hitElements.Count; i++)
                 {
                     var candidate = hitElements.Elements[i].CollisionInformation;
-                    RayHit tempHit;
+                    FPRayHit tempHit;
                     if (candidate.ConvexCast(castShape, ref startingTransform, ref sweep, out tempHit) && tempHit.T < hit.T)
                     {
                         hit = tempHit;
@@ -433,7 +433,7 @@ namespace BEPUphysics.BroadPhaseEntries.MobileCollidables
                     }
                 }
                 PhysicsResources.GiveBack(hitElements);
-                return hit.T != Fix64.MaxValue;
+                return hit.T != FP.MaxValue;
             }
             PhysicsResources.GiveBack(hitElements);
             return false;
@@ -449,7 +449,7 @@ namespace BEPUphysics.BroadPhaseEntries.MobileCollidables
         /// in the entry, this filter will be passed into inner ray casts.</param>
         /// <param name="rayHit">Hit data, if any.</param>
         /// <returns>Whether or not the cast hit anything.</returns>
-        public override bool ConvexCast(CollisionShapes.ConvexShapes.ConvexShape castShape, ref RigidTransform startingTransform, ref Vector3 sweep, Func<BroadPhaseEntry, bool> filter, out RayHit rayHit)
+        public override bool ConvexCast(CollisionShapes.ConvexShapes.ConvexShape castShape, ref RigidTransform startingTransform, ref FPVector3 sweep, Func<BroadPhaseEntry, bool> filter, out FPRayHit rayHit)
         {
             CompoundChild hitChild;
             bool hit = ConvexCast(castShape, ref startingTransform, ref sweep, filter, out rayHit, out hitChild);
@@ -467,10 +467,10 @@ namespace BEPUphysics.BroadPhaseEntries.MobileCollidables
         /// in the entry, this filter will be passed into inner ray casts.</param>
         /// <param name="result">Data and hit object from the first impact, if any.</param>
         /// <returns>Whether or not the cast hit anything.</returns>
-        public bool ConvexCast(CollisionShapes.ConvexShapes.ConvexShape castShape, ref RigidTransform startingTransform, ref Vector3 sweep, Func<BroadPhaseEntry, bool> filter, out RayCastResult result)
+        public bool ConvexCast(CollisionShapes.ConvexShapes.ConvexShape castShape, ref RigidTransform startingTransform, ref FPVector3 sweep, Func<BroadPhaseEntry, bool> filter, out RayCastResult result)
         {
             CompoundChild hitChild;
-            RayHit rayHit;
+            FPRayHit rayHit;
             bool hit = ConvexCast(castShape, ref startingTransform, ref sweep, filter, out rayHit, out hitChild);
             result = new RayCastResult { HitData = rayHit, HitObject = hitChild.CollisionInformation };
             return hit;
@@ -487,22 +487,22 @@ namespace BEPUphysics.BroadPhaseEntries.MobileCollidables
         /// <param name="hit">Hit data, if any.</param>
         /// <param name="hitChild">Child hit by the cast.</param>
         /// <returns>Whether or not the cast hit anything.</returns>
-        public bool ConvexCast(CollisionShapes.ConvexShapes.ConvexShape castShape, ref RigidTransform startingTransform, ref Vector3 sweep, Func<BroadPhaseEntry, bool> filter, out RayHit hit, out CompoundChild hitChild)
+        public bool ConvexCast(CollisionShapes.ConvexShapes.ConvexShape castShape, ref RigidTransform startingTransform, ref FPVector3 sweep, Func<BroadPhaseEntry, bool> filter, out FPRayHit hit, out CompoundChild hitChild)
         {
-            hit = new RayHit();
+            hit = new FPRayHit();
             hitChild = null;
             if (!filter(this))
                 return false;
-            BoundingBox boundingBox;
+            FPBoundingBox boundingBox;
             castShape.GetSweptBoundingBox(ref startingTransform, ref sweep, out boundingBox);
             var hitElements = PhysicsResources.GetCompoundChildList();
             if (hierarchy.Tree.GetOverlaps(boundingBox, hitElements))
             {
-                hit.T = Fix64.MaxValue;
+                hit.T = FP.MaxValue;
                 for (int i = 0; i < hitElements.Count; i++)
                 {
                     var candidate = hitElements.Elements[i].CollisionInformation;
-                    RayHit tempHit;
+                    FPRayHit tempHit;
                     if (candidate.ConvexCast(castShape, ref startingTransform, ref sweep, filter, out tempHit) && tempHit.T < hit.T)
                     {
                         hit = tempHit;
@@ -510,7 +510,7 @@ namespace BEPUphysics.BroadPhaseEntries.MobileCollidables
                     }
                 }
                 PhysicsResources.GiveBack(hitElements);
-                return hit.T != Fix64.MaxValue;
+                return hit.T != FP.MaxValue;
             }
             PhysicsResources.GiveBack(hitElements);
             return false;
@@ -615,7 +615,7 @@ namespace BEPUphysics.BroadPhaseEntries.MobileCollidables
         /// <summary>
         /// Gets the bounding box of the child.
         /// </summary>
-        public BoundingBox BoundingBox
+        public FPBoundingBox BoundingBox
         {
             get { return collisionInformation.boundingBox; }
         }

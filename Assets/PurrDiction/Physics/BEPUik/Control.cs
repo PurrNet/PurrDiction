@@ -14,7 +14,7 @@ namespace BEPUik
         /// </summary>
         public abstract Bone TargetBone { get; set; }
 
-        protected internal abstract void Preupdate(Fix64 dt, Fix64 updateRate);
+        protected internal abstract void Preupdate(FP dt, FP updateRate);
 
         protected internal abstract void UpdateJacobiansAndVelocityBias();
 
@@ -26,6 +26,6 @@ namespace BEPUik
 
         protected internal abstract void ClearAccumulatedImpulses();
 
-        public abstract Fix64 MaximumForce { get; set; }
+        public abstract FP MaximumForce { get; set; }
     }
 }

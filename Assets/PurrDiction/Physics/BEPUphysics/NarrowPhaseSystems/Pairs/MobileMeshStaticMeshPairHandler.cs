@@ -35,23 +35,23 @@ namespace BEPUphysics.NarrowPhaseSystems.Pairs
             var toReturn = PhysicsResources.GetTriangleCollidable();
             var shape = toReturn.Shape;
             mesh.Mesh.Data.GetTriangle(index, out shape.vA, out shape.vB, out shape.vC);
-            Vector3 center;
-            Vector3.Add(ref shape.vA, ref shape.vB, out center);
-            Vector3.Add(ref center, ref shape.vC, out center);
-            Vector3.Multiply(ref center, F64.OneThird, out center);
-            Vector3.Subtract(ref shape.vA, ref center, out shape.vA);
-            Vector3.Subtract(ref shape.vB, ref center, out shape.vB);
-            Vector3.Subtract(ref shape.vC, ref center, out shape.vC);
+            FPVector3 center;
+            FPVector3.Add(ref shape.vA, ref shape.vB, out center);
+            FPVector3.Add(ref center, ref shape.vC, out center);
+            FPVector3.Multiply(ref center, F64.OneThird, out center);
+            FPVector3.Subtract(ref shape.vA, ref center, out shape.vA);
+            FPVector3.Subtract(ref shape.vB, ref center, out shape.vB);
+            FPVector3.Subtract(ref shape.vC, ref center, out shape.vC);
             //The bounding box doesn't update by itself.
             toReturn.worldTransform.Position = center;
-            toReturn.worldTransform.Orientation = Quaternion.Identity;
+            toReturn.worldTransform.Orientation = FPQuaternion.Identity;
             toReturn.UpdateBoundingBoxInternal(F64.C0);
             shape.sidedness = mesh.sidedness;
             shape.collisionMargin = mobileMesh.Shape.MeshCollisionMargin;
             return toReturn;
         }
 
-        protected override void ConfigureCollidable(TriangleEntry entry, Fix64 dt)
+        protected override void ConfigureCollidable(TriangleEntry entry, FP dt)
         {
 
         }
@@ -97,7 +97,7 @@ namespace BEPUphysics.NarrowPhaseSystems.Pairs
 
 
 
-        protected override void UpdateContainedPairs(Fix64 dt)
+        protected override void UpdateContainedPairs(FP dt)
         {
             var overlappedElements = CommonResources.GetIntList();
             mesh.Mesh.Tree.GetOverlaps(mobileMesh.boundingBox, overlappedElements);

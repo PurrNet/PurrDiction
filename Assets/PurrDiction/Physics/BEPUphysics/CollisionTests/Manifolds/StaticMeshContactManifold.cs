@@ -31,7 +31,7 @@ namespace BEPUphysics.CollisionTests.Manifolds
             }
         }
 
-        protected internal override int FindOverlappingTriangles(Fix64 dt)
+        protected internal override int FindOverlappingTriangles(FP dt)
         {
             mesh.Mesh.Tree.GetOverlaps(convex.boundingBox, overlappedTriangles);
             return overlappedTriangles.Count;

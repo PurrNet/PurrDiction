@@ -82,11 +82,11 @@ namespace BEPUphysics.BroadPhaseEntries.MobileCollidables
             set
             {
                 //Remove the local position.  The UpdateBoundingBoxForTransform will reintroduce it; we want the final result to put the shape (i.e. the WorldTransform) right where defined.
-                Quaternion conjugate;
-                Quaternion.Conjugate(ref value.Orientation, out conjugate);
-                Vector3 worldOffset;
-                Quaternion.Transform(ref localPosition, ref conjugate, out worldOffset);
-                Vector3.Subtract(ref value.Position, ref worldOffset, out value.Position);
+                FPQuaternion conjugate;
+                FPQuaternion.Conjugate(ref value.Orientation, out conjugate);
+                FPVector3 worldOffset;
+                FPQuaternion.Transform(ref localPosition, ref conjugate, out worldOffset);
+                FPVector3.Subtract(ref value.Position, ref worldOffset, out value.Position);
                 UpdateBoundingBoxForTransform(ref value);
             }
         }
@@ -102,13 +102,13 @@ namespace BEPUphysics.BroadPhaseEntries.MobileCollidables
             }
         }
 
-        protected internal Vector3 localPosition;
+        protected internal FPVector3 localPosition;
         ///<summary>
         /// Gets or sets the local position of the collidable.
         /// The local position can be used to offset the collision geometry
         /// from an entity's center of mass.
         ///</summary>
-        public Vector3 LocalPosition
+        public FPVector3 LocalPosition
         {
             get
             {
@@ -138,7 +138,7 @@ namespace BEPUphysics.BroadPhaseEntries.MobileCollidables
         /// UpdateBoundingBoxForTransform instead.
         ///</summary>
         ///<param name="dt">Timestep with which to update the bounding box.</param>
-        public override void UpdateBoundingBox(Fix64 dt)
+        public override void UpdateBoundingBox(FP dt)
         {
             //The world transform update isn't strictly required for uninterrupted simulation.
             //The entity update method manages the world transforms.
@@ -154,10 +154,10 @@ namespace BEPUphysics.BroadPhaseEntries.MobileCollidables
         ///</summary>
         ///<param name="position">Position to use for the calculation.</param>
         ///<param name="orientation">Orientation to use for the calculation.</param>
-        public virtual void UpdateWorldTransform(ref Vector3 position, ref Quaternion orientation)
+        public virtual void UpdateWorldTransform(ref FPVector3 position, ref FPQuaternion orientation)
         {
-            Quaternion.Transform(ref localPosition, ref orientation, out worldTransform.Position);
-            Vector3.Add(ref worldTransform.Position, ref position, out worldTransform.Position);
+            FPQuaternion.Transform(ref localPosition, ref orientation, out worldTransform.Position);
+            FPVector3.Add(ref worldTransform.Position, ref position, out worldTransform.Position);
             worldTransform.Orientation = orientation;
 
             worldTransform.Validate();
@@ -172,7 +172,7 @@ namespace BEPUphysics.BroadPhaseEntries.MobileCollidables
         /// <param name="dt">Duration of the simulation time step.  Used to expand the
         /// bounding box using the owning entity's velocity.  If the collidable
         /// does not have an owning entity, this must be zero.</param>
-        public void UpdateBoundingBoxForTransform(ref RigidTransform transform, Fix64 dt)
+        public void UpdateBoundingBoxForTransform(ref RigidTransform transform, FP dt)
         {
             UpdateWorldTransform(ref transform.Position, ref transform.Orientation);
             UpdateBoundingBoxInternal(dt);
@@ -190,16 +190,16 @@ namespace BEPUphysics.BroadPhaseEntries.MobileCollidables
         }
 
 
-        protected internal abstract void UpdateBoundingBoxInternal(Fix64 dt);
+        protected internal abstract void UpdateBoundingBoxInternal(FP dt);
 
         //Helper method for mobile collidables.
-        internal void ExpandBoundingBox(ref BoundingBox boundingBox, Fix64 dt)
+        internal void ExpandBoundingBox(ref FPBoundingBox boundingBox, FP dt)
         {
             //Expand bounding box with velocity.
             if (dt > F64.C0)
             {
                 bool useExtraExpansion = MotionSettings.UseExtraExpansionForContinuousBoundingBoxes && entity.PositionUpdateMode == PositionUpdateMode.Continuous;
-                Fix64 velocityScaling = useExtraExpansion ? 2 : 1;
+                FP velocityScaling = useExtraExpansion ? 2 : 1;
                 if (entity.linearVelocity.X > F64.C0)
                     boundingBox.Max.X += entity.linearVelocity.X * dt * velocityScaling;
                 else
@@ -220,7 +220,7 @@ namespace BEPUphysics.BroadPhaseEntries.MobileCollidables
 
                 if (useExtraExpansion)
                 {
-                    Fix64 expansion = F64.C0;
+                    FP expansion = F64.C0;
                     //It's possible that an object could have a small bounding box since its own
                     //velocity is low, but then a collision with a high velocity object sends
                     //it way out of its bounding box.  By taking into account high velocity objects
@@ -229,11 +229,11 @@ namespace BEPUphysics.BroadPhaseEntries.MobileCollidables
                     foreach (var e in OverlappedEntities)
                     {
 
-                        Fix64 velocity = e.linearVelocity.LengthSquared();
+                        FP velocity = e.linearVelocity.LengthSquared();
                         if (velocity > expansion)
                             expansion = velocity;
                     }
-                    expansion = Fix64.Sqrt(expansion) * dt;
+                    expansion = FP.Sqrt(expansion) * dt;
 
 
                     boundingBox.Min.X -= expansion;

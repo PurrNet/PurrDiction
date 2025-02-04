@@ -32,7 +32,7 @@ namespace BEPUphysics.Entities.Prefabs
         /// <exception cref="InvalidOperationException">Thrown when the bodies list is empty or there is a mix of kinematic and dynamic entities in the body list.</exception>
         public CompoundBody(IList<CompoundShapeEntry> bodies)
         {
-            Vector3 center;
+            FPVector3 center;
             var shape = new CompoundShape(bodies, out center);
             Initialize(new CompoundCollidable(shape));
             Position = center;
@@ -45,9 +45,9 @@ namespace BEPUphysics.Entities.Prefabs
         /// <param name="bodies">List of entities to use as subbodies of the compound body.</param>
         /// <param name="mass">Mass of the compound.</param>
         /// <exception cref="InvalidOperationException">Thrown when the bodies list is empty or there is a mix of kinematic and dynamic entities in the body list.</exception>
-        public CompoundBody(IList<CompoundShapeEntry> bodies, Fix64 mass)
+        public CompoundBody(IList<CompoundShapeEntry> bodies, FP mass)
         {
-            Vector3 center;
+            FPVector3 center;
             var shape = new CompoundShape(bodies, out center);
             Initialize(new CompoundCollidable(shape), mass);
             Position = center;
@@ -61,7 +61,7 @@ namespace BEPUphysics.Entities.Prefabs
         public CompoundBody(IList<CompoundChildData> children)
         {
 
-            Vector3 center;
+            FPVector3 center;
             var collidable = new CompoundCollidable(children, out center);
             Initialize(collidable);
             Position = center;
@@ -72,9 +72,9 @@ namespace BEPUphysics.Entities.Prefabs
         ///</summary>
         ///<param name="children">Children data to construct the compound from.</param>
         ///<param name="mass">Mass of the compound body.</param>
-        public CompoundBody(IList<CompoundChildData> children, Fix64 mass)
+        public CompoundBody(IList<CompoundChildData> children, FP mass)
         {
-            Vector3 center;
+            FPVector3 center;
             var collidable = new CompoundCollidable(children, out center);
             Initialize(collidable, mass);
             Position = center;

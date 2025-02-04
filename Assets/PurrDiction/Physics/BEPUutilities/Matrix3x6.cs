@@ -6,18 +6,18 @@ namespace BEPUutilities
 {
 	static class Matrix3x6
 	{
-		[ThreadStatic] private static Fix64[,] Matrix;
+		[ThreadStatic] private static FP[,] Matrix;
 
-		public static bool Gauss(Fix64[,] M, int m, int n)
+		public static bool Gauss(FP[,] M, int m, int n)
 		{
 			// Perform Gauss-Jordan elimination
 			for (int k = 0; k < m; k++)
 			{
-				Fix64 maxValue = Fix64.Abs(M[k, k]);
+				FP maxValue = FP.Abs(M[k, k]);
 				int iMax = k;
 				for (int i = k+1; i < m; i++)
 				{
-					Fix64 value = Fix64.Abs(M[i, k]);
+					FP value = FP.Abs(M[i, k]);
 					if (value >= maxValue)
 					{
 						maxValue = value;
@@ -31,14 +31,14 @@ namespace BEPUutilities
 				{
 					for (int j = 0; j < n; j++)
 					{
-						Fix64 temp = M[k, j];
+						FP temp = M[k, j];
 						M[k, j] = M[iMax, j];
 						M[iMax, j] = temp;
 					}
 				}
 
 				// Divide row by pivot
-				Fix64 pivotInverse = F64.C1 / M[k, k];
+				FP pivotInverse = F64.C1 / M[k, k];
 
 				M[k, k] = F64.C1;
 				for (int j = k + 1; j < n; j++)
@@ -51,7 +51,7 @@ namespace BEPUutilities
 				{
 					if (i == k)
 						continue;
-					Fix64 f = M[i, k];					
+					FP f = M[i, k];					
 					for (int j = k + 1; j < n; j++)
 					{
 						M[i, j] = M[i, j] - M[k, j] * f;
@@ -65,8 +65,8 @@ namespace BEPUutilities
 		public static bool Invert(ref Matrix3x3 m, out Matrix3x3 r)
 		{
 			if (Matrix == null)
-				 Matrix = new Fix64[3, 6];
-			Fix64[,] M = Matrix;
+				 Matrix = new FP[3, 6];
+			FP[,] M = Matrix;
 
 			// Initialize temporary matrix
 			M[0, 0] = m.M11;
@@ -79,15 +79,15 @@ namespace BEPUutilities
 			M[2, 1] = m.M32;
 			M[2, 2] = m.M33;
 
-			M[0, 3] = Fix64.One;
-			M[0, 4] = Fix64.Zero;
-			M[0, 5] = Fix64.Zero;
-			M[1, 3] = Fix64.Zero;
-			M[1, 4] = Fix64.One;
-			M[1, 5] = Fix64.Zero;
-			M[2, 3] = Fix64.Zero;
-			M[2, 4] = Fix64.Zero;
-			M[2, 5] = Fix64.One;
+			M[0, 3] = FP.One;
+			M[0, 4] = FP.Zero;
+			M[0, 5] = FP.Zero;
+			M[1, 3] = FP.Zero;
+			M[1, 4] = FP.One;
+			M[1, 5] = FP.Zero;
+			M[2, 3] = FP.Zero;
+			M[2, 4] = FP.Zero;
+			M[2, 5] = FP.One;
 
 			if (!Gauss(M, 3, 6))
 			{

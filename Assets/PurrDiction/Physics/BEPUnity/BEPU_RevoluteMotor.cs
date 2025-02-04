@@ -38,9 +38,9 @@ namespace BEPUphysics.Unity
         private void UpdateSettings()
         {
             _motor.Settings.Mode = _mode;
-            _motor.Settings.VelocityMotor.GoalVelocity = (Fix64)_goalVelocity;
-            _motor.Settings.VelocityMotor.Softness = (Fix64)_softness;
-            _motor.Settings.Servo.Goal = (Fix64)_goalServo;
+            _motor.Settings.VelocityMotor.GoalVelocity = (FP)_goalVelocity;
+            _motor.Settings.VelocityMotor.Softness = (FP)_softness;
+            _motor.Settings.Servo.Goal = (FP)_goalServo;
         }
 
         private void OnEnable()

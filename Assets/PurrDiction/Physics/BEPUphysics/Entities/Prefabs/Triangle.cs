@@ -16,7 +16,7 @@ namespace BEPUphysics.Entities.Prefabs
         ///<summary>
         /// Gets or sets the first vertex of the triangle in local space.
         ///</summary>
-        public Vector3 LocalVertexA
+        public FPVector3 LocalVertexA
         {
             get
             {
@@ -30,7 +30,7 @@ namespace BEPUphysics.Entities.Prefabs
         ///<summary>
         /// Gets or sets the second vertex of the triangle in local space.
         ///</summary>
-        public Vector3 LocalVertexB
+        public FPVector3 LocalVertexB
         {
             get
             {
@@ -44,7 +44,7 @@ namespace BEPUphysics.Entities.Prefabs
         ///<summary>
         /// Gets or sets the third vertex of the triangle in local space.
         ///</summary>
-        public Vector3 LocalVertexC
+        public FPVector3 LocalVertexC
         {
             get
             {
@@ -60,7 +60,7 @@ namespace BEPUphysics.Entities.Prefabs
         ///<summary>
         /// Gets or sets the first vertex of the triangle in world space.
         ///</summary>
-        public Vector3 VertexA
+        public FPVector3 VertexA
         {
             get
             {
@@ -74,7 +74,7 @@ namespace BEPUphysics.Entities.Prefabs
         ///<summary>
         /// Gets or sets the second vertex of the triangle in world space.
         ///</summary>
-        public Vector3 VertexB
+        public FPVector3 VertexB
         {
             get
             {
@@ -88,7 +88,7 @@ namespace BEPUphysics.Entities.Prefabs
         ///<summary>
         /// Gets or sets the third vertex of the triangle in world space.
         ///</summary>
-        public Vector3 VertexC
+        public FPVector3 VertexC
         {
             get
             {
@@ -121,9 +121,9 @@ namespace BEPUphysics.Entities.Prefabs
         /// <param name="v2">Position of the second vertex.</param>
         /// <param name="v3">Position of the third vertex.</param>
         /// <param name="mass">Mass of the object.</param>
-        public Triangle(Vector3 v1, Vector3 v2, Vector3 v3, Fix64 mass)
+        public Triangle(FPVector3 v1, FPVector3 v2, FPVector3 v3, FP mass)
         {
-            Vector3 center;
+            FPVector3 center;
             var shape = new TriangleShape(v1, v2, v3, out center);
             Initialize(new ConvexCollidable<TriangleShape>(shape), mass);
             Position = center;
@@ -135,9 +135,9 @@ namespace BEPUphysics.Entities.Prefabs
         /// <param name="v1">Position of the first vertex.</param>
         /// <param name="v2">Position of the second vertex.</param>
         /// <param name="v3">Position of the third vertex.</param>
-        public Triangle(Vector3 v1, Vector3 v2, Vector3 v3)
+        public Triangle(FPVector3 v1, FPVector3 v2, FPVector3 v3)
         {
-            Vector3 center;
+            FPVector3 center;
             var shape = new TriangleShape(v1, v2, v3, out center);
             Initialize(new ConvexCollidable<TriangleShape>(shape));
             Position = center;
@@ -151,7 +151,7 @@ namespace BEPUphysics.Entities.Prefabs
         /// <param name="v2">Position of the second vertex.</param>
         /// <param name="v3">Position of the third vertex.</param>
         /// <param name="mass">Mass of the object.</param>
-        public Triangle(Vector3 pos, Vector3 v1, Vector3 v2, Vector3 v3, Fix64 mass)
+        public Triangle(FPVector3 pos, FPVector3 v1, FPVector3 v2, FPVector3 v3, FP mass)
             : this(v1, v2, v3, mass)
         {
             Position = pos;
@@ -164,7 +164,7 @@ namespace BEPUphysics.Entities.Prefabs
         /// <param name="v1">Position of the first vertex.</param>
         /// <param name="v2">Position of the second vertex.</param>
         /// <param name="v3">Position of the third vertex.</param>
-        public Triangle(Vector3 pos, Vector3 v1, Vector3 v2, Vector3 v3)
+        public Triangle(FPVector3 pos, FPVector3 v1, FPVector3 v2, FPVector3 v3)
             : this(v1, v2, v3)
         {
             Position = pos;
@@ -178,7 +178,7 @@ namespace BEPUphysics.Entities.Prefabs
         /// <param name="v2">Position of the second vertex.</param>
         /// <param name="v3">Position of the third vertex.</param>
         /// <param name="mass">Mass of the object.</param>
-        public Triangle(MotionState motionState, Vector3 v1, Vector3 v2, Vector3 v3, Fix64 mass)
+        public Triangle(MotionState motionState, FPVector3 v1, FPVector3 v2, FPVector3 v3, FP mass)
             : this(v1, v2, v3, mass)
         {
             MotionState = motionState;
@@ -191,7 +191,7 @@ namespace BEPUphysics.Entities.Prefabs
         /// <param name="v1">Position of the first vertex.</param>
         /// <param name="v2">Position of the second vertex.</param>
         /// <param name="v3">Position of the third vertex.</param>
-        public Triangle(MotionState motionState, Vector3 v1, Vector3 v2, Vector3 v3)
+        public Triangle(MotionState motionState, FPVector3 v1, FPVector3 v2, FPVector3 v3)
             : this(v1, v2, v3)
         {
             MotionState = motionState;

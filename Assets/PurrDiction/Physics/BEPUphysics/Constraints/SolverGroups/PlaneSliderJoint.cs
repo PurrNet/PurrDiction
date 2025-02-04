@@ -46,7 +46,7 @@ namespace BEPUphysics.Constraints.SolverGroups
         /// <param name="yAxis">Direction in world space along which the Y axis LinearAxisLimit and LinearAxisMotor work.
         /// This is usually chosen to be perpendicular to the planeNormal and the xAxis.</param>
         /// <param name="pointAnchor">Location of the anchor for the point to be attached to connectionB in world space.</param>
-        public PlaneSliderJoint(Entity connectionA, Entity connectionB, Vector3 planeAnchor, Vector3 planeNormal, Vector3 xAxis, Vector3 yAxis, Vector3 pointAnchor)
+        public PlaneSliderJoint(Entity connectionA, Entity connectionB, FPVector3 planeAnchor, FPVector3 planeNormal, FPVector3 xAxis, FPVector3 yAxis, FPVector3 pointAnchor)
         {
             if (connectionA == null)
                 connectionA = TwoEntityConstraint.WorldEntity;

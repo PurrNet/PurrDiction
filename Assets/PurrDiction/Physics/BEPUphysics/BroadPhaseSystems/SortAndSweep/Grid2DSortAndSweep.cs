@@ -22,7 +22,7 @@ namespace BEPUphysics.BroadPhaseSystems.SortAndSweep
         /// Gets or sets the width of cells in the 2D grid.  For sparser, larger scenes, increasing this can help performance.
         /// For denser scenes, decreasing this may help.
         /// </summary>
-        public static Fix64 CellSize
+        public static FP CellSize
         {
             get
             {
@@ -34,12 +34,12 @@ namespace BEPUphysics.BroadPhaseSystems.SortAndSweep
             }
         }
         //TODO: Try different values for this.
-        internal static Fix64 cellSizeInverse = F64.OneEighth; 
+        internal static FP cellSizeInverse = F64.OneEighth; 
 
-        internal static void ComputeCell(ref Vector3 v, out Int2 cell)
+        internal static void ComputeCell(ref FPVector3 v, out Int2 cell)
         {
-            cell.Y = (int)Fix64.Floor(v.Y * cellSizeInverse);
-            cell.Z = (int)Fix64.Floor(v.Z * cellSizeInverse);
+            cell.Y = (int)FP.Floor(v.Y * cellSizeInverse);
+            cell.Z = (int)FP.Floor(v.Z * cellSizeInverse);
         }
 
         
@@ -82,8 +82,8 @@ namespace BEPUphysics.BroadPhaseSystems.SortAndSweep
         {
             base.Add(entry);
             //Entities do not set up their own bounding box before getting stuck in here.  If they're all zeroed out, the tree will be horrible.
-            Vector3 offset;
-            Vector3.Subtract(ref entry.boundingBox.Max, ref entry.boundingBox.Min, out offset);
+            FPVector3 offset;
+            FPVector3.Subtract(ref entry.boundingBox.Max, ref entry.boundingBox.Min, out offset);
             if (offset.X * offset.Y * offset.Z == F64.C0)
                 entry.UpdateBoundingBox();
             var newEntry = entryPool.Take();

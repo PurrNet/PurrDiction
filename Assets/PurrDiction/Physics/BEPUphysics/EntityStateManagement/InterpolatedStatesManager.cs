@@ -105,7 +105,7 @@ namespace BEPUphysics.EntityStateManagement
         }
 
 
-        Fix64 blendAmount;
+        FP blendAmount;
         ///<summary>
         /// Gets or sets the blending amount to use.
         /// This is set automatically when the space is using internal timestepping
@@ -114,7 +114,7 @@ namespace BEPUphysics.EntityStateManagement
         /// in the blended state.  A value of 1 means use only the current frame;
         /// a value of 0 means use only the previous frame.
         ///</summary>
-        public Fix64 BlendAmount
+        public FP BlendAmount
         {
             get
             {
@@ -134,8 +134,8 @@ namespace BEPUphysics.EntityStateManagement
             //Interpolated updates occur after proper updates complete.
             //That means that the internal positions and the front buffer positions are equivalent.
             //However, the backbuffer is uncontested and contains the previous frame's data.
-            Vector3.Lerp(ref manager.ReadBuffers.backBuffer[i].Position, ref entity.position, blendAmount, out backBuffer[i].Position);
-            Quaternion.Slerp(ref manager.ReadBuffers.backBuffer[i].Orientation, ref entity.orientation, blendAmount, out backBuffer[i].Orientation);
+            FPVector3.Lerp(ref manager.ReadBuffers.backBuffer[i].Position, ref entity.position, blendAmount, out backBuffer[i].Position);
+            FPQuaternion.Slerp(ref manager.ReadBuffers.backBuffer[i].Orientation, ref entity.orientation, blendAmount, out backBuffer[i].Orientation);
         }
 
 

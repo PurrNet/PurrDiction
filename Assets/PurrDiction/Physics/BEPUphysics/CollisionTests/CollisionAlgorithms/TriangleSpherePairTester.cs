@@ -28,30 +28,30 @@ namespace BEPUphysics.CollisionTests.CollisionAlgorithms
             contactList = new TinyStructList<ContactData>();
 
 
-            Vector3 ab, ac;
-            Vector3.Subtract(ref triangle.vB, ref triangle.vA, out ab);
-            Vector3.Subtract(ref triangle.vC, ref triangle.vA, out ac);
-            Vector3 triangleNormal;
-            Vector3.Cross(ref ab, ref ac, out triangleNormal);
+            FPVector3 ab, ac;
+            FPVector3.Subtract(ref triangle.vB, ref triangle.vA, out ab);
+            FPVector3.Subtract(ref triangle.vC, ref triangle.vA, out ac);
+            FPVector3 triangleNormal;
+            FPVector3.Cross(ref ab, ref ac, out triangleNormal);
             if (triangleNormal.LengthSquared() < Toolbox.Epsilon * F64.C0p01)
             {
                 //If the triangle is degenerate, use the offset between its center and the sphere.
-                Vector3.Add(ref triangle.vA, ref triangle.vB, out triangleNormal);
-                Vector3.Add(ref triangleNormal, ref triangle.vC, out triangleNormal);
-                Vector3.Multiply(ref triangleNormal, F64.OneThird, out triangleNormal);
+                FPVector3.Add(ref triangle.vA, ref triangle.vB, out triangleNormal);
+                FPVector3.Add(ref triangleNormal, ref triangle.vC, out triangleNormal);
+                FPVector3.Multiply(ref triangleNormal, F64.OneThird, out triangleNormal);
                 if (triangleNormal.LengthSquared() < Toolbox.Epsilon * F64.C0p01)
                     triangleNormal = Toolbox.UpVector; //Alrighty then! Pick a random direction.
                     
             }
 
             
-            Fix64 dot;
-            Vector3.Dot(ref triangleNormal, ref triangle.vA, out dot);
+            FP dot;
+            FPVector3.Dot(ref triangleNormal, ref triangle.vA, out dot);
             switch (triangle.sidedness)
             {
                 case TriangleSidedness.DoubleSided:
                     if (dot < F64.C0)
-                        Vector3.Negate(ref triangleNormal, out triangleNormal); //Normal must face outward.
+                        FPVector3.Negate(ref triangleNormal, out triangleNormal); //Normal must face outward.
                     break;
                 case TriangleSidedness.Clockwise:
                     if (dot > F64.C0)
@@ -65,12 +65,12 @@ namespace BEPUphysics.CollisionTests.CollisionAlgorithms
             }
 
 
-            Vector3 closestPoint;
+            FPVector3 closestPoint;
             //Could optimize this process a bit.  The 'point' being compared is always zero.  Additionally, since the triangle normal is available,
             //there is a little extra possible optimization.
             lastRegion = Toolbox.GetClosestPointOnTriangleToPoint(ref triangle.vA, ref triangle.vB, ref triangle.vC, ref Toolbox.ZeroVector, out closestPoint);
-            Fix64 lengthSquared = closestPoint.LengthSquared();
-            Fix64 marginSum = triangle.collisionMargin + sphere.collisionMargin;
+            FP lengthSquared = closestPoint.LengthSquared();
+            FP marginSum = triangle.collisionMargin + sphere.collisionMargin;
 
             if (lengthSquared <= marginSum * marginSum)
             {
@@ -79,15 +79,15 @@ namespace BEPUphysics.CollisionTests.CollisionAlgorithms
                 {
                     //Super close to the triangle.  Normalizing would be dangerous.
 
-                    Vector3.Negate(ref triangleNormal, out contact.Normal);
+                    FPVector3.Negate(ref triangleNormal, out contact.Normal);
                     contact.Normal.Normalize();
                     contact.PenetrationDepth = marginSum;
                     contactList.Add(ref contact);
                     return true;
                 }
 
-                lengthSquared = Fix64.Sqrt(lengthSquared);
-                Vector3.Divide(ref closestPoint, lengthSquared, out contact.Normal);
+                lengthSquared = FP.Sqrt(lengthSquared);
+                FPVector3.Divide(ref closestPoint, lengthSquared, out contact.Normal);
                 contact.PenetrationDepth = marginSum - lengthSquared;
                 contact.Position = closestPoint;
                 contactList.Add(ref contact);

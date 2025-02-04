@@ -44,7 +44,7 @@ namespace PurrNet.Prediction.StateMachine
             }
         }
 
-        protected override void Simulate(ref SMState state, Fix64 delta)
+        protected override void Simulate(ref SMState state, FP delta)
         {
             base.Simulate(ref state, delta);
             

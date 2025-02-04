@@ -80,15 +80,15 @@ namespace BEPUphysics.CollisionShapes
         /// <param name="maximumLength">Maximum length, in units of the ray's direction's length, to test.</param>
         /// <param name="result">Hit data, if any.</param>
         /// <returns>Whether or not the ray hit the entry.</returns>
-        public bool RayCast(Ray ray, Fix64 maximumLength, out RayCastResult result)
+        public bool RayCast(FPRay ray, FP maximumLength, out RayCastResult result)
         {
             var outputOverlappedElements = PhysicsResources.GetCollidableList();
             CollidableTree.GetOverlaps(ray, maximumLength, outputOverlappedElements);
             result = new RayCastResult();
-            result.HitData.T = Fix64.MaxValue;
+            result.HitData.T = FP.MaxValue;
             for (int i = 0; i < outputOverlappedElements.Count; ++i)
             {
-                RayHit hit;
+                FPRayHit hit;
                 if (outputOverlappedElements.Elements[i].RayCast(ray, maximumLength, out hit))
                 {
                     if (hit.T < result.HitData.T)
@@ -99,7 +99,7 @@ namespace BEPUphysics.CollisionShapes
                 }
             }
             PhysicsResources.GiveBack(outputOverlappedElements);
-            return result.HitData.T < Fix64.MaxValue;
+            return result.HitData.T < FP.MaxValue;
         }
 
         /// <summary>
@@ -111,15 +111,15 @@ namespace BEPUphysics.CollisionShapes
         /// in the entry, this filter will be passed into inner ray casts.</param>
         /// <param name="result">Hit data, if any.</param>
         /// <returns>Whether or not the ray hit the entry.</returns>
-        public bool RayCast(Ray ray, Fix64 maximumLength, Func<BroadPhaseEntry, bool> filter, out RayCastResult result)
+        public bool RayCast(FPRay ray, FP maximumLength, Func<BroadPhaseEntry, bool> filter, out RayCastResult result)
         {
             var outputOverlappedElements = PhysicsResources.GetCollidableList();
             CollidableTree.GetOverlaps(ray, maximumLength, outputOverlappedElements);
             result = new RayCastResult();
-            result.HitData.T = Fix64.MaxValue;
+            result.HitData.T = FP.MaxValue;
             for (int i = 0; i < outputOverlappedElements.Count; ++i)
             {
-                RayHit hit;
+                FPRayHit hit;
                 if (outputOverlappedElements.Elements[i].RayCast(ray, maximumLength, filter, out hit))
                 {
                     if (hit.T < result.HitData.T)
@@ -130,7 +130,7 @@ namespace BEPUphysics.CollisionShapes
                 }
             }
             PhysicsResources.GiveBack(outputOverlappedElements);
-            return result.HitData.T < Fix64.MaxValue;
+            return result.HitData.T < FP.MaxValue;
         }
 
 
@@ -142,18 +142,18 @@ namespace BEPUphysics.CollisionShapes
         /// <param name="sweep">Sweep to apply to the shape.</param>
         /// <param name="result">Hit data, if any.</param>
         /// <returns>Whether or not the cast hit anything.</returns>
-        public bool ConvexCast(ConvexShapes.ConvexShape castShape, ref RigidTransform startingTransform, ref Vector3 sweep, out RayCastResult result)
+        public bool ConvexCast(ConvexShapes.ConvexShape castShape, ref RigidTransform startingTransform, ref FPVector3 sweep, out RayCastResult result)
         {
             var outputOverlappedElements = PhysicsResources.GetCollidableList();
-            BoundingBox boundingBox;
+            FPBoundingBox boundingBox;
             castShape.GetSweptBoundingBox(ref startingTransform, ref sweep, out boundingBox);
 
             CollidableTree.GetOverlaps(boundingBox, outputOverlappedElements);
             result = new RayCastResult();
-            result.HitData.T = Fix64.MaxValue;
+            result.HitData.T = FP.MaxValue;
             for (int i = 0; i < outputOverlappedElements.Count; ++i)
             {
-                RayHit hit;
+                FPRayHit hit;
                 if (outputOverlappedElements.Elements[i].ConvexCast(castShape, ref startingTransform, ref sweep, out hit))
                 {
                     if (hit.T < result.HitData.T)
@@ -164,7 +164,7 @@ namespace BEPUphysics.CollisionShapes
                 }
             }
             PhysicsResources.GiveBack(outputOverlappedElements);
-            return result.HitData.T < Fix64.MaxValue;
+            return result.HitData.T < FP.MaxValue;
         }
 
         /// <summary>
@@ -177,18 +177,18 @@ namespace BEPUphysics.CollisionShapes
         /// in the entry, this filter will be passed into inner ray casts.</param>
         /// <param name="result">Hit data, if any.</param>
         /// <returns>Whether or not the cast hit anything.</returns>
-        public bool ConvexCast(ConvexShapes.ConvexShape castShape, ref RigidTransform startingTransform, ref Vector3 sweep, Func<BroadPhaseEntry, bool> filter, out RayCastResult result)
+        public bool ConvexCast(ConvexShapes.ConvexShape castShape, ref RigidTransform startingTransform, ref FPVector3 sweep, Func<BroadPhaseEntry, bool> filter, out RayCastResult result)
         {
             var outputOverlappedElements = PhysicsResources.GetCollidableList();
-            BoundingBox boundingBox;
+            FPBoundingBox boundingBox;
             castShape.GetSweptBoundingBox(ref startingTransform, ref sweep, out boundingBox);
 
             CollidableTree.GetOverlaps(boundingBox, outputOverlappedElements);
             result = new RayCastResult();
-            result.HitData.T = Fix64.MaxValue;
+            result.HitData.T = FP.MaxValue;
             for (int i = 0; i < outputOverlappedElements.Count; ++i)
             {
-                RayHit hit;
+                FPRayHit hit;
                 if (outputOverlappedElements.Elements[i].ConvexCast(castShape, ref startingTransform, ref sweep, filter, out hit))
                 {
                     if (hit.T < result.HitData.T)
@@ -199,7 +199,7 @@ namespace BEPUphysics.CollisionShapes
                 }
             }
             PhysicsResources.GiveBack(outputOverlappedElements);
-            return result.HitData.T < Fix64.MaxValue;
+            return result.HitData.T < FP.MaxValue;
         }
 
 

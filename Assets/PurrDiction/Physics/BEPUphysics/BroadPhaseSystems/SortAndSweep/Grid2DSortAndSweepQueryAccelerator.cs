@@ -27,43 +27,43 @@ namespace BEPUphysics.BroadPhaseSystems.SortAndSweep
             }
         }
 
-        public bool RayCast(Ray ray, IList<BroadPhaseEntry> outputIntersections)
+        public bool RayCast(FPRay ray, IList<BroadPhaseEntry> outputIntersections)
         {
             throw new NotSupportedException("The Grid2DSortAndSweep broad phase cannot accelerate infinite ray casts.  Consider using a broad phase which supports infinite tests, using a custom solution, or using a finite ray.");
         }
 
-        public bool RayCast(Ray ray, Fix64 maximumLength, IList<BroadPhaseEntry> outputIntersections)
+        public bool RayCast(FPRay ray, FP maximumLength, IList<BroadPhaseEntry> outputIntersections)
         {
-            if (maximumLength == Fix64.MaxValue) 
+            if (maximumLength == FP.MaxValue) 
                 throw new NotSupportedException("The Grid2DSortAndSweep broad phase cannot accelerate infinite ray casts.  Consider specifying a maximum length or using a broad phase which supports infinite ray casts.");
         
             //Use 2d line rasterization.
             //Compute the exit location in the cell.
             //Test against each bounding box up until the exit value is reached.
-            Fix64 length = F64.C0;
+            FP length = F64.C0;
             Int2 cellIndex;
-            Vector3 currentPosition = ray.Position;
+            FPVector3 currentPosition = ray.Position;
             Grid2DSortAndSweep.ComputeCell(ref currentPosition, out cellIndex);
             while (true)
             {
 
-                Fix64 cellWidth = F64.C1 / Grid2DSortAndSweep.cellSizeInverse;
-                Fix64 nextT; //Distance along ray to next boundary.
-                Fix64 nextTy; //Distance along ray to next boundary along y axis.
-                Fix64 nextTz; //Distance along ray to next boundary along z axis.
+                FP cellWidth = F64.C1 / Grid2DSortAndSweep.cellSizeInverse;
+                FP nextT; //Distance along ray to next boundary.
+                FP nextTy; //Distance along ray to next boundary along y axis.
+                FP nextTz; //Distance along ray to next boundary along z axis.
 							  //Find the next cell.
 				if (ray.Direction.Y > F64.C0)
 					nextTy = ((cellIndex.Y + 1) * cellWidth - currentPosition.Y) / ray.Direction.Y;
 				else if (ray.Direction.Y < F64.C0)
 					nextTy = ((cellIndex.Y) * cellWidth - currentPosition.Y) / ray.Direction.Y;
 				else
-					nextTy = Fix64.MaxValue;
+					nextTy = FP.MaxValue;
                 if (ray.Direction.Z > F64.C0)
                     nextTz = ((cellIndex.Z + 1) * cellWidth - currentPosition.Z) / ray.Direction.Z;
                 else if (ray.Direction.Z < F64.C0)
                     nextTz = ((cellIndex.Z) * cellWidth - currentPosition.Z) / ray.Direction.Z;
                 else
-                    nextTz = Fix64.MaxValue;
+                    nextTz = FP.MaxValue;
 
                 bool yIsMinimum = nextTy < nextTz;
                 nextT = yIsMinimum ? nextTy : nextTz;
@@ -75,7 +75,7 @@ namespace BEPUphysics.BroadPhaseSystems.SortAndSweep
                 GridCell2D cell;
                 if (owner.cellSet.TryGetCell(ref cellIndex, out cell))
                 {
-                    Fix64 endingX;
+                    FP endingX;
                     if(ray.Direction.X < F64.C0)
                         endingX = currentPosition.X;
                     else
@@ -88,7 +88,7 @@ namespace BEPUphysics.BroadPhaseSystems.SortAndSweep
                         && cell.entries.Elements[i].item.boundingBox.Min.X <= endingX; i++) //TODO: Try additional x axis pruning?
                     {
                         var item = cell.entries.Elements[i].item;
-                        Fix64 t;
+                        FP t;
                         if (ray.Intersects(ref item.boundingBox, out t) && t < maximumLength && !outputIntersections.Contains(item))
                         {
                             outputIntersections.Add(item);
@@ -100,9 +100,9 @@ namespace BEPUphysics.BroadPhaseSystems.SortAndSweep
                 length += nextT;
                 if (length > maximumLength) //Note that this catches the case in which the ray is pointing right down the middle of a row (resulting in a nextT of 10e10f).
                     break;
-                Vector3 offset;
-                Vector3.Multiply(ref ray.Direction, nextT, out offset);
-                Vector3.Add(ref offset, ref currentPosition, out currentPosition);
+                FPVector3 offset;
+                FPVector3.Multiply(ref ray.Direction, nextT, out offset);
+                FPVector3.Add(ref offset, ref currentPosition, out currentPosition);
                 if (yIsMinimum)
                     if (ray.Direction.Y < F64.C0)
                         cellIndex.Y -= 1;
@@ -119,7 +119,7 @@ namespace BEPUphysics.BroadPhaseSystems.SortAndSweep
         }
 
 
-        public void GetEntries(BoundingBox boundingShape, IList<BroadPhaseEntry> overlaps)
+        public void GetEntries(FPBoundingBox boundingShape, IList<BroadPhaseEntry> overlaps)
         {
             //Compute the min and max of the bounding box.
             //Loop through the cells and select bounding boxes which overlap the x axis.
@@ -158,22 +158,22 @@ namespace BEPUphysics.BroadPhaseSystems.SortAndSweep
             }
         }
 
-        public void GetEntries(BoundingSphere boundingShape, IList<BroadPhaseEntry> overlaps)
+        public void GetEntries(FPBoundingSphere boundingShape, IList<BroadPhaseEntry> overlaps)
         {
             //Create a bounding box based on the bounding sphere.
             //Compute the min and max of the bounding box.
             //Loop through the cells and select bounding boxes which overlap the x axis.
 #if !WINDOWS
-            Vector3 offset = new Vector3();
+            FPVector3 offset = new FPVector3();
 #else
             Vector3 offset;
 #endif
             offset.X = boundingShape.Radius;
             offset.Y = offset.X;
             offset.Z = offset.Y;
-            BoundingBox box;
-            Vector3.Add(ref boundingShape.Center, ref offset, out box.Max);
-            Vector3.Subtract(ref boundingShape.Center, ref offset, out box.Min);
+            FPBoundingBox box;
+            FPVector3.Add(ref boundingShape.Center, ref offset, out box.Max);
+            FPVector3.Subtract(ref boundingShape.Center, ref offset, out box.Min);
 
             Int2 min, max;
             Grid2DSortAndSweep.ComputeCell(ref box.Min, out min);

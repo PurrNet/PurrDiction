@@ -44,19 +44,19 @@ namespace BEPUphysics.Constraints.Collision
             isActive = false;
         }
 
-        internal Fix64 accumulatedImpulse;
+        internal FP accumulatedImpulse;
         //Fix64 linearBX, linearBY, linearBZ;
-        private Fix64 angularAX, angularAY, angularAZ;
-        private Fix64 angularBX, angularBY, angularBZ;
+        private FP angularAX, angularAY, angularAZ;
+        private FP angularBX, angularBY, angularBZ;
 
         //Inverse effective mass matrix
 
 
-        private Fix64 friction;
-        internal Fix64 linearAX, linearAY, linearAZ;
+        private FP friction;
+        internal FP linearAX, linearAY, linearAZ;
         private Entity entityA, entityB;
         private bool entityAIsDynamic, entityBIsDynamic;
-        private Fix64 velocityToImpulse;
+        private FP velocityToImpulse;
 
 
         ///<summary>
@@ -93,15 +93,15 @@ namespace BEPUphysics.Constraints.Collision
         /// <summary>
         /// Gets the direction in which the friction force acts.
         /// </summary>
-        public Vector3 FrictionDirection
+        public FPVector3 FrictionDirection
         {
-            get { return new Vector3(linearAX, linearAY, linearAZ); }
+            get { return new FPVector3(linearAX, linearAY, linearAZ); }
         }
 
         /// <summary>
         /// Gets the total impulse applied by this friction constraint in the last time step.
         /// </summary>
-        public Fix64 TotalImpulse
+        public FP TotalImpulse
         {
             get { return accumulatedImpulse; }
         }
@@ -109,11 +109,11 @@ namespace BEPUphysics.Constraints.Collision
         ///<summary>
         /// Gets the relative velocity of the constraint.  This is the velocity along the tangent movement direction.
         ///</summary>
-        public Fix64 RelativeVelocity
+        public FP RelativeVelocity
         {
             get
             {
-                Fix64 velocity = F64.C0;
+                FP velocity = F64.C0;
                 if (entityA != null)
                     velocity += entityA.linearVelocity.X * linearAX + entityA.linearVelocity.Y * linearAY + entityA.linearVelocity.Z * linearAZ +
                                 entityA.angularVelocity.X * angularAX + entityA.angularVelocity.Y * angularAY + entityA.angularVelocity.Z * angularAZ;
@@ -129,22 +129,22 @@ namespace BEPUphysics.Constraints.Collision
         /// Computes one iteration of the constraint to meet the solver updateable's goal.
         /// </summary>
         /// <returns>The rough applied impulse magnitude.</returns>
-        public override Fix64 SolveIteration()
+        public override FP SolveIteration()
         {
             //Compute relative velocity and convert to impulse
-            Fix64 lambda = RelativeVelocity * velocityToImpulse;
+            FP lambda = RelativeVelocity * velocityToImpulse;
 
 
             //Clamp accumulated impulse
-            Fix64 previousAccumulatedImpulse = accumulatedImpulse;
-            Fix64 maxForce = friction * penetrationConstraint.accumulatedImpulse;
+            FP previousAccumulatedImpulse = accumulatedImpulse;
+            FP maxForce = friction * penetrationConstraint.accumulatedImpulse;
             accumulatedImpulse = MathHelper.Clamp(accumulatedImpulse + lambda, -maxForce, maxForce);
             lambda = accumulatedImpulse - previousAccumulatedImpulse;
 
             //Apply the impulse
 #if !WINDOWS
-            Vector3 linear = new Vector3();
-            Vector3 angular = new Vector3();
+            FPVector3 linear = new FPVector3();
+            FPVector3 angular = new FPVector3();
 #else
             Vector3 linear, angular;
 #endif
@@ -171,14 +171,14 @@ namespace BEPUphysics.Constraints.Collision
                 entityB.ApplyAngularImpulse(ref angular);
             }
 
-            return Fix64.Abs(lambda);
+            return FP.Abs(lambda);
         }
 
         /// <summary>
         /// Initializes the constraint for this frame.
         /// </summary>
         /// <param name="dt">Time since the last frame.</param>
-        public override void Update(Fix64 dt)
+        public override void Update(FP dt)
         {
 
 
@@ -187,33 +187,33 @@ namespace BEPUphysics.Constraints.Collision
 
             //Compute the three dimensional relative velocity at the point.
 
-            Vector3 velocityA = new Vector3(), velocityB = new Vector3();
-            Vector3 ra = penetrationConstraint.ra, rb = penetrationConstraint.rb;
+            FPVector3 velocityA = new FPVector3(), velocityB = new FPVector3();
+            FPVector3 ra = penetrationConstraint.ra, rb = penetrationConstraint.rb;
             if (entityA != null)
             {
-                Vector3.Cross(ref entityA.angularVelocity, ref ra, out velocityA);
-                Vector3.Add(ref velocityA, ref entityA.linearVelocity, out velocityA);
+                FPVector3.Cross(ref entityA.angularVelocity, ref ra, out velocityA);
+                FPVector3.Add(ref velocityA, ref entityA.linearVelocity, out velocityA);
             }
             if (entityB != null)
             {
-                Vector3.Cross(ref entityB.angularVelocity, ref rb, out velocityB);
-                Vector3.Add(ref velocityB, ref entityB.linearVelocity, out velocityB);
+                FPVector3.Cross(ref entityB.angularVelocity, ref rb, out velocityB);
+                FPVector3.Add(ref velocityB, ref entityB.linearVelocity, out velocityB);
             }
-            Vector3 relativeVelocity;
-            Vector3.Subtract(ref velocityA, ref velocityB, out relativeVelocity);
+            FPVector3 relativeVelocity;
+            FPVector3.Subtract(ref velocityA, ref velocityB, out relativeVelocity);
 
             //Get rid of the normal velocity.
-            Vector3 normal = penetrationConstraint.contact.Normal;
-            Fix64 normalVelocityScalar = normal.X * relativeVelocity.X + normal.Y * relativeVelocity.Y + normal.Z * relativeVelocity.Z;
+            FPVector3 normal = penetrationConstraint.contact.Normal;
+            FP normalVelocityScalar = normal.X * relativeVelocity.X + normal.Y * relativeVelocity.Y + normal.Z * relativeVelocity.Z;
             relativeVelocity.X -= normalVelocityScalar * normal.X;
             relativeVelocity.Y -= normalVelocityScalar * normal.Y;
             relativeVelocity.Z -= normalVelocityScalar * normal.Z;
 
             //Create the jacobian entry and decide the friction coefficient.
-            Fix64 length = relativeVelocity.LengthSquared();
+            FP length = relativeVelocity.LengthSquared();
             if (length > Toolbox.Epsilon)
             {
-                length = Fix64.Sqrt(length);
+                length = FP.Sqrt(length);
                 linearAX = relativeVelocity.X / length;
                 linearAY = relativeVelocity.Y / length;
                 linearAZ = relativeVelocity.Z / length;
@@ -257,10 +257,10 @@ namespace BEPUphysics.Constraints.Collision
             angularBZ = (linearAX * rb.Y) - (linearAY * rb.X);
 
             //Compute inverse effective mass matrix
-            Fix64 entryA, entryB;
+            FP entryA, entryB;
 
             //these are the transformed coordinates
-            Fix64 tX, tY, tZ;
+            FP tX, tY, tZ;
             if (entityAIsDynamic)
             {
                 tX = angularAX * entityA.inertiaTensorInverse.M11 + angularAY * entityA.inertiaTensorInverse.M21 + angularAZ * entityA.inertiaTensorInverse.M31;
@@ -296,8 +296,8 @@ namespace BEPUphysics.Constraints.Collision
         {
             //Warm starting
 #if !WINDOWS
-            Vector3 linear = new Vector3();
-            Vector3 angular = new Vector3();
+            FPVector3 linear = new FPVector3();
+            FPVector3 angular = new FPVector3();
 #else
             Vector3 linear, angular;
 #endif

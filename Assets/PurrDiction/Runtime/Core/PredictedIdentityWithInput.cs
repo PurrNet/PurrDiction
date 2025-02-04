@@ -39,7 +39,7 @@ namespace PurrNet.Prediction
             _inputHistory.Write(localTick, _lastInput);
         }
         
-        internal override void SimulateTick(ulong tick, Fix64 delta)
+        internal override void SimulateTick(ulong tick, FP delta)
         {
             if (IsOwner())
             {
@@ -70,12 +70,12 @@ namespace PurrNet.Prediction
             }
         }
 
-        internal override void SimulateLocal(Fix64 delta)
+        internal override void SimulateLocal(FP delta)
         {
             Simulate(_lastInput, ref fullPredictedState.state, delta);
         }
         
-        internal override void SimulateRemote(ulong tick, Fix64 delta)
+        internal override void SimulateRemote(ulong tick, FP delta)
         {
             if (_queuedInputs.Count == 0)
             {
@@ -91,9 +91,9 @@ namespace PurrNet.Prediction
             Simulate(dequeuedInput, ref fullPredictedState.state, delta);
         }
 
-        protected abstract void Simulate(INPUT? input, ref STATE state, Fix64 delta);
+        protected abstract void Simulate(INPUT? input, ref STATE state, FP delta);
         
-        protected override void Simulate(ref STATE state, Fix64 delta)
+        protected override void Simulate(ref STATE state, FP delta)
         {
             Simulate(_lastInput, ref state, delta);
         }

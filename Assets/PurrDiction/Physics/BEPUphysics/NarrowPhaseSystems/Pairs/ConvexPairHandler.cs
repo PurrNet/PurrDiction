@@ -35,7 +35,7 @@ namespace BEPUphysics.NarrowPhaseSystems.Pairs
         ///</summary>
         ///<param name="requester">Collidable requesting the update.</param>
         ///<param name="dt">Timestep duration.</param>
-        public override void UpdateTimeOfImpact(Collidable requester, Fix64 dt)
+        public override void UpdateTimeOfImpact(Collidable requester, FP dt)
         {
             var collidableA = CollidableA as ConvexCollidable;
             var collidableB = CollidableB as ConvexCollidable;
@@ -61,7 +61,7 @@ namespace BEPUphysics.NarrowPhaseSystems.Pairs
             {
                 //Only perform the test if the minimum radii are small enough relative to the size of the velocity.
                 //Discrete objects have already had their linear motion integrated, so don't use their velocity.
-                Vector3 velocity;
+                FPVector3 velocity;
                 if (modeA == PositionUpdateMode.Discrete)
                 {
                     //CollidableA is static for the purposes of this continuous test.
@@ -70,23 +70,23 @@ namespace BEPUphysics.NarrowPhaseSystems.Pairs
                 else if (modeB == PositionUpdateMode.Discrete)
                 {
                     //CollidableB is static for the purposes of this continuous test.
-                    Vector3.Negate(ref collidableA.entity.linearVelocity, out velocity);
+                    FPVector3.Negate(ref collidableA.entity.linearVelocity, out velocity);
                 }
                 else
                 {
                     //Both objects are moving.
-                    Vector3.Subtract(ref collidableB.entity.linearVelocity, ref collidableA.entity.linearVelocity, out velocity);
+                    FPVector3.Subtract(ref collidableB.entity.linearVelocity, ref collidableA.entity.linearVelocity, out velocity);
                 }
-                Vector3.Multiply(ref velocity, dt, out velocity);
-                Fix64 velocitySquared = velocity.LengthSquared();
+                FPVector3.Multiply(ref velocity, dt, out velocity);
+                FP velocitySquared = velocity.LengthSquared();
 
                 var minimumRadiusA = collidableA.Shape.MinimumRadius * MotionSettings.CoreShapeScaling;
                 timeOfImpact = F64.C1;
                 if (minimumRadiusA * minimumRadiusA < velocitySquared)
                 {
                     //Spherecast A against B.
-                    RayHit rayHit;
-                    if (GJKToolbox.CCDSphereCast(new Ray(collidableA.worldTransform.Position, -velocity), minimumRadiusA, collidableB.Shape, ref collidableB.worldTransform, timeOfImpact, out rayHit))
+                    FPRayHit rayHit;
+                    if (GJKToolbox.CCDSphereCast(new FPRay(collidableA.worldTransform.Position, -velocity), minimumRadiusA, collidableB.Shape, ref collidableB.worldTransform, timeOfImpact, out rayHit))
                         timeOfImpact = rayHit.T;
                 }
 
@@ -94,8 +94,8 @@ namespace BEPUphysics.NarrowPhaseSystems.Pairs
                 if (minimumRadiusB * minimumRadiusB < velocitySquared)
                 {
                     //Spherecast B against A.
-                    RayHit rayHit;
-                    if (GJKToolbox.CCDSphereCast(new Ray(collidableB.worldTransform.Position, velocity), minimumRadiusB, collidableA.Shape, ref collidableA.worldTransform, timeOfImpact, out rayHit))
+                    FPRayHit rayHit;
+                    if (GJKToolbox.CCDSphereCast(new FPRay(collidableB.worldTransform.Position, velocity), minimumRadiusB, collidableA.Shape, ref collidableA.worldTransform, timeOfImpact, out rayHit))
                         timeOfImpact = rayHit.T;
                 }
 

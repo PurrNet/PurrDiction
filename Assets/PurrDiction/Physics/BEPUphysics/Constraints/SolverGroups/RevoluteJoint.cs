@@ -43,7 +43,7 @@ namespace BEPUphysics.Constraints.SolverGroups
         /// <param name="connectionB">Second entity of the constraint pair.</param>
         /// <param name="anchor">Point around which both entities rotate.</param>
         /// <param name="freeAxis">Axis around which the hinge can rotate.</param>
-        public RevoluteJoint(Entity connectionA, Entity connectionB, Vector3 anchor, Vector3 freeAxis)
+        public RevoluteJoint(Entity connectionA, Entity connectionB, FPVector3 anchor, FPVector3 freeAxis)
         {
             if (connectionA == null)
                 connectionA = TwoEntityConstraint.WorldEntity;
@@ -57,31 +57,31 @@ namespace BEPUphysics.Constraints.SolverGroups
             Motor.IsActive = false;
 
             //Ensure that the base and test direction is perpendicular to the free axis.
-            Vector3 baseAxis = anchor - connectionA.position;
+            FPVector3 baseAxis = anchor - connectionA.position;
             if (baseAxis.LengthSquared() < Toolbox.BigEpsilon) //anchor and connection a in same spot, so try the other way.
                 baseAxis = connectionB.position - anchor;
-            baseAxis -= Vector3.Dot(baseAxis, freeAxis) * freeAxis;
+            baseAxis -= FPVector3.Dot(baseAxis, freeAxis) * freeAxis;
             if (baseAxis.LengthSquared() < Toolbox.BigEpsilon)
             {
                 //However, if the free axis is totally aligned (like in an axis constraint), pick another reasonable direction.
-                baseAxis = Vector3.Cross(freeAxis, Vector3.Up);
+                baseAxis = FPVector3.Cross(freeAxis, FPVector3.Up);
                 if (baseAxis.LengthSquared() < Toolbox.BigEpsilon)
                 {
-                    baseAxis = Vector3.Cross(freeAxis, Vector3.Right);
+                    baseAxis = FPVector3.Cross(freeAxis, FPVector3.Right);
                 }
             }
             Limit.Basis.SetWorldAxes(freeAxis, baseAxis, connectionA.orientationMatrix);
             Motor.Basis.SetWorldAxes(freeAxis, baseAxis, connectionA.orientationMatrix);
 
             baseAxis = connectionB.position - anchor;
-            baseAxis -= Vector3.Dot(baseAxis, freeAxis) * freeAxis;
+            baseAxis -= FPVector3.Dot(baseAxis, freeAxis) * freeAxis;
             if (baseAxis.LengthSquared() < Toolbox.BigEpsilon)
             {
                 //However, if the free axis is totally aligned (like in an axis constraint), pick another reasonable direction.
-                baseAxis = Vector3.Cross(freeAxis, Vector3.Up);
+                baseAxis = FPVector3.Cross(freeAxis, FPVector3.Up);
                 if (baseAxis.LengthSquared() < Toolbox.BigEpsilon)
                 {
-                    baseAxis = Vector3.Cross(freeAxis, Vector3.Right);
+                    baseAxis = FPVector3.Cross(freeAxis, FPVector3.Right);
                 }
             }
             Limit.TestAxis = baseAxis;

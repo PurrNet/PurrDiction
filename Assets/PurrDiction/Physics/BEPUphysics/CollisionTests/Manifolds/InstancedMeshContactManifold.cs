@@ -29,17 +29,17 @@ namespace BEPUphysics.CollisionTests.Manifolds
             }
         }
 
-        protected internal override int FindOverlappingTriangles(Fix64 dt)
+        protected internal override int FindOverlappingTriangles(FP dt)
         {
-            BoundingBox boundingBox;
+            FPBoundingBox boundingBox;
             convex.Shape.GetLocalBoundingBox(ref convex.worldTransform, ref mesh.worldTransform, out boundingBox);
             if (convex.entity != null)
             {
-                Vector3 transformedVelocity;
+                FPVector3 transformedVelocity;
                 Matrix3x3 inverse;
                 Matrix3x3.Invert(ref mesh.worldTransform.LinearTransform, out inverse);
                 Matrix3x3.Transform(ref convex.entity.linearVelocity, ref inverse, out transformedVelocity);
-                Vector3.Multiply(ref transformedVelocity, dt, out transformedVelocity);
+                FPVector3.Multiply(ref transformedVelocity, dt, out transformedVelocity);
 
                 if (transformedVelocity.X > F64.C0)
                     boundingBox.Max.X += transformedVelocity.X;

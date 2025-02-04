@@ -25,7 +25,7 @@ namespace BEPUphysics.CollisionTests.CollisionAlgorithms
         private CollisionState state = CollisionState.Separated;
         private CollisionState previousState = CollisionState.Separated;
 
-        Vector3 localSeparatingAxis;
+        FPVector3 localSeparatingAxis;
         CachedSimplex cachedSimplex;
 
         protected internal ConvexCollidable collidableA;
@@ -106,7 +106,7 @@ namespace BEPUphysics.CollisionTests.CollisionAlgorithms
 
         private bool DoShallowContact(out ContactData contact)
         {
-            Vector3 closestA, closestB;
+            FPVector3 closestA, closestB;
 
             //RigidTransform transform = RigidTransform.Identity;
             //Vector3 closestAnew, closestBnew;
@@ -140,9 +140,9 @@ namespace BEPUphysics.CollisionTests.CollisionAlgorithms
                 GJKToolbox.GetClosestPoints(collidableA.Shape, collidableB.Shape, ref collidableA.worldTransform, ref collidableB.worldTransform, ref preInitializedSimplex, out closestA, out closestB);
             }
             
-            Vector3 displacement;
-            Vector3.Subtract(ref closestB, ref closestA, out displacement);
-            Fix64 distanceSquared = displacement.LengthSquared();
+            FPVector3 displacement;
+            FPVector3.Subtract(ref closestB, ref closestA, out displacement);
+            FP distanceSquared = displacement.LengthSquared();
 
             if (distanceSquared < Toolbox.Epsilon)
             {
@@ -151,7 +151,7 @@ namespace BEPUphysics.CollisionTests.CollisionAlgorithms
             }
 
             localDirection = displacement; //Use this as the direction for future deep contacts.
-            Fix64 margin = collidableA.Shape.collisionMargin + collidableB.Shape.collisionMargin;
+            FP margin = collidableA.Shape.collisionMargin + collidableB.Shape.collisionMargin;
 
 
             if (distanceSquared < margin * margin)
@@ -160,15 +160,15 @@ namespace BEPUphysics.CollisionTests.CollisionAlgorithms
                 contact = new ContactData();
                 //Displacement is from A to B.  point = A + t * AB, where t = marginA / margin.
                 if (margin > Toolbox.Epsilon) //Avoid a NaN!
-                    Vector3.Multiply(ref displacement, collidableA.Shape.collisionMargin / margin, out contact.Position); //t * AB
+                    FPVector3.Multiply(ref displacement, collidableA.Shape.collisionMargin / margin, out contact.Position); //t * AB
                 else
-                    contact.Position = new Vector3();
+                    contact.Position = new FPVector3();
 
-                Vector3.Add(ref closestA, ref contact.Position, out contact.Position); //A + t * AB.
+                FPVector3.Add(ref closestA, ref contact.Position, out contact.Position); //A + t * AB.
 
                 contact.Normal = displacement;
-                Fix64 distance = Fix64.Sqrt(distanceSquared);
-                Vector3.Divide(ref contact.Normal, distance, out contact.Normal);
+                FP distance = FP.Sqrt(distanceSquared);
+                FPVector3.Divide(ref contact.Normal, distance, out contact.Normal);
                 contact.PenetrationDepth = margin - distance;
                 return true;
 
@@ -179,7 +179,7 @@ namespace BEPUphysics.CollisionTests.CollisionAlgorithms
             return false;
         }
 
-        Vector3 localDirection;
+        FPVector3 localDirection;
         private bool DoDeepContact(out ContactData contact)
         {
            
@@ -199,13 +199,13 @@ namespace BEPUphysics.CollisionTests.CollisionAlgorithms
 
                 //The above takes into account angular velocity, but linear velocity alone is a lot more stable and does the job just fine.
                 if (collidableA.entity != null && collidableB.entity != null)
-                    Vector3.Subtract(ref collidableA.entity.linearVelocity, ref collidableB.entity.linearVelocity, out localDirection);
+                    FPVector3.Subtract(ref collidableA.entity.linearVelocity, ref collidableB.entity.linearVelocity, out localDirection);
                 else
                     localDirection = localSeparatingAxis;
 
                 if (localDirection.LengthSquared() < Toolbox.Epsilon)
                 {
-                    localDirection = Vector3.Up;
+                    localDirection = FPVector3.Up;
                 }
 
             }
@@ -338,7 +338,7 @@ namespace BEPUphysics.CollisionTests.CollisionAlgorithms
             state = CollisionState.Separated;
             previousState = CollisionState.Separated;
             cachedSimplex = new CachedSimplex();
-            localSeparatingAxis = new Vector3();
+            localSeparatingAxis = new FPVector3();
             collidableA = null;
             collidableB = null;
         }

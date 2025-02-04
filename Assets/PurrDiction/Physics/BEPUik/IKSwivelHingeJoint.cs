@@ -9,34 +9,34 @@ namespace BEPUik
         /// <summary>
         /// Gets or sets the free hinge axis attached to connection A in its local space.
         /// </summary>
-        public Vector3 LocalHingeAxis;
+        public FPVector3 LocalHingeAxis;
         /// <summary>
         /// Gets or sets the free twist axis attached to connection B in its local space.
         /// </summary>
-        public Vector3 LocalTwistAxis;
+        public FPVector3 LocalTwistAxis;
 
 
         /// <summary>
         /// Gets or sets the free hinge axis attached to connection A in world space.
         /// </summary>
-        public Vector3 WorldHingeAxis
+        public FPVector3 WorldHingeAxis
         {
-            get { return Quaternion.Transform(LocalHingeAxis, ConnectionA.Orientation); }
+            get { return FPQuaternion.Transform(LocalHingeAxis, ConnectionA.Orientation); }
             set
             {
-                LocalHingeAxis = Quaternion.Transform(value, Quaternion.Conjugate(ConnectionA.Orientation));
+                LocalHingeAxis = FPQuaternion.Transform(value, FPQuaternion.Conjugate(ConnectionA.Orientation));
             }
         }
 
         /// <summary>
         /// Gets or sets the free twist axis attached to connection B in world space.
         /// </summary>
-        public Vector3 WorldTwistAxis
+        public FPVector3 WorldTwistAxis
         {
-            get { return Quaternion.Transform(LocalTwistAxis, ConnectionB.Orientation); }
+            get { return FPQuaternion.Transform(LocalTwistAxis, ConnectionB.Orientation); }
             set
             {
-                LocalTwistAxis = Quaternion.Transform(value, Quaternion.Conjugate(ConnectionB.Orientation));
+                LocalTwistAxis = FPQuaternion.Transform(value, FPQuaternion.Conjugate(ConnectionB.Orientation));
             }
         }
 
@@ -49,7 +49,7 @@ namespace BEPUik
         /// The connected bone will be able to rotate around this axis relative to each other.</param>
         /// <param name="worldTwistAxis">Twist axis attached to connectionB.
         /// The connected bones will be able to rotate around this axis relative to each other.</param>
-        public IKSwivelHingeJoint(Bone connectionA, Bone connectionB, Vector3 worldHingeAxis, Vector3 worldTwistAxis)
+        public IKSwivelHingeJoint(Bone connectionA, Bone connectionB, FPVector3 worldHingeAxis, FPVector3 worldTwistAxis)
             : base(connectionA, connectionB)
         {
             WorldHingeAxis = worldHingeAxis;
@@ -65,21 +65,21 @@ namespace BEPUik
             //The constraint attempts to keep the hinge axis attached to connection A and the twist axis attached to connection B perpendicular to each other.
             //The restricted axis is the cross product between the twist and hinge axes.
 
-            Vector3 worldTwistAxis, worldHingeAxis;
-            Quaternion.Transform(ref LocalHingeAxis, ref ConnectionA.Orientation, out worldHingeAxis);
-            Quaternion.Transform(ref LocalTwistAxis, ref ConnectionB.Orientation, out worldTwistAxis);
+            FPVector3 worldTwistAxis, worldHingeAxis;
+            FPQuaternion.Transform(ref LocalHingeAxis, ref ConnectionA.Orientation, out worldHingeAxis);
+            FPQuaternion.Transform(ref LocalTwistAxis, ref ConnectionB.Orientation, out worldTwistAxis);
 
-            Vector3 restrictedAxis;
-            Vector3.Cross(ref worldHingeAxis, ref worldTwistAxis, out restrictedAxis);
+            FPVector3 restrictedAxis;
+            FPVector3.Cross(ref worldHingeAxis, ref worldTwistAxis, out restrictedAxis);
             //Attempt to normalize the restricted axis.
-            Fix64 lengthSquared = restrictedAxis.LengthSquared();
+            FP lengthSquared = restrictedAxis.LengthSquared();
             if (lengthSquared > Toolbox.Epsilon)
             {
-                Vector3.Divide(ref restrictedAxis, Fix64.Sqrt(lengthSquared), out restrictedAxis);
+                FPVector3.Divide(ref restrictedAxis, FP.Sqrt(lengthSquared), out restrictedAxis);
             }
             else
             {
-                restrictedAxis = new Vector3();
+                restrictedAxis = new FPVector3();
             }
 
 
@@ -91,11 +91,11 @@ namespace BEPUik
               };
             Matrix3x3.Negate(ref angularJacobianA, out angularJacobianB);
 
-            Fix64 error;
-            Vector3.Dot(ref worldHingeAxis, ref worldTwistAxis, out error);
-            error = Fix64.Acos(MathHelper.Clamp(error, -1, F64.C1)) - MathHelper.PiOver2;
+            FP error;
+            FPVector3.Dot(ref worldHingeAxis, ref worldTwistAxis, out error);
+            error = FP.Acos(MathHelper.Clamp(error, -1, F64.C1)) - MathHelper.PiOver2;
 
-            velocityBias = new Vector3(errorCorrectionFactor * error, F64.C0, F64.C0);
+            velocityBias = new FPVector3(errorCorrectionFactor * error, F64.C0, F64.C0);
 
 
         }

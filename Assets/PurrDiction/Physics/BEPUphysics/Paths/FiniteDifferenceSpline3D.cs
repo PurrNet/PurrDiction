@@ -33,24 +33,24 @@ namespace BEPUphysics.Paths
         {
             if (ControlPoints.Count == 1)
             {
-                tangents.Add(Vector3.Zero);
+                tangents.Add(FPVector3.Zero);
                 return;
             }
             if (ControlPoints.Count == 2)
             {
-                Vector3 tangent = ControlPoints[1].Value - ControlPoints[0].Value;
+                FPVector3 tangent = ControlPoints[1].Value - ControlPoints[0].Value;
                 tangents.Add(tangent);
                 tangents.Add(tangent);
                 return;
             }
 
-            Vector3 tangentA, tangentB;
-            Vector3 previous, current, next;
+            FPVector3 tangentA, tangentB;
+            FPVector3 previous, current, next;
             //First endpoint
             current = ControlPoints[0].Value;
             next = ControlPoints[1].Value;
-            Vector3.Subtract(ref next, ref current, out tangentA);
-            Vector3.Multiply(ref tangentA, F64.C0p5 / (ControlPoints[1].Time - ControlPoints[0].Time), out tangentA);
+            FPVector3.Subtract(ref next, ref current, out tangentA);
+            FPVector3.Multiply(ref tangentA, F64.C0p5 / (ControlPoints[1].Time - ControlPoints[0].Time), out tangentA);
             //Vector3.Multiply(ref current, .5f / (controlPoints[0].time), out tangentB);
             //Vector3.Add(ref tangentA, ref tangentB, out tangentA);
             tangents.Add(tangentA);
@@ -60,22 +60,22 @@ namespace BEPUphysics.Paths
                 previous = current;
                 current = next;
                 next = ControlPoints[i + 1].Value;
-                Vector3.Subtract(ref next, ref current, out tangentA);
-                Vector3.Subtract(ref current, ref previous, out tangentB);
-                Vector3.Multiply(ref tangentA, F64.C0p5 / (ControlPoints[i + 1].Time - ControlPoints[i].Time), out tangentA);
-                Vector3.Multiply(ref tangentB, F64.C0p5 / (ControlPoints[i].Time - ControlPoints[i - 1].Time), out tangentB);
-                Vector3.Add(ref tangentA, ref tangentB, out tangentA);
+                FPVector3.Subtract(ref next, ref current, out tangentA);
+                FPVector3.Subtract(ref current, ref previous, out tangentB);
+                FPVector3.Multiply(ref tangentA, F64.C0p5 / (ControlPoints[i + 1].Time - ControlPoints[i].Time), out tangentA);
+                FPVector3.Multiply(ref tangentB, F64.C0p5 / (ControlPoints[i].Time - ControlPoints[i - 1].Time), out tangentB);
+                FPVector3.Add(ref tangentA, ref tangentB, out tangentA);
                 tangents.Add(tangentA);
             }
 
             previous = current;
             current = next;
-            Vector3.Negate(ref current, out tangentA);
-            Vector3.Subtract(ref current, ref previous, out tangentB);
+            FPVector3.Negate(ref current, out tangentA);
+            FPVector3.Subtract(ref current, ref previous, out tangentB);
             int currentIndex = ControlPoints.Count - 1;
             int previousIndex = currentIndex - 1;
             //Vector3.Multiply(ref tangentA, .5f / (-controlPoints[currentIndex].time), out tangentA);
-            Vector3.Multiply(ref tangentB, F64.C0p5 / (ControlPoints[currentIndex].Time - ControlPoints[previousIndex].Time), out tangentB);
+            FPVector3.Multiply(ref tangentB, F64.C0p5 / (ControlPoints[currentIndex].Time - ControlPoints[previousIndex].Time), out tangentB);
             //Vector3.Add(ref tangentA, ref tangentB, out tangentA);
             tangents.Add(tangentB);
         }

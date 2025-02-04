@@ -20,17 +20,17 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
         /// Minimum radius of the convex shape.
         /// Must be contained fully by the shape when centered at the origin.
         /// </summary>
-        public Fix64 MinimumRadius;
+        public FP MinimumRadius;
 
         /// <summary>
         /// Maximum radius of the convex shape.
         /// Must contain the shape fully when centered at the origin.
         /// </summary>
-        public Fix64 MaximumRadius;
+        public FP MaximumRadius;
 
         /// <summary>
         /// Collision margin of the convex shape.
         /// </summary>
-        public Fix64 CollisionMargin;
+        public FP CollisionMargin;
     }
 }

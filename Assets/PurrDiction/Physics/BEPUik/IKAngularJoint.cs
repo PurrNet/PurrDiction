@@ -11,7 +11,7 @@ namespace BEPUik
         /// <summary>
         /// Gets or sets the rotation from connection A's orientation to connection B's orientation in A's local space.
         /// </summary>
-        public Quaternion GoalRelativeOrientation;
+        public FPQuaternion GoalRelativeOrientation;
 
 
         /// <summary>
@@ -22,10 +22,10 @@ namespace BEPUik
         public IKAngularJoint(Bone connectionA, Bone connectionB)
             : base(connectionA, connectionB)
         {  
-            Quaternion orientationAConjugate;
-            Quaternion.Conjugate(ref ConnectionA.Orientation, out orientationAConjugate);
+            FPQuaternion orientationAConjugate;
+            FPQuaternion.Conjugate(ref ConnectionA.Orientation, out orientationAConjugate);
             //Store the orientation from A to B in A's local space in the GoalRelativeOrientation.
-            Quaternion.Concatenate(ref ConnectionB.Orientation, ref orientationAConjugate, out GoalRelativeOrientation);
+            FPQuaternion.Concatenate(ref ConnectionB.Orientation, ref orientationAConjugate, out GoalRelativeOrientation);
 
         }
 
@@ -42,18 +42,18 @@ namespace BEPUik
             //Of course, B won't be exactly where it should be after initialization.
             //The Error component holds the difference between what is and what should be.
             //Error = (GoalRelativeOrientation * ConnectionA.Orientation)^-1 * ConnectionB.Orientation
-            Quaternion bTarget;
-            Quaternion.Concatenate(ref GoalRelativeOrientation, ref ConnectionA.Orientation, out bTarget);
-            Quaternion bTargetConjugate;
-            Quaternion.Conjugate(ref bTarget, out bTargetConjugate);
+            FPQuaternion bTarget;
+            FPQuaternion.Concatenate(ref GoalRelativeOrientation, ref ConnectionA.Orientation, out bTarget);
+            FPQuaternion bTargetConjugate;
+            FPQuaternion.Conjugate(ref bTarget, out bTargetConjugate);
 
-            Quaternion error;
-            Quaternion.Concatenate(ref bTargetConjugate, ref ConnectionB.Orientation, out error);
+            FPQuaternion error;
+            FPQuaternion.Concatenate(ref bTargetConjugate, ref ConnectionB.Orientation, out error);
 
             //Convert the error into an axis-angle vector usable for bias velocity.
-            Fix64 angle;
-            Vector3 axis;
-            Quaternion.GetAxisAngleFromQuaternion(ref error, out axis, out angle);
+            FP angle;
+            FPVector3 axis;
+            FPQuaternion.GetAxisAngleFromQuaternion(ref error, out axis, out angle);
 
             velocityBias.X = errorCorrectionFactor * axis.X * angle;
             velocityBias.Y = errorCorrectionFactor * axis.Y * angle;

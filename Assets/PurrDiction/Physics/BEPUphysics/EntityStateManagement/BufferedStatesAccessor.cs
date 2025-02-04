@@ -39,7 +39,7 @@ namespace BEPUphysics.EntityStateManagement
         ///<summary>
         /// Gets or sets the buffered position of the entity.
         ///</summary>
-        public Vector3 Position
+        public FPVector3 Position
         {
             get
             {
@@ -59,7 +59,7 @@ namespace BEPUphysics.EntityStateManagement
         ///<summary>
         /// Gets or sets the buffered orientation quaternion of the entity.
         ///</summary>
-        public Quaternion Orientation
+        public FPQuaternion Orientation
         {
             get
             {
@@ -86,7 +86,7 @@ namespace BEPUphysics.EntityStateManagement
                 Matrix3x3 toReturn;
                 if (IsReadBufferAccessible())
                 {
-                    Quaternion o = bufferedStates.BufferedStatesManager.ReadBuffers.GetState(bufferedStates.motionStateIndex).Orientation;
+                    FPQuaternion o = bufferedStates.BufferedStatesManager.ReadBuffers.GetState(bufferedStates.motionStateIndex).Orientation;
                     Matrix3x3.CreateFromQuaternion(ref o, out toReturn);
                 }
                 else
@@ -97,7 +97,7 @@ namespace BEPUphysics.EntityStateManagement
             {
                 if (IsWriteBufferAccessible())
                 {
-                    Quaternion toSet = Quaternion.Normalize(Quaternion.CreateFromRotationMatrix(value));
+                    FPQuaternion toSet = FPQuaternion.Normalize(FPQuaternion.CreateFromRotationMatrix(value));
                     WriteBuffer.EnqueueOrientation(bufferedStates.Entity, ref toSet);
                 }
                 else
@@ -110,7 +110,7 @@ namespace BEPUphysics.EntityStateManagement
         ///<summary>
         /// Gets or sets the buffered linear velocity of the entity.
         ///</summary>
-        public Vector3 LinearVelocity
+        public FPVector3 LinearVelocity
         {
             get
             {
@@ -131,7 +131,7 @@ namespace BEPUphysics.EntityStateManagement
         ///<summary>
         /// Gets or sets the buffered angular velocity of the entity.
         ///</summary>
-        public Vector3 AngularVelocity
+        public FPVector3 AngularVelocity
         {
             get
             {
@@ -163,9 +163,9 @@ namespace BEPUphysics.EntityStateManagement
             {
                 if (IsWriteBufferAccessible())
                 {
-                    Vector3 translation = value.Translation;
-                    Quaternion orientation;
-                    Quaternion.CreateFromRotationMatrix(ref value, out orientation);
+                    FPVector3 translation = value.Translation;
+                    FPQuaternion orientation;
+                    FPQuaternion.CreateFromRotationMatrix(ref value, out orientation);
                     orientation.Normalize();
                     WriteBuffer.EnqueueOrientation(bufferedStates.Entity, ref orientation);
                     WriteBuffer.EnqueuePosition(bufferedStates.Entity, ref translation);

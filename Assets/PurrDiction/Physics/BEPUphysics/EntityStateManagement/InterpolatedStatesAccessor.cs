@@ -30,7 +30,7 @@ namespace BEPUphysics.EntityStateManagement
         ///<summary>
         /// Gets the interpolated position of the entity.
         ///</summary>
-        public Vector3 Position
+        public FPVector3 Position
         {
             get
             {
@@ -43,7 +43,7 @@ namespace BEPUphysics.EntityStateManagement
         ///<summary>
         /// Gets the interpolated orientation of the entity.
         ///</summary>
-        public Quaternion Orientation
+        public FPQuaternion Orientation
         {
             get
             {
@@ -63,7 +63,7 @@ namespace BEPUphysics.EntityStateManagement
                 Matrix3x3 toReturn;
                 if (IsBufferAccessible())
                 {
-                    Quaternion o = bufferedStates.BufferedStatesManager.InterpolatedStates.GetState(bufferedStates.motionStateIndex).Orientation;
+                    FPQuaternion o = bufferedStates.BufferedStatesManager.InterpolatedStates.GetState(bufferedStates.motionStateIndex).Orientation;
                     Matrix3x3.CreateFromQuaternion(ref o, out toReturn);
                 }
                 else

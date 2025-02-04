@@ -7,29 +7,29 @@ namespace BEPUphysics.Constraints.TwoEntity.Motors
     /// </summary>
     public abstract class Motor : TwoEntityConstraint
     {
-        protected Fix64 maxForceDt = Fix64.MaxValue;
-        protected Fix64 maxForceDtSquared = Fix64.MaxValue;
+        protected FP maxForceDt = FP.MaxValue;
+        protected FP maxForceDtSquared = FP.MaxValue;
 
         /// <summary>
         /// Softness divided by the timestep to maintain timestep independence.
         /// </summary>
-        internal Fix64 usedSoftness;
+        internal FP usedSoftness;
 
         /// <summary>
         /// Computes the maxForceDt and maxForceDtSquared fields.
         /// </summary>
-        protected void ComputeMaxForces(Fix64 maxForce, Fix64 dt)
+        protected void ComputeMaxForces(FP maxForce, FP dt)
         {
             //Determine maximum force
-            if (maxForce < Fix64.MaxValue)
+            if (maxForce < FP.MaxValue)
             {
                 maxForceDt = maxForce * dt;
                 maxForceDtSquared = maxForceDt * maxForceDt;
             }
             else
             {
-                maxForceDt = Fix64.MaxValue;
-                maxForceDtSquared = Fix64.MaxValue;
+                maxForceDt = FP.MaxValue;
+                maxForceDtSquared = FP.MaxValue;
             }
         }
     }

@@ -11,22 +11,22 @@ namespace BEPUutilities
         /// <summary>
         /// Approximate value of Pi.
         /// </summary>
-        public static readonly Fix64 Pi = Fix64.Pi;
+        public static readonly FP Pi = FP.Pi;
 
     /// <summary>
     /// Approximate value of Pi multiplied by two.
     /// </summary>
-    public static readonly Fix64 TwoPi = Fix64.PiTimes2;
+    public static readonly FP TwoPi = FP.PiTimes2;
 
     /// <summary>
     /// Approximate value of Pi divided by two.
     /// </summary>
-    public static readonly Fix64 PiOver2 = Fix64.PiOver2;
+    public static readonly FP PiOver2 = FP.PiOver2;
 
     /// <summary>
     /// Approximate value of Pi divided by four.
     /// </summary>
-    public static readonly Fix64 PiOver4 = Fix64.Pi / new Fix64(4);
+    public static readonly FP PiOver4 = FP.Pi / new FP(4);
 
     /// <summary>
     /// Calculate remainder of of Fix64 division using same algorithm
@@ -35,9 +35,9 @@ namespace BEPUutilities
     /// <param name="dividend">Dividend</param>
     /// <param name="divisor">Divisor</param>
     /// <returns>Remainder</returns>
-    public static Fix64 IEEERemainder(Fix64 dividend, Fix64 divisor)
+    public static FP IEEERemainder(FP dividend, FP divisor)
     {
-		return dividend - (divisor * Fix64.Round(dividend / divisor));
+		return dividend - (divisor * FP.Round(dividend / divisor));
     }
 
         /// <summary>
@@ -45,7 +45,7 @@ namespace BEPUutilities
         /// </summary>
         /// <param name="angle">Angle to wrap.</param>
         /// <returns>Wrapped angle.</returns>
-        public static Fix64 WrapAngle(Fix64 angle)
+        public static FP WrapAngle(FP angle)
         {
             angle = IEEERemainder(angle, TwoPi);
             if (angle < -Pi)
@@ -68,7 +68,7 @@ namespace BEPUutilities
         /// <param name="min">Minimum value.  If the value is less than this, the minimum is returned instead.</param>
         /// <param name="max">Maximum value.  If the value is more than this, the maximum is returned instead.</param>
         /// <returns>Clamped value.</returns>
-        public static Fix64 Clamp(Fix64 value, Fix64 min, Fix64 max)
+        public static FP Clamp(FP value, FP min, FP max)
         {
             if (value < min)
                 return min;
@@ -84,7 +84,7 @@ namespace BEPUutilities
         /// <param name="a">First value.</param>
         /// <param name="b">Second value.</param>
         /// <returns>Higher value of the two parameters.</returns>
-        public static Fix64 Max(Fix64 a, Fix64 b)
+        public static FP Max(FP a, FP b)
         {
             return a > b ? a : b;
         }
@@ -95,7 +95,7 @@ namespace BEPUutilities
         /// <param name="a">First value.</param>
         /// <param name="b">Second value.</param>
         /// <returns>Lower value of the two parameters.</returns>
-        public static Fix64 Min(Fix64 a, Fix64 b)
+        public static FP Min(FP a, FP b)
         {
             return a < b ? a : b;
         }
@@ -105,7 +105,7 @@ namespace BEPUutilities
         /// </summary>
         /// <param name="degrees">Degrees to convert.</param>
         /// <returns>Radians equivalent to the input degrees.</returns>
-        public static Fix64 ToRadians(Fix64 degrees)
+        public static FP ToRadians(FP degrees)
         {
             return degrees * (Pi / F64.C180);
         }
@@ -115,7 +115,7 @@ namespace BEPUutilities
         /// </summary>
         /// <param name="radians">Radians to convert.</param>
         /// <returns>Degrees equivalent to the input radians.</returns>
-        public static Fix64 ToDegrees(Fix64 radians)
+        public static FP ToDegrees(FP radians)
         {
             return radians * (F64.C180 / Pi);
         }

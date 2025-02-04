@@ -16,13 +16,13 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
         ///<summary>
         /// Gets or sets the radius of the sphere.
         ///</summary>
-        public Fix64 Radius { get { return collisionMargin; } set { CollisionMargin = value; } }
+        public FP Radius { get { return collisionMargin; } set { CollisionMargin = value; } }
 
         ///<summary>
         /// Constructs a new sphere shape.
         ///</summary>
         ///<param name="radius">Radius of the sphere.</param>
-        public SphereShape(Fix64 radius)
+        public SphereShape(FP radius)
         {
             Radius = radius;
 
@@ -50,12 +50,12 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
         /// </summary>
         ///<param name="radius">Radius of the sphere.</param>
         /// <returns>Description required to define a convex shape.</returns>
-        public static ConvexShapeDescription ComputeDescription(Fix64 radius)
+        public static ConvexShapeDescription ComputeDescription(FP radius)
         {
             ConvexShapeDescription description;
             description.EntityShapeVolume.Volume = F64.FourThirds * MathHelper.Pi * radius * radius * radius;
             description.EntityShapeVolume.VolumeDistribution = new Matrix3x3();
-            Fix64 diagValue = ((F64.TwoFifths) * radius * radius);
+            FP diagValue = ((F64.TwoFifths) * radius * radius);
             description.EntityShapeVolume.VolumeDistribution.M11 = diagValue;
             description.EntityShapeVolume.VolumeDistribution.M22 = diagValue;
             description.EntityShapeVolume.VolumeDistribution.M33 = diagValue;
@@ -73,10 +73,10 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
         /// </summary>
         /// <param name="shapeTransform">Transform to use.</param>
         /// <param name="boundingBox">Bounding box of the transformed shape.</param>
-        public override void GetBoundingBox(ref RigidTransform shapeTransform, out BoundingBox boundingBox)
+        public override void GetBoundingBox(ref RigidTransform shapeTransform, out FPBoundingBox boundingBox)
         {
 #if !WINDOWS
-            boundingBox = new BoundingBox();
+            boundingBox = new FPBoundingBox();
 #endif
             boundingBox.Min.X = shapeTransform.Position.X - collisionMargin;
             boundingBox.Min.Y = shapeTransform.Position.Y - collisionMargin;
@@ -93,7 +93,7 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
         ///</summary>
         ///<param name="direction">Direction to find the extreme point in.</param>
         ///<param name="extremePoint">Extreme point on the shape.</param>
-        public override void GetLocalExtremePointWithoutMargin(ref Vector3 direction, out Vector3 extremePoint)
+        public override void GetLocalExtremePointWithoutMargin(ref FPVector3 direction, out FPVector3 extremePoint)
         {
             extremePoint = Toolbox.ZeroVector;
         }
@@ -107,7 +107,7 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
         /// <param name="maximumLength">Maximum distance to travel in units of the ray direction's length.</param>
         /// <param name="hit">Ray hit data, if any.</param>
         /// <returns>Whether or not the ray hit the target.</returns>
-        public override bool RayTest(ref Ray ray, ref RigidTransform transform, Fix64 maximumLength, out RayHit hit)
+        public override bool RayTest(ref FPRay ray, ref RigidTransform transform, FP maximumLength, out FPRayHit hit)
         {
             return Toolbox.RayCastSphere(ref ray, ref transform.Position, collisionMargin, maximumLength, out hit);
         }

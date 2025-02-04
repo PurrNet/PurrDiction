@@ -10,29 +10,29 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
     /// </summary>
     public class PointOnLineJoint : Joint, I2DImpulseConstraintWithError, I2DJacobianConstraint
     {
-        private Vector2 accumulatedImpulse;
-        private Vector3 angularA1;
-        private Vector3 angularA2;
-        private Vector3 angularB1;
-        private Vector3 angularB2;
-        private Vector2 biasVelocity;
-        private Vector3 localRestrictedAxis1; //on a
-        private Vector3 localRestrictedAxis2; //on a
-        private Vector2 error;
-        private Vector3 localAxisAnchor; //on a
-        private Vector3 localLineDirection; //on a
-        private Vector3 localPoint; //on b
-        private Vector3 worldLineAnchor;
-        private Vector3 worldLineDirection;
-        private Vector3 worldPoint;
+        private FPVector2 accumulatedImpulse;
+        private FPVector3 angularA1;
+        private FPVector3 angularA2;
+        private FPVector3 angularB1;
+        private FPVector3 angularB2;
+        private FPVector2 biasVelocity;
+        private FPVector3 localRestrictedAxis1; //on a
+        private FPVector3 localRestrictedAxis2; //on a
+        private FPVector2 error;
+        private FPVector3 localAxisAnchor; //on a
+        private FPVector3 localLineDirection; //on a
+        private FPVector3 localPoint; //on b
+        private FPVector3 worldLineAnchor;
+        private FPVector3 worldLineDirection;
+        private FPVector3 worldPoint;
         private Matrix2x2 negativeEffectiveMassMatrix;
 
         //Jacobians
         //(Linear jacobians are just:
         // axis 1   -axis 1
         // axis 2   -axis 2 )
-        private Vector3 rA, rB;
-        private Vector3 worldRestrictedAxis1, worldRestrictedAxis2;
+        private FPVector3 rA, rB;
+        private FPVector3 worldRestrictedAxis1, worldRestrictedAxis2;
 
         /// <summary>
         /// Constructs a joint which constrains a point of one body to be on a line based on the other body.
@@ -53,7 +53,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
         /// <param name="lineAnchor">Location off of which the line is based in world space.</param>
         /// <param name="lineDirection">Direction of the line in world space.</param>
         /// <param name="pointLocation">Location of the point anchored to connectionB in world space.</param>
-        public PointOnLineJoint(Entity connectionA, Entity connectionB, Vector3 lineAnchor, Vector3 lineDirection, Vector3 pointLocation)
+        public PointOnLineJoint(Entity connectionA, Entity connectionB, FPVector3 lineAnchor, FPVector3 lineDirection, FPVector3 pointLocation)
         {
             ConnectionA = connectionA;
             ConnectionB = connectionB;
@@ -66,7 +66,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
         /// <summary>
         /// Gets or sets the line anchor in world space.
         /// </summary>
-        public Vector3 LineAnchor
+        public FPVector3 LineAnchor
         {
             get { return worldLineAnchor; }
             set
@@ -80,12 +80,12 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
         /// <summary>
         /// Gets or sets the line direction in world space.
         /// </summary>
-        public Vector3 LineDirection
+        public FPVector3 LineDirection
         {
             get { return worldLineDirection; }
             set
             {
-                worldLineDirection = Vector3.Normalize(value);
+                worldLineDirection = FPVector3.Normalize(value);
                 Matrix3x3.TransformTranspose(ref worldLineDirection, ref connectionA.orientationMatrix, out localLineDirection);
                 UpdateRestrictedAxes();
             }
@@ -95,26 +95,26 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
         /// <summary>
         /// Gets or sets the line anchor in connection A's local space.
         /// </summary>
-        public Vector3 LocalLineAnchor
+        public FPVector3 LocalLineAnchor
         {
             get { return localAxisAnchor; }
             set
             {
                 localAxisAnchor = value;
                 Matrix3x3.Transform(ref localAxisAnchor, ref connectionA.orientationMatrix, out worldLineAnchor);
-                Vector3.Add(ref worldLineAnchor, ref connectionA.position, out worldLineAnchor);
+                FPVector3.Add(ref worldLineAnchor, ref connectionA.position, out worldLineAnchor);
             }
         }
 
         /// <summary>
         /// Gets or sets the line direction in connection A's local space.
         /// </summary>
-        public Vector3 LocalLineDirection
+        public FPVector3 LocalLineDirection
         {
             get { return localLineDirection; }
             set
             {
-                localLineDirection = Vector3.Normalize(value);
+                localLineDirection = FPVector3.Normalize(value);
                 Matrix3x3.Transform(ref localLineDirection, ref connectionA.orientationMatrix, out worldLineDirection);
                 UpdateRestrictedAxes();
             }
@@ -124,21 +124,21 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
         /// Gets or sets the point's location in connection B's local space.
         /// The point is the location that is attached to the line.
         /// </summary>
-        public Vector3 LocalPoint
+        public FPVector3 LocalPoint
         {
             get { return localPoint; }
             set
             {
                 localPoint = value;
                 Matrix3x3.Transform(ref localPoint, ref connectionB.orientationMatrix, out worldPoint);
-                Vector3.Add(ref worldPoint, ref connectionB.position, out worldPoint);
+                FPVector3.Add(ref worldPoint, ref connectionB.position, out worldPoint);
             }
         }
 
         /// <summary>
         /// Gets the offset from A to the connection point between the entities.
         /// </summary>
-        public Vector3 OffsetA
+        public FPVector3 OffsetA
         {
             get { return rA; }
         }
@@ -146,7 +146,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
         /// <summary>
         /// Gets the offset from B to the connection point between the entities.
         /// </summary>
-        public Vector3 OffsetB
+        public FPVector3 OffsetB
         {
             get { return rB; }
         }
@@ -155,7 +155,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
         /// Gets or sets the point's location in world space.
         /// The point is the location on connection B that is attached to the line.
         /// </summary>
-        public Vector3 Point
+        public FPVector3 Point
         {
             get { return worldPoint; }
             set
@@ -171,24 +171,24 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
         /// <summary>
         /// Gets the current relative velocity between the connected entities with respect to the constraint.
         /// </summary>
-        public Vector2 RelativeVelocity
+        public FPVector2 RelativeVelocity
         {
             get
             {
 #if !WINDOWS
-                Vector2 lambda = new Vector2();
+                FPVector2 lambda = new FPVector2();
 #else
                 Vector2 lambda;
 #endif
-                Vector3 dv;
-                Vector3 aVel, bVel;
-                Vector3.Cross(ref connectionA.angularVelocity, ref rA, out aVel);
-                Vector3.Add(ref aVel, ref connectionA.linearVelocity, out aVel);
-                Vector3.Cross(ref connectionB.angularVelocity, ref rB, out bVel);
-                Vector3.Add(ref bVel, ref connectionB.linearVelocity, out bVel);
-                Vector3.Subtract(ref aVel, ref bVel, out dv);
-                Vector3.Dot(ref dv, ref worldRestrictedAxis1, out lambda.X);
-                Vector3.Dot(ref dv, ref worldRestrictedAxis2, out lambda.Y);
+                FPVector3 dv;
+                FPVector3 aVel, bVel;
+                FPVector3.Cross(ref connectionA.angularVelocity, ref rA, out aVel);
+                FPVector3.Add(ref aVel, ref connectionA.linearVelocity, out aVel);
+                FPVector3.Cross(ref connectionB.angularVelocity, ref rB, out bVel);
+                FPVector3.Add(ref bVel, ref connectionB.linearVelocity, out bVel);
+                FPVector3.Subtract(ref aVel, ref bVel, out dv);
+                FPVector3.Dot(ref dv, ref worldRestrictedAxis1, out lambda.X);
+                FPVector3.Dot(ref dv, ref worldRestrictedAxis2, out lambda.Y);
                 return lambda;
             }
         }
@@ -197,7 +197,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
         /// <summary>
         /// Gets the total impulse applied by this constraint.
         /// </summary>
-        public Vector2 TotalImpulse
+        public FPVector2 TotalImpulse
         {
             get { return accumulatedImpulse; }
         }
@@ -205,7 +205,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
         /// <summary>
         /// Gets the current constraint error.
         /// </summary>
-        public Vector2 Error
+        public FPVector2 Error
         {
             get { return error; }
         }
@@ -219,7 +219,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
         /// </summary>
         /// <param name="jacobianX">First linear jacobian entry for the first connected entity.</param>
         /// <param name="jacobianY">Second linear jacobian entry for the first connected entity.</param>
-        public void GetLinearJacobianA(out Vector3 jacobianX, out Vector3 jacobianY)
+        public void GetLinearJacobianA(out FPVector3 jacobianX, out FPVector3 jacobianY)
         {
             jacobianX = worldRestrictedAxis1;
             jacobianY = worldRestrictedAxis2;
@@ -230,7 +230,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
         /// </summary>
         /// <param name="jacobianX">First linear jacobian entry for the second connected entity.</param>
         /// <param name="jacobianY">Second linear jacobian entry for the second connected entity.</param>
-        public void GetLinearJacobianB(out Vector3 jacobianX, out Vector3 jacobianY)
+        public void GetLinearJacobianB(out FPVector3 jacobianX, out FPVector3 jacobianY)
         {
             jacobianX = -worldRestrictedAxis1;
             jacobianY = -worldRestrictedAxis2;
@@ -241,7 +241,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
         /// </summary>
         /// <param name="jacobianX">First angular jacobian entry for the first connected entity.</param>
         /// <param name="jacobianY">Second angular jacobian entry for the first connected entity.</param>
-        public void GetAngularJacobianA(out Vector3 jacobianX, out Vector3 jacobianY)
+        public void GetAngularJacobianA(out FPVector3 jacobianX, out FPVector3 jacobianY)
         {
             jacobianX = angularA1;
             jacobianY = angularA2;
@@ -252,7 +252,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
         /// </summary>
         /// <param name="jacobianX">First angular jacobian entry for the second connected entity.</param>
         /// <param name="jacobianY">Second angular jacobian entry for the second connected entity.</param>
-        public void GetAngularJacobianB(out Vector3 jacobianX, out Vector3 jacobianY)
+        public void GetAngularJacobianB(out FPVector3 jacobianX, out FPVector3 jacobianY)
         {
             jacobianX = angularB1;
             jacobianY = angularB2;
@@ -273,7 +273,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
         /// Calculates and applies corrective impulses.
         /// Called automatically by space.
         /// </summary>
-        public override Fix64 SolveIteration()
+        public override FP SolveIteration()
         {
             #region Theory
 
@@ -314,7 +314,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
             #endregion
 
 #if !WINDOWS
-            Vector2 lambda = new Vector2();
+            FPVector2 lambda = new FPVector2();
 #else
             Vector2 lambda;
 #endif
@@ -331,15 +331,15 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
 
             //lambda.X = va1 + wa1 - vb1 - wb1 + biasVelocity.X + mySoftness * accumulatedImpulse.X;
             //lambda.Y = va2 + wa2 - vb2 - wb2 + biasVelocity.Y + mySoftness * accumulatedImpulse.Y;
-            Vector3 dv;
-            Vector3 aVel, bVel;
-            Vector3.Cross(ref connectionA.angularVelocity, ref rA, out aVel);
-            Vector3.Add(ref aVel, ref connectionA.linearVelocity, out aVel);
-            Vector3.Cross(ref connectionB.angularVelocity, ref rB, out bVel);
-            Vector3.Add(ref bVel, ref connectionB.linearVelocity, out bVel);
-            Vector3.Subtract(ref aVel, ref bVel, out dv);
-            Vector3.Dot(ref dv, ref worldRestrictedAxis1, out lambda.X);
-            Vector3.Dot(ref dv, ref worldRestrictedAxis2, out lambda.Y);
+            FPVector3 dv;
+            FPVector3 aVel, bVel;
+            FPVector3.Cross(ref connectionA.angularVelocity, ref rA, out aVel);
+            FPVector3.Add(ref aVel, ref connectionA.linearVelocity, out aVel);
+            FPVector3.Cross(ref connectionB.angularVelocity, ref rB, out bVel);
+            FPVector3.Add(ref bVel, ref connectionB.linearVelocity, out bVel);
+            FPVector3.Subtract(ref aVel, ref bVel, out dv);
+            FPVector3.Dot(ref dv, ref worldRestrictedAxis1, out lambda.X);
+            FPVector3.Dot(ref dv, ref worldRestrictedAxis2, out lambda.Y);
 
 
             lambda.X += biasVelocity.X + softness * accumulatedImpulse.X;
@@ -348,14 +348,14 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
             //Convert to impulse
             Matrix2x2.Transform(ref lambda, ref negativeEffectiveMassMatrix, out lambda);
 
-            Vector2.Add(ref lambda, ref accumulatedImpulse, out accumulatedImpulse);
+            FPVector2.Add(ref lambda, ref accumulatedImpulse, out accumulatedImpulse);
 
-            Fix64 x = lambda.X;
-            Fix64 y = lambda.Y;
+            FP x = lambda.X;
+            FP y = lambda.Y;
             //Apply impulse
 #if !WINDOWS
-            Vector3 impulse = new Vector3();
-            Vector3 torque= new Vector3();
+            FPVector3 impulse = new FPVector3();
+            FPVector3 torque= new FPVector3();
 #else
             Vector3 impulse;
             Vector3 torque;
@@ -385,80 +385,80 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
                 connectionB.ApplyLinearImpulse(ref impulse);
                 connectionB.ApplyAngularImpulse(ref torque);
             }
-            return (Fix64.Abs(lambda.X) + Fix64.Abs(lambda.Y));
+            return (FP.Abs(lambda.X) + FP.Abs(lambda.Y));
         }
 
         ///<summary>
         /// Performs the frame's configuration step.
         ///</summary>
         ///<param name="dt">Timestep duration.</param>
-        public override void Update(Fix64 dt)
+        public override void Update(FP dt)
         {
             //Transform local axes into world space
             Matrix3x3.Transform(ref localRestrictedAxis1, ref connectionA.orientationMatrix, out worldRestrictedAxis1);
             Matrix3x3.Transform(ref localRestrictedAxis2, ref connectionA.orientationMatrix, out worldRestrictedAxis2);
             Matrix3x3.Transform(ref localAxisAnchor, ref connectionA.orientationMatrix, out worldLineAnchor);
-            Vector3.Add(ref worldLineAnchor, ref connectionA.position, out worldLineAnchor);
+            FPVector3.Add(ref worldLineAnchor, ref connectionA.position, out worldLineAnchor);
             Matrix3x3.Transform(ref localLineDirection, ref connectionA.orientationMatrix, out worldLineDirection);
 
             //Transform local 
             Matrix3x3.Transform(ref localPoint, ref connectionB.orientationMatrix, out rB);
-            Vector3.Add(ref rB, ref connectionB.position, out worldPoint);
+            FPVector3.Add(ref rB, ref connectionB.position, out worldPoint);
 
             //Find the point on the line closest to the world point.
-            Vector3 offset;
-            Vector3.Subtract(ref worldPoint, ref worldLineAnchor, out offset);
-            Fix64 distanceAlongAxis;
-            Vector3.Dot(ref offset, ref worldLineDirection, out distanceAlongAxis);
+            FPVector3 offset;
+            FPVector3.Subtract(ref worldPoint, ref worldLineAnchor, out offset);
+            FP distanceAlongAxis;
+            FPVector3.Dot(ref offset, ref worldLineDirection, out distanceAlongAxis);
 
-            Vector3 worldNearPoint;
-            Vector3.Multiply(ref worldLineDirection, distanceAlongAxis, out offset);
-            Vector3.Add(ref worldLineAnchor, ref offset, out worldNearPoint);
-            Vector3.Subtract(ref worldNearPoint, ref connectionA.position, out rA);
+            FPVector3 worldNearPoint;
+            FPVector3.Multiply(ref worldLineDirection, distanceAlongAxis, out offset);
+            FPVector3.Add(ref worldLineAnchor, ref offset, out worldNearPoint);
+            FPVector3.Subtract(ref worldNearPoint, ref connectionA.position, out rA);
 
             //Error
-            Vector3 error3D;
-            Vector3.Subtract(ref worldPoint, ref worldNearPoint, out error3D);
+            FPVector3 error3D;
+            FPVector3.Subtract(ref worldPoint, ref worldNearPoint, out error3D);
 
-            Vector3.Dot(ref error3D, ref worldRestrictedAxis1, out error.X);
-            Vector3.Dot(ref error3D, ref worldRestrictedAxis2, out error.Y);
+            FPVector3.Dot(ref error3D, ref worldRestrictedAxis1, out error.X);
+            FPVector3.Dot(ref error3D, ref worldRestrictedAxis2, out error.Y);
 
-            Fix64 errorReduction;
+            FP errorReduction;
             springSettings.ComputeErrorReductionAndSoftness(dt, F64.C1 / dt, out errorReduction, out softness);
-            Fix64 bias = -errorReduction;
+            FP bias = -errorReduction;
 
 
             biasVelocity.X = bias * error.X;
             biasVelocity.Y = bias * error.Y;
 
             //Ensure that the corrective velocity doesn't exceed the max.
-            Fix64 length = biasVelocity.LengthSquared();
+            FP length = biasVelocity.LengthSquared();
             if (length > maxCorrectiveVelocitySquared)
             {
-                Fix64 multiplier = maxCorrectiveVelocity / Fix64.Sqrt(length);
+                FP multiplier = maxCorrectiveVelocity / FP.Sqrt(length);
                 biasVelocity.X *= multiplier;
                 biasVelocity.Y *= multiplier;
             }
 
             //Set up the jacobians
-            Vector3.Cross(ref rA, ref worldRestrictedAxis1, out angularA1);
-            Vector3.Cross(ref worldRestrictedAxis1, ref rB, out angularB1);
-            Vector3.Cross(ref rA, ref worldRestrictedAxis2, out angularA2);
-            Vector3.Cross(ref worldRestrictedAxis2, ref rB, out angularB2);
+            FPVector3.Cross(ref rA, ref worldRestrictedAxis1, out angularA1);
+            FPVector3.Cross(ref worldRestrictedAxis1, ref rB, out angularB1);
+            FPVector3.Cross(ref rA, ref worldRestrictedAxis2, out angularA2);
+            FPVector3.Cross(ref worldRestrictedAxis2, ref rB, out angularB2);
 
-            Fix64 m11 = F64.C0, m22 = F64.C0, m1221 = F64.C0;
-            Fix64 inverseMass;
-            Vector3 intermediate;
+            FP m11 = F64.C0, m22 = F64.C0, m1221 = F64.C0;
+            FP inverseMass;
+            FPVector3 intermediate;
             //Compute the effective mass matrix.
             if (connectionA.isDynamic)
             {
                 inverseMass = connectionA.inverseMass;
                 Matrix3x3.Transform(ref angularA1, ref connectionA.inertiaTensorInverse, out intermediate);
-                Vector3.Dot(ref intermediate, ref angularA1, out m11);
+                FPVector3.Dot(ref intermediate, ref angularA1, out m11);
                 m11 += inverseMass;
-                Vector3.Dot(ref intermediate, ref angularA2, out m1221);
+                FPVector3.Dot(ref intermediate, ref angularA2, out m1221);
                 Matrix3x3.Transform(ref angularA2, ref connectionA.inertiaTensorInverse, out intermediate);
-                Vector3.Dot(ref intermediate, ref angularA2, out m22);
+                FPVector3.Dot(ref intermediate, ref angularA2, out m22);
                 m22 += inverseMass;
             }
 
@@ -466,15 +466,15 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
 
             if (connectionB.isDynamic)
             {
-                Fix64 extra;
+                FP extra;
                 inverseMass = connectionB.inverseMass;
                 Matrix3x3.Transform(ref angularB1, ref connectionB.inertiaTensorInverse, out intermediate);
-                Vector3.Dot(ref intermediate, ref angularB1, out extra);
+                FPVector3.Dot(ref intermediate, ref angularB1, out extra);
                 m11 += inverseMass + extra;
-                Vector3.Dot(ref intermediate, ref angularB2, out extra);
+                FPVector3.Dot(ref intermediate, ref angularB2, out extra);
                 m1221 += extra;
                 Matrix3x3.Transform(ref angularB2, ref connectionB.inertiaTensorInverse, out intermediate);
-                Vector3.Dot(ref intermediate, ref angularB2, out extra);
+                FPVector3.Dot(ref intermediate, ref angularB2, out extra);
                 m22 += inverseMass + extra;
             }
 
@@ -499,14 +499,14 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
 
             //Warm starting
 #if !WINDOWS
-            Vector3 impulse = new Vector3();
-            Vector3 torque= new Vector3();
+            FPVector3 impulse = new FPVector3();
+            FPVector3 torque= new FPVector3();
 #else
             Vector3 impulse;
             Vector3 torque;
 #endif
-            Fix64 x = accumulatedImpulse.X;
-            Fix64 y = accumulatedImpulse.Y;
+            FP x = accumulatedImpulse.X;
+            FP y = accumulatedImpulse.Y;
             impulse.X = worldRestrictedAxis1.X * x + worldRestrictedAxis2.X * y;
             impulse.Y = worldRestrictedAxis1.Y * x + worldRestrictedAxis2.Y * y;
             impulse.Z = worldRestrictedAxis1.Z * x + worldRestrictedAxis2.Z * y;
@@ -537,12 +537,12 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
 
         private void UpdateRestrictedAxes()
         {
-            localRestrictedAxis1 = Vector3.Cross(Vector3.Up, localLineDirection);
+            localRestrictedAxis1 = FPVector3.Cross(FPVector3.Up, localLineDirection);
             if (localRestrictedAxis1.LengthSquared() < F64.C0p001)
             {
-                localRestrictedAxis1 = Vector3.Cross(Vector3.Right, localLineDirection);
+                localRestrictedAxis1 = FPVector3.Cross(FPVector3.Right, localLineDirection);
             }
-            localRestrictedAxis2 = Vector3.Cross(localLineDirection, localRestrictedAxis1);
+            localRestrictedAxis2 = FPVector3.Cross(localLineDirection, localRestrictedAxis1);
             localRestrictedAxis1.Normalize();
             localRestrictedAxis2.Normalize();
         }

@@ -169,7 +169,7 @@ namespace BEPUphysics.BroadPhaseEntries
         /// </summary>
         /// <param name="point">Point to check for containment.</param>
         /// <returns>Whether or not the point is contained by the detector volume.</returns>
-        public bool IsPointContained(Vector3 point)
+        public bool IsPointContained(FPVector3 point)
         {
             var triangles = CommonResources.GetIntList();
             bool contained = IsPointContained(ref point, triangles);
@@ -177,32 +177,32 @@ namespace BEPUphysics.BroadPhaseEntries
             return contained;
         }
 
-        internal bool IsPointContained(ref Vector3 point, RawList<int> triangles)
+        internal bool IsPointContained(ref FPVector3 point, RawList<int> triangles)
         {
-            Vector3 rayDirection;
+            FPVector3 rayDirection;
             //Point from the approximate center of the mesh outwards.
             //This is a cheap way to reduce the number of unnecessary checks when objects are external to the mesh.
-            Vector3.Add(ref boundingBox.Max, ref boundingBox.Min, out rayDirection);
-            Vector3.Multiply(ref rayDirection, F64.C0p5, out rayDirection);
-            Vector3.Subtract(ref point, ref rayDirection, out rayDirection);
+            FPVector3.Add(ref boundingBox.Max, ref boundingBox.Min, out rayDirection);
+            FPVector3.Multiply(ref rayDirection, F64.C0p5, out rayDirection);
+            FPVector3.Subtract(ref point, ref rayDirection, out rayDirection);
             //If the point is right in the middle, we'll need a backup.
             if (rayDirection.LengthSquared() < F64.C0p01)
-                rayDirection = Vector3.Up;
+                rayDirection = FPVector3.Up;
 
-            var ray = new Ray(point, rayDirection);
+            var ray = new FPRay(point, rayDirection);
             triangleMesh.Tree.GetOverlaps(ray, triangles);
 
-            Fix64 minimumT = Fix64.MaxValue;
+            FP minimumT = FP.MaxValue;
             bool minimumIsClockwise = false;
 
             for (int i = 0; i < triangles.Count; i++)
             {
-                Vector3 a, b, c;
+                FPVector3 a, b, c;
                 triangleMesh.Data.GetTriangle(triangles.Elements[i], out a, out b, out c);
 
-                RayHit hit;
+                FPRayHit hit;
                 bool hitClockwise;
-                if (Toolbox.FindRayTriangleIntersection(ref ray, Fix64.MaxValue, ref a, ref b, ref c, out hitClockwise, out hit))
+                if (Toolbox.FindRayTriangleIntersection(ref ray, FP.MaxValue, ref a, ref b, ref c, out hitClockwise, out hit))
                 {
                     if (hit.T < minimumT)
                     {
@@ -215,7 +215,7 @@ namespace BEPUphysics.BroadPhaseEntries
             triangles.Clear();
 
             //If the first hit is on the inner surface, then the ray started inside the mesh.
-            return minimumT < Fix64.MaxValue && minimumIsClockwise == innerFacingIsClockwise;
+            return minimumT < FP.MaxValue && minimumIsClockwise == innerFacingIsClockwise;
         }
 
         protected override void CollisionRulesUpdated()
@@ -233,42 +233,42 @@ namespace BEPUphysics.BroadPhaseEntries
             get { return false; }
         }
 
-        public override bool RayCast(Ray ray, Fix64 maximumLength, out RayHit rayHit)
+        public override bool RayCast(FPRay ray, FP maximumLength, out FPRayHit rayHit)
         {
             return triangleMesh.RayCast(ray, maximumLength, TriangleSidedness.DoubleSided, out rayHit);
         }
 
-        public override bool ConvexCast(ConvexShape castShape, ref RigidTransform startingTransform, ref Vector3 sweep, out RayHit hit)
+        public override bool ConvexCast(ConvexShape castShape, ref RigidTransform startingTransform, ref FPVector3 sweep, out FPRayHit hit)
         {
-            hit = new RayHit();
-            BoundingBox boundingBox;
+            hit = new FPRayHit();
+            FPBoundingBox boundingBox;
             castShape.GetSweptBoundingBox(ref startingTransform, ref sweep, out boundingBox);
             var tri = PhysicsThreadResources.GetTriangle();
             var hitElements = CommonResources.GetIntList();
             if (triangleMesh.Tree.GetOverlaps(boundingBox, hitElements))
             {
-                hit.T = Fix64.MaxValue;
+                hit.T = FP.MaxValue;
                 for (int i = 0; i < hitElements.Count; i++)
                 {
                     triangleMesh.Data.GetTriangle(hitElements[i], out tri.vA, out tri.vB, out tri.vC);
-                    Vector3 center;
-                    Vector3.Add(ref tri.vA, ref tri.vB, out center);
-                    Vector3.Add(ref center, ref tri.vC, out center);
-                    Vector3.Multiply(ref center, F64.OneThird, out center);
-                    Vector3.Subtract(ref tri.vA, ref center, out tri.vA);
-                    Vector3.Subtract(ref tri.vB, ref center, out tri.vB);
-                    Vector3.Subtract(ref tri.vC, ref center, out tri.vC);
+                    FPVector3 center;
+                    FPVector3.Add(ref tri.vA, ref tri.vB, out center);
+                    FPVector3.Add(ref center, ref tri.vC, out center);
+                    FPVector3.Multiply(ref center, F64.OneThird, out center);
+                    FPVector3.Subtract(ref tri.vA, ref center, out tri.vA);
+                    FPVector3.Subtract(ref tri.vB, ref center, out tri.vB);
+                    FPVector3.Subtract(ref tri.vC, ref center, out tri.vC);
                     tri.MaximumRadius = tri.vA.LengthSquared();
-					Fix64 radius = tri.vB.LengthSquared();
+					FP radius = tri.vB.LengthSquared();
                     if (tri.MaximumRadius < radius)
                         tri.MaximumRadius = radius;
                     radius = tri.vC.LengthSquared();
                     if (tri.MaximumRadius < radius)
                         tri.MaximumRadius = radius;
-                    tri.MaximumRadius = Fix64.Sqrt(tri.MaximumRadius);
+                    tri.MaximumRadius = FP.Sqrt(tri.MaximumRadius);
                     tri.collisionMargin = F64.C0;
-                    var triangleTransform = new RigidTransform { Orientation = Quaternion.Identity, Position = center };
-                    RayHit tempHit;
+                    var triangleTransform = new RigidTransform { Orientation = FPQuaternion.Identity, Position = center };
+                    FPRayHit tempHit;
                     if (MPRToolbox.Sweep(castShape, tri, ref sweep, ref Toolbox.ZeroVector, ref startingTransform, ref triangleTransform, out tempHit) && tempHit.T < hit.T)
                     {
                         hit = tempHit;
@@ -277,7 +277,7 @@ namespace BEPUphysics.BroadPhaseEntries
                 tri.MaximumRadius = F64.C0;
                 PhysicsThreadResources.GiveBack(tri);
                 CommonResources.GiveBack(hitElements);
-                return hit.T != Fix64.MaxValue;
+                return hit.T != FP.MaxValue;
             }
             PhysicsThreadResources.GiveBack(tri);
             CommonResources.GiveBack(hitElements);
@@ -298,26 +298,26 @@ namespace BEPUphysics.BroadPhaseEntries
         public void Reinitialize()
         {
             //Pick a point that is known to be outside the mesh as the origin.
-            Vector3 origin = (triangleMesh.Tree.BoundingBox.Max - triangleMesh.Tree.BoundingBox.Min) * F64.C1p5 + triangleMesh.Tree.BoundingBox.Min;
+            FPVector3 origin = (triangleMesh.Tree.BoundingBox.Max - triangleMesh.Tree.BoundingBox.Min) * F64.C1p5 + triangleMesh.Tree.BoundingBox.Min;
 
             //Pick a direction which will definitely hit the mesh.
-            Vector3 a, b, c;
+            FPVector3 a, b, c;
             triangleMesh.Data.GetTriangle(0, out a, out b, out c);
             var direction = (a + b + c) / F64.C3 - origin;
 
-            var ray = new Ray(origin, direction);
+            var ray = new FPRay(origin, direction);
             var triangles = CommonResources.GetIntList();
             triangleMesh.Tree.GetOverlaps(ray, triangles);
 
-			Fix64 minimumT = Fix64.MaxValue;
+			FP minimumT = FP.MaxValue;
 
             for (int i = 0; i < triangles.Count; i++)
             {
                 triangleMesh.Data.GetTriangle(triangles.Elements[i], out a, out b, out c);
 
-                RayHit hit;
+                FPRayHit hit;
                 bool hitClockwise;
-                if (Toolbox.FindRayTriangleIntersection(ref ray, Fix64.MaxValue, ref a, ref b, ref c, out hitClockwise, out hit))
+                if (Toolbox.FindRayTriangleIntersection(ref ray, FP.MaxValue, ref a, ref b, ref c, out hitClockwise, out hit))
                 {
                     if (hit.T < minimumT)
                     {

@@ -14,22 +14,22 @@ namespace BEPUutilities
         /// <summary>
         /// Value at row 1, column 1 of the matrix.
         /// </summary>
-        public Fix64 M11;
+        public FP M11;
 
         /// <summary>
         /// Value at row 1, column 2 of the matrix.
         /// </summary>
-        public Fix64 M12;
+        public FP M12;
 
         /// <summary>
         /// Value at row 2, column 1 of the matrix.
         /// </summary>
-        public Fix64 M21;
+        public FP M21;
 
         /// <summary>
         /// Value at row 2, column 2 of the matrix.
         /// </summary>
-        public Fix64 M22;
+        public FP M22;
 
 
         /// <summary>
@@ -39,7 +39,7 @@ namespace BEPUutilities
         /// <param name="m12">Value at row 1, column 2 of the matrix.</param>
         /// <param name="m21">Value at row 2, column 1 of the matrix.</param>
         /// <param name="m22">Value at row 2, column 2 of the matrix.</param>
-        public Matrix2x2(Fix64 m11, Fix64 m12, Fix64 m21, Fix64 m22)
+        public Matrix2x2(FP m11, FP m12, FP m21, FP m22)
         {
             M11 = m11;
             M12 = m12;
@@ -63,11 +63,11 @@ namespace BEPUutilities
         /// <param name="result">Sum of the two matrices.</param>
         public static void Add(ref Matrix2x2 a, ref Matrix2x2 b, out Matrix2x2 result)
         {
-            Fix64 m11 = a.M11 + b.M11;
-            Fix64 m12 = a.M12 + b.M12;
+            FP m11 = a.M11 + b.M11;
+            FP m12 = a.M12 + b.M12;
 
-            Fix64 m21 = a.M21 + b.M21;
-            Fix64 m22 = a.M22 + b.M22;
+            FP m21 = a.M21 + b.M21;
+            FP m22 = a.M22 + b.M22;
 
             result.M11 = m11;
             result.M12 = m12;
@@ -84,11 +84,11 @@ namespace BEPUutilities
         /// <param name="result">Sum of the two matrices.</param>
         public static void Add(ref Matrix a, ref Matrix2x2 b, out Matrix2x2 result)
         {
-            Fix64 m11 = a.M11 + b.M11;
-            Fix64 m12 = a.M12 + b.M12;
+            FP m11 = a.M11 + b.M11;
+            FP m12 = a.M12 + b.M12;
 
-            Fix64 m21 = a.M21 + b.M21;
-            Fix64 m22 = a.M22 + b.M22;
+            FP m21 = a.M21 + b.M21;
+            FP m22 = a.M22 + b.M22;
 
             result.M11 = m11;
             result.M12 = m12;
@@ -105,11 +105,11 @@ namespace BEPUutilities
         /// <param name="result">Sum of the two matrices.</param>
         public static void Add(ref Matrix2x2 a, ref Matrix b, out Matrix2x2 result)
         {
-            Fix64 m11 = a.M11 + b.M11;
-            Fix64 m12 = a.M12 + b.M12;
+            FP m11 = a.M11 + b.M11;
+            FP m12 = a.M12 + b.M12;
 
-            Fix64 m21 = a.M21 + b.M21;
-            Fix64 m22 = a.M22 + b.M22;
+            FP m21 = a.M21 + b.M21;
+            FP m22 = a.M22 + b.M22;
 
             result.M11 = m11;
             result.M12 = m12;
@@ -126,11 +126,11 @@ namespace BEPUutilities
         /// <param name="result">Sum of the two matrices.</param>
         public static void Add(ref Matrix a, ref Matrix b, out Matrix2x2 result)
         {
-            Fix64 m11 = a.M11 + b.M11;
-            Fix64 m12 = a.M12 + b.M12;
+            FP m11 = a.M11 + b.M11;
+            FP m12 = a.M12 + b.M12;
 
-            Fix64 m21 = a.M21 + b.M21;
-            Fix64 m22 = a.M22 + b.M22;
+            FP m21 = a.M21 + b.M21;
+            FP m22 = a.M22 + b.M22;
 
             result.M11 = m11;
             result.M12 = m12;
@@ -144,7 +144,7 @@ namespace BEPUutilities
         /// </summary>
         /// <param name="scale">Value to use in the diagonal.</param>
         /// <param name="matrix">Scaling matrix.</param>
-        public static void CreateScale(Fix64 scale, out Matrix2x2 matrix)
+        public static void CreateScale(FP scale, out Matrix2x2 matrix)
         {
             matrix.M11 = scale;
             matrix.M22 = scale;
@@ -161,12 +161,12 @@ namespace BEPUutilities
         /// <param name="result">Inverted matrix.</param>
         public static void Invert(ref Matrix2x2 matrix, out Matrix2x2 result)
         {
-            Fix64 determinantInverse = F64.C1 / (matrix.M11 * matrix.M22 - matrix.M12 * matrix.M21);
-            Fix64 m11 = matrix.M22 * determinantInverse;
-            Fix64 m12 = -matrix.M12 * determinantInverse;
+            FP determinantInverse = F64.C1 / (matrix.M11 * matrix.M22 - matrix.M12 * matrix.M21);
+            FP m11 = matrix.M22 * determinantInverse;
+            FP m12 = -matrix.M12 * determinantInverse;
 
-            Fix64 m21 = -matrix.M21 * determinantInverse;
-            Fix64 m22 = matrix.M11 * determinantInverse;
+            FP m21 = -matrix.M21 * determinantInverse;
+            FP m22 = matrix.M11 * determinantInverse;
 
             result.M11 = m11;
             result.M12 = m12;
@@ -183,11 +183,11 @@ namespace BEPUutilities
         /// <param name="result">Product of the multiplication.</param>
         public static void Multiply(ref Matrix2x2 a, ref Matrix2x2 b, out Matrix2x2 result)
         {
-            Fix64 resultM11 = a.M11 * b.M11 + a.M12 * b.M21;
-            Fix64 resultM12 = a.M11 * b.M12 + a.M12 * b.M22;
+            FP resultM11 = a.M11 * b.M11 + a.M12 * b.M21;
+            FP resultM12 = a.M11 * b.M12 + a.M12 * b.M22;
 
-            Fix64 resultM21 = a.M21 * b.M11 + a.M22 * b.M21;
-            Fix64 resultM22 = a.M21 * b.M12 + a.M22 * b.M22;
+            FP resultM21 = a.M21 * b.M11 + a.M22 * b.M21;
+            FP resultM22 = a.M21 * b.M12 + a.M22 * b.M22;
 
             result.M11 = resultM11;
             result.M12 = resultM12;
@@ -204,11 +204,11 @@ namespace BEPUutilities
         /// <param name="result">Product of the multiplication.</param>
         public static void Multiply(ref Matrix2x2 a, ref Matrix b, out Matrix2x2 result)
         {
-            Fix64 resultM11 = a.M11 * b.M11 + a.M12 * b.M21;
-            Fix64 resultM12 = a.M11 * b.M12 + a.M12 * b.M22;
+            FP resultM11 = a.M11 * b.M11 + a.M12 * b.M21;
+            FP resultM12 = a.M11 * b.M12 + a.M12 * b.M22;
 
-            Fix64 resultM21 = a.M21 * b.M11 + a.M22 * b.M21;
-            Fix64 resultM22 = a.M21 * b.M12 + a.M22 * b.M22;
+            FP resultM21 = a.M21 * b.M11 + a.M22 * b.M21;
+            FP resultM22 = a.M21 * b.M12 + a.M22 * b.M22;
 
             result.M11 = resultM11;
             result.M12 = resultM12;
@@ -225,11 +225,11 @@ namespace BEPUutilities
         /// <param name="result">Product of the multiplication.</param>
         public static void Multiply(ref Matrix a, ref Matrix2x2 b, out Matrix2x2 result)
         {
-            Fix64 resultM11 = a.M11 * b.M11 + a.M12 * b.M21;
-            Fix64 resultM12 = a.M11 * b.M12 + a.M12 * b.M22;
+            FP resultM11 = a.M11 * b.M11 + a.M12 * b.M21;
+            FP resultM12 = a.M11 * b.M12 + a.M12 * b.M22;
 
-            Fix64 resultM21 = a.M21 * b.M11 + a.M22 * b.M21;
-            Fix64 resultM22 = a.M21 * b.M12 + a.M22 * b.M22;
+            FP resultM21 = a.M21 * b.M11 + a.M22 * b.M21;
+            FP resultM22 = a.M21 * b.M12 + a.M22 * b.M22;
 
             result.M11 = resultM11;
             result.M12 = resultM12;
@@ -260,11 +260,11 @@ namespace BEPUutilities
         /// <param name="result">Negated matrix.</param>
         public static void Negate(ref Matrix2x2 matrix, out Matrix2x2 result)
         {
-            Fix64 m11 = -matrix.M11;
-            Fix64 m12 = -matrix.M12;
+            FP m11 = -matrix.M11;
+            FP m12 = -matrix.M12;
 
-            Fix64 m21 = -matrix.M21;
-            Fix64 m22 = -matrix.M22;
+            FP m21 = -matrix.M21;
+            FP m22 = -matrix.M22;
 
 
             result.M11 = m11;
@@ -282,11 +282,11 @@ namespace BEPUutilities
         /// <param name="result">Difference of the two matrices.</param>
         public static void Subtract(ref Matrix2x2 a, ref Matrix2x2 b, out Matrix2x2 result)
         {
-            Fix64 m11 = a.M11 - b.M11;
-            Fix64 m12 = a.M12 - b.M12;
+            FP m11 = a.M11 - b.M11;
+            FP m12 = a.M12 - b.M12;
 
-            Fix64 m21 = a.M21 - b.M21;
-            Fix64 m22 = a.M22 - b.M22;
+            FP m21 = a.M21 - b.M21;
+            FP m22 = a.M22 - b.M22;
 
             result.M11 = m11;
             result.M12 = m12;
@@ -301,12 +301,12 @@ namespace BEPUutilities
         /// <param name="v">Vector2 to transform.</param>
         /// <param name="matrix">Matrix to use as the transformation.</param>
         /// <param name="result">Product of the transformation.</param>
-        public static void Transform(ref Vector2 v, ref Matrix2x2 matrix, out Vector2 result)
+        public static void Transform(ref FPVector2 v, ref Matrix2x2 matrix, out FPVector2 result)
         {
-            Fix64 vX = v.X;
-            Fix64 vY = v.Y;
+            FP vX = v.X;
+            FP vY = v.Y;
 #if !WINDOWS
-            result = new Vector2();
+            result = new FPVector2();
 #endif
             result.X = vX * matrix.M11 + vY * matrix.M21;
             result.Y = vX * matrix.M12 + vY * matrix.M22;
@@ -319,7 +319,7 @@ namespace BEPUutilities
         /// <param name="result">Transposed matrix.</param>
         public static void Transpose(ref Matrix2x2 matrix, out Matrix2x2 result)
         {
-            Fix64 m21 = matrix.M12;
+            FP m21 = matrix.M12;
 
             result.M11 = matrix.M11;
             result.M12 = matrix.M21;
@@ -333,7 +333,7 @@ namespace BEPUutilities
         /// </summary>
         public void Transpose()
         {
-            Fix64 m21 = M21;
+            FP m21 = M21;
             M21 = M12;
             M12 = m21;
         }      
@@ -352,7 +352,7 @@ namespace BEPUutilities
         /// Calculates the determinant of the matrix.
         /// </summary>
         /// <returns>The matrix's determinant.</returns>
-        public Fix64 Determinant()
+        public FP Determinant()
         {
             return M11 * M22 - M12 * M21;
         }

@@ -14,12 +14,12 @@ namespace BEPUphysics.Constraints
         /// Gets the current relative velocity of the constraint.
         /// Computed based on the current connection velocities and jacobians.
         /// </summary>
-        Fix64 RelativeVelocity { get; }
+        FP RelativeVelocity { get; }
 
         /// <summary>
         /// Gets the total impulse a constraint has applied.
         /// </summary>
-        Fix64 TotalImpulse { get; }
+        FP TotalImpulse { get; }
     }
 
     /// <summary>
@@ -30,7 +30,7 @@ namespace BEPUphysics.Constraints
         /// <summary>
         /// Gets the current constraint error.
         /// </summary>
-        Fix64 Error { get; }
+        FP Error { get; }
     }
 
     /// <summary>
@@ -42,12 +42,12 @@ namespace BEPUphysics.Constraints
         /// Gets the current relative velocity of the constraint.
         /// Computed based on the current connection velocities and jacobians.
         /// </summary>
-        Vector2 RelativeVelocity { get; }
+        FPVector2 RelativeVelocity { get; }
 
         /// <summary>
         /// Gets the total impulse a constraint has applied.
         /// </summary>
-        Vector2 TotalImpulse { get; }
+        FPVector2 TotalImpulse { get; }
     }
 
     /// <summary>
@@ -58,7 +58,7 @@ namespace BEPUphysics.Constraints
         /// <summary>
         /// Gets the current constraint error.
         /// </summary>
-        Vector2 Error { get; }
+        FPVector2 Error { get; }
     }
 
     /// <summary>
@@ -70,12 +70,12 @@ namespace BEPUphysics.Constraints
         /// Gets the current relative velocity of the constraint.
         /// Computed based on the current connection velocities and jacobians.
         /// </summary>
-        Vector3 RelativeVelocity { get; }
+        FPVector3 RelativeVelocity { get; }
 
         /// <summary>
         /// Gets the total impulse a constraint has applied.
         /// </summary>
-        Vector3 TotalImpulse { get; }
+        FPVector3 TotalImpulse { get; }
     }
 
     /// <summary>
@@ -86,6 +86,6 @@ namespace BEPUphysics.Constraints
         /// <summary>
         /// Gets the current constraint error.
         /// </summary>
-        Vector3 Error { get; }
+        FPVector3 Error { get; }
     }
 }

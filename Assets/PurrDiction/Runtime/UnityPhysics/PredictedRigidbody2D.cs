@@ -1,4 +1,3 @@
-using PurrNet.Prediction;
 using UnityEngine;
 
 namespace PurrNet.Prediction
@@ -11,7 +10,6 @@ namespace PurrNet.Prediction
 
         private void Reset()
         {
-            _updateView = false;
             _rigidbody = GetComponent<Rigidbody2D>();
         }
 

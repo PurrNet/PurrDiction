@@ -19,7 +19,7 @@ namespace BEPUphysics.UpdateableSystems.ForceFields
         /// Constructs a new force field shape using a bounding box.
         /// </summary>
         /// <param name="box">Bounding box to use.</param>
-        public BoundingBoxForceFieldShape(BoundingBox box)
+        public BoundingBoxForceFieldShape(FPBoundingBox box)
         {
             BoundingBox = box;
         }
@@ -27,7 +27,7 @@ namespace BEPUphysics.UpdateableSystems.ForceFields
         /// <summary>
         /// Gets or sets the bounding box used by the shape.
         /// </summary>
-        public BoundingBox BoundingBox { get; set; }
+        public FPBoundingBox BoundingBox { get; set; }
 
         /// <summary>
         /// Determines the possibly involved entities.

@@ -42,7 +42,7 @@ namespace BEPUphysics.Constraints.SolverGroups
         /// <param name="lineAnchor">Location of the anchor for the line to be attached to connectionA in world space.</param>
         /// <param name="lineDirection">Axis in world space to be attached to connectionA along which connectionB can move.</param>
         /// <param name="pointAnchor">Location of the anchor for the point to be attached to connectionB in world space.</param>
-        public PrismaticJoint(Entity connectionA, Entity connectionB, Vector3 lineAnchor, Vector3 lineDirection, Vector3 pointAnchor)
+        public PrismaticJoint(Entity connectionA, Entity connectionB, FPVector3 lineAnchor, FPVector3 lineDirection, FPVector3 pointAnchor)
         {
             if (connectionA == null)
                 connectionA = TwoEntityConstraint.WorldEntity;

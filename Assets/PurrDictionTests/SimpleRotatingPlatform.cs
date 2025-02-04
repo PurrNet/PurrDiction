@@ -11,7 +11,7 @@ namespace PurrNet.Prediction.Tests
             public bool markedForDeletion;
         }
 
-        protected override void Simulate(ref State data, Fix64 delta)
+        protected override void Simulate(ref State data, FP delta)
         {
             if (!data.markedForDeletion)
                 return;

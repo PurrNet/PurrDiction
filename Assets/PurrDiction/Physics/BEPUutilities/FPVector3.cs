@@ -4,26 +4,23 @@ using System;
 namespace BEPUutilities
 {
     /// <summary>
-    /// Provides XNA-like 4-component vector math.
+    /// Provides XNA-like 3D vector math.
     /// </summary>
-    public struct Vector4 : IEquatable<Vector4>
+    [Serializable]
+    public struct FPVector3 : IEquatable<FPVector3>
     {
         /// <summary>
         /// X component of the vector.
         /// </summary>
-        public Fix64 X;
+        public FP X;
         /// <summary>
         /// Y component of the vector.
         /// </summary>
-        public Fix64 Y;
+        public FP Y;
         /// <summary>
         /// Z component of the vector.
         /// </summary>
-        public Fix64 Z;
-        /// <summary>
-        /// W component of the vector.
-        /// </summary>
-        public Fix64 W;
+        public FP Z;
 
         /// <summary>
         /// Constructs a new 3d vector.
@@ -31,40 +28,11 @@ namespace BEPUutilities
         /// <param name="x">X component of the vector.</param>
         /// <param name="y">Y component of the vector.</param>
         /// <param name="z">Z component of the vector.</param>
-        /// <param name="w">W component of the vector.</param>
-        public Vector4(Fix64 x, Fix64 y, Fix64 z, Fix64 w)
+        public FPVector3(FP x, FP y, FP z)
         {
             this.X = x;
             this.Y = y;
             this.Z = z;
-            this.W = w;
-        }
-
-        /// <summary>
-        /// Constructs a new 3d vector.
-        /// </summary>
-        /// <param name="xyz">X, Y, and Z components of the vector.</param>
-        /// <param name="w">W component of the vector.</param>
-        public Vector4(Vector3 xyz, Fix64 w)
-        {
-            this.X = xyz.X;
-            this.Y = xyz.Y;
-            this.Z = xyz.Z;
-            this.W = w;
-        }
-
-
-        /// <summary>
-        /// Constructs a new 3d vector.
-        /// </summary>
-        /// <param name="x">X component of the vector.</param>
-        /// <param name="yzw">Y, Z, and W components of the vector.</param>
-        public Vector4(Fix64 x, Vector3 yzw)
-        {
-            this.X = x;
-            this.Y = yzw.X;
-            this.Z = yzw.Y;
-            this.W = yzw.Z;
         }
 
         /// <summary>
@@ -72,13 +40,11 @@ namespace BEPUutilities
         /// </summary>
         /// <param name="xy">X and Y components of the vector.</param>
         /// <param name="z">Z component of the vector.</param>
-        /// <param name="w">W component of the vector.</param>
-        public Vector4(Vector2 xy, Fix64 z, Fix64 w)
+        public FPVector3(FPVector2 xy, FP z)
         {
             this.X = xy.X;
             this.Y = xy.Y;
             this.Z = z;
-            this.W = w;
         }
 
         /// <summary>
@@ -86,59 +52,29 @@ namespace BEPUutilities
         /// </summary>
         /// <param name="x">X component of the vector.</param>
         /// <param name="yz">Y and Z components of the vector.</param>
-        /// <param name="w">W component of the vector.</param>
-        public Vector4(Fix64 x, Vector2 yz, Fix64 w)
+        public FPVector3(FP x, FPVector2 yz)
         {
             this.X = x;
             this.Y = yz.X;
             this.Z = yz.Y;
-            this.W = w;
         }
-
-        /// <summary>
-        /// Constructs a new 3d vector.
-        /// </summary>
-        /// <param name="x">X component of the vector.</param>
-        /// <param name="y">Y and Z components of the vector.</param>
-        /// <param name="zw">W component of the vector.</param>
-        public Vector4(Fix64 x, Fix64 y, Vector2 zw)
-        {
-            this.X = x;
-            this.Y = y;
-            this.Z = zw.X;
-            this.W = zw.Y;
-        }
-
-        /// <summary>
-        /// Constructs a new 3d vector.
-        /// </summary>
-        /// <param name="xy">X and Y components of the vector.</param>
-        /// <param name="zw">Z and W components of the vector.</param>
-        public Vector4(Vector2 xy, Vector2 zw)
-        {
-            this.X = xy.X;
-            this.Y = xy.Y;
-            this.Z = zw.X;
-            this.W = zw.Y;
-        }
-
 
         /// <summary>
         /// Computes the squared length of the vector.
         /// </summary>
         /// <returns>Squared length of the vector.</returns>
-        public Fix64 LengthSquared()
+        public FP LengthSquared()
         {
-            return X * X + Y * Y + Z * Z + W * W;
+            return X * X + Y * Y + Z * Z;
         }
 
         /// <summary>
         /// Computes the length of the vector.
         /// </summary>
         /// <returns>Length of the vector.</returns>
-        public Fix64 Length()
+        public FP Length()
         {
-            return Fix64.Sqrt(X * X + Y * Y + Z * Z + W * W);
+            return FP.Sqrt(X * X + Y * Y + Z * Z);
         }
 
         /// <summary>
@@ -146,11 +82,10 @@ namespace BEPUutilities
         /// </summary>
         public void Normalize()
         {
-            Fix64 inverse = F64.C1 / Fix64.Sqrt(X * X + Y * Y + Z * Z + W * W);
+            FP inverse = F64.C1 / FP.Sqrt(X * X + Y * Y + Z * Z);
             X *= inverse;
             Y *= inverse;
             Z *= inverse;
-            W *= inverse;
         }
 
         /// <summary>
@@ -159,7 +94,7 @@ namespace BEPUutilities
         /// <returns>String representing the vector.</returns>
         public override string ToString()
         {
-            return "{" + X + ", " + Y + ", " + Z + ", " + W + "}";
+            return "{" + X + ", " + Y + ", " + Z + "}";
         }
 
         /// <summary>
@@ -168,9 +103,9 @@ namespace BEPUutilities
         /// <param name="a">First vector in the product.</param>
         /// <param name="b">Second vector in the product.</param>
         /// <returns>Resulting dot product.</returns>
-        public static Fix64 Dot(Vector4 a, Vector4 b)
+        public static FP Dot(FPVector3 a, FPVector3 b)
         {
-            return a.X * b.X + a.Y * b.Y + a.Z * b.Z + a.W * b.W;
+            return a.X * b.X + a.Y * b.Y + a.Z * b.Z;
         }
 
         /// <summary>
@@ -179,9 +114,9 @@ namespace BEPUutilities
         /// <param name="a">First vector in the product.</param>
         /// <param name="b">Second vector in the product.</param>
         /// <param name="product">Resulting dot product.</param>
-        public static void Dot(ref Vector4 a, ref Vector4 b, out Fix64 product)
+        public static void Dot(ref FPVector3 a, ref FPVector3 b, out FP product)
         {
-            product = a.X * b.X + a.Y * b.Y + a.Z * b.Z + a.W * b.W;
+            product = a.X * b.X + a.Y * b.Y + a.Z * b.Z;
         }
         /// <summary>
         /// Adds two vectors together.
@@ -189,12 +124,11 @@ namespace BEPUutilities
         /// <param name="a">First vector to add.</param>
         /// <param name="b">Second vector to add.</param>
         /// <param name="sum">Sum of the two vectors.</param>
-        public static void Add(ref Vector4 a, ref Vector4 b, out Vector4 sum)
+        public static void Add(ref FPVector3 a, ref FPVector3 b, out FPVector3 sum)
         {
             sum.X = a.X + b.X;
             sum.Y = a.Y + b.Y;
             sum.Z = a.Z + b.Z;
-            sum.W = a.W + b.W;
         }
         /// <summary>
         /// Subtracts two vectors.
@@ -202,12 +136,11 @@ namespace BEPUutilities
         /// <param name="a">Vector to subtract from.</param>
         /// <param name="b">Vector to subtract from the first vector.</param>
         /// <param name="difference">Result of the subtraction.</param>
-        public static void Subtract(ref Vector4 a, ref Vector4 b, out Vector4 difference)
+        public static void Subtract(ref FPVector3 a, ref FPVector3 b, out FPVector3 difference)
         {
             difference.X = a.X - b.X;
             difference.Y = a.Y - b.Y;
             difference.Z = a.Z - b.Z;
-            difference.W = a.W - b.W;
         }
         /// <summary>
         /// Scales a vector.
@@ -215,14 +148,12 @@ namespace BEPUutilities
         /// <param name="v">Vector to scale.</param>
         /// <param name="scale">Amount to scale.</param>
         /// <param name="result">Scaled vector.</param>
-        public static void Multiply(ref Vector4 v, Fix64 scale, out Vector4 result)
+        public static void Multiply(ref FPVector3 v, FP scale, out FPVector3 result)
         {
             result.X = v.X * scale;
             result.Y = v.Y * scale;
             result.Z = v.Z * scale;
-            result.W = v.W * scale;
         }
-
 
         /// <summary>
         /// Multiplies two vectors on a per-component basis.
@@ -230,14 +161,12 @@ namespace BEPUutilities
         /// <param name="a">First vector to multiply.</param>
         /// <param name="b">Second vector to multiply.</param>
         /// <param name="result">Result of the componentwise multiplication.</param>
-        public static void Multiply(ref Vector4 a, ref Vector4 b, out Vector4 result)
+        public static void Multiply(ref FPVector3 a, ref FPVector3 b, out FPVector3 result)
         {
             result.X = a.X * b.X;
             result.Y = a.Y * b.Y;
             result.Z = a.Z * b.Z;
-            result.W = a.W * b.W;
         }
-
 
         /// <summary>
         /// Divides a vector's components by some amount.
@@ -245,13 +174,12 @@ namespace BEPUutilities
         /// <param name="v">Vector to divide.</param>
         /// <param name="divisor">Value to divide the vector's components.</param>
         /// <param name="result">Result of the division.</param>
-        public static void Divide(ref Vector4 v, Fix64 divisor, out Vector4 result)
+        public static void Divide(ref FPVector3 v, FP divisor, out FPVector3 result)
         {
-            Fix64 inverse = F64.C1 / divisor;
+            FP inverse = F64.C1 / divisor;
             result.X = v.X * inverse;
             result.Y = v.Y * inverse;
             result.Z = v.Z * inverse;
-            result.W = v.W * inverse;
         }
         /// <summary>
         /// Scales a vector.
@@ -259,31 +187,29 @@ namespace BEPUutilities
         /// <param name="v">Vector to scale.</param>
         /// <param name="f">Amount to scale.</param>
         /// <returns>Scaled vector.</returns>
-        public static Vector4 operator *(Vector4 v, Fix64 f)
+        public static FPVector3 operator *(FPVector3 v, FP f)
         {
-            Vector4 toReturn;
+            FPVector3 toReturn;
             toReturn.X = v.X * f;
             toReturn.Y = v.Y * f;
             toReturn.Z = v.Z * f;
-            toReturn.W = v.W * f;
-            return toReturn;
-        }
-        /// <summary>
-        /// Scales a vector.
-        /// </summary>
-        /// <param name="v">Vector to scale.</param>
-        /// <param name="f">Amount to scale.</param>
-        /// <returns>Scaled vector.</returns>
-        public static Vector4 operator *(Fix64 f, Vector4 v)
-        {
-            Vector4 toReturn;
-            toReturn.X = v.X * f;
-            toReturn.Y = v.Y * f;
-            toReturn.Z = v.Z * f;
-            toReturn.W = v.W * f;
             return toReturn;
         }
 
+        /// <summary>
+        /// Scales a vector.
+        /// </summary>
+        /// <param name="v">Vector to scale.</param>
+        /// <param name="f">Amount to scale.</param>
+        /// <returns>Scaled vector.</returns>
+        public static FPVector3 operator *(FP f, FPVector3 v)
+        {
+            FPVector3 toReturn;
+            toReturn.X = v.X * f;
+            toReturn.Y = v.Y * f;
+            toReturn.Z = v.Z * f;
+            return toReturn;
+        }
 
         /// <summary>
         /// Multiplies two vectors on a per-component basis.
@@ -291,13 +217,12 @@ namespace BEPUutilities
         /// <param name="a">First vector to multiply.</param>
         /// <param name="b">Second vector to multiply.</param>
         /// <returns>Result of the componentwise multiplication.</returns>
-        public static Vector4 operator *(Vector4 a, Vector4 b)
+        public static FPVector3 operator *(FPVector3 a, FPVector3 b)
         {
-            Vector4 result;
+            FPVector3 result;
             Multiply(ref a, ref b, out result);
             return result;
         }
-
 
         /// <summary>
         /// Divides a vector's components by some amount.
@@ -305,14 +230,13 @@ namespace BEPUutilities
         /// <param name="v">Vector to divide.</param>
         /// <param name="f">Value to divide the vector's components.</param>
         /// <returns>Result of the division.</returns>
-        public static Vector4 operator /(Vector4 v, Fix64 f)
+        public static FPVector3 operator /(FPVector3 v, FP f)
         {
-            Vector4 toReturn;
+            FPVector3 toReturn;
             f = F64.C1 / f;
             toReturn.X = v.X * f;
             toReturn.Y = v.Y * f;
             toReturn.Z = v.Z * f;
-            toReturn.W = v.W * f;
             return toReturn;
         }
         /// <summary>
@@ -321,13 +245,12 @@ namespace BEPUutilities
         /// <param name="a">Vector to subtract from.</param>
         /// <param name="b">Vector to subtract from the first vector.</param>
         /// <returns>Result of the subtraction.</returns>
-        public static Vector4 operator -(Vector4 a, Vector4 b)
+        public static FPVector3 operator -(FPVector3 a, FPVector3 b)
         {
-            Vector4 v;
+            FPVector3 v;
             v.X = a.X - b.X;
             v.Y = a.Y - b.Y;
             v.Z = a.Z - b.Z;
-            v.W = a.W - b.W;
             return v;
         }
         /// <summary>
@@ -336,13 +259,12 @@ namespace BEPUutilities
         /// <param name="a">First vector to add.</param>
         /// <param name="b">Second vector to add.</param>
         /// <returns>Sum of the two vectors.</returns>
-        public static Vector4 operator +(Vector4 a, Vector4 b)
+        public static FPVector3 operator +(FPVector3 a, FPVector3 b)
         {
-            Vector4 v;
+            FPVector3 v;
             v.X = a.X + b.X;
             v.Y = a.Y + b.Y;
             v.Z = a.Z + b.Z;
-            v.W = a.W + b.W;
             return v;
         }
 
@@ -352,12 +274,11 @@ namespace BEPUutilities
         /// </summary>
         /// <param name="v">Vector to negate.</param>
         /// <returns>Negated vector.</returns>
-        public static Vector4 operator -(Vector4 v)
+        public static FPVector3 operator -(FPVector3 v)
         {
             v.X = -v.X;
             v.Y = -v.Y;
             v.Z = -v.Z;
-            v.W = -v.W;
             return v;
         }
         /// <summary>
@@ -366,9 +287,9 @@ namespace BEPUutilities
         /// <param name="a">First vector to test for equivalence.</param>
         /// <param name="b">Second vector to test for equivalence.</param>
         /// <returns>Whether the vectors were equivalent.</returns>
-        public static bool operator ==(Vector4 a, Vector4 b)
+        public static bool operator ==(FPVector3 a, FPVector3 b)
         {
-            return a.X == b.X && a.Y == b.Y && a.Z == b.Z && a.W == b.W;
+            return a.X == b.X && a.Y == b.Y && a.Z == b.Z;
         }
         /// <summary>
         /// Tests two vectors for componentwise inequivalence.
@@ -376,9 +297,9 @@ namespace BEPUutilities
         /// <param name="a">First vector to test for inequivalence.</param>
         /// <param name="b">Second vector to test for inequivalence.</param>
         /// <returns>Whether the vectors were inequivalent.</returns>
-        public static bool operator !=(Vector4 a, Vector4 b)
+        public static bool operator !=(FPVector3 a, FPVector3 b)
         {
-            return a.X != b.X || a.Y != b.Y || a.Z != b.Z || a.W != b.W;
+            return a.X != b.X || a.Y != b.Y || a.Z != b.Z;
         }
 
         /// <summary>
@@ -388,9 +309,9 @@ namespace BEPUutilities
         /// true if the current object is equal to the <paramref name="other"/> parameter; otherwise, false.
         /// </returns>
         /// <param name="other">An object to compare with this object.</param>
-        public bool Equals(Vector4 other)
+        public bool Equals(FPVector3 other)
         {
-            return X == other.X && Y == other.Y && Z == other.Z && W == other.W;
+            return X == other.X && Y == other.Y && Z == other.Z;
         }
 
         /// <summary>
@@ -402,9 +323,9 @@ namespace BEPUutilities
         /// <param name="obj">Another object to compare to. </param><filterpriority>2</filterpriority>
         public override bool Equals(object obj)
         {
-            if (obj is Vector4)
+            if (obj is FPVector3)
             {
-                return Equals((Vector4)obj);
+                return Equals((FPVector3)obj);
             }
             return false;
         }
@@ -418,7 +339,22 @@ namespace BEPUutilities
         /// <filterpriority>2</filterpriority>
         public override int GetHashCode()
         {
-            return X.GetHashCode() + Y.GetHashCode() + Z.GetHashCode() + W.GetHashCode();
+            return X.GetHashCode() + Y.GetHashCode() + Z.GetHashCode();
+        }
+
+        
+        /// <summary>
+        /// Computes the squared distance between two vectors.
+        /// </summary>
+        /// <param name="a">First vector.</param>
+        /// <param name="b">Second vector.</param>
+        /// <param name="distanceSquared">Squared distance between the two vectors.</param>
+        public static void DistanceSquared(ref FPVector3 a, ref FPVector3 b, out FP distanceSquared)
+        {
+            FP x = a.X - b.X;
+            FP y = a.Y - b.Y;
+            FP z = a.Z - b.Z;
+            distanceSquared = x * x + y * y + z * z;
         }
 
         /// <summary>
@@ -426,15 +362,15 @@ namespace BEPUutilities
         /// </summary>
         /// <param name="a">First vector.</param>
         /// <param name="b">Second vector.</param>
-        /// <param name="distanceSquared">Squared distance between the two vectors.</param>
-        public static void DistanceSquared(ref Vector4 a, ref Vector4 b, out Fix64 distanceSquared)
+        /// <returns>Squared distance between the two vectors.</returns>
+        public static FP DistanceSquared(FPVector3 a, FPVector3 b)
         {
-            Fix64 x = a.X - b.X;
-            Fix64 y = a.Y - b.Y;
-            Fix64 z = a.Z - b.Z;
-            Fix64 w = a.W - b.W;
-            distanceSquared = x * x + y * y + z * z + w * w;
+            FP x = a.X - b.X;
+            FP y = a.Y - b.Y;
+            FP z = a.Z - b.Z;
+            return x * x + y * y + z * z;
         }
+
 
         /// <summary>
         /// Computes the distance between two two vectors.
@@ -442,13 +378,12 @@ namespace BEPUutilities
         /// <param name="a">First vector.</param>
         /// <param name="b">Second vector.</param>
         /// <param name="distance">Distance between the two vectors.</param>
-        public static void Distance(ref Vector4 a, ref Vector4 b, out Fix64 distance)
+        public static void Distance(ref FPVector3 a, ref FPVector3 b, out FP distance)
         {
-            Fix64 x = a.X - b.X;
-            Fix64 y = a.Y - b.Y;
-            Fix64 z = a.Z - b.Z;
-            Fix64 w = a.W - b.W;
-            distance = Fix64.Sqrt(x * x + y * y + z * z + w * w);
+            FP x = a.X - b.X;
+            FP y = a.Y - b.Y;
+            FP z = a.Z - b.Z;
+            distance = FP.Sqrt(x * x + y * y + z * z);
         }
         /// <summary>
         /// Computes the distance between two two vectors.
@@ -456,9 +391,9 @@ namespace BEPUutilities
         /// <param name="a">First vector.</param>
         /// <param name="b">Second vector.</param>
         /// <returns>Distance between the two vectors.</returns>
-        public static Fix64 Distance(Vector4 a, Vector4 b)
+        public static FP Distance(FPVector3 a, FPVector3 b)
         {
-            Fix64 toReturn;
+            FP toReturn;
             Distance(ref a, ref b, out toReturn);
             return toReturn;
         }
@@ -466,44 +401,160 @@ namespace BEPUutilities
         /// <summary>
         /// Gets the zero vector.
         /// </summary>
-        public static Vector4 Zero
+        public static FPVector3 Zero
         {
             get
             {
-                return new Vector4();
+                return new FPVector3();
+            }
+        }
+
+        /// <summary>
+        /// Gets the up vector (0,1,0).
+        /// </summary>
+        public static FPVector3 Up
+        {
+            get
+            {
+                return new FPVector3()
+                {
+                    X = F64.C0,
+                    Y = F64.C1,
+                    Z = F64.C0
+				};
+            }
+        }
+
+        /// <summary>
+        /// Gets the down vector (0,-1,0).
+        /// </summary>
+        public static FPVector3 Down
+        {
+            get
+            {
+                return new FPVector3()
+                {
+                    X = F64.C0,
+                    Y = -1,
+                    Z = F64.C0
+				};
+            }
+        }
+
+        /// <summary>
+        /// Gets the right vector (1,0,0).
+        /// </summary>
+        public static FPVector3 Right
+        {
+            get
+            {
+                return new FPVector3()
+                {
+                    X = F64.C1,
+                    Y = F64.C0,
+                    Z = F64.C0
+				};
+            }
+        }
+
+        /// <summary>
+        /// Gets the left vector (-1,0,0).
+        /// </summary>
+        public static FPVector3 Left
+        {
+            get
+            {
+                return new FPVector3()
+                {
+                    X = -1,
+                    Y = F64.C0,
+                    Z = F64.C0
+				};
+            }
+        }
+
+        /// <summary>
+        /// Gets the forward vector (0,0,-1).
+        /// </summary>
+        public static FPVector3 Forward
+        {
+            get
+            {
+                return new FPVector3()
+                {
+                    X = F64.C0,
+                    Y = F64.C0,
+                    Z = -1
+                };
+            }
+        }
+
+        /// <summary>
+        /// Gets the back vector (0,0,1).
+        /// </summary>
+        public static FPVector3 Backward
+        {
+            get
+            {
+                return new FPVector3()
+                {
+                    X = F64.C0,
+                    Y = F64.C0,
+                    Z = F64.C1
+				};
             }
         }
 
         /// <summary>
         /// Gets a vector pointing along the X axis.
         /// </summary>
-        public static Vector4 UnitX
+        public static FPVector3 UnitX
         {
-            get { return new Vector4 { X = F64.C1 }; }
+            get { return new FPVector3 { X = F64.C1 }; }
         }
 
         /// <summary>
         /// Gets a vector pointing along the Y axis.
         /// </summary>
-        public static Vector4 UnitY
+        public static FPVector3 UnitY
         {
-            get { return new Vector4 { Y = F64.C1 }; }
+            get { return new FPVector3 { Y = F64.C1 }; }
         }
 
         /// <summary>
         /// Gets a vector pointing along the Z axis.
         /// </summary>
-        public static Vector4 UnitZ
+        public static FPVector3 UnitZ
         {
-            get { return new Vector4 { Z = F64.C1 }; }
+            get { return new FPVector3 { Z = F64.C1 }; }
         }
 
         /// <summary>
-        /// Gets a vector pointing along the W axis.
+        /// Computes the cross product between two vectors.
         /// </summary>
-        public static Vector4 UnitW
+        /// <param name="a">First vector.</param>
+        /// <param name="b">Second vector.</param>
+        /// <returns>Cross product of the two vectors.</returns>
+        public static FPVector3 Cross(FPVector3 a, FPVector3 b)
         {
-            get { return new Vector4 { W = F64.C1 }; }
+            FPVector3 toReturn;
+            FPVector3.Cross(ref a, ref b, out toReturn);
+            return toReturn;
+        }
+        /// <summary>
+        /// Computes the cross product between two vectors.
+        /// </summary>
+        /// <param name="a">First vector.</param>
+        /// <param name="b">Second vector.</param>
+        /// <param name="result">Cross product of the two vectors.</param>
+        public static void Cross(ref FPVector3 a, ref FPVector3 b, out FPVector3 result)
+        {
+            FP resultX = a.Y * b.Z - a.Z * b.Y;
+            FP resultY = a.Z * b.X - a.X * b.Z;
+            FP resultZ = a.X * b.Y - a.Y * b.X;
+            result.X = resultX;
+            result.Y = resultY;
+            result.Z = resultZ;
         }
 
         /// <summary>
@@ -511,10 +562,10 @@ namespace BEPUutilities
         /// </summary>
         /// <param name="v">Vector to normalize.</param>
         /// <returns>Normalized vector.</returns>
-        public static Vector4 Normalize(Vector4 v)
+        public static FPVector3 Normalize(FPVector3 v)
         {
-            Vector4 toReturn;
-            Vector4.Normalize(ref v, out toReturn);
+            FPVector3 toReturn;
+            FPVector3.Normalize(ref v, out toReturn);
             return toReturn;
         }
 
@@ -523,13 +574,12 @@ namespace BEPUutilities
         /// </summary>
         /// <param name="v">Vector to normalize.</param>
         /// <param name="result">Normalized vector.</param>
-        public static void Normalize(ref Vector4 v, out Vector4 result)
+        public static void Normalize(ref FPVector3 v, out FPVector3 result)
         {
-            Fix64 inverse = F64.C1 / Fix64.Sqrt(v.X * v.X + v.Y * v.Y + v.Z * v.Z + v.W * v.W);
+            FP inverse = F64.C1 / FP.Sqrt(v.X * v.X + v.Y * v.Y + v.Z * v.Z);
             result.X = v.X * inverse;
             result.Y = v.Y * inverse;
             result.Z = v.Z * inverse;
-            result.W = v.W * inverse;
         }
 
         /// <summary>
@@ -537,21 +587,19 @@ namespace BEPUutilities
         /// </summary>
         /// <param name="v">Vector to negate.</param>
         /// <param name="negated">Negated vector.</param>
-        public static void Negate(ref Vector4 v, out Vector4 negated)
+        public static void Negate(ref FPVector3 v, out FPVector3 negated)
         {
             negated.X = -v.X;
             negated.Y = -v.Y;
             negated.Z = -v.Z;
-            negated.W = -v.W;
         }
-
 
         /// <summary>
         /// Computes the absolute value of the input vector.
         /// </summary>
         /// <param name="v">Vector to take the absolute value of.</param>
         /// <param name="result">Vector with nonnegative elements.</param>
-        public static void Abs(ref Vector4 v, out Vector4 result)
+        public static void Abs(ref FPVector3 v, out FPVector3 result)
         {
             if (v.X < F64.C0)
                 result.X = -v.X;
@@ -565,10 +613,6 @@ namespace BEPUutilities
                 result.Z = -v.Z;
             else
                 result.Z = v.Z;
-            if (v.W < F64.C0)
-                result.W = -v.W;
-            else
-                result.W = v.W;
         }
 
         /// <summary>
@@ -576,9 +620,9 @@ namespace BEPUutilities
         /// </summary>
         /// <param name="v">Vector to take the absolute value of.</param>
         /// <returns>Vector with nonnegative elements.</returns>
-        public static Vector4 Abs(Vector4 v)
+        public static FPVector3 Abs(FPVector3 v)
         {
-            Vector4 result;
+            FPVector3 result;
             Abs(ref v, out result);
             return result;
         }
@@ -589,12 +633,11 @@ namespace BEPUutilities
         /// <param name="a">First input vector to compare values from.</param>
         /// <param name="b">Second input vector to compare values from.</param>
         /// <param name="min">Vector containing the lesser values of each vector.</param>
-        public static void Min(ref Vector4 a, ref Vector4 b, out Vector4 min)
+        public static void Min(ref FPVector3 a, ref FPVector3 b, out FPVector3 min)
         {
             min.X = a.X < b.X ? a.X : b.X;
             min.Y = a.Y < b.Y ? a.Y : b.Y;
             min.Z = a.Z < b.Z ? a.Z : b.Z;
-            min.W = a.W < b.W ? a.W : b.W;
         }
 
         /// <summary>
@@ -603,9 +646,9 @@ namespace BEPUutilities
         /// <param name="a">First input vector to compare values from.</param>
         /// <param name="b">Second input vector to compare values from.</param>
         /// <returns>Vector containing the lesser values of each vector.</returns>
-        public static Vector4 Min(Vector4 a, Vector4 b)
+        public static FPVector3 Min(FPVector3 a, FPVector3 b)
         {
-            Vector4 result;
+            FPVector3 result;
             Min(ref a, ref b, out result);
             return result;
         }
@@ -617,12 +660,11 @@ namespace BEPUutilities
         /// <param name="a">First input vector to compare values from.</param>
         /// <param name="b">Second input vector to compare values from.</param>
         /// <param name="max">Vector containing the greater values of each vector.</param>
-        public static void Max(ref Vector4 a, ref Vector4 b, out Vector4 max)
+        public static void Max(ref FPVector3 a, ref FPVector3 b, out FPVector3 max)
         {
             max.X = a.X > b.X ? a.X : b.X;
             max.Y = a.Y > b.Y ? a.Y : b.Y;
             max.Z = a.Z > b.Z ? a.Z : b.Z;
-            max.W = a.W > b.W ? a.W : b.W;
         }
 
         /// <summary>
@@ -631,9 +673,9 @@ namespace BEPUutilities
         /// <param name="a">First input vector to compare values from.</param>
         /// <param name="b">Second input vector to compare values from.</param>
         /// <returns>Vector containing the greater values of each vector.</returns>
-        public static Vector4 Max(Vector4 a, Vector4 b)
+        public static FPVector3 Max(FPVector3 a, FPVector3 b)
         {
-            Vector4 result;
+            FPVector3 result;
             Max(ref a, ref b, out result);
             return result;
         }
@@ -645,9 +687,9 @@ namespace BEPUutilities
         /// <param name="end">Ending location of the interpolation.</param>
         /// <param name="interpolationAmount">Amount of the end location to use.</param>
         /// <returns>Interpolated intermediate state.</returns>
-        public static Vector4 Lerp(Vector4 start, Vector4 end, Fix64 interpolationAmount)
+        public static FPVector3 Lerp(FPVector3 start, FPVector3 end, FP interpolationAmount)
         {
-            Vector4 toReturn;
+            FPVector3 toReturn;
             Lerp(ref start, ref end, interpolationAmount, out toReturn);
             return toReturn;
         }
@@ -658,13 +700,12 @@ namespace BEPUutilities
         /// <param name="end">Ending location of the interpolation.</param>
         /// <param name="interpolationAmount">Amount of the end location to use.</param>
         /// <param name="result">Interpolated intermediate state.</param>
-        public static void Lerp(ref Vector4 start, ref Vector4 end, Fix64 interpolationAmount, out Vector4 result)
+        public static void Lerp(ref FPVector3 start, ref FPVector3 end, FP interpolationAmount, out FPVector3 result)
         {
-            Fix64 startAmount = F64.C1 - interpolationAmount;
+            FP startAmount = F64.C1 - interpolationAmount;
             result.X = start.X * startAmount + end.X * interpolationAmount;
             result.Y = start.Y * startAmount + end.Y * interpolationAmount;
             result.Z = start.Z * startAmount + end.Z * interpolationAmount;
-            result.W = start.W * startAmount + end.W * interpolationAmount;
         }
 
         /// <summary>
@@ -676,18 +717,17 @@ namespace BEPUutilities
         /// <param name="tangent2">Tangent associated with the second position.</param>
         /// <param name="interpolationAmount">Amount of the second point to use.</param>
         /// <param name="result">Interpolated intermediate state.</param>
-        public static void Hermite(ref Vector4 value1, ref Vector4 tangent1, ref Vector4 value2, ref Vector4 tangent2, Fix64 interpolationAmount, out Vector4 result)
+        public static void Hermite(ref FPVector3 value1, ref FPVector3 tangent1, ref FPVector3 value2, ref FPVector3 tangent2, FP interpolationAmount, out FPVector3 result)
         {
-            Fix64 weightSquared = interpolationAmount * interpolationAmount;
-            Fix64 weightCubed = interpolationAmount * weightSquared;
-            Fix64 value1Blend = F64.C2 * weightCubed - F64.C3 * weightSquared + F64.C1;
-            Fix64 tangent1Blend = weightCubed - F64.C2 * weightSquared + interpolationAmount;
-            Fix64 value2Blend = -2 * weightCubed + F64.C3 * weightSquared;
-            Fix64 tangent2Blend = weightCubed - weightSquared;
+            FP weightSquared = interpolationAmount * interpolationAmount;
+            FP weightCubed = interpolationAmount * weightSquared;
+            FP value1Blend = F64.C2 * weightCubed - F64.C3 * weightSquared + F64.C1;
+            FP tangent1Blend = weightCubed - F64.C2 * weightSquared + interpolationAmount;
+            FP value2Blend = -2 * weightCubed + F64.C3 * weightSquared;
+            FP tangent2Blend = weightCubed - weightSquared;
             result.X = value1.X * value1Blend + value2.X * value2Blend + tangent1.X * tangent1Blend + tangent2.X * tangent2Blend;
             result.Y = value1.Y * value1Blend + value2.Y * value2Blend + tangent1.Y * tangent1Blend + tangent2.Y * tangent2Blend;
             result.Z = value1.Z * value1Blend + value2.Z * value2Blend + tangent1.Z * tangent1Blend + tangent2.Z * tangent2Blend;
-            result.W = value1.W * value1Blend + value2.W * value2Blend + tangent1.W * tangent1Blend + tangent2.W * tangent2Blend;
         }
         /// <summary>
         /// Computes an intermediate location using hermite interpolation.
@@ -698,9 +738,9 @@ namespace BEPUutilities
         /// <param name="tangent2">Tangent associated with the second position.</param>
         /// <param name="interpolationAmount">Amount of the second point to use.</param>
         /// <returns>Interpolated intermediate state.</returns>
-        public static Vector4 Hermite(Vector4 value1, Vector4 tangent1, Vector4 value2, Vector4 tangent2, Fix64 interpolationAmount)
+        public static FPVector3 Hermite(FPVector3 value1, FPVector3 tangent1, FPVector3 value2, FPVector3 tangent2, FP interpolationAmount)
         {
-            Vector4 toReturn;
+            FPVector3 toReturn;
             Hermite(ref value1, ref tangent1, ref value2, ref tangent2, interpolationAmount, out toReturn);
             return toReturn;
         }

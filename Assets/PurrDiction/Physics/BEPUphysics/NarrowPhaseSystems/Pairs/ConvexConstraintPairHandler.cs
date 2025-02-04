@@ -40,7 +40,7 @@ namespace BEPUphysics.NarrowPhaseSystems.Pairs
         {
             info.Contact = ContactManifold.contacts.Elements[index];
             //Find the contact's normal force.
-            Fix64 totalNormalImpulse = F64.C0;
+            FP totalNormalImpulse = F64.C0;
             info.NormalImpulse = F64.C0;
             for (int i = 0; i < contactConstraint.penetrationConstraints.Count; i++)
             {
@@ -51,30 +51,30 @@ namespace BEPUphysics.NarrowPhaseSystems.Pairs
                 }
             }
             //Compute friction force.  Since we are using central friction, this is 'faked.'
-            Fix64 radius;
-            Vector3.Distance(ref contactConstraint.slidingFriction.manifoldCenter, ref info.Contact.Position, out radius);
+            FP radius;
+            FPVector3.Distance(ref contactConstraint.slidingFriction.manifoldCenter, ref info.Contact.Position, out radius);
             if (totalNormalImpulse > F64.C0)
                 info.FrictionImpulse = (info.NormalImpulse / totalNormalImpulse) * (contactConstraint.slidingFriction.accumulatedImpulse.Length() + contactConstraint.twistFriction.accumulatedImpulse * radius);
             else
                 info.FrictionImpulse = F64.C0;
             //Compute relative velocity
-            Vector3 velocity;
+            FPVector3 velocity;
             //If the pair is handling some type of query and does not actually have supporting entities, then consider the velocity contribution to be zero.
             if (EntityA != null)
             {
-                Vector3.Subtract(ref info.Contact.Position, ref EntityA.position, out velocity);
-                Vector3.Cross(ref EntityA.angularVelocity, ref velocity, out velocity);
-                Vector3.Add(ref velocity, ref EntityA.linearVelocity, out info.RelativeVelocity);
+                FPVector3.Subtract(ref info.Contact.Position, ref EntityA.position, out velocity);
+                FPVector3.Cross(ref EntityA.angularVelocity, ref velocity, out velocity);
+                FPVector3.Add(ref velocity, ref EntityA.linearVelocity, out info.RelativeVelocity);
             }
             else
-                info.RelativeVelocity = new Vector3();
+                info.RelativeVelocity = new FPVector3();
 
             if (EntityB != null)
             {
-                Vector3.Subtract(ref info.Contact.Position, ref EntityB.position, out velocity);
-                Vector3.Cross(ref EntityB.angularVelocity, ref velocity, out velocity);
-                Vector3.Add(ref velocity, ref EntityB.linearVelocity, out velocity);
-                Vector3.Subtract(ref info.RelativeVelocity, ref velocity, out info.RelativeVelocity);
+                FPVector3.Subtract(ref info.Contact.Position, ref EntityB.position, out velocity);
+                FPVector3.Cross(ref EntityB.angularVelocity, ref velocity, out velocity);
+                FPVector3.Add(ref velocity, ref EntityB.linearVelocity, out velocity);
+                FPVector3.Subtract(ref info.RelativeVelocity, ref velocity, out info.RelativeVelocity);
             }
 
 

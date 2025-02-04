@@ -19,12 +19,12 @@ namespace BEPUphysics.CollisionShapes
     ///</summary>
     public class MobileMeshShape : EntityShape
     {
-        private Fix64 meshCollisionMargin = CollisionDetectionSettings.DefaultMargin;
+        private FP meshCollisionMargin = CollisionDetectionSettings.DefaultMargin;
         /// <summary>
         /// Gets or sets the margin of the mobile mesh to use when colliding with other meshes.
         /// When colliding with non-mesh shapes, the mobile mesh has no margin.
         /// </summary>
-        public Fix64 MeshCollisionMargin
+        public FP MeshCollisionMargin
         {
             get
             {
@@ -61,14 +61,14 @@ namespace BEPUphysics.CollisionShapes
             }
         }
 
-        RawList<Vector3> hullVertices = new RawList<Vector3>();
+        RawList<FPVector3> hullVertices = new RawList<FPVector3>();
 
         /// <summary>
         /// Gets the list of vertices on the convex hull of the mesh used to compute the bounding box.
         /// </summary>
-        public ReadOnlyList<Vector3> HullVertices
+        public ReadOnlyList<FPVector3> HullVertices
         {
-            get { return new ReadOnlyList<Vector3>(hullVertices); }
+            get { return new ReadOnlyList<FPVector3>(hullVertices); }
         }
 
         internal MobileMeshSolidity solidity = MobileMeshSolidity.DoubleSided;
@@ -135,7 +135,7 @@ namespace BEPUphysics.CollisionShapes
         ///<param name="indices">Indices of the mesh.</param>
         ///<param name="localTransform">Local transform to apply to the shape.</param>
         ///<param name="solidity">Solidity state of the shape.</param>
-        public MobileMeshShape(Vector3[] vertices, int[] indices, AffineTransform localTransform, MobileMeshSolidity solidity)
+        public MobileMeshShape(FPVector3[] vertices, int[] indices, AffineTransform localTransform, MobileMeshSolidity solidity)
         {
             this.solidity = solidity;
             var data = new TransformableMeshData(vertices, indices, localTransform);
@@ -160,7 +160,7 @@ namespace BEPUphysics.CollisionShapes
         ///<param name="localTransform">Local transform to apply to the shape.</param>
         ///<param name="solidity">Solidity state of the shape.</param>
         /// <param name="center">Center of the shape.</param>
-        public MobileMeshShape(Vector3[] vertices, int[] indices, AffineTransform localTransform, MobileMeshSolidity solidity, out Vector3 center)
+        public MobileMeshShape(FPVector3[] vertices, int[] indices, AffineTransform localTransform, MobileMeshSolidity solidity, out FPVector3 center)
         {
             this.solidity = solidity;
             var data = new TransformableMeshData(vertices, indices, localTransform);
@@ -187,10 +187,10 @@ namespace BEPUphysics.CollisionShapes
         /// <param name="sidednessWhenSolid">Triangle sidedness to use when the shape is solid.</param>
         /// <param name="collisionMargin">Collision margin used to expand the mesh triangles.</param>
         /// <param name="volumeDescription">Description of the volume and its distribution in the shape. Assumed to be correct; no processing or validation is performed.</param>
-        public MobileMeshShape(TransformableMeshData meshData, IList<Vector3> hullVertices, MobileMeshSolidity solidity, TriangleSidedness sidednessWhenSolid, Fix64 collisionMargin, EntityShapeVolumeDescription volumeDescription)
+        public MobileMeshShape(TransformableMeshData meshData, IList<FPVector3> hullVertices, MobileMeshSolidity solidity, TriangleSidedness sidednessWhenSolid, FP collisionMargin, EntityShapeVolumeDescription volumeDescription)
         {
             triangleMesh = new TriangleMesh(meshData);
-            this.hullVertices = new RawList<Vector3>(hullVertices);
+            this.hullVertices = new RawList<FPVector3>(hullVertices);
             meshCollisionMargin = collisionMargin;
             this.solidity = solidity;
             SidednessWhenSolid = sidednessWhenSolid;
@@ -217,21 +217,21 @@ namespace BEPUphysics.CollisionShapes
         /// <param name="ray">Ray in the local space of the shape to test.</param>
         /// <param name="hit">The first hit against the mesh, if any.</param>
         /// <returns>Whether or not the ray origin was in the mesh.</returns>
-        public bool IsLocalRayOriginInMesh(ref Ray ray, out RayHit hit)
+        public bool IsLocalRayOriginInMesh(ref FPRay ray, out FPRayHit hit)
         {
             var overlapList = CommonResources.GetIntList();
-            hit = new RayHit();
-            hit.T = Fix64.MaxValue;
+            hit = new FPRayHit();
+            hit.T = FP.MaxValue;
             if (triangleMesh.Tree.GetOverlaps(ray, overlapList))
             {
                 bool minimumClockwise = false;
                 for (int i = 0; i < overlapList.Count; i++)
                 {
-                    Vector3 vA, vB, vC;
+                    FPVector3 vA, vB, vC;
                     triangleMesh.Data.GetTriangle(overlapList[i], out vA, out vB, out vC);
                     bool hitClockwise;
-                    RayHit tempHit;
-                    if (Toolbox.FindRayTriangleIntersection(ref ray, Fix64.MaxValue, ref vA, ref vB, ref vC, out hitClockwise, out tempHit) &&
+                    FPRayHit tempHit;
+                    if (Toolbox.FindRayTriangleIntersection(ref ray, FP.MaxValue, ref vA, ref vB, ref vC, out hitClockwise, out tempHit) &&
                         tempHit.T < hit.T)
                     {
                         hit = tempHit;
@@ -241,7 +241,7 @@ namespace BEPUphysics.CollisionShapes
                 CommonResources.GiveBack(overlapList);
 
                 //If the mesh is hit from behind by the ray on the first hit, then the ray is inside.
-                return hit.T < Fix64.MaxValue && ((SidednessWhenSolid == TriangleSidedness.Clockwise && !minimumClockwise) || (SidednessWhenSolid == TriangleSidedness.Counterclockwise && minimumClockwise));
+                return hit.T < FP.MaxValue && ((SidednessWhenSolid == TriangleSidedness.Clockwise && !minimumClockwise) || (SidednessWhenSolid == TriangleSidedness.Counterclockwise && minimumClockwise));
             }
             CommonResources.GiveBack(overlapList);
             return false;
@@ -251,13 +251,13 @@ namespace BEPUphysics.CollisionShapes
         /// <summary>
         /// The difference in t parameters in a ray cast under which two hits are considered to be redundant.
         /// </summary>
-        public static Fix64 MeshHitUniquenessThreshold = F64.C1em5;
+        public static FP MeshHitUniquenessThreshold = F64.C1em5;
 
-        internal bool IsHitUnique(RawList<RayHit> hits, ref RayHit hit)
+        internal bool IsHitUnique(RawList<FPRayHit> hits, ref FPRayHit hit)
         {
             for (int i = 0; i < hits.Count; i++)
             {
-                if (Fix64.Abs(hits.Elements[i].T - hit.T) < MeshHitUniquenessThreshold)
+                if (FP.Abs(hits.Elements[i].T - hit.T) < MeshHitUniquenessThreshold)
                     return false;
             }
             hits.Add(hit);
@@ -279,8 +279,8 @@ namespace BEPUphysics.CollisionShapes
 
             //Pick a ray direction that goes to a random location on the mesh.  
             //A vertex would work, but targeting the middle of a triangle avoids some edge cases.
-            var ray = new Ray();
-            Vector3 vA, vB, vC;
+            var ray = new FPRay();
+            FPVector3 vA, vB, vC;
             triangleMesh.Data.GetTriangle(((triangleMesh.Data.indices.Length / 3) / 2) * 3, out vA, out vB, out vC);
             ray.Direction = (vA + vB + vC) / F64.C3;
             ray.Direction.Normalize();
@@ -291,24 +291,24 @@ namespace BEPUphysics.CollisionShapes
 
         }
 
-        TriangleSidedness ComputeSolidSidednessHelper(Ray ray)
+        TriangleSidedness ComputeSolidSidednessHelper(FPRay ray)
         {
             TriangleSidedness toReturn;
             var hitList = CommonResources.GetIntList();
             if (triangleMesh.Tree.GetOverlaps(ray, hitList))
             {
-                Vector3 vA, vB, vC;
+                FPVector3 vA, vB, vC;
                 var hits = CommonResources.GetRayHitList();
                 //Identify the first and last hits.
                 int minimum = 0;
                 int maximum = 0;
-                Fix64 minimumT = Fix64.MaxValue;
-                Fix64 maximumT = -1;
+                FP minimumT = FP.MaxValue;
+                FP maximumT = -1;
                 for (int i = 0; i < hitList.Count; i++)
                 {
                     triangleMesh.Data.GetTriangle(hitList[i], out vA, out vB, out vC);
-                    RayHit hit;
-                    if (Toolbox.FindRayTriangleIntersection(ref ray, Fix64.MaxValue, TriangleSidedness.DoubleSided, ref vA, ref vB, ref vC, out hit) &&
+                    FPRayHit hit;
+                    if (Toolbox.FindRayTriangleIntersection(ref ray, FP.MaxValue, TriangleSidedness.DoubleSided, ref vA, ref vB, ref vC, out hit) &&
                         IsHitUnique(hits, ref hit))
                     {
                         if (hit.T < minimumT)
@@ -330,8 +330,8 @@ namespace BEPUphysics.CollisionShapes
                     //such that it faces towards us.
 
                     triangleMesh.Data.GetTriangle(minimum, out vA, out vB, out vC);
-                    var normal = Vector3.Cross(vA - vB, vA - vC);
-                    if (Vector3.Dot(normal, ray.Direction) < F64.C0)
+                    var normal = FPVector3.Cross(vA - vB, vA - vC);
+                    if (FPVector3.Dot(normal, ray.Direction) < F64.C0)
                         toReturn = TriangleSidedness.Clockwise;
                     else
                         toReturn = TriangleSidedness.Counterclockwise;
@@ -342,8 +342,8 @@ namespace BEPUphysics.CollisionShapes
                     //such that it faces away from us.
 
                     triangleMesh.Data.GetTriangle(maximum, out vA, out vB, out vC);
-                    var normal = Vector3.Cross(vA - vB, vA - vC);
-                    if (Vector3.Dot(normal, ray.Direction) < F64.C0)
+                    var normal = FPVector3.Cross(vA - vB, vA - vC);
+                    if (FPVector3.Dot(normal, ray.Direction) < F64.C0)
                         toReturn = TriangleSidedness.Counterclockwise;
                     else
                         toReturn = TriangleSidedness.Clockwise;
@@ -379,10 +379,10 @@ namespace BEPUphysics.CollisionShapes
                 hullVertices.Clear();
                 //A mobile mesh is allowed to have zero volume, so long as it isn't solid.
                 //In this case, compute the bounding box of all points.
-                BoundingBox box = new BoundingBox();
+                FPBoundingBox box = new FPBoundingBox();
                 for (int i = 0; i < triangleMesh.Data.vertices.Length; i++)
                 {
-                    Vector3 v;
+                    FPVector3 v;
                     triangleMesh.Data.GetVertexPosition(i, out v);
                     if (v.X > box.Max.X)
                         box.Max.X = v.X;
@@ -400,12 +400,12 @@ namespace BEPUphysics.CollisionShapes
                 //Add the corners.  This will overestimate the size of the surface a bit.
                 hullVertices.Add(box.Min);
                 hullVertices.Add(box.Max);
-                hullVertices.Add(new Vector3(box.Min.X, box.Min.Y, box.Max.Z));
-                hullVertices.Add(new Vector3(box.Min.X, box.Max.Y, box.Min.Z));
-                hullVertices.Add(new Vector3(box.Max.X, box.Min.Y, box.Min.Z));
-                hullVertices.Add(new Vector3(box.Min.X, box.Max.Y, box.Max.Z));
-                hullVertices.Add(new Vector3(box.Max.X, box.Max.Y, box.Min.Z));
-                hullVertices.Add(new Vector3(box.Max.X, box.Min.Y, box.Max.Z));
+                hullVertices.Add(new FPVector3(box.Min.X, box.Min.Y, box.Max.Z));
+                hullVertices.Add(new FPVector3(box.Min.X, box.Max.Y, box.Min.Z));
+                hullVertices.Add(new FPVector3(box.Max.X, box.Min.Y, box.Min.Z));
+                hullVertices.Add(new FPVector3(box.Min.X, box.Max.Y, box.Max.Z));
+                hullVertices.Add(new FPVector3(box.Max.X, box.Max.Y, box.Min.Z));
+                hullVertices.Add(new FPVector3(box.Max.X, box.Min.Y, box.Max.Z));
             }
         }
 
@@ -436,24 +436,24 @@ namespace BEPUphysics.CollisionShapes
                     return shapeInformation;
                 throw new ArgumentException("A solid mesh must have volume.");
             }
-            shapeInformation.Center = new Vector3();
+            shapeInformation.Center = new FPVector3();
             shapeInformation.VolumeDistribution = new Matrix3x3();
-            Fix64 totalWeight = F64.C0;
+            FP totalWeight = F64.C0;
             for (int i = 0; i < data.indices.Length; i += 3)
             {
                 //Compute the center contribution.
-                Vector3 vA, vB, vC;
+                FPVector3 vA, vB, vC;
                 data.GetTriangle(i, out vA, out vB, out vC);
-                Vector3 vAvB;
-                Vector3 vAvC;
-                Vector3.Subtract(ref vB, ref vA, out vAvB);
-                Vector3.Subtract(ref vC, ref vA, out vAvC);
-                Vector3 cross;
-                Vector3.Cross(ref vAvB, ref vAvC, out cross);
-                Fix64 weight = cross.Length();
+                FPVector3 vAvB;
+                FPVector3 vAvC;
+                FPVector3.Subtract(ref vB, ref vA, out vAvB);
+                FPVector3.Subtract(ref vC, ref vA, out vAvC);
+                FPVector3 cross;
+                FPVector3.Cross(ref vAvB, ref vAvC, out cross);
+                FP weight = cross.Length();
                 totalWeight += weight;
 
-                Fix64 perVertexWeight = weight * F64.OneThird;
+                FP perVertexWeight = weight * F64.OneThird;
                 shapeInformation.Center += perVertexWeight * (vA + vB + vC);
 
                 //Compute the inertia contribution of this triangle.
@@ -486,25 +486,25 @@ namespace BEPUphysics.CollisionShapes
         }
 
 
-        private void GetBoundingBox(ref Matrix3x3 o, out BoundingBox boundingBox)
+        private void GetBoundingBox(ref Matrix3x3 o, out FPBoundingBox boundingBox)
         {
 #if !WINDOWS
-            boundingBox = new BoundingBox();
+            boundingBox = new FPBoundingBox();
 #endif
             //Sample the local directions from the matrix, implicitly transposed.
-            var rightDirection = new Vector3(o.M11, o.M21, o.M31);
-            var upDirection = new Vector3(o.M12, o.M22, o.M32);
-            var backDirection = new Vector3(o.M13, o.M23, o.M33);
+            var rightDirection = new FPVector3(o.M11, o.M21, o.M31);
+            var upDirection = new FPVector3(o.M12, o.M22, o.M32);
+            var backDirection = new FPVector3(o.M13, o.M23, o.M33);
 
             int right = 0, left = 0, up = 0, down = 0, backward = 0, forward = 0;
-            Fix64 minX = Fix64.MaxValue, maxX = -Fix64.MaxValue, minY = Fix64.MaxValue, maxY = -Fix64.MaxValue, minZ = Fix64.MaxValue, maxZ = -Fix64.MaxValue;
+            FP minX = FP.MaxValue, maxX = -FP.MaxValue, minY = FP.MaxValue, maxY = -FP.MaxValue, minZ = FP.MaxValue, maxZ = -FP.MaxValue;
 
             for (int i = 0; i < hullVertices.Count; i++)
             {
-                Fix64 dotX, dotY, dotZ;
-                Vector3.Dot(ref rightDirection, ref hullVertices.Elements[i], out dotX);
-                Vector3.Dot(ref upDirection, ref hullVertices.Elements[i], out dotY);
-                Vector3.Dot(ref backDirection, ref hullVertices.Elements[i], out dotZ);
+                FP dotX, dotY, dotZ;
+                FPVector3.Dot(ref rightDirection, ref hullVertices.Elements[i], out dotX);
+                FPVector3.Dot(ref upDirection, ref hullVertices.Elements[i], out dotY);
+                FPVector3.Dot(ref backDirection, ref hullVertices.Elements[i], out dotZ);
                 if (dotX < minX)
                 {
                     minX = dotX;
@@ -541,9 +541,9 @@ namespace BEPUphysics.CollisionShapes
             }
 
             //Incorporate the collision margin.
-            Vector3.Multiply(ref rightDirection, meshCollisionMargin / Fix64.Sqrt(rightDirection.Length()), out rightDirection);
-            Vector3.Multiply(ref upDirection, meshCollisionMargin / Fix64.Sqrt(upDirection.Length()), out upDirection);
-            Vector3.Multiply(ref backDirection, meshCollisionMargin / Fix64.Sqrt(backDirection.Length()), out backDirection);
+            FPVector3.Multiply(ref rightDirection, meshCollisionMargin / FP.Sqrt(rightDirection.Length()), out rightDirection);
+            FPVector3.Multiply(ref upDirection, meshCollisionMargin / FP.Sqrt(upDirection.Length()), out upDirection);
+            FPVector3.Multiply(ref backDirection, meshCollisionMargin / FP.Sqrt(backDirection.Length()), out backDirection);
 
             var rightElement = hullVertices.Elements[right];
             var leftElement = hullVertices.Elements[left];
@@ -551,12 +551,12 @@ namespace BEPUphysics.CollisionShapes
             var downElement = hullVertices.Elements[down];
             var backwardElement = hullVertices.Elements[backward];
             var forwardElement = hullVertices.Elements[forward];
-            Vector3.Add(ref rightElement, ref rightDirection, out rightElement);
-            Vector3.Subtract(ref leftElement, ref rightDirection, out leftElement);
-            Vector3.Add(ref upElement, ref upDirection, out upElement);
-            Vector3.Subtract(ref downElement, ref upDirection, out downElement);
-            Vector3.Add(ref backwardElement, ref backDirection, out backwardElement);
-            Vector3.Subtract(ref forwardElement, ref backDirection, out forwardElement);
+            FPVector3.Add(ref rightElement, ref rightDirection, out rightElement);
+            FPVector3.Subtract(ref leftElement, ref rightDirection, out leftElement);
+            FPVector3.Add(ref upElement, ref upDirection, out upElement);
+            FPVector3.Subtract(ref downElement, ref upDirection, out downElement);
+            FPVector3.Add(ref backwardElement, ref backDirection, out backwardElement);
+            FPVector3.Subtract(ref forwardElement, ref backDirection, out forwardElement);
 
             //Rather than transforming each axis independently (and doing three times as many operations as required), just get the 6 required values directly.
             TransformLocalExtremePoints(ref rightElement, ref upElement, ref backwardElement, ref o, out boundingBox.Max);
@@ -568,15 +568,15 @@ namespace BEPUphysics.CollisionShapes
         ///</summary>
         ///<param name="shapeTransform">Transform to apply to the shape during the bounding box calculation.</param>
         ///<param name="boundingBox">Bounding box containing the transformed mesh shape.</param>
-        public override void GetBoundingBox(ref RigidTransform shapeTransform, out BoundingBox boundingBox)
+        public override void GetBoundingBox(ref RigidTransform shapeTransform, out FPBoundingBox boundingBox)
         {
             //TODO: Could use an approximate bounding volume.  Would be cheaper at runtime and use less memory, though the box would be bigger.
             Matrix3x3 o;
             Matrix3x3.CreateFromQuaternion(ref shapeTransform.Orientation, out o);
             GetBoundingBox(ref o, out boundingBox);
 
-            Vector3.Add(ref boundingBox.Max, ref shapeTransform.Position, out boundingBox.Max);
-            Vector3.Add(ref boundingBox.Min, ref shapeTransform.Position, out boundingBox.Min);
+            FPVector3.Add(ref boundingBox.Max, ref shapeTransform.Position, out boundingBox.Max);
+            FPVector3.Add(ref boundingBox.Min, ref shapeTransform.Position, out boundingBox.Min);
 
         }
 
@@ -588,10 +588,10 @@ namespace BEPUphysics.CollisionShapes
         /// <param name="spaceTransform">Used as the frame of reference to compute the bounding box.
         /// In effect, the shape is transformed by the inverse of the space transform to compute its bounding box in local space.</param>
         /// <param name="boundingBox">Bounding box in the local space.</param>
-        public void GetLocalBoundingBox(ref RigidTransform shapeTransform, ref AffineTransform spaceTransform, out BoundingBox boundingBox)
+        public void GetLocalBoundingBox(ref RigidTransform shapeTransform, ref AffineTransform spaceTransform, out FPBoundingBox boundingBox)
         {
 #if !WINDOWS
-            boundingBox = new BoundingBox();
+            boundingBox = new FPBoundingBox();
 #endif
             //TODO: This method peforms quite a few sqrts because the collision margin can get scaled, and so cannot be applied as a final step.
             //There should be a better way to do this.
@@ -622,10 +622,10 @@ namespace BEPUphysics.CollisionShapes
         /// In effect, the shape is transformed by the inverse of the space transform to compute its bounding box in local space.</param>
         /// <param name="sweep">World space sweep direction to transform and add to the bounding box.</param>
         /// <param name="boundingBox">Bounding box in the local space.</param>
-        public void GetSweptLocalBoundingBox(ref RigidTransform shapeTransform, ref AffineTransform spaceTransform, ref Vector3 sweep, out BoundingBox boundingBox)
+        public void GetSweptLocalBoundingBox(ref RigidTransform shapeTransform, ref AffineTransform spaceTransform, ref FPVector3 sweep, out FPBoundingBox boundingBox)
         {
             GetLocalBoundingBox(ref shapeTransform, ref spaceTransform, out boundingBox);
-            Vector3 expansion;
+            FPVector3 expansion;
             Matrix3x3.TransformTranspose(ref sweep, ref spaceTransform.LinearTransform, out expansion);
             Toolbox.ExpandBoundingBox(ref boundingBox, ref expansion);
         }

@@ -111,7 +111,7 @@ namespace BEPUphysics.CollisionTests.Manifolds
         /// Updates the manifold.
         ///</summary>
         ///<param name="dt">Timestep duration.</param>
-        public abstract void Update(Fix64 dt);
+        public abstract void Update(FP dt);
 
         /// <summary>
         /// Clears the contacts associated with this manifold.

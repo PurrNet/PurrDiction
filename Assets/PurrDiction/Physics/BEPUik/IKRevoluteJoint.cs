@@ -6,12 +6,12 @@ namespace BEPUik
 {
     public class IKRevoluteJoint : IKJoint
     {
-        private Vector3 localFreeAxisA;
+        private FPVector3 localFreeAxisA;
         /// <summary>
         /// Gets or sets the free axis in connection A's local space.
         /// Must be unit length.
         /// </summary>
-        public Vector3 LocalFreeAxisA
+        public FPVector3 LocalFreeAxisA
         {
             get { return localFreeAxisA; }
             set
@@ -21,12 +21,12 @@ namespace BEPUik
             }
         }
 
-        private Vector3 localFreeAxisB;
+        private FPVector3 localFreeAxisB;
         /// <summary>
         /// Gets or sets the free axis in connection B's local space.
         /// Must be unit length.
         /// </summary>
-        public Vector3 LocalFreeAxisB
+        public FPVector3 LocalFreeAxisB
         {
             get { return localFreeAxisB; }
             set
@@ -42,12 +42,12 @@ namespace BEPUik
         /// Gets or sets the free axis attached to connection A in world space.
         /// This does not change the other connection's free axis.
         /// </summary>
-        public Vector3 WorldFreeAxisA
+        public FPVector3 WorldFreeAxisA
         {
-            get { return Quaternion.Transform(localFreeAxisA, ConnectionA.Orientation); }
+            get { return FPQuaternion.Transform(localFreeAxisA, ConnectionA.Orientation); }
             set
             {
-                LocalFreeAxisA = Quaternion.Transform(value, Quaternion.Conjugate(ConnectionA.Orientation));
+                LocalFreeAxisA = FPQuaternion.Transform(value, FPQuaternion.Conjugate(ConnectionA.Orientation));
             }
         }
 
@@ -55,51 +55,51 @@ namespace BEPUik
         /// Gets or sets the free axis attached to connection B in world space.
         /// This does not change the other connection's free axis.
         /// </summary>
-        public Vector3 WorldFreeAxisB
+        public FPVector3 WorldFreeAxisB
         {
-            get { return Quaternion.Transform(localFreeAxisB, ConnectionB.Orientation); }
+            get { return FPQuaternion.Transform(localFreeAxisB, ConnectionB.Orientation); }
             set
             {
-                LocalFreeAxisB = Quaternion.Transform(value, Quaternion.Conjugate(ConnectionB.Orientation));
+                LocalFreeAxisB = FPQuaternion.Transform(value, FPQuaternion.Conjugate(ConnectionB.Orientation));
             }
         }
 
-        private Vector3 localConstrainedAxis1, localConstrainedAxis2;
+        private FPVector3 localConstrainedAxis1, localConstrainedAxis2;
         void ComputeConstrainedAxes()
         {
-            Vector3 worldAxisA = WorldFreeAxisA;
-            Vector3 error = Vector3.Cross(worldAxisA, WorldFreeAxisB);
-            Fix64 lengthSquared = error.LengthSquared();
-            Vector3 worldConstrainedAxis1, worldConstrainedAxis2;
+            FPVector3 worldAxisA = WorldFreeAxisA;
+            FPVector3 error = FPVector3.Cross(worldAxisA, WorldFreeAxisB);
+            FP lengthSquared = error.LengthSquared();
+            FPVector3 worldConstrainedAxis1, worldConstrainedAxis2;
             //Find the first constrained axis.
             if (lengthSquared > Toolbox.Epsilon)
             {
                 //The error direction can be used as the first axis!
-                Vector3.Divide(ref error, Fix64.Sqrt(lengthSquared), out worldConstrainedAxis1);
+                FPVector3.Divide(ref error, FP.Sqrt(lengthSquared), out worldConstrainedAxis1);
             }
             else
             {
                 //There's not enough error for it to be a good constrained axis.
                 //We'll need to create the constrained axes arbitrarily.
-                Vector3.Cross(ref Toolbox.UpVector, ref worldAxisA, out worldConstrainedAxis1);
+                FPVector3.Cross(ref Toolbox.UpVector, ref worldAxisA, out worldConstrainedAxis1);
                 lengthSquared = worldConstrainedAxis1.LengthSquared();
                 if (lengthSquared > Toolbox.Epsilon)
                 {
                     //The up vector worked!
-                    Vector3.Divide(ref worldConstrainedAxis1, Fix64.Sqrt(lengthSquared), out worldConstrainedAxis1);
+                    FPVector3.Divide(ref worldConstrainedAxis1, FP.Sqrt(lengthSquared), out worldConstrainedAxis1);
                 }
                 else
                 {
                     //The up vector didn't work. Just try the right vector.
-                    Vector3.Cross(ref Toolbox.RightVector, ref worldAxisA, out worldConstrainedAxis1);
+                    FPVector3.Cross(ref Toolbox.RightVector, ref worldAxisA, out worldConstrainedAxis1);
                     worldConstrainedAxis1.Normalize();
                 }
             }
             //Don't have to normalize the second constraint axis; it's the cross product of two perpendicular normalized vectors.
-            Vector3.Cross(ref worldAxisA, ref worldConstrainedAxis1, out worldConstrainedAxis2);
+            FPVector3.Cross(ref worldAxisA, ref worldConstrainedAxis1, out worldConstrainedAxis2);
 
-            localConstrainedAxis1 = Quaternion.Transform(worldConstrainedAxis1, Quaternion.Conjugate(ConnectionA.Orientation));
-            localConstrainedAxis2 = Quaternion.Transform(worldConstrainedAxis2, Quaternion.Conjugate(ConnectionA.Orientation));
+            localConstrainedAxis1 = FPQuaternion.Transform(worldConstrainedAxis1, FPQuaternion.Conjugate(ConnectionA.Orientation));
+            localConstrainedAxis2 = FPQuaternion.Transform(worldConstrainedAxis2, FPQuaternion.Conjugate(ConnectionA.Orientation));
         }
 
         /// <summary>
@@ -110,7 +110,7 @@ namespace BEPUik
         /// <param name="connectionA">First entity connected in the orientation joint.</param>
         /// <param name="connectionB">Second entity connected in the orientation joint.</param>
         /// <param name="freeAxis">Axis allowed to rotate freely in world space.</param>
-        public IKRevoluteJoint(Bone connectionA, Bone connectionB, Vector3 freeAxis)
+        public IKRevoluteJoint(Bone connectionA, Bone connectionB, FPVector3 freeAxis)
             : base(connectionA, connectionB)
         {
             WorldFreeAxisA = freeAxis;
@@ -125,16 +125,16 @@ namespace BEPUik
             //We can grab one of the restricted axes using a cross product of the two world axes. This is not guaranteed
             //to be nonzero, so the normalization requires protection.
 
-            Vector3 worldAxisA, worldAxisB;
-            Quaternion.Transform(ref localFreeAxisA, ref ConnectionA.Orientation, out worldAxisA);
-            Quaternion.Transform(ref localFreeAxisB, ref ConnectionB.Orientation, out worldAxisB);
+            FPVector3 worldAxisA, worldAxisB;
+            FPQuaternion.Transform(ref localFreeAxisA, ref ConnectionA.Orientation, out worldAxisA);
+            FPQuaternion.Transform(ref localFreeAxisB, ref ConnectionB.Orientation, out worldAxisB);
 
-            Vector3 error;
-            Vector3.Cross(ref worldAxisA, ref worldAxisB, out error);
+            FPVector3 error;
+            FPVector3.Cross(ref worldAxisA, ref worldAxisB, out error);
 
-            Vector3 worldConstrainedAxis1, worldConstrainedAxis2;
-            Quaternion.Transform(ref localConstrainedAxis1, ref ConnectionA.Orientation, out worldConstrainedAxis1);
-            Quaternion.Transform(ref localConstrainedAxis2, ref ConnectionA.Orientation, out worldConstrainedAxis2);
+            FPVector3 worldConstrainedAxis1, worldConstrainedAxis2;
+            FPQuaternion.Transform(ref localConstrainedAxis1, ref ConnectionA.Orientation, out worldConstrainedAxis1);
+            FPQuaternion.Transform(ref localConstrainedAxis2, ref ConnectionA.Orientation, out worldConstrainedAxis2);
 
 
             angularJacobianA = new Matrix3x3
@@ -149,9 +149,9 @@ namespace BEPUik
             Matrix3x3.Negate(ref angularJacobianA, out angularJacobianB);
 
 
-            Vector2 constraintSpaceError;
-            Vector3.Dot(ref error, ref worldConstrainedAxis1, out constraintSpaceError.X);
-            Vector3.Dot(ref error, ref worldConstrainedAxis2, out constraintSpaceError.Y);
+            FPVector2 constraintSpaceError;
+            FPVector3.Dot(ref error, ref worldConstrainedAxis1, out constraintSpaceError.X);
+            FPVector3.Dot(ref error, ref worldConstrainedAxis2, out constraintSpaceError.Y);
             velocityBias.X = errorCorrectionFactor * constraintSpaceError.X;
             velocityBias.Y = errorCorrectionFactor * constraintSpaceError.Y;
 

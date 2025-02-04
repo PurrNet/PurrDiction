@@ -13,7 +13,7 @@ namespace BEPUphysics.CollisionTests
         /// <summary>
         /// Amount of penetration between the two objects.
         /// </summary>
-        public Fix64 PenetrationDepth;
+        public FP PenetrationDepth;
 
         /// <summary>
         /// Feature-based id used to match contacts from the previous frame to their current versions.
@@ -23,12 +23,12 @@ namespace BEPUphysics.CollisionTests
         /// <summary>
         /// Normal direction of the surface at the contact point.
         /// </summary>
-        public Vector3 Normal;
+        public FPVector3 Normal;
 
         /// <summary>
         /// Position of the contact point.
         /// </summary>
-        public Vector3 Position;
+        public FPVector3 Position;
 
         /// <summary>
         /// Creates a ContactData from an existing Contact.

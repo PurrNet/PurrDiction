@@ -12,16 +12,16 @@ namespace BEPUphysics.Constraints.TwoEntity.JointLimits
     public class EllipseSwingLimit : JointLimit, I1DImpulseConstraintWithError, I1DJacobianConstraint
     {
         private readonly JointBasis3D basis = new JointBasis3D();
-        private Fix64 accumulatedImpulse;
-        private Fix64 biasVelocity;
-        private Vector3 jacobianA, jacobianB;
-        private Fix64 error;
+        private FP accumulatedImpulse;
+        private FP biasVelocity;
+        private FPVector3 jacobianA, jacobianB;
+        private FP error;
 
-        private Vector3 localTwistAxisB;
-        private Fix64 maximumAngleX;
-        private Fix64 maximumAngleY;
-        private Vector3 worldTwistAxisB;
-        private Fix64 velocityToImpulse;
+        private FPVector3 localTwistAxisB;
+        private FP maximumAngleX;
+        private FP maximumAngleY;
+        private FPVector3 worldTwistAxisB;
+        private FP velocityToImpulse;
 
         /// <summary>
         /// Constructs a new swing limit.
@@ -47,7 +47,7 @@ namespace BEPUphysics.Constraints.TwoEntity.JointLimits
         /// The basis's x and y axis are automatically created from the twist axis.</param>
         /// <param name="maximumAngleX">Maximum angle of rotation around the basis X axis.</param>
         /// <param name="maximumAngleY">Maximum angle of rotation around the basis Y axis.</param>
-        public EllipseSwingLimit(Entity connectionA, Entity connectionB, Vector3 twistAxis, Fix64 maximumAngleX, Fix64 maximumAngleY)
+        public EllipseSwingLimit(Entity connectionA, Entity connectionB, FPVector3 twistAxis, FP maximumAngleX, FP maximumAngleY)
         {
             ConnectionA = connectionA;
             ConnectionB = connectionB;
@@ -84,7 +84,7 @@ namespace BEPUphysics.Constraints.TwoEntity.JointLimits
         /// Gets or sets the twist axis attached to entity B in its local space.
         /// The transformed twist axis will be used to determine the angles around entity A's basis axes.
         /// </summary>
-        public Vector3 LocalTwistAxisB
+        public FPVector3 LocalTwistAxisB
         {
             get { return localTwistAxisB; }
             set
@@ -98,7 +98,7 @@ namespace BEPUphysics.Constraints.TwoEntity.JointLimits
         /// Gets or sets the maximum angle of rotation around the x axis.
         /// This can be thought of as the major radius of the swing limit's ellipse.
         /// </summary>
-        public Fix64 MaximumAngleX
+        public FP MaximumAngleX
         {
             get { return maximumAngleX; }
             set { maximumAngleX = MathHelper.Clamp(value, Toolbox.BigEpsilon, MathHelper.Pi); }
@@ -108,7 +108,7 @@ namespace BEPUphysics.Constraints.TwoEntity.JointLimits
         /// Gets or sets the maximum angle of rotation around the y axis.
         /// This can be thought of as the minor radius of the swing limit's ellipse.
         /// </summary>
-        public Fix64 MaximumAngleY
+        public FP MaximumAngleY
         {
             get { return maximumAngleY; }
             set { maximumAngleY = MathHelper.Clamp(value, Toolbox.BigEpsilon, MathHelper.Pi); }
@@ -118,7 +118,7 @@ namespace BEPUphysics.Constraints.TwoEntity.JointLimits
         /// Gets or sets the twist axis attached to entity B in world space.
         /// The transformed twist axis will be used to determine the angles around entity A's basis axes.
         /// </summary>
-        public Vector3 TwistAxisB
+        public FPVector3 TwistAxisB
         {
             get { return worldTwistAxisB; }
             set
@@ -133,15 +133,15 @@ namespace BEPUphysics.Constraints.TwoEntity.JointLimits
         /// <summary>
         /// Gets the current relative velocity between the connected entities with respect to the constraint.
         /// </summary>
-        public Fix64 RelativeVelocity
+        public FP RelativeVelocity
         {
             get
             {
                 if (isLimitActive)
                 {
-                    Fix64 velocityA, velocityB;
-                    Vector3.Dot(ref connectionA.angularVelocity, ref jacobianA, out velocityA);
-                    Vector3.Dot(ref connectionB.angularVelocity, ref jacobianB, out velocityB);
+                    FP velocityA, velocityB;
+                    FPVector3.Dot(ref connectionA.angularVelocity, ref jacobianA, out velocityA);
+                    FPVector3.Dot(ref connectionB.angularVelocity, ref jacobianB, out velocityB);
                     return velocityA + velocityB;
                 }
                 return F64.C0;
@@ -152,7 +152,7 @@ namespace BEPUphysics.Constraints.TwoEntity.JointLimits
         /// <summary>
         /// Gets the total impulse applied by this constraint.
         /// </summary>
-        public Fix64 TotalImpulse
+        public FP TotalImpulse
         {
             get { return accumulatedImpulse; }
         }
@@ -160,7 +160,7 @@ namespace BEPUphysics.Constraints.TwoEntity.JointLimits
         /// <summary>
         /// Gets the current constraint error.
         /// </summary>
-        public Fix64 Error
+        public FP Error
         {
             get { return error; }
         }
@@ -173,7 +173,7 @@ namespace BEPUphysics.Constraints.TwoEntity.JointLimits
         /// Gets the linear jacobian entry for the first connected entity.
         /// </summary>
         /// <param name="jacobian">Linear jacobian entry for the first connected entity.</param>
-        public void GetLinearJacobianA(out Vector3 jacobian)
+        public void GetLinearJacobianA(out FPVector3 jacobian)
         {
             jacobian = Toolbox.ZeroVector;
         }
@@ -182,7 +182,7 @@ namespace BEPUphysics.Constraints.TwoEntity.JointLimits
         /// Gets the linear jacobian entry for the second connected entity.
         /// </summary>
         /// <param name="jacobian">Linear jacobian entry for the second connected entity.</param>
-        public void GetLinearJacobianB(out Vector3 jacobian)
+        public void GetLinearJacobianB(out FPVector3 jacobian)
         {
             jacobian = Toolbox.ZeroVector;
         }
@@ -191,7 +191,7 @@ namespace BEPUphysics.Constraints.TwoEntity.JointLimits
         /// Gets the angular jacobian entry for the first connected entity.
         /// </summary>
         /// <param name="jacobian">Angular jacobian entry for the first connected entity.</param>
-        public void GetAngularJacobianA(out Vector3 jacobian)
+        public void GetAngularJacobianA(out FPVector3 jacobian)
         {
             jacobian = jacobianA;
         }
@@ -200,7 +200,7 @@ namespace BEPUphysics.Constraints.TwoEntity.JointLimits
         /// Gets the angular jacobian entry for the second connected entity.
         /// </summary>
         /// <param name="jacobian">Angular jacobian entry for the second connected entity.</param>
-        public void GetAngularJacobianB(out Vector3 jacobian)
+        public void GetAngularJacobianB(out FPVector3 jacobian)
         {
             jacobian = jacobianB;
         }
@@ -209,7 +209,7 @@ namespace BEPUphysics.Constraints.TwoEntity.JointLimits
         /// Gets the mass matrix of the constraint.
         /// </summary>
         /// <param name="outputMassMatrix">Constraint's mass matrix.</param>
-        public void GetMassMatrix(out Fix64 outputMassMatrix)
+        public void GetMassMatrix(out FP outputMassMatrix)
         {
             outputMassMatrix = velocityToImpulse;
         }
@@ -220,19 +220,19 @@ namespace BEPUphysics.Constraints.TwoEntity.JointLimits
         /// Sets up the joint transforms by automatically creating perpendicular vectors to complete the bases.
         /// </summary>
         /// <param name="twistAxis">Axis around which rotation is allowed.</param>
-        public void SetupJointTransforms(Vector3 twistAxis)
+        public void SetupJointTransforms(FPVector3 twistAxis)
         {
             //Compute a vector which is perpendicular to the axis.  It'll be added in local space to both connections.
-            Vector3 xAxis;
-            Vector3.Cross(ref twistAxis, ref Toolbox.UpVector, out xAxis);
-            Fix64 length = xAxis.LengthSquared();
+            FPVector3 xAxis;
+            FPVector3.Cross(ref twistAxis, ref Toolbox.UpVector, out xAxis);
+            FP length = xAxis.LengthSquared();
             if (length < Toolbox.Epsilon)
             {
-                Vector3.Cross(ref twistAxis, ref Toolbox.RightVector, out xAxis);
+                FPVector3.Cross(ref twistAxis, ref Toolbox.RightVector, out xAxis);
             }
 
-            Vector3 yAxis;
-            Vector3.Cross(ref twistAxis, ref xAxis, out yAxis);
+            FPVector3 yAxis;
+            FPVector3.Cross(ref twistAxis, ref xAxis, out yAxis);
 
             //Put the axes into the joint transform of A.
             basis.rotationMatrix = connectionA.orientationMatrix;
@@ -248,7 +248,7 @@ namespace BEPUphysics.Constraints.TwoEntity.JointLimits
         /// Performs the frame's configuration step.
         ///</summary>
         ///<param name="dt">Timestep duration.</param>
-        public override void Update(Fix64 dt)
+        public override void Update(FP dt)
         {
             //Transform the axes into world space.
             basis.rotationMatrix = connectionA.orientationMatrix;
@@ -256,14 +256,14 @@ namespace BEPUphysics.Constraints.TwoEntity.JointLimits
             Matrix3x3.Transform(ref localTwistAxisB, ref connectionB.orientationMatrix, out worldTwistAxisB);
 
             //Compute the individual swing angles.
-            Quaternion relativeRotation;
-            Quaternion.GetQuaternionBetweenNormalizedVectors(ref worldTwistAxisB, ref basis.primaryAxis, out relativeRotation);
-            Vector3 axis;
-            Fix64 angle;
-            Quaternion.GetAxisAngleFromQuaternion(ref relativeRotation, out axis, out angle);
+            FPQuaternion relativeRotation;
+            FPQuaternion.GetQuaternionBetweenNormalizedVectors(ref worldTwistAxisB, ref basis.primaryAxis, out relativeRotation);
+            FPVector3 axis;
+            FP angle;
+            FPQuaternion.GetAxisAngleFromQuaternion(ref relativeRotation, out axis, out angle);
 
 #if !WINDOWS
-            Vector3 axisAngle = new Vector3();
+            FPVector3 axisAngle = new FPVector3();
 #else
             Vector3 axisAngle;
 #endif
@@ -275,15 +275,15 @@ namespace BEPUphysics.Constraints.TwoEntity.JointLimits
             axisAngle.Y = axis.Y * angle;
             axisAngle.Z = axis.Z * angle;
 
-            Fix64 angleX;
-            Vector3.Dot(ref axisAngle, ref basis.xAxis, out angleX);
-            Fix64 angleY;
-            Vector3.Dot(ref axisAngle, ref basis.yAxis, out angleY);
+            FP angleX;
+            FPVector3.Dot(ref axisAngle, ref basis.xAxis, out angleX);
+            FP angleY;
+            FPVector3.Dot(ref axisAngle, ref basis.yAxis, out angleY);
 
 
             //The position constraint states that the angles must be within an ellipse. The following is just a reorganization of the x^2 / a^2 + y^2 / b^2 <= 1 definition of an ellipse's area.
-            Fix64 maxAngleXSquared = maximumAngleX * maximumAngleX;
-            Fix64 maxAngleYSquared = maximumAngleY * maximumAngleY;
+            FP maxAngleXSquared = maximumAngleX * maximumAngleX;
+            FP maxAngleYSquared = maximumAngleY * maximumAngleY;
             error = angleX * angleX * maxAngleYSquared + angleY * angleY * maxAngleXSquared - maxAngleXSquared * maxAngleYSquared;
 
             if (error < F64.C0)
@@ -314,7 +314,7 @@ namespace BEPUphysics.Constraints.TwoEntity.JointLimits
 
             //The jacobian is implemented by first considering the local values (2x / a^2) and (2y / b^2).
 #if !WINDOWS
-            Vector2 tangent = new Vector2();
+            FPVector2 tangent = new FPVector2();
 #else
             Vector2 tangent;
 #endif
@@ -324,22 +324,22 @@ namespace BEPUphysics.Constraints.TwoEntity.JointLimits
             //The tangent is then taken into world space using the basis.
 
             //Create a rotation which swings our basis 'out' to b's world orientation.
-            Quaternion.Conjugate(ref relativeRotation, out relativeRotation);
-            Vector3 sphereTangentX, sphereTangentY;
-            Quaternion.Transform(ref basis.xAxis, ref relativeRotation, out sphereTangentX);
-            Quaternion.Transform(ref basis.yAxis, ref relativeRotation, out sphereTangentY);
+            FPQuaternion.Conjugate(ref relativeRotation, out relativeRotation);
+            FPVector3 sphereTangentX, sphereTangentY;
+            FPQuaternion.Transform(ref basis.xAxis, ref relativeRotation, out sphereTangentX);
+            FPQuaternion.Transform(ref basis.yAxis, ref relativeRotation, out sphereTangentY);
 
-            Vector3.Multiply(ref sphereTangentX, tangent.X, out jacobianA); //not actually jA, just storing it there.
-            Vector3.Multiply(ref sphereTangentY, tangent.Y, out jacobianB); //not actually jB, just storing it there.
-            Vector3.Add(ref jacobianA, ref jacobianB, out jacobianA);
+            FPVector3.Multiply(ref sphereTangentX, tangent.X, out jacobianA); //not actually jA, just storing it there.
+            FPVector3.Multiply(ref sphereTangentY, tangent.Y, out jacobianB); //not actually jB, just storing it there.
+            FPVector3.Add(ref jacobianA, ref jacobianB, out jacobianA);
 
             jacobianB.X = -jacobianA.X;
             jacobianB.Y = -jacobianA.Y;
             jacobianB.Z = -jacobianA.Z;
 
 
-            Fix64 errorReduction;
-            Fix64 inverseDt = F64.C1 / dt;
+            FP errorReduction;
+            FP inverseDt = F64.C1 / dt;
             springSettings.ComputeErrorReductionAndSoftness(dt, inverseDt, out errorReduction, out softness);
 
             //Compute the error correcting velocity
@@ -349,11 +349,11 @@ namespace BEPUphysics.Constraints.TwoEntity.JointLimits
 
             if (bounciness > F64.C0)
             {
-                Fix64 relativeVelocity;
-                Fix64 dot;
+                FP relativeVelocity;
+                FP dot;
                 //Find the velocity contribution from each connection
-                Vector3.Dot(ref connectionA.angularVelocity, ref jacobianA, out relativeVelocity);
-                Vector3.Dot(ref connectionB.angularVelocity, ref jacobianB, out dot);
+                FPVector3.Dot(ref connectionA.angularVelocity, ref jacobianA, out relativeVelocity);
+                FPVector3.Dot(ref connectionB.angularVelocity, ref jacobianB, out dot);
                 relativeVelocity += dot;
                 biasVelocity = MathHelper.Max(biasVelocity, ComputeBounceVelocity(relativeVelocity));
 
@@ -363,22 +363,22 @@ namespace BEPUphysics.Constraints.TwoEntity.JointLimits
 
             //****** EFFECTIVE MASS MATRIX ******//
             //Connection A's contribution to the mass matrix
-            Fix64 entryA;
-            Vector3 transformedAxis;
+            FP entryA;
+            FPVector3 transformedAxis;
             if (connectionA.isDynamic)
             {
                 Matrix3x3.Transform(ref jacobianA, ref connectionA.inertiaTensorInverse, out transformedAxis);
-                Vector3.Dot(ref transformedAxis, ref jacobianA, out entryA);
+                FPVector3.Dot(ref transformedAxis, ref jacobianA, out entryA);
             }
             else
                 entryA = F64.C0;
 
             //Connection B's contribution to the mass matrix
-            Fix64 entryB;
+            FP entryB;
             if (connectionB.isDynamic)
             {
                 Matrix3x3.Transform(ref jacobianB, ref connectionB.inertiaTensorInverse, out transformedAxis);
-                Vector3.Dot(ref transformedAxis, ref jacobianB, out entryB);
+                FPVector3.Dot(ref transformedAxis, ref jacobianB, out entryB);
             }
             else
                 entryB = F64.C0;
@@ -399,15 +399,15 @@ namespace BEPUphysics.Constraints.TwoEntity.JointLimits
         {
             //****** WARM STARTING ******//
             //Apply accumulated impulse
-            Vector3 impulse;
+            FPVector3 impulse;
             if (connectionA.isDynamic)
             {
-                Vector3.Multiply(ref jacobianA, accumulatedImpulse, out impulse);
+                FPVector3.Multiply(ref jacobianA, accumulatedImpulse, out impulse);
                 connectionA.ApplyAngularImpulse(ref impulse);
             }
             if (connectionB.isDynamic)
             {
-                Vector3.Multiply(ref jacobianB, accumulatedImpulse, out impulse);
+                FPVector3.Multiply(ref jacobianB, accumulatedImpulse, out impulse);
                 connectionB.ApplyAngularImpulse(ref impulse);
             }
         }
@@ -416,37 +416,37 @@ namespace BEPUphysics.Constraints.TwoEntity.JointLimits
         /// Computes one iteration of the constraint to meet the solver updateable's goal.
         /// </summary>
         /// <returns>The rough applied impulse magnitude.</returns>
-        public override Fix64 SolveIteration()
+        public override FP SolveIteration()
         {
-            Fix64 velocityA, velocityB;
+            FP velocityA, velocityB;
             //Find the velocity contribution from each connection
-            Vector3.Dot(ref connectionA.angularVelocity, ref jacobianA, out velocityA);
-            Vector3.Dot(ref connectionB.angularVelocity, ref jacobianB, out velocityB);
+            FPVector3.Dot(ref connectionA.angularVelocity, ref jacobianA, out velocityA);
+            FPVector3.Dot(ref connectionB.angularVelocity, ref jacobianB, out velocityB);
             //Add in the constraint space bias velocity
-            Fix64 lambda = (-velocityA - velocityB) - biasVelocity - softness * accumulatedImpulse;
+            FP lambda = (-velocityA - velocityB) - biasVelocity - softness * accumulatedImpulse;
 
             //Transform to an impulse
             lambda *= velocityToImpulse;
 
             //Clamp accumulated impulse (can't go negative)
-            Fix64 previousAccumulatedImpulse = accumulatedImpulse;
+            FP previousAccumulatedImpulse = accumulatedImpulse;
             accumulatedImpulse = MathHelper.Min(accumulatedImpulse + lambda, F64.C0);
             lambda = accumulatedImpulse - previousAccumulatedImpulse;
 
             //Apply the impulse
-            Vector3 impulse;
+            FPVector3 impulse;
             if (connectionA.isDynamic)
             {
-                Vector3.Multiply(ref jacobianA, lambda, out impulse);
+                FPVector3.Multiply(ref jacobianA, lambda, out impulse);
                 connectionA.ApplyAngularImpulse(ref impulse);
             }
             if (connectionB.isDynamic)
             {
-                Vector3.Multiply(ref jacobianB, lambda, out impulse);
+                FPVector3.Multiply(ref jacobianB, lambda, out impulse);
                 connectionB.ApplyAngularImpulse(ref impulse);
             }
 
-            return (Fix64.Abs(lambda));
+            return (FP.Abs(lambda));
         }
 
     }

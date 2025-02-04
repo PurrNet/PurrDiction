@@ -13,7 +13,7 @@ namespace BEPUphysics.DataStructures
         ///</summary>
         ///<param name="vertices">Vertices to use in the data.</param>
         ///<param name="indices">Indices to use in the data.</param>
-        public StaticMeshData(Vector3[] vertices, int[] indices)
+        public StaticMeshData(FPVector3[] vertices, int[] indices)
         {
             Vertices = vertices;
             Indices = indices;
@@ -27,7 +27,7 @@ namespace BEPUphysics.DataStructures
         ///<param name="v1">First vertex of the triangle.</param>
         ///<param name="v2">Second vertex of the triangle.</param>
         ///<param name="v3">Third vertex of the triangle.</param>
-        public override void GetTriangle(int triangleIndex, out Vector3 v1, out Vector3 v2, out Vector3 v3)
+        public override void GetTriangle(int triangleIndex, out FPVector3 v1, out FPVector3 v2, out FPVector3 v3)
         {
             v1 = vertices[indices[triangleIndex]];
             v2 = vertices[indices[triangleIndex + 1]];
@@ -40,7 +40,7 @@ namespace BEPUphysics.DataStructures
         ///</summary>
         ///<param name="i">Index of the vertex.</param>
         ///<param name="vertex">Position of the vertex.</param>
-        public override void GetVertexPosition(int i, out Vector3 vertex)
+        public override void GetVertexPosition(int i, out FPVector3 vertex)
         {
             vertex = vertices[i];
         }

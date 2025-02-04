@@ -19,7 +19,7 @@ namespace BEPUutilities
         /// <param name="points">List of points in the set.</param>
         /// <param name="outputTriangleIndices">List of indices into the input point set composing the triangulated surface of the convex hull.
         /// Each group of 3 indices represents a triangle on the surface of the hull.</param>
-        public static void GetConvexHull(IList<Vector3> points, IList<int> outputTriangleIndices)
+        public static void GetConvexHull(IList<FPVector3> points, IList<int> outputTriangleIndices)
         {
             var rawPoints = CommonResources.GetVectorList();
             var rawIndices = CommonResources.GetIntList();
@@ -38,7 +38,7 @@ namespace BEPUutilities
         /// </summary>
         /// <param name="points">List of points in the set.</param>
         /// <param name="outputSurfacePoints">Unique points on the surface of the convex hull.</param>
-        public static void GetConvexHull(IList<Vector3> points, IList<Vector3> outputSurfacePoints)
+        public static void GetConvexHull(IList<FPVector3> points, IList<FPVector3> outputSurfacePoints)
         {
             var rawPoints = CommonResources.GetVectorList();
             rawPoints.AddRange(points);
@@ -51,7 +51,7 @@ namespace BEPUutilities
         /// </summary>
         /// <param name="points">List of points in the set.</param>
         /// <param name="outputSurfacePoints">Unique points on the surface of the convex hull.</param>
-        public static void GetConvexHull(RawList<Vector3> points, IList<Vector3> outputSurfacePoints)
+        public static void GetConvexHull(RawList<FPVector3> points, IList<FPVector3> outputSurfacePoints)
         {
             var indices = CommonResources.GetIntList();
             GetConvexHull(points, indices, outputSurfacePoints);
@@ -65,7 +65,7 @@ namespace BEPUutilities
         /// <param name="outputTriangleIndices">List of indices into the input point set composing the triangulated surface of the convex hull.
         /// Each group of 3 indices represents a triangle on the surface of the hull.</param>
         /// <param name="outputSurfacePoints">Unique points on the surface of the convex hull.</param>
-        public static void GetConvexHull(IList<Vector3> points, IList<int> outputTriangleIndices, IList<Vector3> outputSurfacePoints)
+        public static void GetConvexHull(IList<FPVector3> points, IList<int> outputTriangleIndices, IList<FPVector3> outputSurfacePoints)
         {
             var rawPoints = CommonResources.GetVectorList();
             var rawIndices = CommonResources.GetIntList();
@@ -86,7 +86,7 @@ namespace BEPUutilities
         /// <param name="outputTriangleIndices">List of indices into the input point set composing the triangulated surface of the convex hull.
         /// Each group of 3 indices represents a triangle on the surface of the hull.</param>
         /// <param name="outputSurfacePoints">Unique points on the surface of the convex hull.</param>
-        public static void GetConvexHull(RawList<Vector3> points, RawList<int> outputTriangleIndices, IList<Vector3> outputSurfacePoints)
+        public static void GetConvexHull(RawList<FPVector3> points, RawList<int> outputTriangleIndices, IList<FPVector3> outputSurfacePoints)
         {
             GetConvexHull(points, outputTriangleIndices);
 
@@ -112,7 +112,7 @@ namespace BEPUutilities
         /// <param name="points">List of points in the set.</param>
         /// <param name="outputTriangleIndices">List of indices into the input point set composing the triangulated surface of the convex hull.
         /// Each group of 3 indices represents a triangle on the surface of the hull.</param>
-        public static void GetConvexHull(RawList<Vector3> points, RawList<int> outputTriangleIndices)
+        public static void GetConvexHull(RawList<FPVector3> points, RawList<int> outputTriangleIndices)
         {
             if (points.Count == 0)
             {
@@ -127,7 +127,7 @@ namespace BEPUutilities
             //final convex hull.  We can use this point to calibrate the winding of triangles.
             //A set of outside point candidates (all points other than those composing the tetrahedron) will be returned in the outsidePoints list.
             //That list will then be further pruned by the RemoveInsidePoints call.
-            Vector3 insidePoint;
+            FPVector3 insidePoint;
             ComputeInitialTetrahedron(points, outsidePoints, outputTriangleIndices, out insidePoint);
 
             //Compute outside points.
@@ -144,19 +144,19 @@ namespace BEPUutilities
                 for (int k = 0; k < outputTriangleIndices.Count; k += 3)
                 {
                     //Find the normal of the triangle
-                    Vector3 normal;
+                    FPVector3 normal;
                     FindNormal(outputTriangleIndices, points, k, out normal);
 
                     //Get the furthest point in the direction of the normal.
                     int maxIndexInOutsideList = GetExtremePoint(ref normal, points, outsidePoints);
                     int maxIndex = outsidePoints.Elements[maxIndexInOutsideList];
-                    Vector3 maximum = points.Elements[maxIndex];
+                    FPVector3 maximum = points.Elements[maxIndex];
 
                     //If the point is beyond the current triangle, continue.
-                    Vector3 offset;
-                    Vector3.Subtract(ref maximum, ref points.Elements[outputTriangleIndices.Elements[k]], out offset);
-					Fix64 dot;
-                    Vector3.Dot(ref normal, ref offset, out dot);
+                    FPVector3 offset;
+                    FPVector3.Subtract(ref maximum, ref points.Elements[outputTriangleIndices.Elements[k]], out offset);
+					FP dot;
+                    FPVector3.Dot(ref normal, ref offset, out dot);
                     if (dot > F64.C0)
                     {
                         //It's been picked! Remove the maximum point from the outside.
@@ -238,14 +238,14 @@ namespace BEPUutilities
             }
         }
 
-        private static int GetExtremePoint(ref Vector3 direction, RawList<Vector3> points, RawList<int> outsidePoints)
+        private static int GetExtremePoint(ref FPVector3 direction, RawList<FPVector3> points, RawList<int> outsidePoints)
         {
-            Fix64 maximumDot = -Fix64.MaxValue;
+            FP maximumDot = -FP.MaxValue;
             int extremeIndex = 0;
             for (int i = 0; i < outsidePoints.Count; ++i)
             {
-                Fix64 dot;
-                Vector3.Dot(ref points.Elements[outsidePoints[i]], ref direction, out dot);
+                FP dot;
+                FPVector3.Dot(ref points.Elements[outsidePoints[i]], ref direction, out dot);
                 if (dot > maximumDot)
                 {
                     maximumDot = dot;
@@ -255,18 +255,18 @@ namespace BEPUutilities
             return extremeIndex;
         }
 
-        private static void GetExtremePoints(ref Vector3 direction, RawList<Vector3> points, out Fix64 maximumDot, out Fix64 minimumDot, out int maximumIndex, out int minimumIndex)
+        private static void GetExtremePoints(ref FPVector3 direction, RawList<FPVector3> points, out FP maximumDot, out FP minimumDot, out int maximumIndex, out int minimumIndex)
         {
             maximumIndex = 0;
             minimumIndex = 0;
 
-            Fix64 dot;
-            Vector3.Dot(ref points.Elements[0], ref direction, out dot);
+            FP dot;
+            FPVector3.Dot(ref points.Elements[0], ref direction, out dot);
             minimumDot = dot;
             maximumDot = dot;
             for (int i = 1; i < points.Count; ++i)
             {
-                Vector3.Dot(ref points.Elements[i], ref direction, out dot);
+                FPVector3.Dot(ref points.Elements[i], ref direction, out dot);
                 if (dot > maximumDot)
                 {
                     maximumDot = dot;
@@ -280,14 +280,14 @@ namespace BEPUutilities
             }
         }
 
-        private static void ComputeInitialTetrahedron(RawList<Vector3> points, RawList<int> outsidePointCandidates, RawList<int> triangleIndices, out Vector3 centroid)
+        private static void ComputeInitialTetrahedron(RawList<FPVector3> points, RawList<int> outsidePointCandidates, RawList<int> triangleIndices, out FPVector3 centroid)
         {
             //Find four points on the hull.
             //We'll start with using the x axis to identify two points on the hull.
             int a, b, c, d;
-            Vector3 direction;
+            FPVector3 direction;
             //Find the extreme points along the x axis.
-            Fix64 minimumX = Fix64.MaxValue, maximumX = -Fix64.MaxValue;
+            FP minimumX = FP.MaxValue, maximumX = -FP.MaxValue;
             int minimumXIndex = 0, maximumXIndex = 0;
             for (int i = 0; i < points.Count; ++i)
             {
@@ -310,19 +310,19 @@ namespace BEPUutilities
                 throw new ArgumentException("Point set is degenerate; convex hulls must have volume.");
 
             //Now, use a second axis perpendicular to the two points we found.
-            Vector3 ab;
-            Vector3.Subtract(ref points.Elements[b], ref points.Elements[a], out ab);
-            Vector3.Cross(ref ab, ref Toolbox.UpVector, out direction);
+            FPVector3 ab;
+            FPVector3.Subtract(ref points.Elements[b], ref points.Elements[a], out ab);
+            FPVector3.Cross(ref ab, ref Toolbox.UpVector, out direction);
             if (direction.LengthSquared() < Toolbox.Epsilon)
-                Vector3.Cross(ref ab, ref Toolbox.RightVector, out direction);
-            Fix64 minimumDot, maximumDot;
+                FPVector3.Cross(ref ab, ref Toolbox.RightVector, out direction);
+            FP minimumDot, maximumDot;
             int minimumIndex, maximumIndex;
             GetExtremePoints(ref direction, points, out maximumDot, out minimumDot, out maximumIndex, out minimumIndex);
             //Compare the location of the extreme points to the location of the axis.
-            Fix64 dot;
-            Vector3.Dot(ref direction, ref points.Elements[a], out dot);
+            FP dot;
+            FPVector3.Dot(ref direction, ref points.Elements[a], out dot);
             //Use the point further from the axis.
-            if (Fix64.Abs(dot - minimumDot) > Fix64.Abs(dot - maximumDot))
+            if (FP.Abs(dot - minimumDot) > FP.Abs(dot - maximumDot))
             {
                 //In this case, we should use the minimum index.
                 c = minimumIndex;
@@ -338,15 +338,15 @@ namespace BEPUutilities
                 throw new ArgumentException("Point set is degenerate; convex hulls must have volume.");
 
             //Use a third axis perpendicular to the plane defined by the three unique points a, b, and c.
-            Vector3 ac;
-            Vector3.Subtract(ref points.Elements[c], ref points.Elements[a], out ac);
-            Vector3.Cross(ref ab, ref ac, out direction);
+            FPVector3 ac;
+            FPVector3.Subtract(ref points.Elements[c], ref points.Elements[a], out ac);
+            FPVector3.Cross(ref ab, ref ac, out direction);
 
             GetExtremePoints(ref direction, points, out maximumDot, out minimumDot, out maximumIndex, out minimumIndex);
             //Compare the location of the extreme points to the location of the plane.
-            Vector3.Dot(ref direction, ref points.Elements[a], out dot);
+            FPVector3.Dot(ref direction, ref points.Elements[a], out dot);
             //Use the point further from the plane. 
-            if (Fix64.Abs(dot - minimumDot) > Fix64.Abs(dot - maximumDot))
+            if (FP.Abs(dot - minimumDot) > FP.Abs(dot - maximumDot))
             {
                 //In this case, we should use the minimum index.
                 d = minimumIndex;
@@ -379,10 +379,10 @@ namespace BEPUutilities
             triangleIndices.Add(d);
 
             //The centroid is guaranteed to be within the convex hull.  It will be used to verify the windings of triangles throughout the hull process.
-            Vector3.Add(ref points.Elements[a], ref points.Elements[b], out centroid);
-            Vector3.Add(ref centroid, ref points.Elements[c], out centroid);
-            Vector3.Add(ref centroid, ref points.Elements[d], out centroid);
-            Vector3.Multiply(ref centroid, F64.C0p25, out centroid);
+            FPVector3.Add(ref points.Elements[a], ref points.Elements[b], out centroid);
+            FPVector3.Add(ref centroid, ref points.Elements[c], out centroid);
+            FPVector3.Add(ref centroid, ref points.Elements[d], out centroid);
+            FPVector3.Multiply(ref centroid, F64.C0p25, out centroid);
 
             for (int i = 0; i < triangleIndices.Count; i += 3)
             {
@@ -391,16 +391,16 @@ namespace BEPUutilities
                 var vC = points.Elements[triangleIndices.Elements[i + 2]];
 
                 //Check the signed volume of a parallelepiped with the edges of this triangle and the centroid.
-                Vector3 cross;
-                Vector3.Subtract(ref vB, ref vA, out ab);
-                Vector3.Subtract(ref vC, ref vA, out ac);
-                Vector3.Cross(ref ac, ref ab, out cross);
-                Vector3 offset;
-                Vector3.Subtract(ref vA, ref centroid, out offset);
-                Fix64 volume;
-                Vector3.Dot(ref offset, ref cross, out volume);
+                FPVector3 cross;
+                FPVector3.Subtract(ref vB, ref vA, out ab);
+                FPVector3.Subtract(ref vC, ref vA, out ac);
+                FPVector3.Cross(ref ac, ref ab, out cross);
+                FPVector3 offset;
+                FPVector3.Subtract(ref vA, ref centroid, out offset);
+                FP volume;
+                FPVector3.Dot(ref offset, ref cross, out volume);
                 //This volume/cross product could also be used to check for degeneracy, but we already tested for that.
-                if (Fix64.Abs(volume) < Toolbox.BigEpsilon)
+                if (FP.Abs(volume) < Toolbox.BigEpsilon)
                 {
                     throw new ArgumentException("Point set is degenerate; convex hulls must have volume.");
                 }
@@ -438,7 +438,7 @@ namespace BEPUutilities
             CommonResources.GiveBack(tetrahedronIndices);
         }
 
-        private static void RemoveInsidePoints(RawList<Vector3> points, RawList<int> triangleIndices, RawList<int> outsidePoints)
+        private static void RemoveInsidePoints(RawList<FPVector3> points, RawList<int> triangleIndices, RawList<int> outsidePoints)
         {
             var insidePoints = CommonResources.GetIntList();
             //We're going to remove points from this list as we go to prune it down to the truly inner points.
@@ -448,18 +448,18 @@ namespace BEPUutilities
             for (int i = 0; i < triangleIndices.Count && insidePoints.Count > 0; i += 3)
             {
                 //Compute the triangle's plane in point-normal representation to test other points against.
-                Vector3 normal;
+                FPVector3 normal;
                 FindNormal(triangleIndices, points, i, out normal);
-                Vector3 p = points.Elements[triangleIndices.Elements[i]];
+                FPVector3 p = points.Elements[triangleIndices.Elements[i]];
 
                 for (int j = insidePoints.Count - 1; j >= 0; --j)
                 {
                     //Offset from the triangle to the current point, tested against the normal, determines if the current point is visible
                     //from the triangle face.
-                    Vector3 offset;
-                    Vector3.Subtract(ref points.Elements[insidePoints.Elements[j]], ref p, out offset);
-                    Fix64 dot;
-                    Vector3.Dot(ref offset, ref normal, out dot);
+                    FPVector3 offset;
+                    FPVector3.Subtract(ref points.Elements[insidePoints.Elements[j]], ref p, out offset);
+                    FP dot;
+                    FPVector3.Dot(ref offset, ref normal, out dot);
                     //If it's visible, then it's outside!
                     if (dot > F64.C0)
                     {
@@ -473,33 +473,33 @@ namespace BEPUutilities
         }
 
 
-        private static void FindNormal(RawList<int> indices, RawList<Vector3> points, int triangleIndex, out Vector3 normal)
+        private static void FindNormal(RawList<int> indices, RawList<FPVector3> points, int triangleIndex, out FPVector3 normal)
         {
             var a = points.Elements[indices.Elements[triangleIndex]];
-            Vector3 ab, ac;
-            Vector3.Subtract(ref points.Elements[indices.Elements[triangleIndex + 1]], ref a, out ab);
-            Vector3.Subtract(ref points.Elements[indices.Elements[triangleIndex + 2]], ref a, out ac);
-            Vector3.Cross(ref ac, ref ab, out normal);
+            FPVector3 ab, ac;
+            FPVector3.Subtract(ref points.Elements[indices.Elements[triangleIndex + 1]], ref a, out ab);
+            FPVector3.Subtract(ref points.Elements[indices.Elements[triangleIndex + 2]], ref a, out ac);
+            FPVector3.Cross(ref ac, ref ab, out normal);
         }
 
-        private static bool IsTriangleVisibleFromPoint(RawList<int> indices, RawList<Vector3> points, int triangleIndex, ref Vector3 point)
+        private static bool IsTriangleVisibleFromPoint(RawList<int> indices, RawList<FPVector3> points, int triangleIndex, ref FPVector3 point)
         {
             //Compute the normal of the triangle.
             var a = points.Elements[indices.Elements[triangleIndex]];
-            Vector3 ab, ac;
-            Vector3.Subtract(ref points.Elements[indices.Elements[triangleIndex + 1]], ref a, out ab);
-            Vector3.Subtract(ref points.Elements[indices.Elements[triangleIndex + 2]], ref a, out ac);
-            Vector3 normal;
-            Vector3.Cross(ref ac, ref ab, out normal);
+            FPVector3 ab, ac;
+            FPVector3.Subtract(ref points.Elements[indices.Elements[triangleIndex + 1]], ref a, out ab);
+            FPVector3.Subtract(ref points.Elements[indices.Elements[triangleIndex + 2]], ref a, out ac);
+            FPVector3 normal;
+            FPVector3.Cross(ref ac, ref ab, out normal);
             //Assume a consistent winding.  Check to see if the normal points at the point.
-            Vector3 offset;
-            Vector3.Subtract(ref point, ref a, out offset);
-            Fix64 dot;
-            Vector3.Dot(ref offset, ref normal, out dot);
+            FPVector3 offset;
+            FPVector3.Subtract(ref point, ref a, out offset);
+            FP dot;
+            FPVector3.Dot(ref offset, ref normal, out dot);
             return dot >= F64.C0;
         }
 
-        private static void VerifyWindings(RawList<int> newIndices, RawList<Vector3> points, ref Vector3 centroid)
+        private static void VerifyWindings(RawList<int> newIndices, RawList<FPVector3> points, ref FPVector3 centroid)
         {
             //Go through every triangle.
             for (int k = 0; k < newIndices.Count; k += 3)

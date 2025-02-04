@@ -15,7 +15,7 @@ namespace BEPUphysics.NarrowPhaseSystems.Pairs
         /// Updates the collision between the broad phase entries.
         ///</summary>
         ///<param name="dt">Timestep duration.</param>
-        public abstract void UpdateCollision(Fix64 dt);
+        public abstract void UpdateCollision(FP dt);
 
         ///<summary>
         /// Gets or sets whether or not the pair needs to be updated.

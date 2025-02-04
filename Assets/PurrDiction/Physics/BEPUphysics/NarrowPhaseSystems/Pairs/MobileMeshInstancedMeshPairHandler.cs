@@ -38,18 +38,18 @@ namespace BEPUphysics.NarrowPhaseSystems.Pairs
             Matrix3x3.Transform(ref shape.vA, ref mesh.worldTransform.LinearTransform, out shape.vA);
             Matrix3x3.Transform(ref shape.vB, ref mesh.worldTransform.LinearTransform, out shape.vB);
             Matrix3x3.Transform(ref shape.vC, ref mesh.worldTransform.LinearTransform, out shape.vC);
-            Vector3 center;
-            Vector3.Add(ref shape.vA, ref shape.vB, out center);
-            Vector3.Add(ref center, ref shape.vC, out center);
-            Vector3.Multiply(ref center, F64.OneThird, out center);
-            Vector3.Subtract(ref shape.vA, ref center, out shape.vA);
-            Vector3.Subtract(ref shape.vB, ref center, out shape.vB);
-            Vector3.Subtract(ref shape.vC, ref center, out shape.vC);
+            FPVector3 center;
+            FPVector3.Add(ref shape.vA, ref shape.vB, out center);
+            FPVector3.Add(ref center, ref shape.vC, out center);
+            FPVector3.Multiply(ref center, F64.OneThird, out center);
+            FPVector3.Subtract(ref shape.vA, ref center, out shape.vA);
+            FPVector3.Subtract(ref shape.vB, ref center, out shape.vB);
+            FPVector3.Subtract(ref shape.vC, ref center, out shape.vC);
 
-            Vector3.Add(ref center, ref mesh.worldTransform.Translation, out center);
+            FPVector3.Add(ref center, ref mesh.worldTransform.Translation, out center);
             //The bounding box doesn't update by itself.
             toReturn.worldTransform.Position = center;
-            toReturn.worldTransform.Orientation = Quaternion.Identity;
+            toReturn.worldTransform.Orientation = FPQuaternion.Identity;
             toReturn.UpdateBoundingBoxInternal(F64.C0);
             shape.sidedness = mesh.Sidedness;
             shape.collisionMargin = mobileMesh.Shape.MeshCollisionMargin;
@@ -58,7 +58,7 @@ namespace BEPUphysics.NarrowPhaseSystems.Pairs
 
       
 
-        protected override void ConfigureCollidable(TriangleEntry entry, Fix64 dt)
+        protected override void ConfigureCollidable(TriangleEntry entry, FP dt)
         {
 
         }
@@ -103,13 +103,13 @@ namespace BEPUphysics.NarrowPhaseSystems.Pairs
 
 
 
-        protected override void UpdateContainedPairs(Fix64 dt)
+        protected override void UpdateContainedPairs(FP dt)
         {
             var overlappedElements = CommonResources.GetIntList();
-            BoundingBox localBoundingBox;
+            FPBoundingBox localBoundingBox;
 
-            Vector3 sweep;
-            Vector3.Multiply(ref mobileMesh.entity.linearVelocity, dt, out sweep);
+            FPVector3 sweep;
+            FPVector3.Multiply(ref mobileMesh.entity.linearVelocity, dt, out sweep);
             mobileMesh.Shape.GetSweptLocalBoundingBox(ref mobileMesh.worldTransform, ref mesh.worldTransform, ref sweep, out localBoundingBox);
             mesh.Shape.TriangleMesh.Tree.GetOverlaps(localBoundingBox, overlappedElements);
             for (int i = 0; i < overlappedElements.Count; i++)

@@ -36,7 +36,7 @@ namespace BEPUphysics.CollisionShapes
         ///</summary>
         ///<param name="vertices">Vertices of the mesh.</param>
         ///<param name="indices">Indices of the mesh.</param>
-        public InstancedMeshShape(Vector3[] vertices, int[] indices)
+        public InstancedMeshShape(FPVector3[] vertices, int[] indices)
         {
             TriangleMesh = new TriangleMesh(new StaticMeshData(vertices, indices));
         }
@@ -48,21 +48,21 @@ namespace BEPUphysics.CollisionShapes
         ///</summary>
         ///<param name="transform">Transform to apply to the shape during the bounding box calculation.</param>
         ///<param name="boundingBox">Bounding box containing the transformed mesh shape.</param>
-        public void ComputeBoundingBox(ref AffineTransform transform, out BoundingBox boundingBox)
+        public void ComputeBoundingBox(ref AffineTransform transform, out FPBoundingBox boundingBox)
         {
 #if !WINDOWS
-            boundingBox = new BoundingBox();
+            boundingBox = new FPBoundingBox();
 #endif
-            Fix64 minX = Fix64.MaxValue;
-            Fix64 minY = Fix64.MaxValue;
-            Fix64 minZ = Fix64.MaxValue;
+            FP minX = FP.MaxValue;
+            FP minY = FP.MaxValue;
+            FP minZ = FP.MaxValue;
 
-            Fix64 maxX = -Fix64.MaxValue;
-            Fix64 maxY = -Fix64.MaxValue;
-            Fix64 maxZ = -Fix64.MaxValue;
+            FP maxX = -FP.MaxValue;
+            FP maxY = -FP.MaxValue;
+            FP maxZ = -FP.MaxValue;
             for (int i = 0; i < triangleMesh.Data.vertices.Length; i++)
             {
-                Vector3 vertex;
+                FPVector3 vertex;
                 triangleMesh.Data.GetVertexPosition(i, out vertex);
                 Matrix3x3.Transform(ref vertex, ref transform.LinearTransform, out vertex);
                 if (vertex.X < minX)

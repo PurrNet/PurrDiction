@@ -56,23 +56,23 @@ namespace BEPUphysics.NarrowPhaseSystems.Pairs
 
         RawList<int> overlaps = new RawList<int>(8);
         private TriangleShape triangle = new TriangleShape { collisionMargin = F64.C0 };
-        public override void UpdateCollision(Fix64 dt)
+        public override void UpdateCollision(FP dt)
         {
             WasContaining = Containing;
             WasTouching = Touching;
 
 
-            var transform = new RigidTransform { Orientation = Quaternion.Identity };
+            var transform = new RigidTransform { Orientation = FPQuaternion.Identity };
             DetectorVolume.TriangleMesh.Tree.GetOverlaps(convex.boundingBox, overlaps);
             for (int i = 0; i < overlaps.Count; i++)
             {
                 DetectorVolume.TriangleMesh.Data.GetTriangle(overlaps.Elements[i], out triangle.vA, out triangle.vB, out triangle.vC);
-                Vector3.Add(ref triangle.vA, ref triangle.vB, out transform.Position);
-                Vector3.Add(ref triangle.vC, ref transform.Position, out transform.Position);
-                Vector3.Multiply(ref transform.Position, F64.OneThird, out transform.Position);
-                Vector3.Subtract(ref triangle.vA, ref transform.Position, out triangle.vA);
-                Vector3.Subtract(ref triangle.vB, ref transform.Position, out triangle.vB);
-                Vector3.Subtract(ref triangle.vC, ref transform.Position, out triangle.vC);
+                FPVector3.Add(ref triangle.vA, ref triangle.vB, out transform.Position);
+                FPVector3.Add(ref triangle.vC, ref transform.Position, out transform.Position);
+                FPVector3.Multiply(ref transform.Position, F64.OneThird, out transform.Position);
+                FPVector3.Subtract(ref triangle.vA, ref transform.Position, out triangle.vA);
+                FPVector3.Subtract(ref triangle.vB, ref transform.Position, out triangle.vB);
+                FPVector3.Subtract(ref triangle.vC, ref transform.Position, out triangle.vC);
 
                 //If this triangle collides with the convex, we can stop immediately since we know we're touching and not containing.)))
                 //[MPR is used here in lieu of GJK because the MPR implementation tends to finish quicker when objects are overlapping than GJK.  The GJK implementation does better on separated objects.]

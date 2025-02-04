@@ -11,8 +11,6 @@ using BEPUutilities;
 using ConversionHelper;
 using FixMath.NET;
 using UnityEngine;
-using Quaternion = BEPUutilities.Quaternion;
-using Vector3 = BEPUutilities.Vector3;
 
 namespace BEPUphysics.Unity
 {
@@ -31,29 +29,29 @@ namespace BEPUphysics.Unity
         
         public Entity entity => _entity;
 
-        private Vector3 _offset;
+        private FPVector3 _offset;
         private Transform _trs;
         private Entity _entity;
         
-        public Vector3 position
+        public FPVector3 position
         {
             get => _entity.Position;
             set => _entity.Position = value;
         }
         
-        public Quaternion rotation
+        public FPQuaternion rotation
         {
             get => _entity.Orientation;
             set => _entity.Orientation = value;
         }
 
-        public Vector3 velocity
+        public FPVector3 velocity
         {
             get => _entity.LinearVelocity;
             set => _entity.LinearVelocity = value;
         }
         
-        public Vector3 angularVelocity
+        public FPVector3 angularVelocity
         {
             get => _entity.AngularVelocity;
             set => _entity.AngularVelocity = value;
@@ -69,7 +67,7 @@ namespace BEPUphysics.Unity
                     return;
                 if (_kinematic)
                     _entity.BecomeKinematic();
-                else _entity.BecomeDynamic((Fix64)_mass);
+                else _entity.BecomeDynamic((FP)_mass);
             }
         }
         
@@ -131,11 +129,11 @@ namespace BEPUphysics.Unity
                     case BoxCollider box: AddBoxCollider(_trs, box, bepuPos, bepuRot); break;
                     case MeshCollider mesh: AddMeshCollider(mesh, bepuPos, bepuRot, bepuScale); break;
                     case SphereCollider sphere:
-                        var e = new SphereShape((Fix64)sphere.radius);
+                        var e = new SphereShape((FP)sphere.radius);
                         _entities.Add(new CompoundShapeEntry(e, new RigidTransform(bepuPos, bepuRot), 1));
                         break;
                     case CapsuleCollider capsule:
-                        var entity2 = new CapsuleShape((Fix64)capsule.radius, (Fix64)capsule.height);
+                        var entity2 = new CapsuleShape((FP)capsule.radius, (FP)capsule.height);
                         _entities.Add(new CompoundShapeEntry(entity2, new RigidTransform(bepuPos, bepuRot), 1));
                         break;
                     default:
@@ -144,7 +142,7 @@ namespace BEPUphysics.Unity
             }
 
             if (_entities.Count > 0)
-                _entity = new CompoundBody(_entities, (Fix64)_mass);
+                _entity = new CompoundBody(_entities, (FP)_mass);
             
             if (_entity != null)
             {
@@ -153,7 +151,7 @@ namespace BEPUphysics.Unity
 
                 if (_kinematic)
                     _entity.BecomeKinematic();
-                else _entity.BecomeDynamic((Fix64)_mass);
+                else _entity.BecomeDynamic((FP)_mass);
                 
                 _space.Add(_entity);
             }
@@ -181,11 +179,11 @@ namespace BEPUphysics.Unity
             }
         }
 
-        private void AddMeshCollider(MeshCollider meshCollider, Vector3 colliderWorldPos, Quaternion colliderWorldRot, Vector3 colliderWorldScale)
+        private void AddMeshCollider(MeshCollider meshCollider, FPVector3 colliderWorldPos, FPQuaternion colliderWorldRot, FPVector3 colliderWorldScale)
         {
             var mesh = meshCollider.sharedMesh;
 
-            var vertices = new Vector3[mesh.vertexCount];
+            var vertices = new FPVector3[mesh.vertexCount];
             var unityVerts = mesh.vertices;
 
             for (var i = 0; i < vertices.Length; i++)
@@ -200,7 +198,7 @@ namespace BEPUphysics.Unity
             }
         }
 
-        private void AddBoxCollider(Transform trs, BoxCollider box, Vector3 bepuPos, Quaternion bepuRot)
+        private void AddBoxCollider(Transform trs, BoxCollider box, FPVector3 bepuPos, FPQuaternion bepuRot)
         {
             var worldSize = UnityEngine.Vector3.Scale(trs.lossyScale, box.size);
             
@@ -213,10 +211,10 @@ namespace BEPUphysics.Unity
             MathConverter.Convert(ref worldSize, out var bepuSize);
             
             var e = new BoxShape(bepuSize.X, bepuSize.Y, bepuSize.Z);
-            _entities.Add(new CompoundShapeEntry(e, new RigidTransform(bepuPos, Quaternion.Identity), 1));
+            _entities.Add(new CompoundShapeEntry(e, new RigidTransform(bepuPos, FPQuaternion.Identity), 1));
         }
         
-        public void AddTorque(Vector3 torque, ForceMode mode = ForceMode.Force)
+        public void AddTorque(FPVector3 torque, ForceMode mode = ForceMode.Force)
         {
             if (_entity == null)
                 return;
@@ -229,11 +227,11 @@ namespace BEPUphysics.Unity
                     _entity.ApplyAngularImpulse(ref torque);
                     break;
                 case ForceMode.Impulse:
-                    torque *= (Fix64)Time.fixedDeltaTime;
+                    torque *= (FP)Time.fixedDeltaTime;
                     _entity.ApplyAngularImpulse(ref torque);
                     break;
                 case ForceMode.Acceleration:
-                    torque *= (Fix64)Time.fixedDeltaTime * (Fix64)_mass;
+                    torque *= (FP)Time.fixedDeltaTime * (FP)_mass;
                     _entity.ApplyAngularImpulse(ref torque);
                     break;
                 case ForceMode.VelocityChange:
@@ -244,7 +242,7 @@ namespace BEPUphysics.Unity
             }
         }
 
-        public void AddForce(Vector3 force, ForceMode mode = ForceMode.Force)
+        public void AddForce(FPVector3 force, ForceMode mode = ForceMode.Force)
         {
              if (_entity == null)
                 return;
@@ -306,7 +304,7 @@ namespace BEPUphysics.Unity
             }
         }*/
         
-        public void AddForceAtPosition(Vector3 force, Vector3 pos, ForceMode mode = ForceMode.Force)
+        public void AddForceAtPosition(FPVector3 force, FPVector3 pos, ForceMode mode = ForceMode.Force)
         {
             if (_entity == null)
                 return;
@@ -319,11 +317,11 @@ namespace BEPUphysics.Unity
                     _entity.ApplyImpulse(ref force, ref pos);
                     break;
                 case ForceMode.Impulse:
-                    force *= (Fix64)Time.fixedDeltaTime;
+                    force *= (FP)Time.fixedDeltaTime;
                     _entity.ApplyImpulse(ref force, ref pos);
                     break;
                 case ForceMode.Acceleration:
-                    force *= (Fix64)Time.fixedDeltaTime * (Fix64)_mass;
+                    force *= (FP)Time.fixedDeltaTime * (FP)_mass;
                     _entity.ApplyImpulse(ref force, ref pos);
                     break;
                 case ForceMode.VelocityChange:

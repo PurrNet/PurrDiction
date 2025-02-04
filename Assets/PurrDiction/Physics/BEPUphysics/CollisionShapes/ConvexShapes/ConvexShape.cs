@@ -22,13 +22,13 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
 
 
 
-        protected internal Fix64 collisionMargin = CollisionDetectionSettings.DefaultMargin;
+        protected internal FP collisionMargin = CollisionDetectionSettings.DefaultMargin;
         ///<summary>
         /// Collision margin of the convex shape.  The margin is a small spherical expansion around
         /// entities which allows specialized collision detection algorithms to be used.
         /// It's recommended that this be left unchanged.
         ///</summary>
-        public Fix64 CollisionMargin
+        public FP CollisionMargin
         {
             get
             {
@@ -48,20 +48,20 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
         /// guaranteed to be equal to or smaller than the actual minimum radius.  When setting this property,
         /// ensure that the inner sphere formed by the new minimum radius is fully contained within the shape.
         /// </summary>
-        public Fix64 MinimumRadius { get; internal set; }
+        public FP MinimumRadius { get; internal set; }
 
         /// <summary>
         /// Gets the maximum radius of the collidable's shape.  This is initialized to a value that is
         /// guaranteed to be equal to or larger than the actual maximum radius.
         /// </summary>
-        public Fix64 MaximumRadius { get; internal set; }
+        public FP MaximumRadius { get; internal set; }
 
         ///<summary>
         /// Gets the extreme point of the shape in local space in a given direction.
         ///</summary>
         ///<param name="direction">Direction to find the extreme point in.</param>
         ///<param name="extremePoint">Extreme point on the shape.</param>
-        public abstract void GetLocalExtremePointWithoutMargin(ref Vector3 direction, out Vector3 extremePoint);
+        public abstract void GetLocalExtremePointWithoutMargin(ref FPVector3 direction, out FPVector3 extremePoint);
 
         ///<summary>
         /// Gets the extreme point of the shape in world space in a given direction.
@@ -69,15 +69,15 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
         ///<param name="direction">Direction to find the extreme point in.</param>
         /// <param name="shapeTransform">Transform to use for the shape.</param>
         ///<param name="extremePoint">Extreme point on the shape.</param>
-        public void GetExtremePointWithoutMargin(Vector3 direction, ref RigidTransform shapeTransform, out Vector3 extremePoint)
+        public void GetExtremePointWithoutMargin(FPVector3 direction, ref RigidTransform shapeTransform, out FPVector3 extremePoint)
         {
-            Quaternion conjugate;
-            Quaternion.Conjugate(ref shapeTransform.Orientation, out conjugate);
-            Quaternion.Transform(ref direction, ref conjugate, out direction);
+            FPQuaternion conjugate;
+            FPQuaternion.Conjugate(ref shapeTransform.Orientation, out conjugate);
+            FPQuaternion.Transform(ref direction, ref conjugate, out direction);
             GetLocalExtremePointWithoutMargin(ref direction, out extremePoint);
 
-            Quaternion.Transform(ref extremePoint, ref shapeTransform.Orientation, out extremePoint);
-            Vector3.Add(ref extremePoint, ref shapeTransform.Position, out extremePoint);
+            FPQuaternion.Transform(ref extremePoint, ref shapeTransform.Orientation, out extremePoint);
+            FPVector3.Add(ref extremePoint, ref shapeTransform.Position, out extremePoint);
         }
 
         ///<summary>
@@ -86,15 +86,15 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
         ///<param name="direction">Direction to find the extreme point in.</param>
         /// <param name="shapeTransform">Transform to use for the shape.</param>
         ///<param name="extremePoint">Extreme point on the shape.</param>
-        public void GetExtremePoint(Vector3 direction, ref RigidTransform shapeTransform, out Vector3 extremePoint)
+        public void GetExtremePoint(FPVector3 direction, ref RigidTransform shapeTransform, out FPVector3 extremePoint)
         {
             GetExtremePointWithoutMargin(direction, ref shapeTransform, out extremePoint);
 
-			Fix64 directionLength = direction.LengthSquared();
+			FP directionLength = direction.LengthSquared();
             if (directionLength > Toolbox.Epsilon)
             {
-                Vector3.Multiply(ref direction, collisionMargin / Fix64.Sqrt(directionLength), out direction);
-                Vector3.Add(ref extremePoint, ref direction, out extremePoint);
+                FPVector3.Multiply(ref direction, collisionMargin / FP.Sqrt(directionLength), out direction);
+                FPVector3.Add(ref extremePoint, ref direction, out extremePoint);
             }
 
         }
@@ -104,15 +104,15 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
         ///</summary>
         ///<param name="direction">Direction to find the extreme point in.</param>
         ///<param name="extremePoint">Extreme point on the shape.</param>
-        public void GetLocalExtremePoint(Vector3 direction, out Vector3 extremePoint)
+        public void GetLocalExtremePoint(FPVector3 direction, out FPVector3 extremePoint)
         {
             GetLocalExtremePointWithoutMargin(ref direction, out extremePoint);
 
-			Fix64 directionLength = direction.LengthSquared();
+			FP directionLength = direction.LengthSquared();
             if (directionLength > Toolbox.Epsilon)
             {
-                Vector3.Multiply(ref direction, collisionMargin / Fix64.Sqrt(directionLength), out direction);
-                Vector3.Add(ref extremePoint, ref direction, out extremePoint);
+                FPVector3.Multiply(ref direction, collisionMargin / FP.Sqrt(directionLength), out direction);
+                FPVector3.Add(ref extremePoint, ref direction, out extremePoint);
             }
         }
 
@@ -123,42 +123,42 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
         /// </summary>
         /// <param name="shapeTransform">Transform to use.</param>
         /// <param name="boundingBox">Bounding box of the transformed shape.</param>
-        public override void GetBoundingBox(ref RigidTransform shapeTransform, out BoundingBox boundingBox)
+        public override void GetBoundingBox(ref RigidTransform shapeTransform, out FPBoundingBox boundingBox)
         {
 #if !WINDOWS
-            boundingBox = new BoundingBox();
+            boundingBox = new FPBoundingBox();
 #endif
             Matrix3x3 o;
             Matrix3x3.CreateFromQuaternion(ref shapeTransform.Orientation, out o);
             //Sample the local directions from the orientation matrix, implicitly transposed.
 
-            Vector3 right;
-            var direction = new Vector3(o.M11, o.M21, o.M31);
+            FPVector3 right;
+            var direction = new FPVector3(o.M11, o.M21, o.M31);
             GetLocalExtremePointWithoutMargin(ref direction, out right);
 
-            Vector3 left;
-            direction = new Vector3(-o.M11, -o.M21, -o.M31);
+            FPVector3 left;
+            direction = new FPVector3(-o.M11, -o.M21, -o.M31);
             GetLocalExtremePointWithoutMargin(ref direction, out left);
 
-            Vector3 up;
-            direction = new Vector3(o.M12, o.M22, o.M32);
+            FPVector3 up;
+            direction = new FPVector3(o.M12, o.M22, o.M32);
             GetLocalExtremePointWithoutMargin(ref direction, out up);
 
-            Vector3 down;
-            direction = new Vector3(-o.M12, -o.M22, -o.M32);
+            FPVector3 down;
+            direction = new FPVector3(-o.M12, -o.M22, -o.M32);
             GetLocalExtremePointWithoutMargin(ref direction, out down);
 
-            Vector3 backward;
-            direction = new Vector3(o.M13, o.M23, o.M33);
+            FPVector3 backward;
+            direction = new FPVector3(o.M13, o.M23, o.M33);
             GetLocalExtremePointWithoutMargin(ref direction, out backward);
 
-            Vector3 forward;
-            direction = new Vector3(-o.M13, -o.M23, -o.M33);
+            FPVector3 forward;
+            direction = new FPVector3(-o.M13, -o.M23, -o.M33);
             GetLocalExtremePointWithoutMargin(ref direction, out forward);
 
 
             //Rather than transforming each axis independently (and doing three times as many operations as required), just get the 6 required values directly.
-            Vector3 positive, negative;
+            FPVector3 positive, negative;
             TransformLocalExtremePoints(ref right, ref up, ref backward, ref o, out positive);
             TransformLocalExtremePoints(ref left, ref down, ref forward, ref o, out negative);
 
@@ -181,7 +181,7 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
         /// <param name="maximumLength">Maximum distance to travel in units of the ray direction's length.</param>
         /// <param name="hit">Ray hit data, if any.</param>
         /// <returns>Whether or not the ray hit the target.</returns>
-        public virtual bool RayTest(ref Ray ray, ref RigidTransform transform, Fix64 maximumLength, out RayHit hit)
+        public virtual bool RayTest(ref FPRay ray, ref RigidTransform transform, FP maximumLength, out FPRayHit hit)
         {
             return MPRToolbox.RayCast(ray, maximumLength, this, ref transform, out hit);
         }
@@ -192,7 +192,7 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
         /// <param name="transform">Transform to use to position the shape.</param>
         /// <param name="sweep">Extra to add to the bounding box.</param>
         /// <param name="boundingBox">Expanded bounding box.</param>
-        public void GetSweptBoundingBox(ref RigidTransform transform, ref Vector3 sweep, out BoundingBox boundingBox)
+        public void GetSweptBoundingBox(ref RigidTransform transform, ref FPVector3 sweep, out FPBoundingBox boundingBox)
         {
             GetBoundingBox(ref transform, out boundingBox);
             Toolbox.ExpandBoundingBox(ref boundingBox, ref sweep);
@@ -207,10 +207,10 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
         /// In effect, the shape is transformed by the inverse of the space transform to compute its bounding box in local space.</param>
         /// <param name="sweep">Vector to expand the bounding box with in local space.</param>
         /// <param name="boundingBox">Bounding box in the local space.</param>
-        public void GetSweptLocalBoundingBox(ref RigidTransform shapeTransform, ref AffineTransform spaceTransform, ref Vector3 sweep, out BoundingBox boundingBox)
+        public void GetSweptLocalBoundingBox(ref RigidTransform shapeTransform, ref AffineTransform spaceTransform, ref FPVector3 sweep, out FPBoundingBox boundingBox)
         {
             GetLocalBoundingBox(ref shapeTransform, ref spaceTransform, out boundingBox);
-            Vector3 expansion;
+            FPVector3 expansion;
             Matrix3x3.TransformTranspose(ref sweep, ref spaceTransform.LinearTransform, out expansion);
             Toolbox.ExpandBoundingBox(ref boundingBox, ref expansion);
         }
@@ -223,10 +223,10 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
         /// <param name="spaceTransform">Used as the frame of reference to compute the bounding box.
         /// In effect, the shape is transformed by the inverse of the space transform to compute its bounding box in local space.</param>
         /// <param name="boundingBox">Bounding box in the local space.</param>
-        public void GetLocalBoundingBox(ref RigidTransform shapeTransform, ref AffineTransform spaceTransform, out BoundingBox boundingBox)
+        public void GetLocalBoundingBox(ref RigidTransform shapeTransform, ref AffineTransform spaceTransform, out FPBoundingBox boundingBox)
         {
 #if !WINDOWS
-            boundingBox = new BoundingBox();
+            boundingBox = new FPBoundingBox();
 #endif
             //TODO: This method peforms quite a few sqrts because the collision margin can get scaled, and so cannot be applied as a final step.
             //There should be a better way to do this. At the very least, it should be possible to avoid the 6 square roots involved currently.
@@ -241,32 +241,32 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
 
             //Sample the local directions from the orientation matrix, implicitly transposed.
 
-            Vector3 right;
-            var direction = new Vector3(transform.LinearTransform.M11, transform.LinearTransform.M21, transform.LinearTransform.M31);
+            FPVector3 right;
+            var direction = new FPVector3(transform.LinearTransform.M11, transform.LinearTransform.M21, transform.LinearTransform.M31);
             GetLocalExtremePoint(direction, out right);
 
-            Vector3 left;
-            direction = new Vector3(-transform.LinearTransform.M11, -transform.LinearTransform.M21, -transform.LinearTransform.M31);
+            FPVector3 left;
+            direction = new FPVector3(-transform.LinearTransform.M11, -transform.LinearTransform.M21, -transform.LinearTransform.M31);
             GetLocalExtremePoint(direction, out left);
 
-            Vector3 up;
-            direction = new Vector3(transform.LinearTransform.M12, transform.LinearTransform.M22, transform.LinearTransform.M32);
+            FPVector3 up;
+            direction = new FPVector3(transform.LinearTransform.M12, transform.LinearTransform.M22, transform.LinearTransform.M32);
             GetLocalExtremePoint(direction, out up);
 
-            Vector3 down;
-            direction = new Vector3(-transform.LinearTransform.M12, -transform.LinearTransform.M22, -transform.LinearTransform.M32);
+            FPVector3 down;
+            direction = new FPVector3(-transform.LinearTransform.M12, -transform.LinearTransform.M22, -transform.LinearTransform.M32);
             GetLocalExtremePoint(direction, out down);
 
-            Vector3 backward;
-            direction = new Vector3(transform.LinearTransform.M13, transform.LinearTransform.M23, transform.LinearTransform.M33);
+            FPVector3 backward;
+            direction = new FPVector3(transform.LinearTransform.M13, transform.LinearTransform.M23, transform.LinearTransform.M33);
             GetLocalExtremePoint(direction, out backward);
 
-            Vector3 forward;
-            direction = new Vector3(-transform.LinearTransform.M13, -transform.LinearTransform.M23, -transform.LinearTransform.M33);
+            FPVector3 forward;
+            direction = new FPVector3(-transform.LinearTransform.M13, -transform.LinearTransform.M23, -transform.LinearTransform.M33);
             GetLocalExtremePoint(direction, out forward);
 
             //Rather than transforming each axis independently (and doing three times as many operations as required), just get the 6 required values directly.
-            Vector3 positive, negative;
+            FPVector3 positive, negative;
             TransformLocalExtremePoints(ref right, ref up, ref backward, ref transform.LinearTransform, out positive);
             TransformLocalExtremePoints(ref left, ref down, ref forward, ref transform.LinearTransform, out negative);
 

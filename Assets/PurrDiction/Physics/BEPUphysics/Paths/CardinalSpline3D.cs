@@ -11,14 +11,14 @@ namespace BEPUphysics.Paths
     /// </summary>
     public class CardinalSpline3D : HermiteCurve3D
     {
-        private Fix64 tension;
+        private FP tension;
 
         /// <summary>
         /// Gets or sets the tension parameter of the cardinal spline.
         /// A value of 0 acts like a Catmull-Rom spline, while a 
         /// value of 1 produces 0-length tangents.
         /// </summary>
-        public Fix64 Tension
+        public FP Tension
         {
             get { return tension; }
             set { tension = MathHelper.Clamp(value, F64.C0, F64.C1); }
@@ -46,17 +46,17 @@ namespace BEPUphysics.Paths
 
         protected override void ComputeTangents()
         {
-            tangents.Add(Vector3.Zero);
+            tangents.Add(FPVector3.Zero);
             for (int i = 1; i < ControlPoints.Count - 1; i++)
             {
-                Vector3 tangent;
-                Vector3 previous = ControlPoints[i - 1].Value;
-                Vector3 next = ControlPoints[i + 1].Value;
-                Vector3.Subtract(ref next, ref previous, out tangent);
-                Vector3.Multiply(ref tangent, (Fix64)((F64.C1 - tension) / (ControlPoints[i + 1].Time - ControlPoints[i - 1].Time)), out tangent);
+                FPVector3 tangent;
+                FPVector3 previous = ControlPoints[i - 1].Value;
+                FPVector3 next = ControlPoints[i + 1].Value;
+                FPVector3.Subtract(ref next, ref previous, out tangent);
+                FPVector3.Multiply(ref tangent, (FP)((F64.C1 - tension) / (ControlPoints[i + 1].Time - ControlPoints[i - 1].Time)), out tangent);
                 tangents.Add(tangent);
             }
-            tangents.Add(Vector3.Zero);
+            tangents.Add(FPVector3.Zero);
         }
     }
 }

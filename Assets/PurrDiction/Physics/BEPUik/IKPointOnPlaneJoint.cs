@@ -11,45 +11,45 @@ namespace BEPUik
         /// <summary>
         /// Gets or sets the offset in connection A's local space from the center of mass to the anchor point of the line.
         /// </summary>
-        public Vector3 LocalPlaneAnchor;
+        public FPVector3 LocalPlaneAnchor;
 
         /// <summary>
         /// Gets or sets the direction of the line in connection A's local space.
         /// Must be unit length.
         /// </summary>
-        public Vector3 LocalPlaneNormal;
+        public FPVector3 LocalPlaneNormal;
 
         /// <summary>
         /// Gets or sets the offset in connection B's local space from the center of mass to the anchor point which will be kept on the plane.
         /// </summary>
-        public Vector3 LocalAnchorB;
+        public FPVector3 LocalAnchorB;
 
         /// <summary>
         /// Gets or sets the world space location of the line anchor attached to connection A.
         /// </summary>
-        public Vector3 PlaneAnchor
+        public FPVector3 PlaneAnchor
         {
-            get { return ConnectionA.Position + Quaternion.Transform(LocalPlaneAnchor, ConnectionA.Orientation); }
-            set { LocalPlaneAnchor = Quaternion.Transform(value - ConnectionA.Position, Quaternion.Conjugate(ConnectionA.Orientation)); }
+            get { return ConnectionA.Position + FPQuaternion.Transform(LocalPlaneAnchor, ConnectionA.Orientation); }
+            set { LocalPlaneAnchor = FPQuaternion.Transform(value - ConnectionA.Position, FPQuaternion.Conjugate(ConnectionA.Orientation)); }
         }
 
         /// <summary>
         /// Gets or sets the world space normal of the plane attached to connection A.
         /// Must be unit length.
         /// </summary>
-        public Vector3 PlaneNormal
+        public FPVector3 PlaneNormal
         {
-            get { return Quaternion.Transform(LocalPlaneNormal, ConnectionA.Orientation); }
-            set { LocalPlaneNormal = Quaternion.Transform(value, Quaternion.Conjugate(ConnectionA.Orientation)); }
+            get { return FPQuaternion.Transform(LocalPlaneNormal, ConnectionA.Orientation); }
+            set { LocalPlaneNormal = FPQuaternion.Transform(value, FPQuaternion.Conjugate(ConnectionA.Orientation)); }
         }
 
         /// <summary>
         /// Gets or sets the offset in world space from the center of mass of connection B to the anchor point.
         /// </summary>
-        public Vector3 AnchorB
+        public FPVector3 AnchorB
         {
-            get { return ConnectionB.Position + Quaternion.Transform(LocalAnchorB, ConnectionB.Orientation); }
-            set { LocalAnchorB = Quaternion.Transform(value - ConnectionB.Position, Quaternion.Conjugate(ConnectionB.Orientation)); }
+            get { return ConnectionB.Position + FPQuaternion.Transform(LocalAnchorB, ConnectionB.Orientation); }
+            set { LocalAnchorB = FPQuaternion.Transform(value - ConnectionB.Position, FPQuaternion.Conjugate(ConnectionB.Orientation)); }
         }
 
 
@@ -61,7 +61,7 @@ namespace BEPUik
         /// <param name="planeAnchor">Anchor point of the plane attached to the first bone in world space.</param>
         /// <param name="planeNormal">Normal of the plane attached to the first bone in world space. Must be unit length.</param>
         /// <param name="anchorB">Anchor point on the second bone in world space which is measured against the other connection's anchor.</param>
-        public IKPointOnPlaneJoint(Bone connectionA, Bone connectionB, Vector3 planeAnchor, Vector3 planeNormal, Vector3 anchorB)
+        public IKPointOnPlaneJoint(Bone connectionA, Bone connectionB, FPVector3 planeAnchor, FPVector3 planeNormal, FPVector3 anchorB)
             : base(connectionA, connectionB)
         {
             PlaneAnchor = planeAnchor;
@@ -72,30 +72,30 @@ namespace BEPUik
         protected internal override void UpdateJacobiansAndVelocityBias()
         {
             //Transform the anchors and offsets into world space.
-            Vector3 offsetA, offsetB, lineDirection;
-            Quaternion.Transform(ref LocalPlaneAnchor, ref ConnectionA.Orientation, out offsetA);
-            Quaternion.Transform(ref LocalPlaneNormal, ref ConnectionA.Orientation, out lineDirection);
-            Quaternion.Transform(ref LocalAnchorB, ref ConnectionB.Orientation, out offsetB);
-            Vector3 anchorA, anchorB;
-            Vector3.Add(ref ConnectionA.Position, ref offsetA, out anchorA);
-            Vector3.Add(ref ConnectionB.Position, ref offsetB, out anchorB);
+            FPVector3 offsetA, offsetB, lineDirection;
+            FPQuaternion.Transform(ref LocalPlaneAnchor, ref ConnectionA.Orientation, out offsetA);
+            FPQuaternion.Transform(ref LocalPlaneNormal, ref ConnectionA.Orientation, out lineDirection);
+            FPQuaternion.Transform(ref LocalAnchorB, ref ConnectionB.Orientation, out offsetB);
+            FPVector3 anchorA, anchorB;
+            FPVector3.Add(ref ConnectionA.Position, ref offsetA, out anchorA);
+            FPVector3.Add(ref ConnectionB.Position, ref offsetB, out anchorB);
 
             //Compute the distance.
-            Vector3 separation;
-            Vector3.Subtract(ref anchorB, ref anchorA, out separation);
+            FPVector3 separation;
+            FPVector3.Subtract(ref anchorB, ref anchorA, out separation);
             //This entire constraint is very similar to the IKDistanceLimit, except the current distance is along an axis.
-            Fix64 currentDistance;
-            Vector3.Dot(ref separation, ref lineDirection, out currentDistance);
-            velocityBias = new Vector3(errorCorrectionFactor * currentDistance, F64.C0, F64.C0);
+            FP currentDistance;
+            FPVector3.Dot(ref separation, ref lineDirection, out currentDistance);
+            velocityBias = new FPVector3(errorCorrectionFactor * currentDistance, F64.C0, F64.C0);
 
             //Compute jacobians
-            Vector3 angularA, angularB;
+            FPVector3 angularA, angularB;
             //We can't just use the offset to anchor for A's jacobian- the 'collision' location is way out there at anchorB!
-            Vector3 rA;
-            Vector3.Subtract(ref anchorB, ref ConnectionA.Position, out rA);
-            Vector3.Cross(ref rA, ref lineDirection, out angularA);
+            FPVector3 rA;
+            FPVector3.Subtract(ref anchorB, ref ConnectionA.Position, out rA);
+            FPVector3.Cross(ref rA, ref lineDirection, out angularA);
             //linearB = -linearA, so just swap the cross product order.
-            Vector3.Cross(ref lineDirection, ref offsetB, out angularB);
+            FPVector3.Cross(ref lineDirection, ref offsetB, out angularB);
 
             //Put all the 1x3 jacobians into a 3x3 matrix representation.
             linearJacobianA = new Matrix3x3 { M11 = lineDirection.X, M12 = lineDirection.Y, M13 = lineDirection.Z };

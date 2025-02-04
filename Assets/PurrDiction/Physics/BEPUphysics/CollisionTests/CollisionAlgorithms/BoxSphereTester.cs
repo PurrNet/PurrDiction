@@ -21,14 +21,14 @@ namespace BEPUphysics.CollisionTests.CollisionAlgorithms
         ///<param name="spherePosition">Transform to apply to the sphere.</param>
         ///<param name="contact">Contact point between the shapes, if any.</param>
         ///<returns>Whether or not the shapes were colliding.</returns>
-        public static bool AreShapesColliding(BoxShape box, SphereShape sphere, ref RigidTransform boxTransform, ref Vector3 spherePosition, out ContactData contact)
+        public static bool AreShapesColliding(BoxShape box, SphereShape sphere, ref RigidTransform boxTransform, ref FPVector3 spherePosition, out ContactData contact)
         {
             contact = new ContactData();
 
-            Vector3 localPosition;
+            FPVector3 localPosition;
             RigidTransform.TransformByInverse(ref spherePosition, ref boxTransform, out localPosition);
 #if !WINDOWS
-            Vector3 localClosestPoint = new Vector3();
+            FPVector3 localClosestPoint = new FPVector3();
 #else
             Vector3 localClosestPoint;
 #endif
@@ -38,9 +38,9 @@ namespace BEPUphysics.CollisionTests.CollisionAlgorithms
 
             RigidTransform.Transform(ref localClosestPoint, ref boxTransform, out contact.Position);
 
-            Vector3 offset;
-            Vector3.Subtract(ref spherePosition, ref contact.Position, out offset);
-            Fix64 offsetLength = offset.LengthSquared();
+            FPVector3 offset;
+            FPVector3.Subtract(ref spherePosition, ref contact.Position, out offset);
+            FP offsetLength = offset.LengthSquared();
 
             if (offsetLength > (sphere.collisionMargin + CollisionDetectionSettings.maximumContactDistance) * (sphere.collisionMargin + CollisionDetectionSettings.maximumContactDistance))
             {
@@ -50,15 +50,15 @@ namespace BEPUphysics.CollisionTests.CollisionAlgorithms
             //Colliding.
             if (offsetLength > Toolbox.Epsilon)
             {
-                offsetLength = Fix64.Sqrt(offsetLength);
+                offsetLength = FP.Sqrt(offsetLength);
                 //Outside of the box.
-                Vector3.Divide(ref offset, offsetLength, out contact.Normal);
+                FPVector3.Divide(ref offset, offsetLength, out contact.Normal);
                 contact.PenetrationDepth = sphere.collisionMargin - offsetLength;
             }
             else
             {
                 //Inside of the box.
-                Vector3 penetrationDepths;
+                FPVector3 penetrationDepths;
                 penetrationDepths.X = localClosestPoint.X < F64.C0 ? localClosestPoint.X + box.halfWidth : box.halfWidth - localClosestPoint.X;
                 penetrationDepths.Y = localClosestPoint.Y < F64.C0 ? localClosestPoint.Y + box.halfHeight : box.halfHeight - localClosestPoint.Y;
                 penetrationDepths.Z = localClosestPoint.Z < F64.C0 ? localClosestPoint.Z + box.halfLength : box.halfLength - localClosestPoint.Z;
@@ -78,7 +78,7 @@ namespace BEPUphysics.CollisionTests.CollisionAlgorithms
                     contact.PenetrationDepth = penetrationDepths.Z;
                 }
                 contact.PenetrationDepth += sphere.collisionMargin;
-                Quaternion.Transform(ref contact.Normal, ref boxTransform.Orientation, out contact.Normal);
+                FPQuaternion.Transform(ref contact.Normal, ref boxTransform.Orientation, out contact.Normal);
             }
 
 

@@ -57,10 +57,6 @@ namespace PurrNet.Prediction
     
     public abstract class PredictedIdentity : MonoBehaviour
     {
-        [Header("Predicted State")]
-        [SerializeField] protected int _maxInterpolationBuffer = 2;
-        [SerializeField] protected bool _updateView = true;
-        
         public PredictionManager predictionManager { get; protected set; }
 
         public PlayerID? owner;
@@ -118,17 +114,17 @@ namespace PurrNet.Prediction
 
         internal abstract void EvaluateAndRegisterLocalInput(ulong localTick);
         
-        internal abstract void SimulateTick(ulong tick, Fix64 delta);
+        internal abstract void SimulateTick(ulong tick, FP delta);
         
-        internal abstract void SimulateLocal(Fix64 delta);
+        internal abstract void SimulateLocal(FP delta);
 
-        internal abstract void SimulateRemote(ulong tick, Fix64 delta);
+        internal abstract void SimulateRemote(ulong tick, FP delta);
         
         internal abstract void SaveStateInHistory(ulong tick);
 
         internal abstract void Rollback(ulong tick);
 
-        public abstract void UpdateRollbackInterpolationState(Fix64 delta, bool accumulateError);
+        public abstract void UpdateRollbackInterpolationState(FP delta, bool accumulateError);
 
         internal abstract void ResetInterpolation();
         
@@ -246,7 +242,10 @@ namespace PurrNet.Prediction
 
             var copy = fullPredictedState.DeepCopy();
             
-            _interpolatedState = new Interpolated<FULL_STATE>(FULLInterpolate, (float)world.tickDelta, copy, _maxInterpolationBuffer);
+            // if TickRate is 30, then this should be 2
+            var interpolationBuffer = (int)FP.Max(world.tickRate / (FP)15, 1);
+            
+            _interpolatedState = new Interpolated<FULL_STATE>(FULLInterpolate, (float)world.tickDelta, copy, interpolationBuffer);
             _stateHistory = new History<FULL_STATE>(world.tickRate * 5);
             _stateHistory.Write(0, copy);
         }
@@ -267,11 +266,11 @@ namespace PurrNet.Prediction
 
         internal override void EvaluateAndRegisterLocalInput(ulong localTick) { }
 
-        internal override void SimulateTick(ulong tick, Fix64 delta) => Simulate(ref fullPredictedState.state, delta);
+        internal override void SimulateTick(ulong tick, FP delta) => Simulate(ref fullPredictedState.state, delta);
 
-        internal override void SimulateLocal(Fix64 delta) => Simulate(ref fullPredictedState.state, delta);
+        internal override void SimulateLocal(FP delta) => Simulate(ref fullPredictedState.state, delta);
 
-        internal override void SimulateRemote(ulong tick, Fix64 delta) => Simulate(ref fullPredictedState.state, delta);
+        internal override void SimulateRemote(ulong tick, FP delta) => Simulate(ref fullPredictedState.state, delta);
 
         internal override void SaveStateInHistory(ulong tick)
         {
@@ -280,22 +279,19 @@ namespace PurrNet.Prediction
         
         FULL_STATE? _viewState;
         
-        public override void UpdateRollbackInterpolationState(Fix64 delta, bool accumulateError)
+        public override void UpdateRollbackInterpolationState(FP delta, bool accumulateError)
         {
-            if (!_updateView)
-                return;
-            
             _viewState?.Dispose();
             var copy = fullPredictedState.DeepCopy();
             ModifyRollbackViewState(ref copy.state, delta, accumulateError);
             _viewState = copy;
         }
 
-        protected virtual void ModifyRollbackViewState(ref STATE state, Fix64 delta, bool accumulateError) { }
+        protected virtual void ModifyRollbackViewState(ref STATE state, FP delta, bool accumulateError) { }
         
         protected virtual STATE GetInitialState() => default;
 
-        protected virtual void Simulate(ref STATE state, Fix64 delta) {}
+        protected virtual void Simulate(ref STATE state, FP delta) {}
 
         internal override void Rollback(ulong tick)
         {
@@ -358,9 +354,6 @@ namespace PurrNet.Prediction
         
         internal override void UpdateView(float deltaTime)
         {
-            if (!_updateView)
-                return;
-            
             if (_interpolatedState == null)
                 return;
 

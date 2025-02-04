@@ -20,11 +20,11 @@ namespace BEPUphysics.Character
 
         SupportData supportData;
 
-        private Fix64 maximumGlueForce;
+        private FP maximumGlueForce;
         /// <summary>
         /// Gets or sets the maximum force that the constraint will apply in attempting to keep the character stuck to the ground.
         /// </summary>
-        public Fix64 MaximumGlueForce
+        public FP MaximumGlueForce
         {
             get
             {
@@ -37,15 +37,15 @@ namespace BEPUphysics.Character
                 maximumGlueForce = value;
             }
         }
-        Fix64 maximumForce;
+        FP maximumForce;
 
-        Fix64 supportForceFactor = F64.C1;
+        FP supportForceFactor = F64.C1;
         /// <summary>
         /// Gets or sets the scaling factor of forces applied to the supporting object if it is a dynamic entity.
         /// Low values (below 1) reduce the amount of motion imparted to the support object; it acts 'heavier' as far as vertical motion is concerned.
         /// High values (above 1) increase the force applied to support objects, making them appear lighter.
         /// </summary>
-        public Fix64 SupportForceFactor
+        public FP SupportForceFactor
         {
             get
             {
@@ -63,22 +63,22 @@ namespace BEPUphysics.Character
         /// <summary>
         /// Gets the effective mass felt by the constraint.
         /// </summary>
-        public Fix64 EffectiveMass
+        public FP EffectiveMass
         {
             get
             {
                 return effectiveMass;
             }
         }
-        Fix64 effectiveMass;
+        FP effectiveMass;
         Entity supportEntity;
-        Vector3 linearJacobianA;
-        Vector3 linearJacobianB;
-        Vector3 angularJacobianB;
+        FPVector3 linearJacobianA;
+        FPVector3 linearJacobianB;
+        FPVector3 angularJacobianB;
 
    
-        Fix64 accumulatedImpulse;
-        Fix64 permittedVelocity;
+        FP accumulatedImpulse;
+        FP permittedVelocity;
 
 		/// <summary>
 		/// Constructs a new vertical motion constraint.
@@ -90,7 +90,7 @@ namespace BEPUphysics.Character
 		{
 			this.characterBody = characterBody;
 			this.supportFinder = supportFinder;
-			MaximumGlueForce = (Fix64)5000;
+			MaximumGlueForce = (FP)5000;
 		}
 
 		/// <summary>
@@ -99,7 +99,7 @@ namespace BEPUphysics.Character
 		/// <param name="characterBody">Character body governed by the constraint.</param>
 		/// <param name="supportFinder">Support finder used by the character.</param>
 		/// <param name="maximumGlueForce">Maximum force the vertical motion constraint is allowed to apply in an attempt to keep the character on the ground.</param>
-		public VerticalMotionConstraint(Entity characterBody, SupportFinder supportFinder, Fix64 maximumGlueForce)
+		public VerticalMotionConstraint(Entity characterBody, SupportFinder supportFinder, FP maximumGlueForce)
         {
             this.characterBody = characterBody;
             this.supportFinder = supportFinder;
@@ -148,7 +148,7 @@ namespace BEPUphysics.Character
         /// Performs any per-frame computation needed by the constraint.
         /// </summary>
         /// <param name="dt">Time step duration.</param>
-        public override void Update(Fix64 dt)
+        public override void Update(FP dt)
         {
             //Collect references, pick the mode, and configure the coefficients to be used by the solver.
             if (supportData.SupportObject != null)
@@ -183,21 +183,21 @@ namespace BEPUphysics.Character
             //Compute the jacobians and effective mass matrix.  This constraint works along a single degree of freedom, so the mass matrix boils down to a scalar.
 
             linearJacobianA = supportData.Normal;
-            Vector3.Negate(ref linearJacobianA, out linearJacobianB);
-            Fix64 inverseEffectiveMass = characterBody.InverseMass;
+            FPVector3.Negate(ref linearJacobianA, out linearJacobianB);
+            FP inverseEffectiveMass = characterBody.InverseMass;
             if (supportEntity != null)
             {
-                Vector3 offsetB = supportData.Position - supportEntity.Position;
-                Vector3.Cross(ref offsetB, ref linearJacobianB, out angularJacobianB);
+                FPVector3 offsetB = supportData.Position - supportEntity.Position;
+                FPVector3.Cross(ref offsetB, ref linearJacobianB, out angularJacobianB);
                 if (supportEntity.IsDynamic)
                 {
                     //Only dynamic entities can actually contribute anything to the effective mass.
                     //Kinematic entities have infinite mass and inertia, so this would all zero out.
                     Matrix3x3 inertiaInverse = supportEntity.InertiaTensorInverse;
-                    Vector3 angularComponentB;
+                    FPVector3 angularComponentB;
                     Matrix3x3.Transform(ref angularJacobianB, ref inertiaInverse, out angularComponentB);
-                    Fix64 effectiveMassContribution;
-                    Vector3.Dot(ref angularComponentB, ref angularJacobianB, out effectiveMassContribution);
+                    FP effectiveMassContribution;
+                    FPVector3.Dot(ref angularComponentB, ref angularJacobianB, out effectiveMassContribution);
 
                     inverseEffectiveMass += supportForceFactor * (effectiveMassContribution + supportEntity.InverseMass);
                 }
@@ -214,20 +214,20 @@ namespace BEPUphysics.Character
         {
             //Warm start the constraint using the previous impulses and the new jacobians!
 #if !WINDOWS
-            Vector3 impulse = new Vector3();
-            Vector3 torque= new Vector3();
+            FPVector3 impulse = new FPVector3();
+            FPVector3 torque= new FPVector3();
 #else
             Vector3 impulse;
             Vector3 torque;
 #endif
-            Vector3.Multiply(ref linearJacobianA, accumulatedImpulse, out impulse);
+            FPVector3.Multiply(ref linearJacobianA, accumulatedImpulse, out impulse);
 
             characterBody.ApplyLinearImpulse(ref impulse);
 
             if (supportEntity != null && supportEntity.IsDynamic)
             {
-                Vector3.Multiply(ref impulse, -supportForceFactor, out impulse);
-                Vector3.Multiply(ref angularJacobianB, accumulatedImpulse * supportForceFactor, out torque);
+                FPVector3.Multiply(ref impulse, -supportForceFactor, out impulse);
+                FPVector3.Multiply(ref angularJacobianB, accumulatedImpulse * supportForceFactor, out torque);
 
                 supportEntity.ApplyLinearImpulse(ref impulse);
                 supportEntity.ApplyAngularImpulse(ref torque);
@@ -238,45 +238,45 @@ namespace BEPUphysics.Character
         /// Computes a solution to the constraint.
         /// </summary>
         /// <returns>Magnitude of the applied impulse.</returns>
-        public override Fix64 SolveIteration()
+        public override FP SolveIteration()
         {
             //The relative velocity's x component is in the movement direction.
             //y is the perpendicular direction.
 
             //Note that positive velocity is penetrating velocity.
-            Fix64 relativeVelocity = RelativeVelocity + permittedVelocity;
+            FP relativeVelocity = RelativeVelocity + permittedVelocity;
 
 
             //Create the full velocity change, and convert it to an impulse in constraint space.
-            Fix64 lambda = -relativeVelocity * effectiveMass;
+            FP lambda = -relativeVelocity * effectiveMass;
 
             //Add and clamp the impulse.
-            Fix64 previousAccumulatedImpulse = accumulatedImpulse;
+            FP previousAccumulatedImpulse = accumulatedImpulse;
             accumulatedImpulse = MathHelper.Clamp(accumulatedImpulse + lambda, F64.C0, maximumForce);
             lambda = accumulatedImpulse - previousAccumulatedImpulse;
             //Use the jacobians to put the impulse into world space.
 
 #if !WINDOWS
-            Vector3 impulse = new Vector3();
-            Vector3 torque= new Vector3();
+            FPVector3 impulse = new FPVector3();
+            FPVector3 torque= new FPVector3();
 #else
             Vector3 impulse;
             Vector3 torque;
 #endif
-            Vector3.Multiply(ref linearJacobianA, lambda, out impulse);
+            FPVector3.Multiply(ref linearJacobianA, lambda, out impulse);
 
             characterBody.ApplyLinearImpulse(ref impulse);
 
             if (supportEntity != null && supportEntity.IsDynamic)
             {
-                Vector3.Multiply(ref impulse, -supportForceFactor, out impulse);
+                FPVector3.Multiply(ref impulse, -supportForceFactor, out impulse);
 
-                Vector3.Multiply(ref angularJacobianB, lambda * supportForceFactor, out torque);
+                FPVector3.Multiply(ref angularJacobianB, lambda * supportForceFactor, out torque);
 
                 supportEntity.ApplyLinearImpulse(ref impulse);
                 supportEntity.ApplyAngularImpulse(ref torque);
             }
-            return Fix64.Abs(lambda);
+            return FP.Abs(lambda);
 
 
         }
@@ -284,20 +284,20 @@ namespace BEPUphysics.Character
         /// <summary>
         /// Gets the relative velocity between the character and its support along the support normal.
         /// </summary>
-        public Fix64 RelativeVelocity
+        public FP RelativeVelocity
         {
             get
             {
-                Fix64 relativeVelocity;
+                FP relativeVelocity;
 
-                Vector3.Dot(ref linearJacobianA, ref characterBody.linearVelocity, out relativeVelocity);
+                FPVector3.Dot(ref linearJacobianA, ref characterBody.linearVelocity, out relativeVelocity);
 
                 if (supportEntity != null)
                 {
-                    Fix64 supportVelocity;
-                    Vector3.Dot(ref linearJacobianB, ref supportEntity.linearVelocity, out supportVelocity);
+                    FP supportVelocity;
+                    FPVector3.Dot(ref linearJacobianB, ref supportEntity.linearVelocity, out supportVelocity);
                     relativeVelocity += supportVelocity;
-                    Vector3.Dot(ref angularJacobianB, ref supportEntity.angularVelocity, out supportVelocity);
+                    FPVector3.Dot(ref angularJacobianB, ref supportEntity.angularVelocity, out supportVelocity);
                     relativeVelocity += supportVelocity;
 
                 }

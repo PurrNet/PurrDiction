@@ -14,7 +14,7 @@ namespace BEPUphysics.Vehicle
     /// </summary>
     public class Wheel
     {
-        internal Vector3 ra, rb;
+        internal FPVector3 ra, rb;
 
         /// <summary>
         /// Used for solver early outing.
@@ -26,19 +26,19 @@ namespace BEPUphysics.Vehicle
         internal WheelDrivingMotor drivingMotor;
 
 
-        internal Vector3 localForwardDirection = new Vector3(F64.C0, F64.C0, -1);
+        internal FPVector3 localForwardDirection = new FPVector3(F64.C0, F64.C0, -1);
 
-        internal Vector3 normal;
+        internal FPVector3 normal;
         internal WheelShape shape;
         internal WheelSlidingFriction slidingFriction;
 
         internal Collidable supportingCollidable;
         internal Material supportMaterial;
-        internal Vector3 supportLocation;
+        internal FPVector3 supportLocation;
         internal Entity supportingEntity;
         internal WheelSuspension suspension;
         internal Vehicle vehicle;
-        internal Vector3 worldForwardDirection;
+        internal FPVector3 worldForwardDirection;
 
 
         /// <summary>
@@ -133,12 +133,12 @@ namespace BEPUphysics.Vehicle
         /// <summary>
         /// Gets or sets the local space forward direction of the wheel.
         /// </summary>
-        public Vector3 LocalForwardDirection
+        public FPVector3 LocalForwardDirection
         {
             get { return localForwardDirection; }
             set
             {
-                localForwardDirection = Vector3.Normalize(value);
+                localForwardDirection = FPVector3.Normalize(value);
                 if (vehicle != null)
                     Matrix3x3.Transform(ref localForwardDirection, ref Vehicle.Body.orientationMatrix, out worldForwardDirection);
                 else
@@ -204,7 +204,7 @@ namespace BEPUphysics.Vehicle
         /// <summary>
         /// Gets the current support location of this wheel.
         /// </summary>
-        public Vector3 SupportLocation
+        public FPVector3 SupportLocation
         {
             get { return supportLocation; }
         }
@@ -212,7 +212,7 @@ namespace BEPUphysics.Vehicle
         /// <summary>
         /// Gets the normal 
         /// </summary>
-        public Vector3 SupportNormal
+        public FPVector3 SupportNormal
         {
             get { return normal; }
         }
@@ -281,17 +281,17 @@ namespace BEPUphysics.Vehicle
         /// <summary>
         /// Gets or sets the world space forward direction of the wheel.
         /// </summary>
-        public Vector3 WorldForwardDirection
+        public FPVector3 WorldForwardDirection
         {
             get { return worldForwardDirection; }
             set
             {
-                worldForwardDirection = Vector3.Normalize(value);
+                worldForwardDirection = FPVector3.Normalize(value);
                 if (vehicle != null)
                 {
-                    Quaternion conjugate;
-                    Quaternion.Conjugate(ref Vehicle.Body.orientation, out conjugate);
-                    Quaternion.Transform(ref worldForwardDirection, ref conjugate, out localForwardDirection);
+                    FPQuaternion conjugate;
+                    FPQuaternion.Conjugate(ref Vehicle.Body.orientation, out conjugate);
+                    FPQuaternion.Transform(ref worldForwardDirection, ref conjugate, out localForwardDirection);
                 }
                 else
                     localForwardDirection = worldForwardDirection;
@@ -299,16 +299,16 @@ namespace BEPUphysics.Vehicle
         }
 
 
-        internal void PreStep(Fix64 dt)
+        internal void PreStep(FP dt)
         {
             Matrix.CreateFromAxisAngle(ref suspension.localDirection, shape.steeringAngle, out shape.steeringTransform);
             Matrix.TransformNormal(ref localForwardDirection, ref shape.steeringTransform, out worldForwardDirection);
             Matrix3x3.Transform(ref worldForwardDirection, ref Vehicle.Body.orientationMatrix, out worldForwardDirection);
             if (HasSupport)
             {
-                Vector3.Subtract(ref supportLocation, ref Vehicle.Body.position, out ra);
+                FPVector3.Subtract(ref supportLocation, ref Vehicle.Body.position, out ra);
                 if (supportingEntity != null)
-                    Vector3.Subtract(ref supportLocation, ref SupportingEntity.position, out rb);
+                    FPVector3.Subtract(ref supportLocation, ref SupportingEntity.position, out rb);
 
 
                 //Mind the order of updating!  sliding friction must come before driving force or rolling friction
@@ -369,7 +369,7 @@ namespace BEPUphysics.Vehicle
             if (suspension.isActive)
             {
                 if (++suspension.solverSettings.currentIterations <= suspension.solverSettings.maximumIterationCount)
-                    if (Fix64.Abs(suspension.ApplyImpulse()) < suspension.solverSettings.minimumImpulse)
+                    if (FP.Abs(suspension.ApplyImpulse()) < suspension.solverSettings.minimumImpulse)
                     {
                         suspension.numIterationsAtZeroImpulse++;
                         if (suspension.numIterationsAtZeroImpulse > suspension.solverSettings.minimumIterationCount)
@@ -391,7 +391,7 @@ namespace BEPUphysics.Vehicle
             if (slidingFriction.isActive)
             {
                 if (++slidingFriction.solverSettings.currentIterations <= suspension.solverSettings.maximumIterationCount)
-                    if (Fix64.Abs(slidingFriction.ApplyImpulse()) < slidingFriction.solverSettings.minimumImpulse)
+                    if (FP.Abs(slidingFriction.ApplyImpulse()) < slidingFriction.solverSettings.minimumImpulse)
                     {
                         slidingFriction.numIterationsAtZeroImpulse++;
                         if (slidingFriction.numIterationsAtZeroImpulse > slidingFriction.solverSettings.minimumIterationCount)
@@ -413,7 +413,7 @@ namespace BEPUphysics.Vehicle
             if (drivingMotor.isActive)
             {
                 if (++drivingMotor.solverSettings.currentIterations <= suspension.solverSettings.maximumIterationCount)
-                    if (Fix64.Abs(drivingMotor.ApplyImpulse()) < drivingMotor.solverSettings.minimumImpulse)
+                    if (FP.Abs(drivingMotor.ApplyImpulse()) < drivingMotor.solverSettings.minimumImpulse)
                     {
                         drivingMotor.numIterationsAtZeroImpulse++;
                         if (drivingMotor.numIterationsAtZeroImpulse > drivingMotor.solverSettings.minimumIterationCount)
@@ -435,7 +435,7 @@ namespace BEPUphysics.Vehicle
             if (brake.isActive)
             {
                 if (++brake.solverSettings.currentIterations <= suspension.solverSettings.maximumIterationCount)
-                    if (Fix64.Abs(brake.ApplyImpulse()) < brake.solverSettings.minimumImpulse)
+                    if (FP.Abs(brake.ApplyImpulse()) < brake.solverSettings.minimumImpulse)
                     {
                         brake.numIterationsAtZeroImpulse++;
                         if (brake.numIterationsAtZeroImpulse > brake.solverSettings.minimumIterationCount)
@@ -502,17 +502,17 @@ namespace BEPUphysics.Vehicle
         }
 
 
-        internal void UpdateAtEndOfFrame(Fix64 dt)
+        internal void UpdateAtEndOfFrame(FP dt)
         {
             shape.UpdateWorldTransform();
         }
 
-        internal void UpdateAtEndOfUpdate(Fix64 dt)
+        internal void UpdateAtEndOfUpdate(FP dt)
         {
             shape.UpdateSpin(dt);
         }
 
-        internal void UpdateDuringForces(Fix64 dt)
+        internal void UpdateDuringForces(FP dt)
         {
             suspension.ComputeWorldSpaceData();
             shape.UpdateDetectorPosition();

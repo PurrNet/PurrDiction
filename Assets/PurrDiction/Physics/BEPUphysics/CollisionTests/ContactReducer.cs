@@ -22,12 +22,12 @@ namespace BEPUphysics.CollisionTests
         public static void ReduceContacts(RawList<Contact> contacts, ref QuickList<ContactData> contactCandidates, RawList<int> contactsToRemove, ref QuickList<ContactData> toAdd)
         {
             //Find the deepest point of all contacts/candidates, as well as a compounded 'normal' vector.
-            Fix64 maximumDepth = -Fix64.MaxValue;
+            FP maximumDepth = -FP.MaxValue;
             int deepestIndex = -1;
-            Vector3 normal = Toolbox.ZeroVector;
+            FPVector3 normal = Toolbox.ZeroVector;
             for (int i = 0; i < contacts.Count; i++)
             {
-                Vector3.Add(ref normal, ref contacts.Elements[i].Normal, out normal);
+                FPVector3.Add(ref normal, ref contacts.Elements[i].Normal, out normal);
                 if (contacts.Elements[i].PenetrationDepth > maximumDepth)
                 {
                     deepestIndex = i;
@@ -36,7 +36,7 @@ namespace BEPUphysics.CollisionTests
             }
             for (int i = 0; i < contactCandidates.Count; i++)
             {
-                Vector3.Add(ref normal, ref contactCandidates.Elements[i].Normal, out normal);
+                FPVector3.Add(ref normal, ref contactCandidates.Elements[i].Normal, out normal);
                 if (contactCandidates.Elements[i].PenetrationDepth > maximumDepth)
                 {
                     deepestIndex = contacts.Count + i;
@@ -54,17 +54,17 @@ namespace BEPUphysics.CollisionTests
 
 
             //Find the contact (candidate) that is furthest away from the deepest contact (candidate).
-            Vector3 deepestPosition;
+            FPVector3 deepestPosition;
             if (deepestIndex < contacts.Count)
                 deepestPosition = contacts.Elements[deepestIndex].Position;
             else
                 deepestPosition = contactCandidates.Elements[deepestIndex - contacts.Count].Position;
-            Fix64 distanceSquared;
-            Fix64 furthestDistance = F64.C0;
+            FP distanceSquared;
+            FP furthestDistance = F64.C0;
             int furthestIndex = -1;
             for (int i = 0; i < contacts.Count; i++)
             {
-                Vector3.DistanceSquared(ref contacts.Elements[i].Position, ref deepestPosition, out distanceSquared);
+                FPVector3.DistanceSquared(ref contacts.Elements[i].Position, ref deepestPosition, out distanceSquared);
                 if (distanceSquared > furthestDistance)
                 {
                     furthestDistance = distanceSquared;
@@ -73,7 +73,7 @@ namespace BEPUphysics.CollisionTests
             }
             for (int i = 0; i < contactCandidates.Count; i++)
             {
-                Vector3.DistanceSquared(ref contactCandidates.Elements[i].Position, ref deepestPosition, out distanceSquared);
+                FPVector3.DistanceSquared(ref contactCandidates.Elements[i].Position, ref deepestPosition, out distanceSquared);
                 if (distanceSquared > furthestDistance)
                 {
                     furthestDistance = distanceSquared;
@@ -99,26 +99,26 @@ namespace BEPUphysics.CollisionTests
                 throw new ArgumentException("Cannot reduce an empty contact set.");
 
             }
-            Vector3 furthestPosition;
+            FPVector3 furthestPosition;
             if (furthestIndex < contacts.Count)
                 furthestPosition = contacts.Elements[furthestIndex].Position;
             else
                 furthestPosition = contactCandidates.Elements[furthestIndex - contacts.Count].Position;
-            Vector3 xAxis;
-            Vector3.Subtract(ref deepestPosition, ref furthestPosition, out xAxis);
+            FPVector3 xAxis;
+            FPVector3.Subtract(ref deepestPosition, ref furthestPosition, out xAxis);
 
             //Create the second axis of the 2d 'coordinate system' of the manifold.
-            Vector3 yAxis;
-            Vector3.Cross(ref xAxis, ref normal, out yAxis);
+            FPVector3 yAxis;
+            FPVector3.Cross(ref xAxis, ref normal, out yAxis);
 
             //Determine the furthest points along the axis.
-            Fix64 minYAxisDot = Fix64.MaxValue, maxYAxisDot = -Fix64.MaxValue;
+            FP minYAxisDot = FP.MaxValue, maxYAxisDot = -FP.MaxValue;
             int minYAxisIndex = -1, maxYAxisIndex = -1;
 
             for (int i = 0; i < contacts.Count; i++)
             {
-                Fix64 dot;
-                Vector3.Dot(ref contacts.Elements[i].Position, ref yAxis, out dot);
+                FP dot;
+                FPVector3.Dot(ref contacts.Elements[i].Position, ref yAxis, out dot);
                 if (dot < minYAxisDot)
                 {
                     minYAxisIndex = i;
@@ -133,8 +133,8 @@ namespace BEPUphysics.CollisionTests
             }
             for (int i = 0; i < contactCandidates.Count; i++)
             {
-                Fix64 dot;
-                Vector3.Dot(ref contactCandidates.Elements[i].Position, ref yAxis, out dot);
+                FP dot;
+                FPVector3.Dot(ref contactCandidates.Elements[i].Position, ref yAxis, out dot);
                 if (dot < minYAxisDot)
                 {
                     minYAxisIndex = i + contacts.Count;
@@ -201,7 +201,7 @@ namespace BEPUphysics.CollisionTests
 
             
             //Find the deepest point of all contacts/candidates, as well as a compounded 'normal' vector.
-            Fix64 maximumDepth = -Fix64.MaxValue;
+            FP maximumDepth = -FP.MaxValue;
             int deepestIndex = -1;
             for (int i = 0; i < 4; i++)
             {
@@ -218,17 +218,17 @@ namespace BEPUphysics.CollisionTests
 
 
             //Find the contact (candidate) that is furthest away from the deepest contact (candidate).
-            Vector3 deepestPosition;
+            FPVector3 deepestPosition;
             if (deepestIndex < 4)
                 deepestPosition = contacts.Elements[deepestIndex].Position;
             else
                 deepestPosition = contactCandidate.Position;
-            Fix64 distanceSquared;
-            Fix64 furthestDistance = F64.C0;
+            FP distanceSquared;
+            FP furthestDistance = F64.C0;
             int furthestIndex = -1;
             for (int i = 0; i < 4; i++)
             {
-                Vector3.DistanceSquared(ref contacts.Elements[i].Position, ref deepestPosition, out distanceSquared);
+                FPVector3.DistanceSquared(ref contacts.Elements[i].Position, ref deepestPosition, out distanceSquared);
                 if (distanceSquared > furthestDistance)
                 {
                     furthestDistance = distanceSquared;
@@ -236,31 +236,31 @@ namespace BEPUphysics.CollisionTests
                 }
             }
 
-            Vector3.DistanceSquared(ref contactCandidate.Position, ref deepestPosition, out distanceSquared);
+            FPVector3.DistanceSquared(ref contactCandidate.Position, ref deepestPosition, out distanceSquared);
             if (distanceSquared > furthestDistance)
             {
                 furthestIndex = 4;
             }
-            Vector3 furthestPosition;
+            FPVector3 furthestPosition;
             if (furthestIndex < contacts.Count)
                 furthestPosition = contacts.Elements[furthestIndex].Position;
             else
                 furthestPosition = contactCandidate.Position;
-            Vector3 xAxis;
-            Vector3.Subtract(ref deepestPosition, ref furthestPosition, out xAxis);
+            FPVector3 xAxis;
+            FPVector3.Subtract(ref deepestPosition, ref furthestPosition, out xAxis);
 
             //Create the second axis of the 2d 'coordinate system' of the manifold.
-            Vector3 yAxis;
-            Vector3.Cross(ref xAxis, ref contacts.Elements[0].Normal, out yAxis);
+            FPVector3 yAxis;
+            FPVector3.Cross(ref xAxis, ref contacts.Elements[0].Normal, out yAxis);
 
             //Determine the furthest points along the axis.
-            Fix64 minYAxisDot = Fix64.MaxValue, maxYAxisDot = -Fix64.MaxValue;
+            FP minYAxisDot = FP.MaxValue, maxYAxisDot = -FP.MaxValue;
             int minYAxisIndex = -1, maxYAxisIndex = -1;
 
-            Fix64 dot;
+            FP dot;
             for (int i = 0; i < 4; i++)
             {
-                Vector3.Dot(ref contacts.Elements[i].Position, ref yAxis, out dot);
+                FPVector3.Dot(ref contacts.Elements[i].Position, ref yAxis, out dot);
                 if (dot < minYAxisDot)
                 {
                     minYAxisIndex = i;
@@ -273,7 +273,7 @@ namespace BEPUphysics.CollisionTests
                 }
 
             }
-            Vector3.Dot(ref contactCandidate.Position, ref yAxis, out dot);
+            FPVector3.Dot(ref contactCandidate.Position, ref yAxis, out dot);
             if (dot < minYAxisDot)
             {
                 minYAxisIndex = 4;

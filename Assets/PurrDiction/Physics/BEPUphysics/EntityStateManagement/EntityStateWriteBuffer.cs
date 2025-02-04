@@ -39,8 +39,8 @@ namespace BEPUphysics.EntityStateManagement
 #else
         internal struct EntityStateChange
         {
-            internal Quaternion orientationQuaternion;
-            internal Vector3 vector;
+            internal FPQuaternion orientationQuaternion;
+            internal FPVector3 vector;
             internal TargetField targetField;
             internal Entity target;
         }
@@ -61,7 +61,7 @@ namespace BEPUphysics.EntityStateManagement
         ///</summary>
         ///<param name="entity">Entity to target.</param>
         ///<param name="newPosition">New position of the entity.</param>
-        public void EnqueuePosition(Entity entity, ref Vector3 newPosition)
+        public void EnqueuePosition(Entity entity, ref FPVector3 newPosition)
         {
             stateChanges.Enqueue(new EntityStateChange { target = entity, vector = newPosition, targetField = TargetField.Position });
         }
@@ -70,7 +70,7 @@ namespace BEPUphysics.EntityStateManagement
         ///</summary>
         ///<param name="entity">Entity to target.</param>
         ///<param name="newOrientationQuaternion">New orientation of the entity.</param>
-        public void EnqueueOrientation(Entity entity, ref Quaternion newOrientationQuaternion)
+        public void EnqueueOrientation(Entity entity, ref FPQuaternion newOrientationQuaternion)
         {
             stateChanges.Enqueue(new EntityStateChange { target = entity, orientationQuaternion = newOrientationQuaternion, targetField = TargetField.Orientation });
         }
@@ -79,7 +79,7 @@ namespace BEPUphysics.EntityStateManagement
         ///</summary>
         ///<param name="entity">Entity to target.</param>
         ///<param name="newLinearVelocity">New linear velocity of the entity.</param>
-        public void EnqueueLinearVelocity(Entity entity, ref Vector3 newLinearVelocity)
+        public void EnqueueLinearVelocity(Entity entity, ref FPVector3 newLinearVelocity)
         {
             stateChanges.Enqueue(new EntityStateChange { target = entity, vector = newLinearVelocity, targetField = TargetField.LinearVelocity });
         }
@@ -88,7 +88,7 @@ namespace BEPUphysics.EntityStateManagement
         ///</summary>
         ///<param name="entity">Entity to target.</param>
         ///<param name="newAngularVelocity">New angular velocity of the entity.</param>
-        public void EnqueueAngularVelocity(Entity entity, ref Vector3 newAngularVelocity)
+        public void EnqueueAngularVelocity(Entity entity, ref FPVector3 newAngularVelocity)
         {
             stateChanges.Enqueue(new EntityStateChange { target = entity, vector = newAngularVelocity, targetField = TargetField.AngularVelocity });
         }

@@ -8,22 +8,22 @@ namespace BEPUphysics.Paths
     /// <summary>
     /// Defines a 3D curve using hermite interpolation.
     /// </summary>
-    public abstract class HermiteCurve3D : Curve<Vector3>
+    public abstract class HermiteCurve3D : Curve<FPVector3>
     {
         /// <summary>
         /// Internal list of curve tangents.
         /// </summary>
-        protected List<Vector3> tangents = new List<Vector3>();
+        protected List<FPVector3> tangents = new List<FPVector3>();
 
 
         /// <summary>
         /// Gets the tangents used by the curve per control point.
         /// </summary>
-        public ReadOnlyList<Vector3> Tangents
+        public ReadOnlyList<FPVector3> Tangents
         {
             get
             {
-                return new ReadOnlyList<Vector3>(tangents);
+                return new ReadOnlyList<FPVector3>(tangents);
             }
         }
 
@@ -34,9 +34,9 @@ namespace BEPUphysics.Paths
         /// <param name="controlPointIndex">Index of the starting control point of the subinterval.</param>
         /// <param name="weight">Location to evaluate on the subinterval from 0 to 1.</param>
         /// <param name="value">Value at the given location.</param>
-        public override void Evaluate(int controlPointIndex, Fix64 weight, out Vector3 value)
+        public override void Evaluate(int controlPointIndex, FP weight, out FPVector3 value)
         {
-            value = Vector3.Hermite(
+            value = FPVector3.Hermite(
                 ControlPoints[controlPointIndex].Value, tangents[controlPointIndex],
                 ControlPoints[controlPointIndex + 1].Value, tangents[controlPointIndex + 1], weight);
         }
@@ -46,7 +46,7 @@ namespace BEPUphysics.Paths
         /// </summary>
         /// <param name="curveControlPoint">New control point.</param>
         /// <param name="index">Index of the control point.</param>
-        protected internal override void ControlPointAdded(CurveControlPoint<Vector3> curveControlPoint, int index)
+        protected internal override void ControlPointAdded(CurveControlPoint<FPVector3> curveControlPoint, int index)
         {
             tangents.Clear();
             ComputeTangents();
@@ -57,7 +57,7 @@ namespace BEPUphysics.Paths
         /// </summary>
         /// <param name="curveControlPoint">Removed control point.</param>
         /// <param name="oldIndex">Index of the control point before it was removed.</param>
-        protected internal override void ControlPointRemoved(CurveControlPoint<Vector3> curveControlPoint, int oldIndex)
+        protected internal override void ControlPointRemoved(CurveControlPoint<FPVector3> curveControlPoint, int oldIndex)
         {
             tangents.Clear();
             ComputeTangents();
@@ -69,7 +69,7 @@ namespace BEPUphysics.Paths
         /// <param name="curveControlPoint">Changed control point.</param>
         /// <param name="oldIndex">Old index of the control point.</param>
         /// <param name="newIndex">New index of the control point.</param>
-        protected internal override void ControlPointTimeChanged(CurveControlPoint<Vector3> curveControlPoint, int oldIndex, int newIndex)
+        protected internal override void ControlPointTimeChanged(CurveControlPoint<FPVector3> curveControlPoint, int oldIndex, int newIndex)
         {
             tangents.Clear();
             ComputeTangents();
@@ -79,7 +79,7 @@ namespace BEPUphysics.Paths
         /// Called when a control point belonging to the curve has its value changed.
         /// </summary>
         /// <param name="curveControlPoint">Changed control point.</param>
-        protected internal override void ControlPointValueChanged(CurveControlPoint<Vector3> curveControlPoint)
+        protected internal override void ControlPointValueChanged(CurveControlPoint<FPVector3> curveControlPoint)
         {
             tangents.Clear();
             ComputeTangents();

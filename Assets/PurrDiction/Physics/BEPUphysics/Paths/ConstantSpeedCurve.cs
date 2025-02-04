@@ -13,7 +13,7 @@ namespace BEPUphysics.Paths
         /// </summary>
         /// <param name="speed">Speed to maintain while traveling around a curve.</param>
         /// <param name="curve">Curve to wrap.</param>
-        protected ConstantSpeedCurve(Fix64 speed, Curve<TValue> curve)
+        protected ConstantSpeedCurve(FP speed, Curve<TValue> curve)
             : base(curve)
         {
             Speed = speed;
@@ -27,7 +27,7 @@ namespace BEPUphysics.Paths
         /// <param name="curve">Curve to wrap.</param>
         /// <param name="sampleCount">Number of samples to use when constructing the wrapper curve.
         /// More samples increases the accuracy of the speed requirement at the cost of performance.</param>
-        protected ConstantSpeedCurve(Fix64 speed, Curve<TValue> curve, int sampleCount)
+        protected ConstantSpeedCurve(FP speed, Curve<TValue> curve, int sampleCount)
             : base(curve, sampleCount)
         {
             Speed = speed;
@@ -37,14 +37,14 @@ namespace BEPUphysics.Paths
         /// <summary>
         /// Gets or sets the speed of the curve.
         /// </summary>
-        public Fix64 Speed { get; set; }
+        public FP Speed { get; set; }
 
         /// <summary>
         /// Gets the desired speed at a given time.
         /// </summary>
         /// <param name="time">Time to check for speed.</param>
         /// <returns>Speed at the given time.</returns>
-        public override Fix64 GetSpeedAtCurveTime(Fix64 time)
+        public override FP GetSpeedAtCurveTime(FP time)
         {
             return Speed;
         }

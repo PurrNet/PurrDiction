@@ -28,7 +28,7 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
         /// </summary>
         /// <param name="position">Local position of the entry.</param>
         /// <param name="shape">Shape of the entry.</param>
-        public ConvexShapeEntry(Vector3 position, ConvexShape shape)
+        public ConvexShapeEntry(FPVector3 position, ConvexShape shape)
         {
             Transform = new RigidTransform(position);
             CollisionShape = shape;
@@ -39,7 +39,7 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
         /// </summary>
         /// <param name="orientation">Local orientation of the entry.</param>
         /// <param name="shape">Shape of the entry.</param>
-        public ConvexShapeEntry(Quaternion orientation, ConvexShape shape)
+        public ConvexShapeEntry(FPQuaternion orientation, ConvexShape shape)
         {
             Transform = new RigidTransform(orientation);
             CollisionShape = shape;
@@ -98,7 +98,7 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
             shapes.Add(firstShape);
             shapes.Add(secondShape);
 
-            Vector3 center;
+            FPVector3 center;
             UpdateConvexShapeInfo(out center);
 
             shapes.Changed += ShapesChanged;
@@ -112,7 +112,7 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
         ///<param name="firstShape">First shape in the wrapped shape.</param>
         ///<param name="secondShape">Second shape in the wrapped shape.</param>
         ///<param name="center">Center of the shape before recentering..</param>
-        public WrappedShape(ConvexShapeEntry firstShape, ConvexShapeEntry secondShape, out Vector3 center)
+        public WrappedShape(ConvexShapeEntry firstShape, ConvexShapeEntry secondShape, out FPVector3 center)
         {
             shapes.Add(firstShape);
             shapes.Add(secondShape);
@@ -137,7 +137,7 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
                 shapes.Add(shapeEntries[i]);
             }
 
-            Vector3 center;
+            FPVector3 center;
             UpdateConvexShapeInfo(out center);
             shapes.Changed += ShapesChanged;
         }
@@ -149,7 +149,7 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
         ///<param name="shapeEntries">Shape entries used to construct the shape.</param>
         /// <param name="center">Center of the shape before recentering.</param>
         ///<exception cref="Exception">Thrown when the shape list is empty.</exception>
-        public WrappedShape(IList<ConvexShapeEntry> shapeEntries, out Vector3 center)
+        public WrappedShape(IList<ConvexShapeEntry> shapeEntries, out FPVector3 center)
         {
             if (shapeEntries.Count == 0)
                 throw new ArgumentException("Cannot create a wrapped shape with no contained shapes.");
@@ -184,7 +184,7 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
 
         protected override void OnShapeChanged()
         {
-            Vector3 center;
+            FPVector3 center;
             UpdateConvexShapeInfo(out center);
             base.OnShapeChanged();
         }
@@ -199,7 +199,7 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
         /// Computes and applies a convex shape description for this WrappedShape.
         /// </summary>
         /// <param name="center">Computed center of the shape before recentering.</param>
-        public void UpdateConvexShapeInfo(out Vector3 center)
+        public void UpdateConvexShapeInfo(out FPVector3 center)
         {
             //Compute the volume distribution.
             var samples = CommonResources.GetVectorList();
@@ -214,7 +214,7 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
             var triangles = CommonResources.GetIntList();
             ConvexHullHelper.GetConvexHull(samples, triangles);
 
-            Fix64 volume;
+            FP volume;
             InertiaHelper.ComputeShapeDistribution(samples, triangles, out center, out volume, out volumeDistribution);
             Volume = volume;
 
@@ -238,7 +238,7 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
         /// </summary>
         /// <param name="shapeTransform">Transform to use.</param>
         /// <param name="boundingBox">Bounding box of the transformed shape.</param>
-        public override void GetBoundingBox(ref RigidTransform shapeTransform, out BoundingBox boundingBox)
+        public override void GetBoundingBox(ref RigidTransform shapeTransform, out FPBoundingBox boundingBox)
         {
             RigidTransform subTransform;
             RigidTransform.Multiply(ref shapes.WrappedList.Elements[0].Transform, ref shapeTransform, out subTransform);
@@ -246,9 +246,9 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
             for (int i = 1; i < shapes.WrappedList.Count; i++)
             {
                 RigidTransform.Multiply(ref shapes.WrappedList.Elements[i].Transform, ref shapeTransform, out subTransform);
-                BoundingBox toMerge;
+                FPBoundingBox toMerge;
                 shapes.WrappedList.Elements[i].CollisionShape.GetBoundingBox(ref subTransform, out toMerge);
-                BoundingBox.CreateMerged(ref boundingBox, ref toMerge, out boundingBox);
+                FPBoundingBox.CreateMerged(ref boundingBox, ref toMerge, out boundingBox);
             }
 
             boundingBox.Min.X -= collisionMargin;
@@ -266,18 +266,18 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
         ///</summary>
         ///<param name="direction">Direction to find the extreme point in.</param>
         ///<param name="extremePoint">Extreme point on the shape.</param>
-        public override void GetLocalExtremePointWithoutMargin(ref Vector3 direction, out Vector3 extremePoint)
+        public override void GetLocalExtremePointWithoutMargin(ref FPVector3 direction, out FPVector3 extremePoint)
         {
             shapes.WrappedList.Elements[0].CollisionShape.GetExtremePoint(direction, ref shapes.WrappedList.Elements[0].Transform, out extremePoint);
-            Fix64 maxDot;
-            Vector3.Dot(ref extremePoint, ref direction, out maxDot);
+            FP maxDot;
+            FPVector3.Dot(ref extremePoint, ref direction, out maxDot);
             for (int i = 1; i < shapes.WrappedList.Count; i++)
             {
-                Fix64 dot;
-                Vector3 temp;
+                FP dot;
+                FPVector3 temp;
 
                 shapes.WrappedList.Elements[i].CollisionShape.GetExtremePoint(direction, ref shapes.WrappedList.Elements[i].Transform, out temp);
-                Vector3.Dot(ref direction, ref temp, out dot);
+                FPVector3.Dot(ref direction, ref temp, out dot);
                 if (dot > maxDot)
                 {
                     extremePoint = temp;
@@ -293,13 +293,13 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
         /// it is simply an approximation that avoids underestimating.
         /// </summary>
         /// <returns>Maximum radius of the shape.</returns>
-        public Fix64 ComputeMaximumRadius()
+        public FP ComputeMaximumRadius()
         {
             //This can overestimate the actual maximum radius, but such is the defined behavior of the ComputeMaximumRadius function.  It's not exact; it's an upper bound on the actual maximum.
-            Fix64 maxRadius = F64.C0;
+            FP maxRadius = F64.C0;
             for (int i = 0; i < shapes.Count; i++)
             {
-                Fix64 radius = shapes.WrappedList.Elements[i].CollisionShape.MaximumRadius +
+                FP radius = shapes.WrappedList.Elements[i].CollisionShape.MaximumRadius +
                                shapes.WrappedList.Elements[i].Transform.Position.Length();
                 if (radius > maxRadius)
                     maxRadius = radius;
@@ -312,13 +312,13 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
         /// it is simply an approximation that avoids overestimating.
         /// </summary>
         /// <returns>Minimum radius of the shape.</returns>
-        public Fix64 ComputeMinimumRadius()
+        public FP ComputeMinimumRadius()
         {
             //Could also use the tetrahedron approximation approach.
-            Fix64 minRadius = F64.C0;
+            FP minRadius = F64.C0;
             for (int i = 0; i < shapes.Count; i++)
             {
-                Fix64 radius = shapes.WrappedList.Elements[i].CollisionShape.MinimumRadius;
+                FP radius = shapes.WrappedList.Elements[i].CollisionShape.MinimumRadius;
                 if (radius < minRadius)
                     minRadius = radius;
             }

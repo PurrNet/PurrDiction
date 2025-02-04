@@ -34,28 +34,28 @@ namespace BEPUphysics.NarrowPhaseSystems.Pairs
         {
             //Construct a TriangleCollidable from the static mesh.
             var toReturn = PhysicsResources.GetTriangleCollidable();
-            Vector3 terrainUp = new Vector3(mesh.worldTransform.LinearTransform.M21, mesh.worldTransform.LinearTransform.M22, mesh.worldTransform.LinearTransform.M23);
-            Fix64 dot;
-            Vector3 AB, AC, normal;
+            FPVector3 terrainUp = new FPVector3(mesh.worldTransform.LinearTransform.M21, mesh.worldTransform.LinearTransform.M22, mesh.worldTransform.LinearTransform.M23);
+            FP dot;
+            FPVector3 AB, AC, normal;
             var shape = toReturn.Shape;
             mesh.Shape.GetTriangle(index, ref mesh.worldTransform, out shape.vA, out shape.vB, out shape.vC);
-            Vector3 center;
-            Vector3.Add(ref shape.vA, ref shape.vB, out center);
-            Vector3.Add(ref center, ref shape.vC, out center);
-            Vector3.Multiply(ref center, F64.OneThird, out center);
-            Vector3.Subtract(ref shape.vA, ref center, out shape.vA);
-            Vector3.Subtract(ref shape.vB, ref center, out shape.vB);
-            Vector3.Subtract(ref shape.vC, ref center, out shape.vC);
+            FPVector3 center;
+            FPVector3.Add(ref shape.vA, ref shape.vB, out center);
+            FPVector3.Add(ref center, ref shape.vC, out center);
+            FPVector3.Multiply(ref center, F64.OneThird, out center);
+            FPVector3.Subtract(ref shape.vA, ref center, out shape.vA);
+            FPVector3.Subtract(ref shape.vB, ref center, out shape.vB);
+            FPVector3.Subtract(ref shape.vC, ref center, out shape.vC);
 
             //The bounding box doesn't update by itself.
             toReturn.worldTransform.Position = center;
-            toReturn.worldTransform.Orientation = Quaternion.Identity;
+            toReturn.worldTransform.Orientation = FPQuaternion.Identity;
             toReturn.UpdateBoundingBoxInternal(F64.C0);
 
-            Vector3.Subtract(ref shape.vB, ref shape.vA, out AB);
-            Vector3.Subtract(ref shape.vC, ref shape.vA, out AC);
-            Vector3.Cross(ref AB, ref AC, out normal);
-            Vector3.Dot(ref terrainUp, ref normal, out dot);
+            FPVector3.Subtract(ref shape.vB, ref shape.vA, out AB);
+            FPVector3.Subtract(ref shape.vC, ref shape.vA, out AC);
+            FPVector3.Cross(ref AB, ref AC, out normal);
+            FPVector3.Dot(ref terrainUp, ref normal, out dot);
             if (dot > F64.C0)
             {
                 shape.sidedness = TriangleSidedness.Clockwise;
@@ -69,7 +69,7 @@ namespace BEPUphysics.NarrowPhaseSystems.Pairs
         }
 
 
-        protected override void ConfigureCollidable(TriangleEntry entry, Fix64 dt)
+        protected override void ConfigureCollidable(TriangleEntry entry, FP dt)
         {
 
         }
@@ -114,13 +114,13 @@ namespace BEPUphysics.NarrowPhaseSystems.Pairs
 
 
 
-        protected override void UpdateContainedPairs(Fix64 dt)
+        protected override void UpdateContainedPairs(FP dt)
         {
             var overlappedElements = new QuickList<int>(BufferPools<int>.Thread);
-            BoundingBox localBoundingBox;
+            FPBoundingBox localBoundingBox;
 
-            Vector3 sweep;
-            Vector3.Multiply(ref mobileMesh.entity.linearVelocity, dt, out sweep);
+            FPVector3 sweep;
+            FPVector3.Multiply(ref mobileMesh.entity.linearVelocity, dt, out sweep);
             mobileMesh.Shape.GetSweptLocalBoundingBox(ref mobileMesh.worldTransform, ref mesh.worldTransform, ref sweep, out localBoundingBox);
             mesh.Shape.GetOverlaps(localBoundingBox, ref overlappedElements);
             for (int i = 0; i < overlappedElements.Count; i++)

@@ -21,28 +21,28 @@ namespace BEPUphysics.CollisionTests.CollisionAlgorithms
         /// <param name="positionB">Position of the second sphere.</param>
         /// <param name="contact">Contact data between the spheres, if any.</param>
         /// <returns>Whether or not the spheres are touching.</returns>
-        public static bool AreSpheresColliding(SphereShape a, SphereShape b, ref Vector3 positionA, ref Vector3 positionB, out ContactData contact)
+        public static bool AreSpheresColliding(SphereShape a, SphereShape b, ref FPVector3 positionA, ref FPVector3 positionB, out ContactData contact)
         {
             contact = new ContactData();
 
-            Fix64 radiusSum = a.collisionMargin + b.collisionMargin;
-            Vector3 centerDifference;
-            Vector3.Subtract(ref positionB, ref positionA, out centerDifference);
-            Fix64 centerDistance = centerDifference.LengthSquared();
+            FP radiusSum = a.collisionMargin + b.collisionMargin;
+            FPVector3 centerDifference;
+            FPVector3.Subtract(ref positionB, ref positionA, out centerDifference);
+            FP centerDistance = centerDifference.LengthSquared();
 
             if (centerDistance < (radiusSum + CollisionDetectionSettings.maximumContactDistance) * (radiusSum + CollisionDetectionSettings.maximumContactDistance))
             {
                 //In collision!
 
                 if (radiusSum > Toolbox.Epsilon) //This would be weird, but it is still possible to cause a NaN.
-                    Vector3.Multiply(ref centerDifference, a.collisionMargin / (radiusSum), out  contact.Position);
-                else contact.Position = new Vector3();
-                Vector3.Add(ref contact.Position, ref positionA, out contact.Position);
+                    FPVector3.Multiply(ref centerDifference, a.collisionMargin / (radiusSum), out  contact.Position);
+                else contact.Position = new FPVector3();
+                FPVector3.Add(ref contact.Position, ref positionA, out contact.Position);
 
-                centerDistance = Fix64.Sqrt(centerDistance);
+                centerDistance = FP.Sqrt(centerDistance);
                 if (centerDistance > Toolbox.BigEpsilon)
                 {
-                    Vector3.Divide(ref centerDifference, centerDistance, out contact.Normal);
+                    FPVector3.Divide(ref centerDifference, centerDistance, out contact.Normal);
                 }
                 else
                 {

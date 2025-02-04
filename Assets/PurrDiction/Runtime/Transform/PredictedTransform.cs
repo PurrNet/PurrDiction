@@ -76,7 +76,7 @@ namespace PurrNet.Prediction
         private Vector3 _accumulatedPositionError;
         private Quaternion _accumulatedRotationError = Quaternion.identity;
 
-        protected override void ModifyRollbackViewState(ref PredictedTransformState state, Fix64 delta, bool accumulateError)
+        protected override void ModifyRollbackViewState(ref PredictedTransformState state, FP delta, bool accumulateError)
         {
             bool _smoothCorrections = _interpolationSettings && _interpolationSettings.useInterpolation;
             

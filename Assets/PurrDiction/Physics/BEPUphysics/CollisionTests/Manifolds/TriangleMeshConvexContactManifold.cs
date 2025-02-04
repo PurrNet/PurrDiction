@@ -84,7 +84,7 @@ namespace BEPUphysics.CollisionTests.Manifolds
 
 
         protected abstract bool UseImprovedBoundaryHandling { get; }
-        protected internal abstract int FindOverlappingTriangles(Fix64 dt);
+        protected internal abstract int FindOverlappingTriangles(FP dt);
 
         /// <summary>
         /// Precomputes the transform to bring triangles from their native local space to the local space of the convex.
@@ -99,7 +99,7 @@ namespace BEPUphysics.CollisionTests.Manifolds
         /// Updates the manifold.
         ///</summary>
         ///<param name="dt">Timestep duration.</param>
-        public override void Update(Fix64 dt)
+        public override void Update(FP dt)
         {
             //First, refresh all existing contacts.  This is an incremental manifold.
             var transform = MeshTransform;
@@ -137,7 +137,7 @@ namespace BEPUphysics.CollisionTests.Manifolds
             PrecomputeTriangleTransform(ref convexInverseWorldTransform, out fromMeshLocalToConvexLocal);
 
             //Grab the convex's local space bounding box up front. This will be used for a secondary pruning step.
-            BoundingBox convexLocalBoundingBox;
+            FPBoundingBox convexLocalBoundingBox;
             convex.Shape.GetBoundingBox(ref Toolbox.RigidIdentity, out convexLocalBoundingBox);
 
             Matrix3x3 orientation;
@@ -156,7 +156,7 @@ namespace BEPUphysics.CollisionTests.Manifolds
 
                     //Do one last AABB test between the convex and triangle in the convex's local space.
                     //This can prune out a lot of triangles when dealing with larger objects, and it's pretty cheap to do.
-                    BoundingBox triangleBoundingBox;
+                    FPBoundingBox triangleBoundingBox;
                     Toolbox.GetTriangleBoundingBox(ref localTriangleShape.vA, ref localTriangleShape.vB, ref localTriangleShape.vC, out triangleBoundingBox);
 
                     bool intersecting;
@@ -250,9 +250,9 @@ namespace BEPUphysics.CollisionTests.Manifolds
 
                     var firstNormal = boundarySets.EdgeContacts.Elements[0].ContactData.Normal;
                     boundarySets.EdgeContacts.Elements[0].CorrectedNormal.Normalize();
-                    Fix64 dot;
-                    Vector3.Dot(ref firstNormal, ref boundarySets.EdgeContacts.Elements[0].CorrectedNormal, out dot);
-                    if (Fix64.Abs(dot) > F64.C0p01)
+                    FP dot;
+                    FPVector3.Dot(ref firstNormal, ref boundarySets.EdgeContacts.Elements[0].CorrectedNormal, out dot);
+                    if (FP.Abs(dot) > F64.C0p01)
                     {
                         //Go ahead and test the first contact separately, since we're using its contact normal to determine coplanarity.
                         allNormalsInSamePlane = false;
@@ -264,15 +264,15 @@ namespace BEPUphysics.CollisionTests.Manifolds
                         //we'll ignore that possibility for now.
                         for (int i = 1; i < boundarySets.EdgeContacts.Count; i++)
                         {
-                            Vector3.Dot(ref boundarySets.EdgeContacts.Elements[i].ContactData.Normal, ref firstNormal, out dot);
+                            FPVector3.Dot(ref boundarySets.EdgeContacts.Elements[i].ContactData.Normal, ref firstNormal, out dot);
                             if (dot < F64.C0)
                             {
                                 atLeastOneNormalAgainst = true;
                             }
                             //Check to see if the normal is outside the plane.
-                            Vector3.Dot(ref boundarySets.EdgeContacts.Elements[i].ContactData.Normal, ref boundarySets.EdgeContacts.Elements[0].CorrectedNormal, out dot);
+                            FPVector3.Dot(ref boundarySets.EdgeContacts.Elements[i].ContactData.Normal, ref boundarySets.EdgeContacts.Elements[0].CorrectedNormal, out dot);
 
-                            if (Fix64.Abs(dot) > F64.C0p01)
+                            if (FP.Abs(dot) > F64.C0p01)
                             {
 
                                 //We are not stuck!
@@ -296,7 +296,7 @@ namespace BEPUphysics.CollisionTests.Manifolds
                         {
                             //Must normalize the corrected normal before using it.
                             boundarySets.EdgeContacts.Elements[i].CorrectedNormal.Normalize();
-                            Vector3.Dot(ref boundarySets.EdgeContacts.Elements[i].CorrectedNormal, ref boundarySets.EdgeContacts.Elements[i].ContactData.Normal, out dot);
+                            FPVector3.Dot(ref boundarySets.EdgeContacts.Elements[i].CorrectedNormal, ref boundarySets.EdgeContacts.Elements[i].ContactData.Normal, out dot);
                             if (dot < F64.C0p01)
                             {
                                 //Only bother doing the correction if the normal appears to be pointing nearly horizontally- implying that it's a contributor to the stuckness!
@@ -336,9 +336,9 @@ namespace BEPUphysics.CollisionTests.Manifolds
                     {
                         //If it is blocked, we can still make use of the contact.  But first, we need to change the contact normal to ensure that
                         //it will not interfere (and cause a bump or something).
-                        Fix64 dot;
+                        FP dot;
                         boundarySets.EdgeContacts.Elements[i].CorrectedNormal.Normalize();
-                        Vector3.Dot(ref boundarySets.EdgeContacts.Elements[i].CorrectedNormal, ref boundarySets.EdgeContacts.Elements[i].ContactData.Normal, out dot);
+                        FPVector3.Dot(ref boundarySets.EdgeContacts.Elements[i].CorrectedNormal, ref boundarySets.EdgeContacts.Elements[i].ContactData.Normal, out dot);
                         boundarySets.EdgeContacts.Elements[i].ContactData.Normal = boundarySets.EdgeContacts.Elements[i].CorrectedNormal;
                         boundarySets.EdgeContacts.Elements[i].ContactData.PenetrationDepth *= MathHelper.Max(F64.C0, dot); //Never cause a negative penetration depth.
                         AddLocalContact(ref boundarySets.EdgeContacts.Elements[i].ContactData, ref orientation, ref candidatesToAdd);
@@ -364,9 +364,9 @@ namespace BEPUphysics.CollisionTests.Manifolds
                     {
                         //If it is blocked, we can still make use of the contact.  But first, we need to change the contact normal to ensure that
                         //it will not interfere (and cause a bump or something).
-                        Fix64 dot;
+                        FP dot;
                         boundarySets.VertexContacts.Elements[i].CorrectedNormal.Normalize();
-                        Vector3.Dot(ref boundarySets.VertexContacts.Elements[i].CorrectedNormal, ref boundarySets.VertexContacts.Elements[i].ContactData.Normal, out dot);
+                        FPVector3.Dot(ref boundarySets.VertexContacts.Elements[i].CorrectedNormal, ref boundarySets.VertexContacts.Elements[i].ContactData.Normal, out dot);
                         boundarySets.VertexContacts.Elements[i].ContactData.Normal = boundarySets.VertexContacts.Elements[i].CorrectedNormal;
                         boundarySets.VertexContacts.Elements[i].ContactData.PenetrationDepth *= MathHelper.Max(F64.C0, dot); //Never cause a negative penetration depth.
                         AddLocalContact(ref boundarySets.VertexContacts.Elements[i].ContactData, ref orientation, ref candidatesToAdd);
@@ -438,7 +438,7 @@ namespace BEPUphysics.CollisionTests.Manifolds
         {
             //Put the contact into world space.
             Matrix3x3.Transform(ref contact.Position, ref orientation, out contact.Position);
-            Vector3.Add(ref contact.Position, ref convex.worldTransform.Position, out contact.Position);
+            FPVector3.Add(ref contact.Position, ref convex.worldTransform.Position, out contact.Position);
             Matrix3x3.Transform(ref contact.Normal, ref orientation, out contact.Normal);
             //Check to see if the contact is unique before proceeding.
             if (IsContactUnique(ref contact, ref candidatesToAdd))
@@ -448,32 +448,32 @@ namespace BEPUphysics.CollisionTests.Manifolds
         }
 
 
-        protected void GetNormal(ref Vector3 uncorrectedNormal, TriangleShape localTriangleShape, out Vector3 normal)
+        protected void GetNormal(ref FPVector3 uncorrectedNormal, TriangleShape localTriangleShape, out FPVector3 normal)
         {
             //Compute the normal of the triangle in the current convex's local space.
             //Note its reliance on the local triangle shape.  It must be initialized to the correct values before this is called.
-            Vector3 AB, AC;
-            Vector3.Subtract(ref localTriangleShape.vB, ref localTriangleShape.vA, out AB);
-            Vector3.Subtract(ref localTriangleShape.vC, ref localTriangleShape.vA, out AC);
+            FPVector3 AB, AC;
+            FPVector3.Subtract(ref localTriangleShape.vB, ref localTriangleShape.vA, out AB);
+            FPVector3.Subtract(ref localTriangleShape.vC, ref localTriangleShape.vA, out AC);
             //Compute the normal based on the sidedness.
             switch (localTriangleShape.sidedness)
             {
                 case TriangleSidedness.DoubleSided:
                     //If it's double sided, then pick the triangle normal which points in the same direction
                     //as the contact normal that's going to be corrected.
-                    Fix64 dot;
-                    Vector3.Cross(ref AB, ref AC, out normal);
-                    Vector3.Dot(ref normal, ref uncorrectedNormal, out dot);
+                    FP dot;
+                    FPVector3.Cross(ref AB, ref AC, out normal);
+                    FPVector3.Dot(ref normal, ref uncorrectedNormal, out dot);
                     if (dot < F64.C0)
-                        Vector3.Negate(ref normal, out normal);
+                        FPVector3.Negate(ref normal, out normal);
                     break;
                 case TriangleSidedness.Clockwise:
                     //If it's clockwise, always use ACxAB.
-                    Vector3.Cross(ref AC, ref AB, out normal);
+                    FPVector3.Cross(ref AC, ref AB, out normal);
                     break;
                 default:
                     //If it's counterclockwise, always use ABxAC.
-                    Vector3.Cross(ref AB, ref AC, out normal);
+                    FPVector3.Cross(ref AB, ref AC, out normal);
                     break;
             }
             //If the normal is degenerate, just use the uncorrected normal.
@@ -618,17 +618,17 @@ namespace BEPUphysics.CollisionTests.Manifolds
         private bool IsContactUnique(ref ContactData contactCandidate, ref QuickList<ContactData> candidatesToAdd)
         {
             contactCandidate.Validate();
-            Fix64 distanceSquared;
+            FP distanceSquared;
             RigidTransform meshTransform = MeshTransform;
             for (int i = 0; i < contacts.Count; i++)
             {
-                Vector3.DistanceSquared(ref contacts.Elements[i].Position, ref contactCandidate.Position, out distanceSquared);
+                FPVector3.DistanceSquared(ref contacts.Elements[i].Position, ref contactCandidate.Position, out distanceSquared);
                 if (distanceSquared < CollisionDetectionSettings.ContactMinimumSeparationDistanceSquared)
                 {
                     //This is a nonconvex manifold.  There will be times where a an object will be shoved into a corner such that
                     //a single position will have two reasonable normals.  If the normals aren't mostly aligned, they should NOT be considered equivalent.
-                    Vector3.Dot(ref contacts.Elements[i].Normal, ref contactCandidate.Normal, out distanceSquared);
-                    if (Fix64.Abs(distanceSquared) >= CollisionDetectionSettings.nonconvexNormalDotMinimum)
+                    FPVector3.Dot(ref contacts.Elements[i].Normal, ref contactCandidate.Normal, out distanceSquared);
+                    if (FP.Abs(distanceSquared) >= CollisionDetectionSettings.nonconvexNormalDotMinimum)
                     {
                         //Update the existing 'redundant' contact with the new information.
                         //This works out because the new contact is the deepest contact according to the previous collision detection iteration.
@@ -644,13 +644,13 @@ namespace BEPUphysics.CollisionTests.Manifolds
             }
             for (int i = 0; i < candidatesToAdd.Count; i++)
             {
-                Vector3.DistanceSquared(ref candidatesToAdd.Elements[i].Position, ref contactCandidate.Position, out distanceSquared);
+                FPVector3.DistanceSquared(ref candidatesToAdd.Elements[i].Position, ref contactCandidate.Position, out distanceSquared);
                 if (distanceSquared < CollisionDetectionSettings.ContactMinimumSeparationDistanceSquared)
                 {
                     //This is a nonconvex manifold.  There will be times where a an object will be shoved into a corner such that
                     //a single position will have two reasonable normals.  If the normals aren't mostly aligned, they should NOT be considered equivalent.
-                    Vector3.Dot(ref candidatesToAdd.Elements[i].Normal, ref contactCandidate.Normal, out distanceSquared);
-                    if (Fix64.Abs(distanceSquared) >= CollisionDetectionSettings.nonconvexNormalDotMinimum)
+                    FPVector3.Dot(ref candidatesToAdd.Elements[i].Normal, ref contactCandidate.Normal, out distanceSquared);
+                    if (FP.Abs(distanceSquared) >= CollisionDetectionSettings.nonconvexNormalDotMinimum)
                         return false;
                 }
             }
@@ -774,7 +774,7 @@ namespace BEPUphysics.CollisionTests.Manifolds
         struct EdgeContact
         {
             public bool ShouldCorrect;
-            public Vector3 CorrectedNormal;
+            public FPVector3 CorrectedNormal;
             public Edge Edge;
             public ContactData ContactData;
         }
@@ -782,7 +782,7 @@ namespace BEPUphysics.CollisionTests.Manifolds
         struct VertexContact
         {
             public bool ShouldCorrect;
-            public Vector3 CorrectedNormal;
+            public FPVector3 CorrectedNormal;
             public int Vertex;
             public ContactData ContactData;
         }

@@ -16,7 +16,7 @@ namespace BEPUphysics.Unity
         public event Action onPreSimulate;
         public event Action onPostSimulate;
 
-        public Fix64 timeStep { get; set; } = 1 / 60M;
+        public FP timeStep { get; set; } = 1 / 60M;
 
         private void Awake()
         {
@@ -26,7 +26,7 @@ namespace BEPUphysics.Unity
             {
                 ForceUpdater =
                 {
-                    Gravity = new BEPUutilities.Vector3(0, -9.81M, 0)
+                    Gravity = new BEPUutilities.FPVector3(0, -9.81M, 0)
                 }
             };
         }
@@ -36,7 +36,7 @@ namespace BEPUphysics.Unity
             _spaces.Remove(gameObject.scene.handle);
         }
 
-        public void Simulate(Fix64 step)
+        public void Simulate(FP step)
         {
             timeStep = step;
 

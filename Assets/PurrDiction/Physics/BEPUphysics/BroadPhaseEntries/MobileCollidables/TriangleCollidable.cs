@@ -33,7 +33,7 @@ namespace BEPUphysics.BroadPhaseEntries.MobileCollidables
         ///<param name="a">First vertex in the triangle.</param>
         ///<param name="b">Second vertex in the triangle. </param>
         ///<param name="c">Third vertex in the triangle. </param>
-        public void Initialize(ref Vector3 a, ref Vector3 b, ref Vector3 c)
+        public void Initialize(ref FPVector3 a, ref FPVector3 b, ref FPVector3 c)
         {
             var shape = Shape;
             shape.collisionMargin = F64.C0;

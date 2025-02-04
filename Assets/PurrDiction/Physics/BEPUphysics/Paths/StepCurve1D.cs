@@ -6,7 +6,7 @@ namespace BEPUphysics.Paths
     /// One dimensional-valued curve that does not interpolate values.
     /// Instead, it just picks the value from the previous control point.
     /// </summary>
-    public class StepCurve1D : Curve<Fix64>
+    public class StepCurve1D : Curve<FP>
     {
         /// <summary>
         /// Evaluates the curve at a given time using linear interpolation.
@@ -14,7 +14,7 @@ namespace BEPUphysics.Paths
         /// <param name="controlPointIndex">Index of the control point at the beginning of the evaluation interval.</param>
         /// <param name="weight">Value of 0 to 1 representing how far along the interval to sample.</param>
         /// <param name="value">Value of the curve at the given location.</param>
-        public override void Evaluate(int controlPointIndex, Fix64 weight, out Fix64 value)
+        public override void Evaluate(int controlPointIndex, FP weight, out FP value)
         {
             value = ControlPoints[controlPointIndex].Value;
         }
@@ -33,19 +33,19 @@ namespace BEPUphysics.Paths
                 minIndex = 0;
         }
 
-        protected internal override void ControlPointAdded(CurveControlPoint<Fix64> curveControlPoint, int index)
+        protected internal override void ControlPointAdded(CurveControlPoint<FP> curveControlPoint, int index)
         {
         }
 
-        protected internal override void ControlPointRemoved(CurveControlPoint<Fix64> curveControlPoint, int oldIndex)
+        protected internal override void ControlPointRemoved(CurveControlPoint<FP> curveControlPoint, int oldIndex)
         {
         }
 
-        protected internal override void ControlPointTimeChanged(CurveControlPoint<Fix64> curveControlPoint, int oldIndex, int newIndex)
+        protected internal override void ControlPointTimeChanged(CurveControlPoint<FP> curveControlPoint, int oldIndex, int newIndex)
         {
         }
 
-        protected internal override void ControlPointValueChanged(CurveControlPoint<Fix64> curveControlPoint)
+        protected internal override void ControlPointValueChanged(CurveControlPoint<FP> curveControlPoint)
         {
         }
     }

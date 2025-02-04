@@ -10,12 +10,12 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
     /// </summary>
     public class NoRotationJoint : Joint, I3DImpulseConstraintWithError, I3DJacobianConstraint
     {
-        private Vector3 accumulatedImpulse;
-        private Vector3 biasVelocity;
+        private FPVector3 accumulatedImpulse;
+        private FPVector3 biasVelocity;
         private Matrix3x3 effectiveMassMatrix;
-        private Quaternion initialQuaternionConjugateA;
-        private Quaternion initialQuaternionConjugateB;
-        private Vector3 error;
+        private FPQuaternion initialQuaternionConjugateA;
+        private FPQuaternion initialQuaternionConjugateB;
+        private FPVector3 error;
 
         /// <summary>
         /// Constructs a new constraint which prevents relative angular motion between the two connected bodies.
@@ -38,28 +38,28 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
             ConnectionA = connectionA;
             ConnectionB = connectionB;
 
-            initialQuaternionConjugateA = Quaternion.Conjugate(ConnectionA.orientation);
-            initialQuaternionConjugateB = Quaternion.Conjugate(ConnectionB.orientation);
+            initialQuaternionConjugateA = FPQuaternion.Conjugate(ConnectionA.orientation);
+            initialQuaternionConjugateB = FPQuaternion.Conjugate(ConnectionB.orientation);
         }
 
         /// <summary>
         /// Gets or sets the initial orientation of the first connected entity.
         /// The constraint will try to maintain the relative orientation between the initialOrientationA and initialOrientationB.
         /// </summary>
-        public Quaternion InitialOrientationA
+        public FPQuaternion InitialOrientationA
         {
-            get { return Quaternion.Conjugate(initialQuaternionConjugateA); }
-            set { initialQuaternionConjugateA = Quaternion.Conjugate(value); }
+            get { return FPQuaternion.Conjugate(initialQuaternionConjugateA); }
+            set { initialQuaternionConjugateA = FPQuaternion.Conjugate(value); }
         }
 
         /// <summary>
         /// Gets or sets the initial orientation of the second connected entity.
         /// The constraint will try to maintain the relative orientation between the initialOrientationA and initialOrientationB.
         /// </summary>
-        public Quaternion InitialOrientationB
+        public FPQuaternion InitialOrientationB
         {
-            get { return Quaternion.Conjugate(initialQuaternionConjugateB); }
-            set { initialQuaternionConjugateB = Quaternion.Conjugate(value); }
+            get { return FPQuaternion.Conjugate(initialQuaternionConjugateB); }
+            set { initialQuaternionConjugateB = FPQuaternion.Conjugate(value); }
         }
 
         #region I3DImpulseConstraintWithError Members
@@ -67,12 +67,12 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
         /// <summary>
         /// Gets the current relative velocity between the connected entities with respect to the constraint.
         /// </summary>
-        public Vector3 RelativeVelocity
+        public FPVector3 RelativeVelocity
         {
             get
             {
-                Vector3 velocityDifference;
-                Vector3.Subtract(ref connectionB.angularVelocity, ref connectionA.angularVelocity, out velocityDifference);
+                FPVector3 velocityDifference;
+                FPVector3.Subtract(ref connectionB.angularVelocity, ref connectionA.angularVelocity, out velocityDifference);
                 return velocityDifference;
             }
         }
@@ -80,7 +80,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
         /// <summary>
         /// Gets the total impulse applied by this constraint.
         /// </summary>
-        public Vector3 TotalImpulse
+        public FPVector3 TotalImpulse
         {
             get { return accumulatedImpulse; }
         }
@@ -88,7 +88,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
         /// <summary>
         /// Gets the current constraint error.
         /// </summary>
-        public Vector3 Error
+        public FPVector3 Error
         {
             get { return error; }
         }
@@ -103,7 +103,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
         /// <param name="jacobianX">First linear jacobian entry for the first connected entity.</param>
         /// <param name="jacobianY">Second linear jacobian entry for the first connected entity.</param>
         /// <param name="jacobianZ">Third linear jacobian entry for the first connected entity.</param>
-        public void GetLinearJacobianA(out Vector3 jacobianX, out Vector3 jacobianY, out Vector3 jacobianZ)
+        public void GetLinearJacobianA(out FPVector3 jacobianX, out FPVector3 jacobianY, out FPVector3 jacobianZ)
         {
             jacobianX = Toolbox.ZeroVector;
             jacobianY = Toolbox.ZeroVector;
@@ -116,7 +116,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
         /// <param name="jacobianX">First linear jacobian entry for the second connected entity.</param>
         /// <param name="jacobianY">Second linear jacobian entry for the second connected entity.</param>
         /// <param name="jacobianZ">Third linear jacobian entry for the second connected entity.</param>
-        public void GetLinearJacobianB(out Vector3 jacobianX, out Vector3 jacobianY, out Vector3 jacobianZ)
+        public void GetLinearJacobianB(out FPVector3 jacobianX, out FPVector3 jacobianY, out FPVector3 jacobianZ)
         {
             jacobianX = Toolbox.ZeroVector;
             jacobianY = Toolbox.ZeroVector;
@@ -129,7 +129,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
         /// <param name="jacobianX">First angular jacobian entry for the first connected entity.</param>
         /// <param name="jacobianY">Second angular jacobian entry for the first connected entity.</param>
         /// <param name="jacobianZ">Third angular jacobian entry for the first connected entity.</param>
-        public void GetAngularJacobianA(out Vector3 jacobianX, out Vector3 jacobianY, out Vector3 jacobianZ)
+        public void GetAngularJacobianA(out FPVector3 jacobianX, out FPVector3 jacobianY, out FPVector3 jacobianZ)
         {
             jacobianX = Toolbox.RightVector;
             jacobianY = Toolbox.UpVector;
@@ -142,7 +142,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
         /// <param name="jacobianX">First angular jacobian entry for the second connected entity.</param>
         /// <param name="jacobianY">Second angular jacobian entry for the second connected entity.</param>
         /// <param name="jacobianZ">Third angular jacobian entry for the second connected entity.</param>
-        public void GetAngularJacobianB(out Vector3 jacobianX, out Vector3 jacobianY, out Vector3 jacobianZ)
+        public void GetAngularJacobianB(out FPVector3 jacobianX, out FPVector3 jacobianY, out FPVector3 jacobianZ)
         {
             jacobianX = Toolbox.RightVector;
             jacobianY = Toolbox.UpVector;
@@ -163,57 +163,57 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
         /// <summary>
         /// Applies the corrective impulses required by the constraint.
         /// </summary>
-        public override Fix64 SolveIteration()
+        public override FP SolveIteration()
         {
-            Vector3 velocityDifference;
-            Vector3.Subtract(ref connectionB.angularVelocity, ref connectionA.angularVelocity, out velocityDifference);
-            Vector3 softnessVector;
-            Vector3.Multiply(ref accumulatedImpulse, softness, out softnessVector);
+            FPVector3 velocityDifference;
+            FPVector3.Subtract(ref connectionB.angularVelocity, ref connectionA.angularVelocity, out velocityDifference);
+            FPVector3 softnessVector;
+            FPVector3.Multiply(ref accumulatedImpulse, softness, out softnessVector);
 
-            Vector3 lambda;
-            Vector3.Add(ref velocityDifference, ref biasVelocity, out lambda);
-            Vector3.Subtract(ref lambda, ref softnessVector, out lambda);
+            FPVector3 lambda;
+            FPVector3.Add(ref velocityDifference, ref biasVelocity, out lambda);
+            FPVector3.Subtract(ref lambda, ref softnessVector, out lambda);
             Matrix3x3.Transform(ref lambda, ref effectiveMassMatrix, out lambda);
 
-            Vector3.Add(ref lambda, ref accumulatedImpulse, out accumulatedImpulse);
+            FPVector3.Add(ref lambda, ref accumulatedImpulse, out accumulatedImpulse);
             if (connectionA.isDynamic)
             {
                 connectionA.ApplyAngularImpulse(ref lambda);
             }
             if (connectionB.isDynamic)
             {
-                Vector3 torqueB;
-                Vector3.Negate(ref lambda, out torqueB);
+                FPVector3 torqueB;
+                FPVector3.Negate(ref lambda, out torqueB);
                 connectionB.ApplyAngularImpulse(ref torqueB);
             }
 
-            return Fix64.Abs(lambda.X) + Fix64.Abs(lambda.Y) + Fix64.Abs(lambda.Z);
+            return FP.Abs(lambda.X) + FP.Abs(lambda.Y) + FP.Abs(lambda.Z);
         }
 
         /// <summary>
         /// Initializes the constraint for the current frame.
         /// </summary>
         /// <param name="dt">Time between frames.</param>
-        public override void Update(Fix64 dt)
+        public override void Update(FP dt)
         {
-            Quaternion quaternionA;
-            Quaternion.Multiply(ref connectionA.orientation, ref initialQuaternionConjugateA, out quaternionA);
-            Quaternion quaternionB;
-            Quaternion.Multiply(ref connectionB.orientation, ref initialQuaternionConjugateB, out quaternionB);
-            Quaternion.Conjugate(ref quaternionB, out quaternionB);
-            Quaternion intermediate;
-            Quaternion.Multiply(ref quaternionA, ref quaternionB, out intermediate);
+            FPQuaternion quaternionA;
+            FPQuaternion.Multiply(ref connectionA.orientation, ref initialQuaternionConjugateA, out quaternionA);
+            FPQuaternion quaternionB;
+            FPQuaternion.Multiply(ref connectionB.orientation, ref initialQuaternionConjugateB, out quaternionB);
+            FPQuaternion.Conjugate(ref quaternionB, out quaternionB);
+            FPQuaternion intermediate;
+            FPQuaternion.Multiply(ref quaternionA, ref quaternionB, out intermediate);
 
 
-            Fix64 angle;
-            Vector3 axis;
-            Quaternion.GetAxisAngleFromQuaternion(ref intermediate, out axis, out angle);
+            FP angle;
+            FPVector3 axis;
+            FPQuaternion.GetAxisAngleFromQuaternion(ref intermediate, out axis, out angle);
 
             error.X = axis.X * angle;
             error.Y = axis.Y * angle;
             error.Z = axis.Z * angle;
 
-            Fix64 errorReduction;
+            FP errorReduction;
             springSettings.ComputeErrorReductionAndSoftness(dt, F64.C1 / dt, out errorReduction, out softness);
             errorReduction = -errorReduction;
             biasVelocity.X = errorReduction * error.X;
@@ -221,10 +221,10 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
             biasVelocity.Z = errorReduction * error.Z;
 
             //Ensure that the corrective velocity doesn't exceed the max.
-            Fix64 length = biasVelocity.LengthSquared();
+            FP length = biasVelocity.LengthSquared();
             if (length > maxCorrectiveVelocitySquared)
             {
-                Fix64 multiplier = maxCorrectiveVelocity / Fix64.Sqrt(length);
+                FP multiplier = maxCorrectiveVelocity / FP.Sqrt(length);
                 biasVelocity.X *= multiplier;
                 biasVelocity.Y *= multiplier;
                 biasVelocity.Z *= multiplier;
@@ -254,8 +254,8 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
             }
             if (connectionB.isDynamic)
             {
-                Vector3 torqueB;
-                Vector3.Negate(ref accumulatedImpulse, out torqueB);
+                FPVector3 torqueB;
+                FPVector3.Negate(ref accumulatedImpulse, out torqueB);
                 connectionB.ApplyAngularImpulse(ref torqueB);
             }
         } 

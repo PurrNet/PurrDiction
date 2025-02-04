@@ -12,11 +12,11 @@ namespace BEPUphysics.EntityStateManagement
         ///<summary>
         /// Position of an entity.
         ///</summary>
-        public Vector3 Position;
+        public FPVector3 Position;
         ///<summary>
         /// Orientation of an entity.
         ///</summary>
-        public Quaternion Orientation;
+        public FPQuaternion Orientation;
         ///<summary>
         /// Orientation matrix of an entity.
         ///</summary>
@@ -45,11 +45,11 @@ namespace BEPUphysics.EntityStateManagement
         ///<summary>
         /// Linear velocity of an entity.
         ///</summary>
-        public Vector3 LinearVelocity;
+        public FPVector3 LinearVelocity;
         ///<summary>
         /// Angular velocity of an entity.
         ///</summary>
-        public Vector3 AngularVelocity;
+        public FPVector3 AngularVelocity;
 
 
         public bool Equals(MotionState other)

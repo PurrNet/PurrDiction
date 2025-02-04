@@ -49,7 +49,7 @@ namespace BEPUik
             AngularMotor.Rigidity = F64.C1;
         }
 
-        protected internal override void Preupdate(Fix64 dt, Fix64 updateRate)
+        protected internal override void Preupdate(FP dt, FP updateRate)
         {
             LinearMotor.Preupdate(dt, updateRate);
             AngularMotor.Preupdate(dt, updateRate);
@@ -86,7 +86,7 @@ namespace BEPUik
             AngularMotor.ClearAccumulatedImpulses();
         }
 
-        public override Fix64 MaximumForce
+        public override FP MaximumForce
         {
             get { return LinearMotor.MaximumForce; }
             set

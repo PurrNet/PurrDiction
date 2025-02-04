@@ -47,25 +47,25 @@ namespace BEPUphysics.Character
         /// <param name="length">Length of the ray to use in units of the ray's length.</param>
         /// <param name="earliestHit">Earliest intersection location and information.</param>
         /// <returns>Whether or not the ray hit anything.</returns>
-        public bool RayCast(Ray ray, Fix64 length, out RayHit earliestHit)
+        public bool RayCast(FPRay ray, FP length, out FPRayHit earliestHit)
         {
-            earliestHit = new RayHit();
-            earliestHit.T = Fix64.MaxValue;
+            earliestHit = new FPRayHit();
+            earliestHit.T = FP.MaxValue;
             foreach (var collidable in characterBody.CollisionInformation.OverlappedCollidables)
             {
                 //Check to see if the collidable is hit by the ray.
-                Fix64 t;
+                FP t;
                 if (ray.Intersects(ref collidable.boundingBox, out t) && t < length)
                 {
                     //Is it an earlier hit than the current earliest?
-                    RayHit hit;
+                    FPRayHit hit;
                     if (collidable.RayCast(ray, length, SupportRayFilter, out hit) && hit.T < earliestHit.T)
                     {
                         earliestHit = hit;
                     }
                 }
             }
-            if (earliestHit.T == Fix64.MaxValue)
+            if (earliestHit.T == FP.MaxValue)
                 return false;
             return true;
 
@@ -79,19 +79,19 @@ namespace BEPUphysics.Character
         /// <param name="earliestHit">Earliest intersection location and information.</param>
         /// <param name="hitObject">Collidable intersected by the ray, if any.</param>
         /// <returns>Whether or not the ray hit anything.</returns>
-        public bool RayCast(Ray ray, Fix64 length, out RayHit earliestHit, out Collidable hitObject)
+        public bool RayCast(FPRay ray, FP length, out FPRayHit earliestHit, out Collidable hitObject)
         {
-            earliestHit = new RayHit();
-            earliestHit.T = Fix64.MaxValue;
+            earliestHit = new FPRayHit();
+            earliestHit.T = FP.MaxValue;
             hitObject = null;
             foreach (var collidable in characterBody.CollisionInformation.OverlappedCollidables)
             {
                 //Check to see if the collidable is hit by the ray.
-                Fix64 t;
+                FP t;
                 if (ray.Intersects(ref collidable.boundingBox, out t) && t < length)
                 {
                     //Is it an earlier hit than the current earliest?
-                    RayHit hit;
+                    FPRayHit hit;
                     if (collidable.RayCast(ray, length, SupportRayFilter, out hit) && hit.T < earliestHit.T)
                     {
                         earliestHit = hit;
@@ -99,7 +99,7 @@ namespace BEPUphysics.Character
                     }
                 }
             }
-            if (earliestHit.T == Fix64.MaxValue)
+            if (earliestHit.T == FP.MaxValue)
                 return false;
             return true;
 
@@ -111,15 +111,15 @@ namespace BEPUphysics.Character
         /// <param name="ray">Ray to test.</param>
         /// <param name="length">Length of the ray to use in units of the ray's length.</param>
         /// <returns>Whether or not the ray hit anything.</returns>
-        public bool RayCastHitAnything(Ray ray, Fix64 length)
+        public bool RayCastHitAnything(FPRay ray, FP length)
         {
             foreach (var collidable in characterBody.CollisionInformation.OverlappedCollidables)
             {
                 //Check to see if the collidable is hit by the ray.
-                Fix64 t;
+                FP t;
                 if (ray.Intersects(ref collidable.boundingBox, out t) && t < length)
                 {
-                    RayHit hit;
+                    FPRayHit hit;
                     if (collidable.RayCast(ray, length, SupportRayFilter, out hit))
                     {
                         return true;
@@ -211,7 +211,7 @@ namespace BEPUphysics.Character
         public void AnalyzeSupportState(ref QuickList<CharacterContact> tractionContacts, ref QuickList<CharacterContact> supportContacts,
                                         out CharacterContactPositionState state, out CharacterContact supportContact)
         {
-            Fix64 maxDepth = -Fix64.MaxValue;
+            FP maxDepth = -FP.MaxValue;
             int deepestIndex = -1;
             if (tractionContacts.Count > 0)
             {

@@ -40,25 +40,25 @@ namespace BEPUphysics.CollisionTests.Manifolds
 
         //Expand the convex's bounding box to include the mobile mesh's movement.
 
-        protected internal override int FindOverlappingTriangles(Fix64 dt)
+        protected internal override int FindOverlappingTriangles(FP dt)
         {
-            BoundingBox boundingBox;
+            FPBoundingBox boundingBox;
             AffineTransform transform = new AffineTransform(mesh.worldTransform.Orientation, mesh.worldTransform.Position);
             convex.Shape.GetLocalBoundingBox(ref convex.worldTransform, ref transform, out boundingBox);
-            Vector3 transformedVelocity;
+            FPVector3 transformedVelocity;
             //Compute the relative velocity with respect to the mesh.  The mesh's bounding tree is NOT expanded with velocity,
             //so whatever motion there is between the two objects needs to be included in the convex's bounding box.
 
             if (convex.entity != null)
                 transformedVelocity = convex.entity.linearVelocity;
             else
-                transformedVelocity = new Vector3();
+                transformedVelocity = new FPVector3();
             if (mesh.entity != null)
-                Vector3.Subtract(ref transformedVelocity, ref mesh.entity.linearVelocity, out transformedVelocity);
+                FPVector3.Subtract(ref transformedVelocity, ref mesh.entity.linearVelocity, out transformedVelocity);
 
             //The linear transform is known to be orientation only, so using the transpose is allowed.
             Matrix3x3.TransformTranspose(ref transformedVelocity, ref transform.LinearTransform, out transformedVelocity);
-            Vector3.Multiply(ref transformedVelocity, dt, out transformedVelocity);
+            FPVector3.Multiply(ref transformedVelocity, dt, out transformedVelocity);
 
             if (transformedVelocity.X > F64.C0)
                 boundingBox.Max.X += transformedVelocity.X;
@@ -151,8 +151,8 @@ namespace BEPUphysics.CollisionTests.Manifolds
             get { return mesh.improveBoundaryBehavior; }
         }
 
-        Fix64 previousDepth;
-        Vector3 lastValidConvexPosition;
+        FP previousDepth;
+        FPVector3 lastValidConvexPosition;
         protected override void ProcessCandidates(ref QuickList<ContactData> candidates)
         {
             if (candidates.Count == 0 && parentContactCount == 0 && Mesh.Shape.solidity == MobileMeshSolidity.Solid)
@@ -169,13 +169,13 @@ namespace BEPUphysics.CollisionTests.Manifolds
                 Matrix3x3 orientation;
                 Matrix3x3.CreateFromQuaternion(ref mesh.worldTransform.Orientation, out orientation);
 
-                Ray ray;
-                Vector3.Subtract(ref convex.worldTransform.Position, ref mesh.worldTransform.Position, out ray.Position);
+                FPRay ray;
+                FPVector3.Subtract(ref convex.worldTransform.Position, ref mesh.worldTransform.Position, out ray.Position);
                 Matrix3x3.TransformTranspose(ref ray.Position, ref orientation, out ray.Position);
 
                 //Cast from the current position back to the previous position.
-                Vector3.Subtract(ref lastValidConvexPosition, ref ray.Position, out ray.Direction);
-                Fix64 rayDirectionLength = ray.Direction.LengthSquared();
+                FPVector3.Subtract(ref lastValidConvexPosition, ref ray.Position, out ray.Direction);
+                FP rayDirectionLength = ray.Direction.LengthSquared();
                 if (rayDirectionLength < Toolbox.Epsilon)
                 {
                     //The object may not have moved enough to normalize properly.  If so, choose something arbitrary.
@@ -185,26 +185,26 @@ namespace BEPUphysics.CollisionTests.Manifolds
                     if (rayDirectionLength < Toolbox.Epsilon)
                     {
                         //This is unlikely; just pick something completely arbitrary then.
-                        ray.Direction = Vector3.Up;
+                        ray.Direction = FPVector3.Up;
                         rayDirectionLength = F64.C1;
                     }
                 }
-                Vector3.Divide(ref ray.Direction, Fix64.Sqrt(rayDirectionLength), out ray.Direction);
+                FPVector3.Divide(ref ray.Direction, FP.Sqrt(rayDirectionLength), out ray.Direction);
 
 
-                RayHit hit;
+                FPRayHit hit;
                 if (mesh.Shape.IsLocalRayOriginInMesh(ref ray, out hit))
                 {
                     ContactData newContact = new ContactData { Id = 2 };
                     //Give it a special id so that we know that it came from the inside.
                     Matrix3x3.Transform(ref ray.Position, ref orientation, out newContact.Position);
-                    Vector3.Add(ref newContact.Position, ref mesh.worldTransform.Position, out newContact.Position);
+                    FPVector3.Add(ref newContact.Position, ref mesh.worldTransform.Position, out newContact.Position);
 
                     newContact.Normal = hit.Normal;
                     newContact.Normal.Normalize();
 
-                    Fix64 factor;
-                    Vector3.Dot(ref ray.Direction, ref newContact.Normal, out factor);
+                    FP factor;
+                    FPVector3.Dot(ref ray.Direction, ref newContact.Normal, out factor);
                     newContact.PenetrationDepth = -factor * hit.T + convex.Shape.MinimumRadius;
 
                     Matrix3x3.Transform(ref newContact.Normal, ref orientation, out newContact.Normal);
@@ -221,7 +221,7 @@ namespace BEPUphysics.CollisionTests.Manifolds
                             contacts.Elements[i].Normal = newContact.Normal;
                             contacts.Elements[i].PenetrationDepth = newContact.PenetrationDepth;
                             supplementData.Elements[i].BasePenetrationDepth = newContact.PenetrationDepth;
-                            supplementData.Elements[i].LocalOffsetA = new Vector3();
+                            supplementData.Elements[i].LocalOffsetA = new FPVector3();
                             supplementData.Elements[i].LocalOffsetB = ray.Position; //convex local position in mesh.
                             addContact = false;
                             break;

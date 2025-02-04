@@ -12,7 +12,7 @@ namespace BEPUphysics.UpdateableSystems
         /// Updates the object at the end of a time step.
         ///</summary>
         ///<param name="dt">Time step duration.</param>
-        void Update(Fix64 dt);
+        void Update(FP dt);
 
     }
 }

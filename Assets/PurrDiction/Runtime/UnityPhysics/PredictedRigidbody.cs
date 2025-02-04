@@ -10,7 +10,6 @@ namespace PurrNet.Prediction
 
         private void Reset()
         {
-            _updateView = false;
             _rigidbody = GetComponent<Rigidbody>();
         }
 

@@ -20,7 +20,7 @@ namespace BEPUphysics.BroadPhaseSystems
         ///<param name="ray">Ray to test.</param>
         ///<param name="outputIntersections">Overlapped entries.</param>
         ///<returns>Whether or not the ray hit anything.</returns>
-        bool RayCast(Ray ray, IList<BroadPhaseEntry> outputIntersections);
+        bool RayCast(FPRay ray, IList<BroadPhaseEntry> outputIntersections);
         ///<summary>
         /// Gets the broad phase entries overlapping the ray.
         ///</summary>
@@ -28,7 +28,7 @@ namespace BEPUphysics.BroadPhaseSystems
         /// <param name="maximumLength">Maximum length of the ray in units of the ray's direction's length.</param>
         ///<param name="outputIntersections">Overlapped entries.</param>
         ///<returns>Whether or not the ray hit anything.</returns>
-        bool RayCast(Ray ray, Fix64 maximumLength, IList<BroadPhaseEntry> outputIntersections);
+        bool RayCast(FPRay ray, FP maximumLength, IList<BroadPhaseEntry> outputIntersections);
 
         //There's no single-hit version because the TOI on queries isn't really meaningful.
         //TODO: IQueryAccelerator + BroadPhase.  Both have add methods.  A user might expect to be able to add separately, but that doesn't really work.
@@ -40,13 +40,13 @@ namespace BEPUphysics.BroadPhaseSystems
         /// </summary>
         /// <param name="boundingShape">Bounding shape to test.</param>
         /// <param name="overlaps">Overlapped entries.</param>
-        void GetEntries(BoundingBox boundingShape, IList<BroadPhaseEntry> overlaps);
+        void GetEntries(FPBoundingBox boundingShape, IList<BroadPhaseEntry> overlaps);
         /// <summary>
         /// Gets the entries with bounding boxes which overlap the bounding shape.
         /// </summary>
         /// <param name="boundingShape">Bounding shape to test.</param>
         /// <param name="overlaps">Overlapped entries.</param>
-        void GetEntries(BoundingSphere boundingShape, IList<BroadPhaseEntry> overlaps);
+        void GetEntries(FPBoundingSphere boundingShape, IList<BroadPhaseEntry> overlaps);
         ///// <summary>
         ///// Gets the entries with bounding boxes which overlap the bounding shape.
         ///// </summary>

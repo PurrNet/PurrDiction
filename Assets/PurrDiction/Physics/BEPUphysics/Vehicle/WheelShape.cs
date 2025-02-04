@@ -17,23 +17,23 @@ namespace BEPUphysics.Vehicle
     /// </summary>
     public abstract class WheelShape : ICollisionRulesOwner
     {
-        private Fix64 airborneWheelAcceleration = (Fix64)40;
+        private FP airborneWheelAcceleration = (FP)40;
 
 
-        private Fix64 airborneWheelDeceleration = (Fix64)4;
-        private Fix64 brakeFreezeWheelDeceleration = (Fix64)40;
+        private FP airborneWheelDeceleration = (FP)4;
+        private FP brakeFreezeWheelDeceleration = (FP)40;
 
         /// <summary>
         /// Collects collision pairs from the environment.
         /// </summary>
-        protected internal Box detector = new Box(Vector3.Zero, F64.C0, F64.C0, F64.C0);
+        protected internal Box detector = new Box(FPVector3.Zero, F64.C0, F64.C0, F64.C0);
 
         protected internal Matrix localGraphicTransform;
-        protected Fix64 spinAngle;
+        protected FP spinAngle;
 
 
-        protected Fix64 spinVelocity;
-        internal Fix64 steeringAngle;
+        protected FP spinVelocity;
+        internal FP steeringAngle;
 
         internal Matrix steeringTransform;
         protected internal Wheel wheel;
@@ -53,36 +53,36 @@ namespace BEPUphysics.Vehicle
         /// <summary>
         /// Gets or sets the graphical radius of the wheel.
         /// </summary>
-        public abstract Fix64 Radius { get; set; }
+        public abstract FP Radius { get; set; }
 
         /// <summary>
         /// Gets or sets the rate at which the wheel's spinning velocity increases when accelerating and airborne.
         /// This is a purely graphical effect.
         /// </summary>
-        public Fix64 AirborneWheelAcceleration
+        public FP AirborneWheelAcceleration
         {
             get { return airborneWheelAcceleration; }
-            set { airborneWheelAcceleration = Fix64.Abs(value); }
+            set { airborneWheelAcceleration = FP.Abs(value); }
         }
 
         /// <summary>
         /// Gets or sets the rate at which the wheel's spinning velocity decreases when the wheel is airborne and its motor is idle.
         /// This is a purely graphical effect.
         /// </summary>
-        public Fix64 AirborneWheelDeceleration
+        public FP AirborneWheelDeceleration
         {
             get { return airborneWheelDeceleration; }
-            set { airborneWheelDeceleration = Fix64.Abs(value); }
+            set { airborneWheelDeceleration = FP.Abs(value); }
         }
 
         /// <summary>
         /// Gets or sets the rate at which the wheel's spinning velocity decreases when braking.
         /// This is a purely graphical effect.
         /// </summary>
-        public Fix64 BrakeFreezeWheelDeceleration
+        public FP BrakeFreezeWheelDeceleration
         {
             get { return brakeFreezeWheelDeceleration; }
-            set { brakeFreezeWheelDeceleration = Fix64.Abs(value); }
+            set { brakeFreezeWheelDeceleration = FP.Abs(value); }
         }
 
         /// <summary>
@@ -113,7 +113,7 @@ namespace BEPUphysics.Vehicle
         /// This changes each frame based on the relative velocity between the
         /// support and the wheel.
         /// </summary>
-        public Fix64 SpinAngle
+        public FP SpinAngle
         {
             get { return spinAngle; }
             set { spinAngle = value; }
@@ -124,7 +124,7 @@ namespace BEPUphysics.Vehicle
         /// between the support and the wheel.  Whenever the wheel is in contact with
         /// the ground, the spin velocity will be each frame.
         /// </summary>
-        public Fix64 SpinVelocity
+        public FP SpinVelocity
         {
             get { return spinVelocity; }
             set { spinVelocity = value; }
@@ -133,7 +133,7 @@ namespace BEPUphysics.Vehicle
         /// <summary>
         /// Gets or sets the current steering angle of this wheel.
         /// </summary>
-        public Fix64 SteeringAngle
+        public FP SteeringAngle
         {
             get { return steeringAngle; }
             set { steeringAngle = value; }
@@ -187,7 +187,7 @@ namespace BEPUphysics.Vehicle
         /// Updates the spin velocity and spin angle for the shape.
         /// </summary>
         /// <param name="dt">Simulation timestep.</param>
-        internal void UpdateSpin(Fix64 dt)
+        internal void UpdateSpin(FP dt)
         {
             if (wheel.HasSupport && !(wheel.brake.IsBraking && FreezeWheelsWhileBraking))
             {
@@ -197,7 +197,7 @@ namespace BEPUphysics.Vehicle
             else if (wheel.HasSupport && wheel.brake.IsBraking && FreezeWheelsWhileBraking)
             {
                 //On the ground, braking
-                Fix64 deceleratedValue = F64.C0;
+                FP deceleratedValue = F64.C0;
                 if (spinVelocity > F64.C0)
                     deceleratedValue = MathHelper.Max(spinVelocity - brakeFreezeWheelDeceleration * dt, F64.C0);
                 else if (spinVelocity < F64.C0)
@@ -205,14 +205,14 @@ namespace BEPUphysics.Vehicle
 
                 spinVelocity = wheel.drivingMotor.RelativeVelocity / Radius;
 
-                if (Fix64.Abs(deceleratedValue) < Fix64.Abs(spinVelocity))
+                if (FP.Abs(deceleratedValue) < FP.Abs(spinVelocity))
                     spinVelocity = deceleratedValue;
             }
             else if (!wheel.HasSupport && wheel.drivingMotor.TargetSpeed != F64.C0)
             {
                 //Airborne and accelerating, increase spin velocity.
-                Fix64 maxSpeed = Fix64.Abs(wheel.drivingMotor.TargetSpeed) / Radius;
-                spinVelocity = MathHelper.Clamp(spinVelocity + Fix64.Sign(wheel.drivingMotor.TargetSpeed) * airborneWheelAcceleration * dt, -maxSpeed, maxSpeed);
+                FP maxSpeed = FP.Abs(wheel.drivingMotor.TargetSpeed) / Radius;
+                spinVelocity = MathHelper.Clamp(spinVelocity + FP.Sign(wheel.drivingMotor.TargetSpeed) * airborneWheelAcceleration * dt, -maxSpeed, maxSpeed);
             }
             else if (!wheel.HasSupport && wheel.Brake.IsBraking)
             {
@@ -243,7 +243,7 @@ namespace BEPUphysics.Vehicle
         /// <param name="entity">Entity supporting the wheel, if any.</param>
         /// <param name="material">Material of the support.</param>
         /// <returns>Whether or not any support was found.</returns>
-        protected internal abstract bool FindSupport(out Vector3 location, out Vector3 normal, out Fix64 suspensionLength, out Collidable supportCollidable, out Entity entity, out Material material);
+        protected internal abstract bool FindSupport(out FPVector3 location, out FPVector3 normal, out FP suspensionLength, out Collidable supportCollidable, out Entity entity, out Material material);
 
         /// <summary>
         /// Initializes the detector entity and any other necessary logic.

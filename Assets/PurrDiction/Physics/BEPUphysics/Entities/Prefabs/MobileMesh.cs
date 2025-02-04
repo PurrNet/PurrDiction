@@ -24,9 +24,9 @@ namespace BEPUphysics.Entities.Prefabs
         /// <param name="indices">Indices of the mesh.</param>
         /// <param name="localTransform">Affine transform to apply to the vertices.</param>
         /// <param name="solidity">Solidity/sidedness of the mesh.  "Solid" is only permitted if the mesh is closed.</param>
-        public MobileMesh(Vector3[] vertices, int[] indices, AffineTransform localTransform, MobileMeshSolidity solidity)
+        public MobileMesh(FPVector3[] vertices, int[] indices, AffineTransform localTransform, MobileMeshSolidity solidity)
         {
-            Vector3 center;
+            FPVector3 center;
             var shape = new MobileMeshShape(vertices, indices, localTransform, solidity, out center);
             Initialize(new MobileMeshCollidable(shape));
             Position = center;
@@ -42,9 +42,9 @@ namespace BEPUphysics.Entities.Prefabs
         /// <param name="localTransform">Affine transform to apply to the vertices.</param>
         /// <param name="solidity">Solidity/sidedness of the mesh.  "Solid" is only permitted if the mesh is closed.</param>
         /// <param name="mass">Mass of the mesh.</param>
-        public MobileMesh(Vector3[] vertices, int[] indices, AffineTransform localTransform, MobileMeshSolidity solidity, Fix64 mass)
+        public MobileMesh(FPVector3[] vertices, int[] indices, AffineTransform localTransform, MobileMeshSolidity solidity, FP mass)
         {
-            Vector3 center;
+            FPVector3 center;
             var shape = new MobileMeshShape(vertices, indices, localTransform, solidity, out center);
             Initialize(new MobileMeshCollidable(shape), mass);
             Position = center;

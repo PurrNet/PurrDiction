@@ -123,16 +123,16 @@ namespace BEPUphysics.CollisionTests.Manifolds
             }
         }
 #else
-        public override void Update(Fix64 dt)
+        public override void Update(FP dt)
         {
 
             //Now, generate a contact between the two shapes.
-            Fix64 distance;
-            Vector3 axis;
+            FP distance;
+            FPVector3 axis;
             var manifold = new TinyStructList<BoxContactData>();
             if (BoxBoxCollider.AreBoxesColliding(boxA.Shape, boxB.Shape, ref boxA.worldTransform, ref boxB.worldTransform, out distance, out axis, out manifold))
             {
-                Vector3.Negate(ref axis, out axis);
+                FPVector3.Negate(ref axis, out axis);
                 TinyList<int> toRemove = new TinyList<int>();
                 BoxContactData data;
                 for (int i = 0; i < contacts.Count; i++)

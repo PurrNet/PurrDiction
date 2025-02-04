@@ -32,7 +32,7 @@ namespace BEPUphysics.CollisionTests.CollisionAlgorithms.GJK
         public static bool AreShapesIntersecting(ConvexShape shapeA, ConvexShape shapeB, ref RigidTransform transformA, ref RigidTransform transformB)
         {
             //Zero isn't a very good guess!  But it's a cheap guess.
-            Vector3 separatingAxis = Toolbox.ZeroVector;
+            FPVector3 separatingAxis = Toolbox.ZeroVector;
             return AreShapesIntersecting(shapeA, shapeB, ref transformA, ref transformB, ref separatingAxis);
         }
 
@@ -46,18 +46,18 @@ namespace BEPUphysics.CollisionTests.CollisionAlgorithms.GJK
         ///<param name="localSeparatingAxis">Warmstartable separating axis used by the method to quickly early-out if possible.  Updated to the latest separating axis after each run.</param>
         ///<returns>Whether or not the objects were intersecting.</returns>
         public static bool AreShapesIntersecting(ConvexShape shapeA, ConvexShape shapeB, ref RigidTransform transformA, ref RigidTransform transformB,
-                                                 ref Vector3 localSeparatingAxis)
+                                                 ref FPVector3 localSeparatingAxis)
         {
             RigidTransform localtransformB;
             MinkowskiToolbox.GetLocalTransform(ref transformA, ref transformB, out localtransformB);
 
             //Warm start the simplex.
             var simplex = new SimpleSimplex();
-            Vector3 extremePoint;
+            FPVector3 extremePoint;
             MinkowskiToolbox.GetLocalMinkowskiExtremePoint(shapeA, shapeB, ref localSeparatingAxis, ref localtransformB, out extremePoint);
             simplex.AddNewSimplexPoint(ref extremePoint);
 
-            Vector3 closestPoint;
+            FPVector3 closestPoint;
             int count = 0;
             while (count++ < MaximumGJKIterations)
             {
@@ -69,13 +69,13 @@ namespace BEPUphysics.CollisionTests.CollisionAlgorithms.GJK
                 }
 
                 //Use the closest point as a direction.
-                Vector3 direction;
-                Vector3.Negate(ref closestPoint, out direction);
+                FPVector3 direction;
+                FPVector3.Negate(ref closestPoint, out direction);
                 MinkowskiToolbox.GetLocalMinkowskiExtremePoint(shapeA, shapeB, ref direction, ref localtransformB, out extremePoint);
                 //Since this is a boolean test, we don't need to refine the simplex if it becomes apparent that we cannot reach the origin.
                 //If the most extreme point at any given time does not go past the origin, then we can quit immediately.
-                Fix64 dot;
-                Vector3.Dot(ref extremePoint, ref closestPoint, out dot); //extreme point dotted against the direction pointing backwards towards the CSO. 
+                FP dot;
+                FPVector3.Dot(ref extremePoint, ref closestPoint, out dot); //extreme point dotted against the direction pointing backwards towards the CSO. 
                 if (dot > F64.C0)
                 {
                     // If it's positive, that means that the direction pointing towards the origin produced an extreme point 'in front of' the origin, eliminating the possibility of any intersection.
@@ -101,7 +101,7 @@ namespace BEPUphysics.CollisionTests.CollisionAlgorithms.GJK
         ///<param name="closestPointB">Closest point on the second shape to the first shape.</param>
         ///<returns>Whether or not the objects were intersecting.  If they are intersecting, then the closest points cannot be identified.</returns>
         public static bool GetClosestPoints(ConvexShape shapeA, ConvexShape shapeB, ref RigidTransform transformA, ref RigidTransform transformB,
-                                            out Vector3 closestPointA, out Vector3 closestPointB)
+                                            out FPVector3 closestPointA, out FPVector3 closestPointB)
         {
             //The cached simplex stores locations that are local to the shapes.  A fairly decent initial state is between the centroids of the objects.
             //In local space, the centroids are at the origins.
@@ -130,7 +130,7 @@ namespace BEPUphysics.CollisionTests.CollisionAlgorithms.GJK
         ///<param name="closestPointB">Closest point on the second shape to the first shape.</param>
         ///<returns>Whether or not the objects were intersecting.  If they are intersecting, then the closest points cannot be identified.</returns>
         public static bool GetClosestPoints(ConvexShape shapeA, ConvexShape shapeB, ref RigidTransform transformA, ref RigidTransform transformB,
-                                            ref CachedSimplex cachedSimplex, out Vector3 closestPointA, out Vector3 closestPointB)
+                                            ref CachedSimplex cachedSimplex, out FPVector3 closestPointA, out FPVector3 closestPointB)
         {
             RigidTransform localtransformB;
             MinkowskiToolbox.GetLocalTransform(ref transformA, ref transformB, out localtransformB);
@@ -143,12 +143,12 @@ namespace BEPUphysics.CollisionTests.CollisionAlgorithms.GJK
         }
 
         private static bool GetClosestPoints(ConvexShape shapeA, ConvexShape shapeB, ref RigidTransform localTransformB,
-                                             ref CachedSimplex cachedSimplex, out Vector3 localClosestPointA, out Vector3 localClosestPointB)
+                                             ref CachedSimplex cachedSimplex, out FPVector3 localClosestPointA, out FPVector3 localClosestPointB)
         {
 
             var simplex = new PairSimplex(ref cachedSimplex, ref localTransformB);
 
-            Vector3 closestPoint;
+            FPVector3 closestPoint;
             int count = 0;
             while (true)
             {
@@ -193,25 +193,25 @@ namespace BEPUphysics.CollisionTests.CollisionAlgorithms.GJK
         ///<param name="maximumLength">Maximum length of the ray in units of the ray direction's length.</param>
         ///<param name="hit">Hit data of the ray cast, if any.</param>
         ///<returns>Whether or not the ray hit the shape.</returns>
-        public static bool RayCast(Ray ray, ConvexShape shape, ref RigidTransform shapeTransform, Fix64 maximumLength,
-                                   out RayHit hit)
+        public static bool RayCast(FPRay ray, ConvexShape shape, ref RigidTransform shapeTransform, FP maximumLength,
+                                   out FPRayHit hit)
         {
             //Transform the ray into the object's local space.
-            Vector3.Subtract(ref ray.Position, ref shapeTransform.Position, out ray.Position);
-            Quaternion conjugate;
-            Quaternion.Conjugate(ref shapeTransform.Orientation, out conjugate);
-            Quaternion.Transform(ref ray.Position, ref conjugate, out ray.Position);
-            Quaternion.Transform(ref ray.Direction, ref conjugate, out ray.Direction);
+            FPVector3.Subtract(ref ray.Position, ref shapeTransform.Position, out ray.Position);
+            FPQuaternion conjugate;
+            FPQuaternion.Conjugate(ref shapeTransform.Orientation, out conjugate);
+            FPQuaternion.Transform(ref ray.Position, ref conjugate, out ray.Position);
+            FPQuaternion.Transform(ref ray.Direction, ref conjugate, out ray.Direction);
 
-            Vector3 extremePointToRayOrigin, extremePoint;
+            FPVector3 extremePointToRayOrigin, extremePoint;
             hit.T = F64.C0;
             hit.Location = ray.Position;
             hit.Normal = Toolbox.ZeroVector;
-            Vector3 closestOffset = hit.Location;
+            FPVector3 closestOffset = hit.Location;
 
             RaySimplex simplex = new RaySimplex();
 
-            Fix64 vw, closestPointDotDirection;
+            FP vw, closestPointDotDirection;
             int count = 0;
             //This epsilon has a significant impact on performance and accuracy.  Changing it to use BigEpsilon instead increases speed by around 30-40% usually, but jigging is more evident.
             while (closestOffset.LengthSquared() >= Toolbox.Epsilon * simplex.GetErrorTolerance(ref ray.Position))
@@ -219,35 +219,35 @@ namespace BEPUphysics.CollisionTests.CollisionAlgorithms.GJK
                 if (++count > MaximumGJKIterations)
                 {
                     //It's taken too long to find a hit.  Numerical problems are probable; quit.
-                    hit = new RayHit();
+                    hit = new FPRayHit();
                     return false;
                 }
 
                 shape.GetLocalExtremePoint(closestOffset, out extremePoint);
 
-                Vector3.Subtract(ref hit.Location, ref extremePoint, out extremePointToRayOrigin);
-                Vector3.Dot(ref closestOffset, ref extremePointToRayOrigin, out vw);
+                FPVector3.Subtract(ref hit.Location, ref extremePoint, out extremePointToRayOrigin);
+                FPVector3.Dot(ref closestOffset, ref extremePointToRayOrigin, out vw);
                 //If the closest offset and the extreme point->ray origin direction point the same way,
                 //then we might be able to conservatively advance the point towards the surface.
                 if (vw > F64.C0)
                 {
                     
-                    Vector3.Dot(ref closestOffset, ref ray.Direction, out closestPointDotDirection);
+                    FPVector3.Dot(ref closestOffset, ref ray.Direction, out closestPointDotDirection);
                     if (closestPointDotDirection >= F64.C0)
                     {
-                        hit = new RayHit();
+                        hit = new FPRayHit();
                         return false;
                     }
                     hit.T = hit.T - vw / closestPointDotDirection;
                     if (hit.T > maximumLength)
                     {
                         //If we've gone beyond where the ray can reach, there's obviously no hit.
-                        hit = new RayHit();
+                        hit = new FPRayHit();
                         return false;
                     }
                     //Shift the ray up.
-                    Vector3.Multiply(ref ray.Direction, hit.T, out hit.Location);
-                    Vector3.Add(ref hit.Location, ref ray.Position, out hit.Location);
+                    FPVector3.Multiply(ref ray.Direction, hit.T, out hit.Location);
+                    FPVector3.Add(ref hit.Location, ref ray.Position, out hit.Location);
                     hit.Normal = closestOffset;
                 }
 
@@ -259,9 +259,9 @@ namespace BEPUphysics.CollisionTests.CollisionAlgorithms.GJK
 
             }
             //Transform the hit data into world space.
-            Quaternion.Transform(ref hit.Normal, ref shapeTransform.Orientation, out hit.Normal);
-            Quaternion.Transform(ref hit.Location, ref shapeTransform.Orientation, out hit.Location);
-            Vector3.Add(ref hit.Location, ref shapeTransform.Position, out hit.Location);
+            FPQuaternion.Transform(ref hit.Normal, ref shapeTransform.Orientation, out hit.Normal);
+            FPQuaternion.Transform(ref hit.Location, ref shapeTransform.Orientation, out hit.Location);
+            FPVector3.Add(ref hit.Location, ref shapeTransform.Position, out hit.Location);
 
             return true;
         }
@@ -276,8 +276,8 @@ namespace BEPUphysics.CollisionTests.CollisionAlgorithms.GJK
         ///<param name="targetTransform">Transform to apply to the target shape.</param>
         ///<param name="hit">Hit data of the sweep test, if any.</param>
         ///<returns>Whether or not the swept shape hit the other shape.</returns>
-        public static bool ConvexCast(ConvexShape sweptShape, ConvexShape target, ref Vector3 sweep, ref RigidTransform startingSweptTransform, ref RigidTransform targetTransform,
-                                  out RayHit hit)
+        public static bool ConvexCast(ConvexShape sweptShape, ConvexShape target, ref FPVector3 sweep, ref RigidTransform startingSweptTransform, ref RigidTransform targetTransform,
+                                  out FPRayHit hit)
         {
             return ConvexCast(sweptShape, target, ref sweep, ref Toolbox.ZeroVector, ref startingSweptTransform, ref targetTransform, out hit);
         }
@@ -293,33 +293,33 @@ namespace BEPUphysics.CollisionTests.CollisionAlgorithms.GJK
         ///<param name="transformB">Transform to apply to the second shape.</param>
         ///<param name="hit">Hit data of the sweep test, if any.</param>
         ///<returns>Whether or not the swept shapes hit each other..</returns>
-        public static bool ConvexCast(ConvexShape shapeA, ConvexShape shapeB, ref Vector3 sweepA, ref Vector3 sweepB, ref RigidTransform transformA, ref RigidTransform transformB,
-                                  out RayHit hit)
+        public static bool ConvexCast(ConvexShape shapeA, ConvexShape shapeB, ref FPVector3 sweepA, ref FPVector3 sweepB, ref RigidTransform transformA, ref RigidTransform transformB,
+                                  out FPRayHit hit)
         {
             //Put the velocity into shapeA's local space.
-            Vector3 velocityWorld;
-            Vector3.Subtract(ref sweepB, ref sweepA, out velocityWorld);
-            Quaternion conjugateOrientationA;
-            Quaternion.Conjugate(ref transformA.Orientation, out conjugateOrientationA);
-            Vector3 rayDirection;
-            Quaternion.Transform(ref velocityWorld, ref conjugateOrientationA, out rayDirection);
+            FPVector3 velocityWorld;
+            FPVector3.Subtract(ref sweepB, ref sweepA, out velocityWorld);
+            FPQuaternion conjugateOrientationA;
+            FPQuaternion.Conjugate(ref transformA.Orientation, out conjugateOrientationA);
+            FPVector3 rayDirection;
+            FPQuaternion.Transform(ref velocityWorld, ref conjugateOrientationA, out rayDirection);
             //Transform b into a's local space.
             RigidTransform localTransformB;
-            Quaternion.Concatenate(ref transformB.Orientation, ref conjugateOrientationA, out localTransformB.Orientation);
-            Vector3.Subtract(ref transformB.Position, ref transformA.Position, out localTransformB.Position);
-            Quaternion.Transform(ref localTransformB.Position, ref conjugateOrientationA, out localTransformB.Position);
+            FPQuaternion.Concatenate(ref transformB.Orientation, ref conjugateOrientationA, out localTransformB.Orientation);
+            FPVector3.Subtract(ref transformB.Position, ref transformA.Position, out localTransformB.Position);
+            FPQuaternion.Transform(ref localTransformB.Position, ref conjugateOrientationA, out localTransformB.Position);
             
 
-            Vector3 w, p;
+            FPVector3 w, p;
             hit.T = F64.C0;
-            hit.Location = Vector3.Zero; //The ray starts at the origin.
+            hit.Location = FPVector3.Zero; //The ray starts at the origin.
             hit.Normal = Toolbox.ZeroVector;
-            Vector3 v = hit.Location;
+            FPVector3 v = hit.Location;
 
             RaySimplex simplex = new RaySimplex();
 
  
-            Fix64 vw, vdir;
+            FP vw, vdir;
             int count = 0;
             do
             {
@@ -328,31 +328,31 @@ namespace BEPUphysics.CollisionTests.CollisionAlgorithms.GJK
                 if (++count > MaximumGJKIterations)
                 {
                     //It's taken too long to find a hit.  Numerical problems are probable; quit.
-                    hit = new RayHit();
+                    hit = new FPRayHit();
                     return false;
                 }
 
                 MinkowskiToolbox.GetLocalMinkowskiExtremePoint(shapeA, shapeB, ref v, ref localTransformB, out p);
 
-                Vector3.Subtract(ref hit.Location, ref p, out w);
-                Vector3.Dot(ref v, ref w, out vw);
+                FPVector3.Subtract(ref hit.Location, ref p, out w);
+                FPVector3.Dot(ref v, ref w, out vw);
                 if (vw > F64.C0)
                 {
-                    Vector3.Dot(ref v, ref rayDirection, out vdir);
+                    FPVector3.Dot(ref v, ref rayDirection, out vdir);
                     if (vdir >= F64.C0)
                     {
-                        hit = new RayHit();
+                        hit = new FPRayHit();
                         return false;
                     }
                     hit.T = hit.T - vw / vdir;
                     if (hit.T > F64.C1)
                     {
                         //If we've gone beyond where the ray can reach, there's obviously no hit.
-                        hit = new RayHit();
+                        hit = new FPRayHit();
                         return false;
                     }
                     //Shift the ray up.
-                    Vector3.Multiply(ref rayDirection, hit.T, out hit.Location);
+                    FPVector3.Multiply(ref rayDirection, hit.T, out hit.Location);
                     //The ray origin is the origin!  Don't need to add any ray position.
                     hit.Normal = v;
                 }
@@ -368,9 +368,9 @@ namespace BEPUphysics.CollisionTests.CollisionAlgorithms.GJK
             } while (v.LengthSquared() >= Toolbox.Epsilon * simplex.GetErrorTolerance(ref Toolbox.ZeroVector));
             //This epsilon has a significant impact on performance and accuracy.  Changing it to use BigEpsilon instead increases speed by around 30-40% usually, but jigging is more evident.
             //Transform the hit data into world space.
-            Quaternion.Transform(ref hit.Normal, ref transformA.Orientation, out hit.Normal);
-            Vector3.Multiply(ref velocityWorld, hit.T, out hit.Location);
-            Vector3.Add(ref hit.Location, ref transformA.Position, out hit.Location);
+            FPQuaternion.Transform(ref hit.Normal, ref transformA.Orientation, out hit.Normal);
+            FPVector3.Multiply(ref velocityWorld, hit.T, out hit.Location);
+            FPVector3.Add(ref hit.Location, ref transformA.Position, out hit.Location);
             return true;
         }
 
@@ -385,25 +385,25 @@ namespace BEPUphysics.CollisionTests.CollisionAlgorithms.GJK
         ///<param name="maximumLength">Maximum length of the ray in units of the ray direction's length.</param>
         ///<param name="hit">Hit data of the sphere cast, if any.</param>
         ///<returns>Whether or not the sphere cast hit the shape.</returns>
-        public static bool SphereCast(Ray ray, Fix64 radius, ConvexShape shape, ref RigidTransform shapeTransform, Fix64 maximumLength,
-                                   out RayHit hit)
+        public static bool SphereCast(FPRay ray, FP radius, ConvexShape shape, ref RigidTransform shapeTransform, FP maximumLength,
+                                   out FPRayHit hit)
         {
             //Transform the ray into the object's local space.
-            Vector3.Subtract(ref ray.Position, ref shapeTransform.Position, out ray.Position);
-            Quaternion conjugate;
-            Quaternion.Conjugate(ref shapeTransform.Orientation, out conjugate);
-            Quaternion.Transform(ref ray.Position, ref conjugate, out ray.Position);
-            Quaternion.Transform(ref ray.Direction, ref conjugate, out ray.Direction);
+            FPVector3.Subtract(ref ray.Position, ref shapeTransform.Position, out ray.Position);
+            FPQuaternion conjugate;
+            FPQuaternion.Conjugate(ref shapeTransform.Orientation, out conjugate);
+            FPQuaternion.Transform(ref ray.Position, ref conjugate, out ray.Position);
+            FPQuaternion.Transform(ref ray.Direction, ref conjugate, out ray.Direction);
 
-            Vector3 w, p;
+            FPVector3 w, p;
             hit.T = F64.C0;
             hit.Location = ray.Position;
             hit.Normal = Toolbox.ZeroVector;
-            Vector3 v = hit.Location;
+            FPVector3 v = hit.Location;
 
             RaySimplex simplex = new RaySimplex();
 
-            Fix64 vw, vdir;
+            FP vw, vdir;
             int count = 0;
 
             //This epsilon has a significant impact on performance and accuracy.  Changing it to use BigEpsilon instead increases speed by around 30-40% usually, but jigging is more evident.
@@ -412,20 +412,20 @@ namespace BEPUphysics.CollisionTests.CollisionAlgorithms.GJK
                 if (++count > MaximumGJKIterations)
                 {
                     //It's taken too long to find a hit.  Numerical problems are probable; quit.
-                    hit = new RayHit();
+                    hit = new FPRayHit();
                     return false;
                 }
 
                 shape.GetLocalExtremePointWithoutMargin(ref v, out p);
-                Vector3 contribution;
+                FPVector3 contribution;
                 MinkowskiToolbox.ExpandMinkowskiSum(shape.collisionMargin, radius, ref v, out contribution);
-                Vector3.Add(ref p, ref contribution, out p);
+                FPVector3.Add(ref p, ref contribution, out p);
 
-                Vector3.Subtract(ref hit.Location, ref p, out w);
-                Vector3.Dot(ref v, ref w, out vw);
+                FPVector3.Subtract(ref hit.Location, ref p, out w);
+                FPVector3.Dot(ref v, ref w, out vw);
                 if (vw > F64.C0)
                 {
-                    Vector3.Dot(ref v, ref ray.Direction, out vdir);
+                    FPVector3.Dot(ref v, ref ray.Direction, out vdir);
                     hit.T = hit.T - vw / vdir;
                     if (vdir >= F64.C0)
                     {
@@ -438,8 +438,8 @@ namespace BEPUphysics.CollisionTests.CollisionAlgorithms.GJK
                         return false;
                     }
                     //Shift the ray up.
-                    Vector3.Multiply(ref ray.Direction, hit.T, out hit.Location);
-                    Vector3.Add(ref hit.Location, ref ray.Position, out hit.Location);
+                    FPVector3.Multiply(ref ray.Direction, hit.T, out hit.Location);
+                    FPVector3.Add(ref hit.Location, ref ray.Position, out hit.Location);
                     hit.Normal = v;
                 }
 
@@ -450,9 +450,9 @@ namespace BEPUphysics.CollisionTests.CollisionAlgorithms.GJK
 
             }
             //Transform the hit data into world space.
-            Quaternion.Transform(ref hit.Normal, ref shapeTransform.Orientation, out hit.Normal);
-            Quaternion.Transform(ref hit.Location, ref shapeTransform.Orientation, out hit.Location);
-            Vector3.Add(ref hit.Location, ref shapeTransform.Position, out hit.Location);
+            FPQuaternion.Transform(ref hit.Normal, ref shapeTransform.Orientation, out hit.Normal);
+            FPQuaternion.Transform(ref hit.Location, ref shapeTransform.Orientation, out hit.Location);
+            FPVector3.Add(ref hit.Location, ref shapeTransform.Position, out hit.Location);
 
             return true;
         }
@@ -468,8 +468,8 @@ namespace BEPUphysics.CollisionTests.CollisionAlgorithms.GJK
         ///<param name="maximumLength">Maximum length of the ray in units of the ray direction's length.</param>
         ///<param name="hit">Hit data of the sphere cast, if any.</param>
         ///<returns>Whether or not the sphere cast hit the shape.</returns>
-        public static bool CCDSphereCast(Ray ray, Fix64 radius, ConvexShape target, ref RigidTransform shapeTransform, Fix64 maximumLength,
-                                   out RayHit hit)
+        public static bool CCDSphereCast(FPRay ray, FP radius, ConvexShape target, ref RigidTransform shapeTransform, FP maximumLength,
+                                   out FPRayHit hit)
         {
             int iterations = 0;
             while (true)

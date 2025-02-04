@@ -120,22 +120,22 @@ namespace BEPUphysics.NarrowPhaseSystems.Pairs
                 }
             }
             //Compute relative velocity
-            Vector3 velocity;
+            FPVector3 velocity;
             if (EntityA != null)
             {
-                Vector3.Subtract(ref info.Contact.Position, ref EntityA.position, out velocity);
-                Vector3.Cross(ref EntityA.angularVelocity, ref velocity, out velocity);
-                Vector3.Add(ref velocity, ref EntityA.linearVelocity, out info.RelativeVelocity);
+                FPVector3.Subtract(ref info.Contact.Position, ref EntityA.position, out velocity);
+                FPVector3.Cross(ref EntityA.angularVelocity, ref velocity, out velocity);
+                FPVector3.Add(ref velocity, ref EntityA.linearVelocity, out info.RelativeVelocity);
             }
             else
-                info.RelativeVelocity = new Vector3();
+                info.RelativeVelocity = new FPVector3();
 
             if (EntityB != null)
             {
-                Vector3.Subtract(ref info.Contact.Position, ref EntityB.position, out velocity);
-                Vector3.Cross(ref EntityB.angularVelocity, ref velocity, out velocity);
-                Vector3.Add(ref velocity, ref EntityB.linearVelocity, out velocity);
-                Vector3.Subtract(ref info.RelativeVelocity, ref velocity, out info.RelativeVelocity);
+                FPVector3.Subtract(ref info.Contact.Position, ref EntityB.position, out velocity);
+                FPVector3.Cross(ref EntityB.angularVelocity, ref velocity, out velocity);
+                FPVector3.Add(ref velocity, ref EntityB.linearVelocity, out velocity);
+                FPVector3.Subtract(ref info.RelativeVelocity, ref velocity, out info.RelativeVelocity);
             }
 
 

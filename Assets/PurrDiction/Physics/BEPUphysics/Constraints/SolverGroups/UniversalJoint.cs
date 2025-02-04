@@ -39,7 +39,7 @@ namespace BEPUphysics.Constraints.SolverGroups
         /// <param name="connectionA">First entity of the constraint pair.</param>
         /// <param name="connectionB">Second entity of the constraint pair.</param>
         /// <param name="anchor">Point around which both entities rotate in world space.</param>
-        public UniversalJoint(Entity connectionA, Entity connectionB, Vector3 anchor)
+        public UniversalJoint(Entity connectionA, Entity connectionB, FPVector3 anchor)
         {
             if (connectionA == null)
                 connectionA = TwoEntityConstraint.WorldEntity;

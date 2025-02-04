@@ -11,6 +11,6 @@ namespace BEPUphysics.BroadPhaseSystems
         ///<summary>
         /// Gets the bounding box of the object.
         ///</summary>
-        BoundingBox BoundingBox { get; }
+        FPBoundingBox BoundingBox { get; }
     }
 }

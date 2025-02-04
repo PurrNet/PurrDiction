@@ -68,7 +68,7 @@ namespace BEPUphysics.CollisionTests.Manifolds
             pairTester = new TriangleConvexPairTester();
         }
 
-        public override void Update(Fix64 dt)
+        public override void Update(FP dt)
         {
             //First, refresh all existing contacts.  This is an incremental manifold.
             ContactRefresher.ContactRefresh(contacts, supplementData, ref convex.worldTransform, ref triangle.worldTransform, contactIndicesToRemove);
@@ -84,13 +84,13 @@ namespace BEPUphysics.CollisionTests.Manifolds
             Matrix3x3.Transform(ref triangle.Shape.vA, ref orientation, out localTriangleShape.vA);
             Matrix3x3.Transform(ref triangle.Shape.vB, ref orientation, out localTriangleShape.vB);
             Matrix3x3.Transform(ref triangle.Shape.vC, ref orientation, out localTriangleShape.vC);
-            Vector3.Add(ref localTriangleShape.vA, ref triangle.worldTransform.Position, out localTriangleShape.vA);
-            Vector3.Add(ref localTriangleShape.vB, ref triangle.worldTransform.Position, out localTriangleShape.vB);
-            Vector3.Add(ref localTriangleShape.vC, ref triangle.worldTransform.Position, out localTriangleShape.vC);
+            FPVector3.Add(ref localTriangleShape.vA, ref triangle.worldTransform.Position, out localTriangleShape.vA);
+            FPVector3.Add(ref localTriangleShape.vB, ref triangle.worldTransform.Position, out localTriangleShape.vB);
+            FPVector3.Add(ref localTriangleShape.vC, ref triangle.worldTransform.Position, out localTriangleShape.vC);
 
-            Vector3.Subtract(ref localTriangleShape.vA, ref convex.worldTransform.Position, out localTriangleShape.vA);
-            Vector3.Subtract(ref localTriangleShape.vB, ref convex.worldTransform.Position, out localTriangleShape.vB);
-            Vector3.Subtract(ref localTriangleShape.vC, ref convex.worldTransform.Position, out localTriangleShape.vC);
+            FPVector3.Subtract(ref localTriangleShape.vA, ref convex.worldTransform.Position, out localTriangleShape.vA);
+            FPVector3.Subtract(ref localTriangleShape.vB, ref convex.worldTransform.Position, out localTriangleShape.vB);
+            FPVector3.Subtract(ref localTriangleShape.vC, ref convex.worldTransform.Position, out localTriangleShape.vC);
             Matrix3x3.CreateFromQuaternion(ref convex.worldTransform.Orientation, out orientation);
             Matrix3x3.TransformTranspose(ref localTriangleShape.vA, ref orientation, out localTriangleShape.vA);
             Matrix3x3.TransformTranspose(ref localTriangleShape.vB, ref orientation, out localTriangleShape.vB);
@@ -106,7 +106,7 @@ namespace BEPUphysics.CollisionTests.Manifolds
                     contactList.Get(i, out contact);
                     //Put the contact into world space.
                     Matrix3x3.Transform(ref contact.Position, ref orientation, out contact.Position);
-                    Vector3.Add(ref contact.Position, ref convex.worldTransform.Position, out contact.Position);
+                    FPVector3.Add(ref contact.Position, ref convex.worldTransform.Position, out contact.Position);
                     Matrix3x3.Transform(ref contact.Normal, ref orientation, out contact.Normal);
                     //Check if the contact is unique before proceeding.
                     if (IsContactUnique(ref contact))
@@ -159,10 +159,10 @@ namespace BEPUphysics.CollisionTests.Manifolds
         private bool IsContactUnique(ref ContactData contactCandidate)
         {
             contactCandidate.Validate();
-            Fix64 distanceSquared;
+            FP distanceSquared;
             for (int i = 0; i < contacts.Count; i++)
             {
-                Vector3.DistanceSquared(ref contacts.Elements[i].Position, ref contactCandidate.Position, out distanceSquared);
+                FPVector3.DistanceSquared(ref contacts.Elements[i].Position, ref contactCandidate.Position, out distanceSquared);
                 if (distanceSquared < CollisionDetectionSettings.ContactMinimumSeparationDistanceSquared)
                 {
                     //Update the existing 'redundant' contact with the new information.

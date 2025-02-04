@@ -18,17 +18,17 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
         ///<summary>
         /// Gets the point set of the convex hull.
         ///</summary>
-        public ReadOnlyList<Vector3> Vertices
+        public ReadOnlyList<FPVector3> Vertices
         {
             get
             {
-                return new ReadOnlyList<Vector3>(vertices);
+                return new ReadOnlyList<FPVector3>(vertices);
             }
         }
-        Vector3[] vertices;
+        FPVector3[] vertices;
 
-        private readonly Fix64 unexpandedMinimumRadius;
-        private readonly Fix64 unexpandedMaximumRadius;
+        private readonly FP unexpandedMinimumRadius;
+        private readonly FP unexpandedMaximumRadius;
 
         ///<summary>
         /// Constructs a new convex hull shape.
@@ -37,7 +37,7 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
         ///</summary>
         ///<param name="vertices">Point set to use to construct the convex hull.</param>
         ///<exception cref="ArgumentException">Thrown when the point set is empty.</exception>
-        public ConvexHullShape(IList<Vector3> vertices)
+        public ConvexHullShape(IList<FPVector3> vertices)
         {
             if (vertices.Count == 0)
                 throw new ArgumentException("Vertices list used to create a ConvexHullShape cannot be empty.");
@@ -45,7 +45,7 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
             var surfaceVertices = CommonResources.GetVectorList();
             var hullTriangleIndices = CommonResources.GetIntList();
 
-            Vector3 center;
+            FPVector3 center;
             UpdateConvexShapeInfo(ComputeDescription(vertices, collisionMargin, out center, hullTriangleIndices, surfaceVertices));
             this.vertices = surfaceVertices.ToArray();
 
@@ -64,7 +64,7 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
         ///<param name="vertices">Point set to use to construct the convex hull.</param>
         /// <param name="center">Computed center of the convex hull shape prior to recentering.</param>
         ///<exception cref="ArgumentException">Thrown when the point set is empty.</exception>
-        public ConvexHullShape(IList<Vector3> vertices, out Vector3 center)
+        public ConvexHullShape(IList<FPVector3> vertices, out FPVector3 center)
         {
             if (vertices.Count == 0)
                 throw new ArgumentException("Vertices list used to create a ConvexHullShape cannot be empty.");
@@ -92,13 +92,13 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
         /// <param name="outputHullTriangleIndices">Triangle indices computed on the surface of the point set.</param>
         /// <param name="outputUniqueSurfaceVertices">Unique vertices on the surface of the convex hull.</param>
         ///<exception cref="ArgumentException">Thrown when the point set is empty.</exception>
-        public ConvexHullShape(IList<Vector3> vertices, out Vector3 center, IList<int> outputHullTriangleIndices, IList<Vector3> outputUniqueSurfaceVertices)
+        public ConvexHullShape(IList<FPVector3> vertices, out FPVector3 center, IList<int> outputHullTriangleIndices, IList<FPVector3> outputUniqueSurfaceVertices)
         {
             if (vertices.Count == 0)
                 throw new ArgumentException("Vertices list used to create a ConvexHullShape cannot be empty.");
 
             UpdateConvexShapeInfo(ComputeDescription(vertices, collisionMargin, out center, outputHullTriangleIndices, outputUniqueSurfaceVertices));
-            this.vertices = new Vector3[outputUniqueSurfaceVertices.Count];
+            this.vertices = new FPVector3[outputUniqueSurfaceVertices.Count];
             outputUniqueSurfaceVertices.CopyTo(this.vertices, 0);
 
             unexpandedMaximumRadius = MaximumRadius - collisionMargin;
@@ -112,14 +112,14 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
         /// </summary>
         /// <param name="localSurfaceVertices">List of vertex positions on the surface of the convex hull shape, centered on the desired origin. These vertices are used as-is for the shape representation; no additional processing occurs.</param>
         /// <param name="description">Cached information about the shape. Assumed to be correct; no extra processing or validation is performed.</param>
-        public ConvexHullShape(IList<Vector3> localSurfaceVertices, ConvexShapeDescription description)
+        public ConvexHullShape(IList<FPVector3> localSurfaceVertices, ConvexShapeDescription description)
         {
             if (localSurfaceVertices.Count == 0)
                 throw new ArgumentException("Vertices list used to create a ConvexHullShape cannot be empty.");
 
             unexpandedMaximumRadius = description.MaximumRadius - collisionMargin;
             unexpandedMinimumRadius = description.MinimumRadius - collisionMargin;
-            vertices = new Vector3[localSurfaceVertices.Count];
+            vertices = new FPVector3[localSurfaceVertices.Count];
             localSurfaceVertices.CopyTo(vertices, 0);
             UpdateConvexShapeInfo(description);
 
@@ -152,7 +152,7 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
         /// Each group of 3 indices represents a triangle on the surface of the hull.</param>
         /// <param name="outputUniqueSurfaceVertices">Computed nonredundant list of vertices composing the outer shell of the input point set. Recentered on the local origin.</param>
         /// <returns>Description required to define a convex shape.</returns>
-        public static ConvexShapeDescription ComputeDescription(IList<Vector3> vertices, Fix64 collisionMargin, out Vector3 center, IList<int> outputHullTriangleIndices, IList<Vector3> outputUniqueSurfaceVertices)
+        public static ConvexShapeDescription ComputeDescription(IList<FPVector3> vertices, FP collisionMargin, out FPVector3 center, IList<int> outputHullTriangleIndices, IList<FPVector3> outputUniqueSurfaceVertices)
         {
             if (outputHullTriangleIndices.Count != 0 || outputUniqueSurfaceVertices.Count != 0)
                 throw new ArgumentException("Output lists must start empty.");
@@ -182,18 +182,18 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
         /// <param name="localSurfaceVertices">Surface vertices of the convex hull.</param>
         /// <param name="collisionMargin">Collision margin of the shape.</param>
         /// <returns>Maximum radius of the convex hull.</returns>
-        public static Fix64 ComputeMaximumRadius(IList<Vector3> localSurfaceVertices, Fix64 collisionMargin)
+        public static FP ComputeMaximumRadius(IList<FPVector3> localSurfaceVertices, FP collisionMargin)
         {
-            Fix64 longestLengthSquared = F64.C0;
+            FP longestLengthSquared = F64.C0;
             for (int i = 0; i < localSurfaceVertices.Count; ++i)
             {
-                Fix64 lengthCandidate = localSurfaceVertices[i].LengthSquared();
+                FP lengthCandidate = localSurfaceVertices[i].LengthSquared();
                 if (lengthCandidate > longestLengthSquared)
                 {
                     longestLengthSquared = lengthCandidate;
                 }
             }
-            return Fix64.Sqrt(longestLengthSquared) + collisionMargin;
+            return FP.Sqrt(longestLengthSquared) + collisionMargin;
         }
 
 
@@ -204,26 +204,26 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
         /// </summary>
         /// <param name="shapeTransform">Transform to use.</param>
         /// <param name="boundingBox">Bounding box of the transformed shape.</param>
-        public override void GetBoundingBox(ref RigidTransform shapeTransform, out BoundingBox boundingBox)
+        public override void GetBoundingBox(ref RigidTransform shapeTransform, out FPBoundingBox boundingBox)
         {
 #if !WINDOWS
-            boundingBox = new BoundingBox();
+            boundingBox = new FPBoundingBox();
 #endif
 
             Matrix3x3 o;
             Matrix3x3.CreateFromQuaternion(ref shapeTransform.Orientation, out o);
 
-            Fix64 minX, maxX;
-            Fix64 minY, maxY;
-            Fix64 minZ, maxZ;
-            var right = new Vector3(o.M11, o.M21, o.M31);
-            var up = new Vector3(o.M12, o.M22, o.M32);
-            var backward = new Vector3(o.M13, o.M23, o.M33);
-            Vector3.Dot(ref vertices[0], ref right, out maxX);
+            FP minX, maxX;
+            FP minY, maxY;
+            FP minZ, maxZ;
+            var right = new FPVector3(o.M11, o.M21, o.M31);
+            var up = new FPVector3(o.M12, o.M22, o.M32);
+            var backward = new FPVector3(o.M13, o.M23, o.M33);
+            FPVector3.Dot(ref vertices[0], ref right, out maxX);
             minX = maxX;
-            Vector3.Dot(ref vertices[0], ref up, out maxY);
+            FPVector3.Dot(ref vertices[0], ref up, out maxY);
             minY = maxY;
-            Vector3.Dot(ref vertices[0], ref backward, out maxZ);
+            FPVector3.Dot(ref vertices[0], ref backward, out maxZ);
             minZ = maxZ;
             int minXIndex = 0;
             int maxXIndex = 0;
@@ -233,8 +233,8 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
             int maxZIndex = 0;
             for (int i = 1; i < vertices.Length; ++i)
             {
-                Fix64 dot;
-                Vector3.Dot(ref vertices[i], ref right, out dot);
+                FP dot;
+                FPVector3.Dot(ref vertices[i], ref right, out dot);
                 if (dot < minX)
                 {
                     minX = dot;
@@ -246,7 +246,7 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
                     maxXIndex = i;
                 }
 
-                Vector3.Dot(ref vertices[i], ref up, out dot);
+                FPVector3.Dot(ref vertices[i], ref up, out dot);
                 if (dot < minY)
                 {
                     minY = dot;
@@ -258,7 +258,7 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
                     maxYIndex = i;
                 }
 
-                Vector3.Dot(ref vertices[i], ref backward, out dot);
+                FPVector3.Dot(ref vertices[i], ref backward, out dot);
                 if (dot < minZ)
                 {
                     minZ = dot;
@@ -272,7 +272,7 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
             }
 
             //Rather than transforming each axis independently (and doing three times as many operations as required), just get the 6 required values directly.
-            Vector3 positive, negative;
+            FPVector3 positive, negative;
             TransformLocalExtremePoints(ref vertices[maxXIndex], ref vertices[maxYIndex], ref vertices[maxZIndex], ref o, out positive);
             TransformLocalExtremePoints(ref vertices[minXIndex], ref vertices[minYIndex], ref vertices[minZIndex], ref o, out negative);
 
@@ -287,15 +287,15 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
         }
 
 
-        public override void GetLocalExtremePointWithoutMargin(ref Vector3 direction, out Vector3 extremePoint)
+        public override void GetLocalExtremePointWithoutMargin(ref FPVector3 direction, out FPVector3 extremePoint)
         {
-            Fix64 max;
-            Vector3.Dot(ref vertices[0], ref direction, out max);
+            FP max;
+            FPVector3.Dot(ref vertices[0], ref direction, out max);
             int maxIndex = 0;
             for (int i = 1; i < vertices.Length; i++)
             {
-                Fix64 dot;
-                Vector3.Dot(ref vertices[i], ref direction, out dot);
+                FP dot;
+                FPVector3.Dot(ref vertices[i], ref direction, out dot);
                 if (dot > max)
                 {
                     max = dot;

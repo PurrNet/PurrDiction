@@ -100,7 +100,7 @@ namespace BEPUphysics.NarrowPhaseSystems.Pairs
         ///</summary>
         ///<param name="requester">Collidable requesting the update.</param>
         ///<param name="dt">Timestep duration.</param>
-        public override void UpdateTimeOfImpact(Collidable requester, Fix64 dt)
+        public override void UpdateTimeOfImpact(Collidable requester, FP dt)
         {
             var overlap = BroadPhaseOverlap;
             var triangleMode = triangle.entity == null ? PositionUpdateMode.Discrete : triangle.entity.PositionUpdateMode;
@@ -123,7 +123,7 @@ namespace BEPUphysics.NarrowPhaseSystems.Pairs
 
 
                 //Only perform the test if the minimum radii are small enough relative to the size of the velocity.
-                Vector3 velocity;
+                FPVector3 velocity;
                 if (convexMode == PositionUpdateMode.Discrete)
                 {
                     //Triangle is static for the purposes of this continuous test.
@@ -132,36 +132,36 @@ namespace BEPUphysics.NarrowPhaseSystems.Pairs
                 else if (triangleMode == PositionUpdateMode.Discrete)
                 {
                     //Convex is static for the purposes of this continuous test.
-                    Vector3.Negate(ref convex.entity.linearVelocity, out velocity);
+                    FPVector3.Negate(ref convex.entity.linearVelocity, out velocity);
                 }
                 else
                 {
                     //Both objects are moving.
-                    Vector3.Subtract(ref triangle.entity.linearVelocity, ref convex.entity.linearVelocity, out velocity);
+                    FPVector3.Subtract(ref triangle.entity.linearVelocity, ref convex.entity.linearVelocity, out velocity);
                 }
-                Vector3.Multiply(ref velocity, dt, out velocity);
-                Fix64 velocitySquared = velocity.LengthSquared();
+                FPVector3.Multiply(ref velocity, dt, out velocity);
+                FP velocitySquared = velocity.LengthSquared();
 
                 var minimumRadiusA = convex.Shape.MinimumRadius * MotionSettings.CoreShapeScaling;
                 timeOfImpact = F64.C1;
                 if (minimumRadiusA * minimumRadiusA < velocitySquared)
                 {
                     //Spherecast A against B.
-                    RayHit rayHit;
-                    if (GJKToolbox.CCDSphereCast(new Ray(convex.worldTransform.Position, -velocity), minimumRadiusA, triangle.Shape, ref triangle.worldTransform, timeOfImpact, out rayHit))
+                    FPRayHit rayHit;
+                    if (GJKToolbox.CCDSphereCast(new FPRay(convex.worldTransform.Position, -velocity), minimumRadiusA, triangle.Shape, ref triangle.worldTransform, timeOfImpact, out rayHit))
                     {
                         if (triangle.Shape.sidedness != TriangleSidedness.DoubleSided)
                         {                
                             //Only perform sweep if the object is in danger of hitting the object.
                             //Triangles can be one sided, so check the impact normal against the triangle normal.
-                            Vector3 AB, AC;
-                            Vector3.Subtract(ref triangle.Shape.vB, ref triangle.Shape.vA, out AB);
-                            Vector3.Subtract(ref triangle.Shape.vC, ref triangle.Shape.vA, out AC);
-                            Vector3 normal;
-                            Vector3.Cross(ref AB, ref AC, out normal);
+                            FPVector3 AB, AC;
+                            FPVector3.Subtract(ref triangle.Shape.vB, ref triangle.Shape.vA, out AB);
+                            FPVector3.Subtract(ref triangle.Shape.vC, ref triangle.Shape.vA, out AC);
+                            FPVector3 normal;
+                            FPVector3.Cross(ref AB, ref AC, out normal);
 
-                            Fix64 dot;
-                            Vector3.Dot(ref rayHit.Normal, ref normal, out dot);
+                            FP dot;
+                            FPVector3.Dot(ref rayHit.Normal, ref normal, out dot);
                             if (triangle.Shape.sidedness == TriangleSidedness.Counterclockwise && dot < F64.C0 ||
                                 triangle.Shape.sidedness == TriangleSidedness.Clockwise && dot > F64.C0)
                             {
