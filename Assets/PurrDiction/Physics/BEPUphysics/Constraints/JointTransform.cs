@@ -9,13 +9,13 @@ namespace BEPUphysics.Constraints
     /// </summary>
     public class JointBasis3D
     {
-        internal FPVector3 localPrimaryAxis = FPVector3.Backward;
-        internal FPVector3 localXAxis = FPVector3.Right;
-        internal FPVector3 localYAxis = FPVector3.Up;
-        internal FPVector3 primaryAxis = FPVector3.Backward;
+        internal FPVector3 localPrimaryAxis = FPVector3.backward;
+        internal FPVector3 localXAxis = FPVector3.right;
+        internal FPVector3 localYAxis = FPVector3.up;
+        internal FPVector3 primaryAxis = FPVector3.backward;
         internal Matrix3x3 rotationMatrix = Matrix3x3.Identity;
-        internal FPVector3 xAxis = FPVector3.Right;
-        internal FPVector3 yAxis = FPVector3.Up;
+        internal FPVector3 xAxis = FPVector3.right;
+        internal FPVector3 yAxis = FPVector3.up;
 
         /// <summary>
         /// Gets the primary axis of the transform in local space.
@@ -228,11 +228,11 @@ namespace BEPUphysics.Constraints
     /// </summary>
     public class JointBasis2D
     {
-        internal FPVector3 localPrimaryAxis = FPVector3.Backward;
-        internal FPVector3 localXAxis = FPVector3.Right;
-        internal FPVector3 primaryAxis = FPVector3.Backward;
+        internal FPVector3 localPrimaryAxis = FPVector3.backward;
+        internal FPVector3 localXAxis = FPVector3.right;
+        internal FPVector3 primaryAxis = FPVector3.backward;
         internal Matrix3x3 rotationMatrix = Matrix3x3.Identity;
-        internal FPVector3 xAxis = FPVector3.Right;
+        internal FPVector3 xAxis = FPVector3.right;
 
         /// <summary>
         /// Gets the primary axis of the transform in local space.

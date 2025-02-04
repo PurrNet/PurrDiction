@@ -33,7 +33,7 @@ namespace BEPUphysics.Paths
         {
             if (ControlPoints.Count == 1)
             {
-                tangents.Add(FPVector3.Zero);
+                tangents.Add(FPVector3.zero);
                 return;
             }
             if (ControlPoints.Count == 2)

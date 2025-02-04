@@ -605,7 +605,7 @@ namespace BEPUphysics.CollisionTests.CollisionAlgorithms
             #endregion
 
             separationDistance = F64.C0;
-            separatingAxis = FPVector3.Zero;
+            separatingAxis = FPVector3.zero;
             return true;
         }
 

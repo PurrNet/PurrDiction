@@ -205,7 +205,7 @@ namespace BEPUphysics.CollisionTests.CollisionAlgorithms
 
                 if (localDirection.LengthSquared() < Toolbox.Epsilon)
                 {
-                    localDirection = FPVector3.Up;
+                    localDirection = FPVector3.up;
                 }
 
             }

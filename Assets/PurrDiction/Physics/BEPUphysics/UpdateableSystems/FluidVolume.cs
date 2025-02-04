@@ -132,7 +132,7 @@ namespace BEPUphysics.UpdateableSystems
                     flowDirection = value / length;
                 }
                 else
-                    flowDirection = FPVector3.Zero;
+                    flowDirection = FPVector3.zero;
                 //TODO: Activate bodies in water
             }
         }
@@ -511,10 +511,10 @@ namespace BEPUphysics.UpdateableSystems
                     return MathHelper.Min(-bottomY, boundingBoxHeight - rayHit.T - bottom);
                 }
                 //This inner raycast should always hit, but just in case it doesn't due to some numerical problem, give it a graceful way out.
-                volumeCenter = FPVector3.Zero;
+                volumeCenter = FPVector3.zero;
                 return F64.C0;
             }
-            volumeCenter = FPVector3.Zero;
+            volumeCenter = FPVector3.zero;
             return F64.C0;
         }
 

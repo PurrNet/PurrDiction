@@ -185,7 +185,7 @@ namespace BEPUphysics.CollisionTests.Manifolds
                     if (rayDirectionLength < Toolbox.Epsilon)
                     {
                         //This is unlikely; just pick something completely arbitrary then.
-                        ray.Direction = FPVector3.Up;
+                        ray.Direction = FPVector3.up;
                         rayDirectionLength = F64.C1;
                     }
                 }

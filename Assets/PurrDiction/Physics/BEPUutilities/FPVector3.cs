@@ -402,7 +402,7 @@ namespace BEPUutilities
         /// <summary>
         /// Gets the zero vector.
         /// </summary>
-        public static FPVector3 Zero
+        public static FPVector3 zero
         {
             get
             {
@@ -413,7 +413,7 @@ namespace BEPUutilities
         /// <summary>
         /// Gets the up vector (0,1,0).
         /// </summary>
-        public static FPVector3 Up
+        public static FPVector3 up
         {
             get
             {
@@ -429,7 +429,7 @@ namespace BEPUutilities
         /// <summary>
         /// Gets the down vector (0,-1,0).
         /// </summary>
-        public static FPVector3 Down
+        public static FPVector3 down
         {
             get
             {
@@ -445,7 +445,7 @@ namespace BEPUutilities
         /// <summary>
         /// Gets the right vector (1,0,0).
         /// </summary>
-        public static FPVector3 Right
+        public static FPVector3 right
         {
             get
             {
@@ -461,7 +461,7 @@ namespace BEPUutilities
         /// <summary>
         /// Gets the left vector (-1,0,0).
         /// </summary>
-        public static FPVector3 Left
+        public static FPVector3 left
         {
             get
             {
@@ -477,7 +477,7 @@ namespace BEPUutilities
         /// <summary>
         /// Gets the forward vector (0,0,-1).
         /// </summary>
-        public static FPVector3 Forward
+        public static FPVector3 forward
         {
             get
             {
@@ -493,7 +493,7 @@ namespace BEPUutilities
         /// <summary>
         /// Gets the back vector (0,0,1).
         /// </summary>
-        public static FPVector3 Backward
+        public static FPVector3 backward
         {
             get
             {
@@ -509,7 +509,7 @@ namespace BEPUutilities
         /// <summary>
         /// Gets a vector pointing along the X axis.
         /// </summary>
-        public static FPVector3 UnitX
+        public static FPVector3 unitX
         {
             get { return new FPVector3 { x = F64.C1 }; }
         }
@@ -517,7 +517,7 @@ namespace BEPUutilities
         /// <summary>
         /// Gets a vector pointing along the Y axis.
         /// </summary>
-        public static FPVector3 UnitY
+        public static FPVector3 unitY
         {
             get { return new FPVector3 { y = F64.C1 }; }
         }
@@ -525,7 +525,7 @@ namespace BEPUutilities
         /// <summary>
         /// Gets a vector pointing along the Z axis.
         /// </summary>
-        public static FPVector3 UnitZ
+        public static FPVector3 unitZ
         {
             get { return new FPVector3 { z = F64.C1 }; }
         }

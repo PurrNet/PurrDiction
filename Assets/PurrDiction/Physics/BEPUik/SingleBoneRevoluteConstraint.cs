@@ -18,10 +18,10 @@ namespace BEPUik
             set
             {
                 freeAxis = value;
-                constrainedAxis1 = FPVector3.Cross(freeAxis, FPVector3.Up);
+                constrainedAxis1 = FPVector3.Cross(freeAxis, FPVector3.up);
                 if (constrainedAxis1.LengthSquared() < Toolbox.Epsilon)
                 {
-                    constrainedAxis1 = FPVector3.Cross(freeAxis, FPVector3.Right);
+                    constrainedAxis1 = FPVector3.Cross(freeAxis, FPVector3.right);
                 }
                 constrainedAxis1.Normalize();
                 constrainedAxis2 = FPVector3.Cross(freeAxis, constrainedAxis1);

@@ -14,7 +14,7 @@ namespace BEPUphysics.Constraints.TwoEntity
         /// <summary>
         /// Entity that constraints connect to when they are given a null connection.
         /// </summary>
-        public static readonly Entity WorldEntity = new Sphere(FPVector3.Zero, F64.C0);
+        public static readonly Entity WorldEntity = new Sphere(FPVector3.zero, F64.C0);
 
         /// <summary>
         /// First connection to the constraint.

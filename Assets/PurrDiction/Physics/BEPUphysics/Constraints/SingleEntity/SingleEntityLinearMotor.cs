@@ -16,7 +16,7 @@ namespace BEPUphysics.Constraints.SingleEntity
         /// <summary>
         /// Sum of forces applied to the constraint in the past.
         /// </summary>
-        private FPVector3 accumulatedImpulse = FPVector3.Zero;
+        private FPVector3 accumulatedImpulse = FPVector3.zero;
 
         private FPVector3 biasVelocity;
         private Matrix3x3 effectiveMassMatrix;
@@ -247,7 +247,7 @@ namespace BEPUphysics.Constraints.SingleEntity
             {
                 usedSoftness = settings.velocityMotor.softness * updateRate;
                 biasVelocity = settings.velocityMotor.goalVelocity;
-                error = FPVector3.Zero;
+                error = FPVector3.zero;
             }
 
             //Compute the maximum force that can be applied this frame.

@@ -69,10 +69,10 @@ namespace BEPUphysics.Constraints.SolverGroups
             if (baseAxis.LengthSquared() < Toolbox.BigEpsilon)
             {
                 //However, if the free axis is totally aligned (like in an axis constraint), pick another reasonable direction.
-                baseAxis = FPVector3.Cross(hingeAxis, FPVector3.Up);
+                baseAxis = FPVector3.Cross(hingeAxis, FPVector3.up);
                 if (baseAxis.LengthSquared() < Toolbox.BigEpsilon)
                 {
-                    baseAxis = FPVector3.Cross(hingeAxis, FPVector3.Right);
+                    baseAxis = FPVector3.Cross(hingeAxis, FPVector3.right);
                 }
             }
             HingeLimit.Basis.SetWorldAxes(hingeAxis, baseAxis, connectionA.orientationMatrix);
@@ -83,10 +83,10 @@ namespace BEPUphysics.Constraints.SolverGroups
             if (baseAxis.LengthSquared() < Toolbox.BigEpsilon)
             {
                 //However, if the free axis is totally aligned (like in an axis constraint), pick another reasonable direction.
-                baseAxis = FPVector3.Cross(hingeAxis, FPVector3.Up);
+                baseAxis = FPVector3.Cross(hingeAxis, FPVector3.up);
                 if (baseAxis.LengthSquared() < Toolbox.BigEpsilon)
                 {
-                    baseAxis = FPVector3.Cross(hingeAxis, FPVector3.Right);
+                    baseAxis = FPVector3.Cross(hingeAxis, FPVector3.right);
                 }
             }
             HingeLimit.TestAxis = baseAxis;

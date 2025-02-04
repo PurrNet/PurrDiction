@@ -171,7 +171,7 @@ namespace BEPUphysics.NarrowPhaseSystems.Pairs
                 FPVector3 vertex;
                 DetectorVolume.TriangleMesh.Data.GetVertexPosition(0, out vertex);
                 FPRay ray;
-                ray.Direction = FPVector3.Up;
+                ray.Direction = FPVector3.up;
                 FPRayHit hit;
                 RigidTransform.TransformByInverse(ref vertex, ref mesh.worldTransform, out ray.Position);
                 if (mesh.Shape.IsLocalRayOriginInMesh(ref ray, out hit))

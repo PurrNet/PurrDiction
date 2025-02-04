@@ -33,17 +33,17 @@ namespace BEPUutilities
         /// <summary>
         /// Reference for a vector with dimensions (0,0,1).
         /// </summary>
-        public static FPVector3 BackVector = FPVector3.Backward;
+        public static FPVector3 BackVector = FPVector3.backward;
 
         /// <summary>
         /// Reference for a vector with dimensions (0,-1,0).
         /// </summary>
-        public static FPVector3 DownVector = FPVector3.Down;
+        public static FPVector3 DownVector = FPVector3.down;
 
         /// <summary>
         /// Reference for a vector with dimensions (0,0,-1).
         /// </summary>
-        public static FPVector3 ForwardVector = FPVector3.Forward;
+        public static FPVector3 ForwardVector = FPVector3.forward;
 
         /// <summary>
         /// Refers to the identity quaternion.
@@ -53,17 +53,17 @@ namespace BEPUutilities
         /// <summary>
         /// Reference for a vector with dimensions (-1,0,0).
         /// </summary>
-        public static FPVector3 LeftVector = FPVector3.Left;
+        public static FPVector3 LeftVector = FPVector3.left;
 
         /// <summary>
         /// Reference for a vector with dimensions (1,0,0).
         /// </summary>
-        public static FPVector3 RightVector = FPVector3.Right;
+        public static FPVector3 RightVector = FPVector3.right;
 
         /// <summary>
         /// Reference for a vector with dimensions (0,1,0).
         /// </summary>
-        public static FPVector3 UpVector = FPVector3.Up;
+        public static FPVector3 UpVector = FPVector3.up;
 
         /// <summary>
         /// Matrix containing zeroes for every element.
@@ -73,7 +73,7 @@ namespace BEPUutilities
         /// <summary>
         /// Reference for a vector with dimensions (0,0,0).
         /// </summary>
-        public static FPVector3 ZeroVector = FPVector3.Zero;
+        public static FPVector3 ZeroVector = FPVector3.zero;
 
         /// <summary>
         /// Refers to the rigid identity transformation.

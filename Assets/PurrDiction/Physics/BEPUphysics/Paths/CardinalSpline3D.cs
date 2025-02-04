@@ -46,7 +46,7 @@ namespace BEPUphysics.Paths
 
         protected override void ComputeTangents()
         {
-            tangents.Add(FPVector3.Zero);
+            tangents.Add(FPVector3.zero);
             for (int i = 1; i < ControlPoints.Count - 1; i++)
             {
                 FPVector3 tangent;
@@ -56,7 +56,7 @@ namespace BEPUphysics.Paths
                 FPVector3.Multiply(ref tangent, (FP)((F64.C1 - tension) / (ControlPoints[i + 1].Time - ControlPoints[i - 1].Time)), out tangent);
                 tangents.Add(tangent);
             }
-            tangents.Add(FPVector3.Zero);
+            tangents.Add(FPVector3.zero);
         }
     }
 }

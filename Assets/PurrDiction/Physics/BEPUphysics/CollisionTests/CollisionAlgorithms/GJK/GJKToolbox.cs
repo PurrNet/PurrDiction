@@ -312,7 +312,7 @@ namespace BEPUphysics.CollisionTests.CollisionAlgorithms.GJK
 
             FPVector3 w, p;
             hit.T = F64.C0;
-            hit.Location = FPVector3.Zero; //The ray starts at the origin.
+            hit.Location = FPVector3.zero; //The ray starts at the origin.
             hit.Normal = Toolbox.ZeroVector;
             FPVector3 v = hit.Location;
 

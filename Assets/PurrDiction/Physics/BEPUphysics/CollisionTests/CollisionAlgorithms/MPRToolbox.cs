@@ -774,7 +774,7 @@ namespace BEPUphysics.CollisionTests.CollisionAlgorithms
                     }
                     else
                     {
-                        normal = FPVector3.Up;
+                        normal = FPVector3.up;
                         t = F64.C0;
                     }
                     ////DEBUG STUFF:
@@ -1058,7 +1058,7 @@ namespace BEPUphysics.CollisionTests.CollisionAlgorithms
                     }
                     else
                     {
-                        normal = FPVector3.Up;
+                        normal = FPVector3.up;
                         t = F64.C0;
                     }
 

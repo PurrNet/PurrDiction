@@ -187,7 +187,7 @@ namespace BEPUphysics.BroadPhaseEntries
             FPVector3.Subtract(ref point, ref rayDirection, out rayDirection);
             //If the point is right in the middle, we'll need a backup.
             if (rayDirection.LengthSquared() < F64.C0p01)
-                rayDirection = FPVector3.Up;
+                rayDirection = FPVector3.up;
 
             var ray = new FPRay(point, rayDirection);
             triangleMesh.Tree.GetOverlaps(ray, triangles);

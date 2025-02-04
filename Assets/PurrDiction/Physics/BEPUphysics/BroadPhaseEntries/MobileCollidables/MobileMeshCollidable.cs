@@ -95,7 +95,7 @@ namespace BEPUphysics.BroadPhaseEntries.MobileCollidables
                 if (Shape.IsLocalRayOriginInMesh(ref localRay, out rayHit))
                 {
                     //It was inside!
-                    rayHit = new FPRayHit() { Location = ray.Position, Normal = FPVector3.Zero, T = F64.C0 };
+                    rayHit = new FPRayHit() { Location = ray.Position, Normal = FPVector3.zero, T = F64.C0 };
                     return true;
 
                 }

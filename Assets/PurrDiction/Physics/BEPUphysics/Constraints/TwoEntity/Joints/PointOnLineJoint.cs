@@ -537,10 +537,10 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
 
         private void UpdateRestrictedAxes()
         {
-            localRestrictedAxis1 = FPVector3.Cross(FPVector3.Up, localLineDirection);
+            localRestrictedAxis1 = FPVector3.Cross(FPVector3.up, localLineDirection);
             if (localRestrictedAxis1.LengthSquared() < F64.C0p001)
             {
-                localRestrictedAxis1 = FPVector3.Cross(FPVector3.Right, localLineDirection);
+                localRestrictedAxis1 = FPVector3.Cross(FPVector3.right, localLineDirection);
             }
             localRestrictedAxis2 = FPVector3.Cross(localLineDirection, localRestrictedAxis1);
             localRestrictedAxis1.Normalize();

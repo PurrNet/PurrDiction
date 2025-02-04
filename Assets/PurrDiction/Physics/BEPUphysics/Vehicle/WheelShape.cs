@@ -26,7 +26,7 @@ namespace BEPUphysics.Vehicle
         /// <summary>
         /// Collects collision pairs from the environment.
         /// </summary>
-        protected internal Box detector = new Box(FPVector3.Zero, F64.C0, F64.C0, F64.C0);
+        protected internal Box detector = new Box(FPVector3.zero, F64.C0, F64.C0, F64.C0);
 
         protected internal Matrix localGraphicTransform;
         protected FP spinAngle;
