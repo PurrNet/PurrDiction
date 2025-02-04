@@ -404,7 +404,7 @@ namespace PurrNet.Prediction
                 delta.SkipBytes(deltaLen);
 
                 BitPackerDeltaUtils.ApplyDelta(_lastFrame, delta, result);
-
+ 
                 _lastFrame?.Dispose();
                 _lastFrame = result;
 

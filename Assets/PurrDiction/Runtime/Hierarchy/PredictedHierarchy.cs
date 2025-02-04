@@ -33,9 +33,9 @@ namespace PurrNet.Prediction
             
             var min = Mathf.Min(currentActions, stateActions);
             
-            int i;
+            int i = 0;
             
-            for (i = 0; i < min; i++)
+            for (; i < min; i++)
             {
                 var current = _spawnedPrefabs[i];
                 var target = state.spawnedPrefabs[i];
@@ -49,7 +49,7 @@ namespace PurrNet.Prediction
 
             if (countToUndo > 0)
             {
-                for (var j = currentActions - 1; j >= i; j--)
+                for (var j = i; j < currentActions; ++j)
                 {
                     var details = _spawnedPrefabs[j];
                     if (_instanceMap.Remove(details.instanceId, out var instance) && instance)
