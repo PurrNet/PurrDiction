@@ -251,13 +251,13 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
                 FPBoundingBox.CreateMerged(ref boundingBox, ref toMerge, out boundingBox);
             }
 
-            boundingBox.Min.X -= collisionMargin;
-            boundingBox.Min.Y -= collisionMargin;
-            boundingBox.Min.Z -= collisionMargin;
+            boundingBox.Min.x -= collisionMargin;
+            boundingBox.Min.y -= collisionMargin;
+            boundingBox.Min.z -= collisionMargin;
 
-            boundingBox.Max.X += collisionMargin;
-            boundingBox.Max.Y += collisionMargin;
-            boundingBox.Max.Z += collisionMargin;
+            boundingBox.Max.x += collisionMargin;
+            boundingBox.Max.y += collisionMargin;
+            boundingBox.Max.z += collisionMargin;
         }
 
 

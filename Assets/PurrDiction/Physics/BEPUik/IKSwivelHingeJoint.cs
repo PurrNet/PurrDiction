@@ -85,9 +85,9 @@ namespace BEPUik
 
             angularJacobianA = new Matrix3x3
               {
-                  M11 = restrictedAxis.X,
-                  M12 = restrictedAxis.Y,
-                  M13 = restrictedAxis.Z,
+                  M11 = restrictedAxis.x,
+                  M12 = restrictedAxis.y,
+                  M13 = restrictedAxis.z,
               };
             Matrix3x3.Negate(ref angularJacobianA, out angularJacobianB);
 

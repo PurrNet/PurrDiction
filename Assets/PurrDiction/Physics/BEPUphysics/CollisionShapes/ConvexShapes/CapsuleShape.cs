@@ -101,37 +101,37 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
             FPVector3 upExtreme;
             FPQuaternion.TransformY(halfLength, ref shapeTransform.Orientation, out upExtreme);
 
-            if (upExtreme.X > F64.C0)
+            if (upExtreme.x > F64.C0)
             {
-                boundingBox.Max.X = upExtreme.X + collisionMargin;
-                boundingBox.Min.X = -upExtreme.X - collisionMargin;
+                boundingBox.Max.x = upExtreme.x + collisionMargin;
+                boundingBox.Min.x = -upExtreme.x - collisionMargin;
             }
             else
             {
-                boundingBox.Max.X = -upExtreme.X + collisionMargin;
-                boundingBox.Min.X = upExtreme.X - collisionMargin;
+                boundingBox.Max.x = -upExtreme.x + collisionMargin;
+                boundingBox.Min.x = upExtreme.x - collisionMargin;
             }
 
-            if (upExtreme.Y > F64.C0)
+            if (upExtreme.y > F64.C0)
             {
-                boundingBox.Max.Y = upExtreme.Y + collisionMargin;
-                boundingBox.Min.Y = -upExtreme.Y - collisionMargin;
+                boundingBox.Max.y = upExtreme.y + collisionMargin;
+                boundingBox.Min.y = -upExtreme.y - collisionMargin;
             }
             else
             {
-                boundingBox.Max.Y = -upExtreme.Y + collisionMargin;
-                boundingBox.Min.Y = upExtreme.Y - collisionMargin;
+                boundingBox.Max.y = -upExtreme.y + collisionMargin;
+                boundingBox.Min.y = upExtreme.y - collisionMargin;
             }
 
-            if (upExtreme.Z > F64.C0)
+            if (upExtreme.z > F64.C0)
             {
-                boundingBox.Max.Z = upExtreme.Z + collisionMargin;
-                boundingBox.Min.Z = -upExtreme.Z - collisionMargin;
+                boundingBox.Max.z = upExtreme.z + collisionMargin;
+                boundingBox.Min.z = -upExtreme.z - collisionMargin;
             }
             else
             {
-                boundingBox.Max.Z = -upExtreme.Z + collisionMargin;
-                boundingBox.Min.Z = upExtreme.Z - collisionMargin;
+                boundingBox.Max.z = -upExtreme.z + collisionMargin;
+                boundingBox.Min.z = upExtreme.z - collisionMargin;
             }
 
             FPVector3.Add(ref shapeTransform.Position, ref boundingBox.Min, out boundingBox.Min);
@@ -146,9 +146,9 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
         ///<param name="extremePoint">Extreme point on the shape.</param>
         public override void GetLocalExtremePointWithoutMargin(ref FPVector3 direction, out FPVector3 extremePoint)
         {
-            if (direction.Y > F64.C0)
+            if (direction.y > F64.C0)
                 extremePoint = new FPVector3(F64.C0, halfLength, F64.C0);
-            else if (direction.Y < F64.C0)
+            else if (direction.y < F64.C0)
                 extremePoint = new FPVector3(F64.C0, -halfLength, F64.C0);
             else
                 extremePoint = Toolbox.ZeroVector;
@@ -185,12 +185,12 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
             FPQuaternion.Transform(ref ray.Direction, ref conjugate, out localRay.Direction);
 
             //Check for containment in the cylindrical portion of the capsule.
-            if (localRay.Position.Y >= -halfLength && localRay.Position.Y <= halfLength && localRay.Position.X * localRay.Position.X + localRay.Position.Z * localRay.Position.Z <= collisionMargin * collisionMargin)
+            if (localRay.Position.y >= -halfLength && localRay.Position.y <= halfLength && localRay.Position.x * localRay.Position.x + localRay.Position.z * localRay.Position.z <= collisionMargin * collisionMargin)
             {
                 //It's inside!
                 hit.T = F64.C0;
                 hit.Location = localRay.Position;
-                hit.Normal = new FPVector3(hit.Location.X, F64.C0, hit.Location.Z);
+                hit.Normal = new FPVector3(hit.Location.x, F64.C0, hit.Location.z);
                 FP normalLengthSquared = hit.Normal.LengthSquared();
                 if (normalLengthSquared > F64.C1em9)
                     FPVector3.Divide(ref hit.Normal, FP.Sqrt(normalLengthSquared), out hit.Normal);
@@ -205,7 +205,7 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
             //Project the ray direction onto the plane where the cylinder is a circle.
             //The projected ray is then tested against the circle to compute the time of impact.
             //That time of impact is used to compute the 3d hit location.
-            FPVector2 planeDirection = new FPVector2(localRay.Direction.X, localRay.Direction.Z);
+            FPVector2 planeDirection = new FPVector2(localRay.Direction.x, localRay.Direction.z);
             FP planeDirectionLengthSquared = planeDirection.LengthSquared();
 
             if (planeDirectionLengthSquared < Toolbox.Epsilon)
@@ -213,9 +213,9 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
                 //The ray is nearly parallel with the axis.
                 //Skip the cylinder-sides test.  We're either inside the cylinder and won't hit the sides, or we're outside
                 //and won't hit the sides.  
-                if (localRay.Position.Y > halfLength)
+                if (localRay.Position.y > halfLength)
                     goto upperSphereTest;
-                if (localRay.Position.Y < -halfLength)
+                if (localRay.Position.y < -halfLength)
                     goto lowerSphereTest;
 
 
@@ -223,7 +223,7 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
                 return false;
 
             }
-            FPVector2 planeOrigin = new FPVector2(localRay.Position.X, localRay.Position.Z);
+            FPVector2 planeOrigin = new FPVector2(localRay.Position.x, localRay.Position.z);
             FP dot;
             FPVector2.Dot(ref planeDirection, ref planeOrigin, out dot);
             FP closestToCenterT = -dot / planeDirectionLengthSquared;
@@ -253,10 +253,10 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
             FPVector3.Add(ref hit.Location, ref localRay.Position, out hit.Location);
 
             //Is it intersecting the cylindrical portion of the capsule?
-            if (hit.Location.Y <= halfLength && hit.Location.Y >= -halfLength && hit.T < maximumLength)
+            if (hit.Location.y <= halfLength && hit.Location.y >= -halfLength && hit.T < maximumLength)
             {
                 //Yup!
-                hit.Normal = new FPVector3(hit.Location.X, F64.C0, hit.Location.Z);
+                hit.Normal = new FPVector3(hit.Location.x, F64.C0, hit.Location.z);
                 FP normalLengthSquared = hit.Normal.LengthSquared();
                 if (normalLengthSquared > F64.C1em9)
                     FPVector3.Divide(ref hit.Normal, FP.Sqrt(normalLengthSquared), out hit.Normal);
@@ -268,7 +268,7 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
                 return true;
             }
 
-            if (hit.Location.Y < halfLength)
+            if (hit.Location.y < halfLength)
                 goto lowerSphereTest;
         upperSphereTest:
             //Nope! It may be intersecting the ends of the capsule though.

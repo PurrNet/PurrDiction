@@ -1,5 +1,6 @@
 ﻿using FixMath.NET;
 using System;
+using UnityEngine.Serialization;
 
 namespace BEPUutilities
 {
@@ -12,11 +13,11 @@ namespace BEPUutilities
         /// <summary>
         /// X component of the vector.
         /// </summary>
-        public FP X;
+        [FormerlySerializedAs("X")] public FP x;
         /// <summary>
         /// Y component of the vector.
         /// </summary>
-        public FP Y;
+        [FormerlySerializedAs("Y")] public FP y;
 
         /// <summary>
         /// Constructs a new two dimensional vector.
@@ -25,8 +26,8 @@ namespace BEPUutilities
         /// <param name="y">Y component of the vector.</param>
         public FPVector2(FP x, FP y)
         {
-            this.X = x;
-            this.Y = y;
+            this.x = x;
+            this.y = y;
         }
 
         /// <summary>
@@ -35,7 +36,7 @@ namespace BEPUutilities
         /// <returns>Squared length of the vector.</returns>
         public FP LengthSquared()
         {
-            return X * X + Y * Y;
+            return x * x + y * y;
         }
 
         /// <summary>
@@ -44,7 +45,7 @@ namespace BEPUutilities
         /// <returns>Length of the vector.</returns>
         public FP Length()
         {
-            return FP.Sqrt(X * X + Y * Y);
+            return FP.Sqrt(x * x + y * y);
         }
 
         /// <summary>
@@ -53,7 +54,7 @@ namespace BEPUutilities
         /// <returns>String representing the vector.</returns>
         public override string ToString()
         {
-            return "{" + X + ", " + Y + "}";
+            return "{" + x + ", " + y + "}";
         }
 
         /// <summary>
@@ -64,8 +65,8 @@ namespace BEPUutilities
         /// <param name="sum">Sum of the two vectors.</param>
         public static void Add(ref FPVector2 a, ref FPVector2 b, out FPVector2 sum)
         {
-            sum.X = a.X + b.X;
-            sum.Y = a.Y + b.Y;
+            sum.x = a.x + b.x;
+            sum.y = a.y + b.y;
         }
 
         /// <summary>
@@ -76,8 +77,8 @@ namespace BEPUutilities
         /// <param name="difference">Result of the subtraction.</param>
         public static void Subtract(ref FPVector2 a, ref FPVector2 b, out FPVector2 difference)
         {
-            difference.X = a.X - b.X;
-            difference.Y = a.Y - b.Y;
+            difference.x = a.x - b.x;
+            difference.y = a.y - b.y;
         }
 
         /// <summary>
@@ -88,8 +89,8 @@ namespace BEPUutilities
         /// <param name="result">Scaled vector.</param>
         public static void Multiply(ref FPVector2 v, FP scale, out FPVector2 result)
         {
-            result.X = v.X * scale;
-            result.Y = v.Y * scale;
+            result.x = v.x * scale;
+            result.y = v.y * scale;
         }
 
         /// <summary>
@@ -100,8 +101,8 @@ namespace BEPUutilities
         /// <param name="result">Result of the componentwise multiplication.</param>
         public static void Multiply(ref FPVector2 a, ref FPVector2 b, out FPVector2 result)
         {
-            result.X = a.X * b.X;
-            result.Y = a.Y * b.Y;
+            result.x = a.x * b.x;
+            result.y = a.y * b.y;
         }
 
         /// <summary>
@@ -113,8 +114,8 @@ namespace BEPUutilities
         public static void Divide(ref FPVector2 v, FP divisor, out FPVector2 result)
         {
             FP inverse = F64.C1 / divisor;
-            result.X = v.X * inverse;
-            result.Y = v.Y * inverse;
+            result.x = v.x * inverse;
+            result.y = v.y * inverse;
         }
 
         /// <summary>
@@ -125,7 +126,7 @@ namespace BEPUutilities
         /// <param name="dot">Dot product of the two vectors.</param>
         public static void Dot(ref FPVector2 a, ref FPVector2 b, out FP dot)
         {
-            dot = a.X * b.X + a.Y * b.Y;
+            dot = a.x * b.x + a.y * b.y;
         }
 
         /// <summary>
@@ -136,7 +137,7 @@ namespace BEPUutilities
         /// <returns>Dot product of the two vectors.</returns>
         public static FP Dot(FPVector2 a, FPVector2 b)
         {
-            return a.X * b.X + a.Y * b.Y;
+            return a.x * b.x + a.y * b.y;
         }
 
         /// <summary>
@@ -155,7 +156,7 @@ namespace BEPUutilities
         /// </summary>
         public static FPVector2 UnitX
         {
-            get { return new FPVector2 { X = F64.C1 }; }
+            get { return new FPVector2 { x = F64.C1 }; }
         }
 
         /// <summary>
@@ -163,7 +164,7 @@ namespace BEPUutilities
         /// </summary>
         public static FPVector2 UnitY
         {
-            get { return new FPVector2 { Y = F64.C1 }; }
+            get { return new FPVector2 { y = F64.C1 }; }
         }
 
 
@@ -186,9 +187,9 @@ namespace BEPUutilities
         /// <param name="result">Normalized vector.</param>
         public static void Normalize(ref FPVector2 v, out FPVector2 result)
         {
-            FP inverse = F64.C1 / FP.Sqrt(v.X * v.X + v.Y * v.Y);
-            result.X = v.X * inverse;
-            result.Y = v.Y * inverse;
+            FP inverse = F64.C1 / FP.Sqrt(v.x * v.x + v.y * v.y);
+            result.x = v.x * inverse;
+            result.y = v.y * inverse;
         }
 
         /// <summary>
@@ -198,8 +199,8 @@ namespace BEPUutilities
         /// <param name="negated">Negated version of the vector.</param>
         public static void Negate(ref FPVector2 v, out FPVector2 negated)
         {
-            negated.X = -v.X;
-            negated.Y = -v.Y;
+            negated.x = -v.x;
+            negated.y = -v.y;
         }
 
         /// <summary>
@@ -209,14 +210,14 @@ namespace BEPUutilities
         /// <param name="result">Vector with nonnegative elements.</param>
         public static void Abs(ref FPVector2 v, out FPVector2 result)
         {
-            if (v.X < F64.C0)
-                result.X = -v.X;
+            if (v.x < F64.C0)
+                result.x = -v.x;
             else
-                result.X = v.X;
-            if (v.Y < F64.C0)
-                result.Y = -v.Y;
+                result.x = v.x;
+            if (v.y < F64.C0)
+                result.y = -v.y;
             else
-                result.Y = v.Y;
+                result.y = v.y;
         }
 
         /// <summary>
@@ -239,8 +240,8 @@ namespace BEPUutilities
         /// <param name="min">Vector containing the lesser values of each vector.</param>
         public static void Min(ref FPVector2 a, ref FPVector2 b, out FPVector2 min)
         {
-            min.X = a.X < b.X ? a.X : b.X;
-            min.Y = a.Y < b.Y ? a.Y : b.Y;
+            min.x = a.x < b.x ? a.x : b.x;
+            min.y = a.y < b.y ? a.y : b.y;
         }
 
         /// <summary>
@@ -265,8 +266,8 @@ namespace BEPUutilities
         /// <param name="max">Vector containing the greater values of each vector.</param>
         public static void Max(ref FPVector2 a, ref FPVector2 b, out FPVector2 max)
         {
-            max.X = a.X > b.X ? a.X : b.X;
-            max.Y = a.Y > b.Y ? a.Y : b.Y;
+            max.x = a.x > b.x ? a.x : b.x;
+            max.y = a.y > b.y ? a.y : b.y;
         }
 
         /// <summary>
@@ -287,9 +288,9 @@ namespace BEPUutilities
         /// </summary>
         public void Normalize()
         {
-            FP inverse = F64.C1 / FP.Sqrt(X * X + Y * Y);
-            X *= inverse;
-            Y *= inverse;
+            FP inverse = F64.C1 / FP.Sqrt(x * x + y * y);
+            x *= inverse;
+            y *= inverse;
         }
 
         /// <summary>
@@ -301,8 +302,8 @@ namespace BEPUutilities
         public static FPVector2 operator *(FPVector2 v, FP f)
         {
             FPVector2 toReturn;
-            toReturn.X = v.X * f;
-            toReturn.Y = v.Y * f;
+            toReturn.x = v.x * f;
+            toReturn.y = v.y * f;
             return toReturn;
         }
         /// <summary>
@@ -314,8 +315,8 @@ namespace BEPUutilities
         public static FPVector2 operator *(FP f, FPVector2 v)
         {
             FPVector2 toReturn;
-            toReturn.X = v.X * f;
-            toReturn.Y = v.Y * f;
+            toReturn.x = v.x * f;
+            toReturn.y = v.y * f;
             return toReturn;
         }
 
@@ -342,8 +343,8 @@ namespace BEPUutilities
         {
             FPVector2 toReturn;
             f = F64.C1 / f;
-            toReturn.X = v.X * f;
-            toReturn.Y = v.Y * f;
+            toReturn.x = v.x * f;
+            toReturn.y = v.y * f;
             return toReturn;
         }
 
@@ -356,8 +357,8 @@ namespace BEPUutilities
         public static FPVector2 operator -(FPVector2 a, FPVector2 b)
         {
             FPVector2 v;
-            v.X = a.X - b.X;
-            v.Y = a.Y - b.Y;
+            v.x = a.x - b.x;
+            v.y = a.y - b.y;
             return v;
         }
 
@@ -370,8 +371,8 @@ namespace BEPUutilities
         public static FPVector2 operator +(FPVector2 a, FPVector2 b)
         {
             FPVector2 v;
-            v.X = a.X + b.X;
-            v.Y = a.Y + b.Y;
+            v.x = a.x + b.x;
+            v.y = a.y + b.y;
             return v;
         }
 
@@ -382,8 +383,8 @@ namespace BEPUutilities
         /// <returns>Negated vector.</returns>
         public static FPVector2 operator -(FPVector2 v)
         {
-            v.X = -v.X;
-            v.Y = -v.Y;
+            v.x = -v.x;
+            v.y = -v.y;
             return v;
         }
 
@@ -395,7 +396,7 @@ namespace BEPUutilities
         /// <returns>Whether the vectors were equivalent.</returns>
         public static bool operator ==(FPVector2 a, FPVector2 b)
         {
-            return a.X == b.X && a.Y == b.Y;
+            return a.x == b.x && a.y == b.y;
         }
         /// <summary>
         /// Tests two vectors for componentwise inequivalence.
@@ -405,7 +406,7 @@ namespace BEPUutilities
         /// <returns>Whether the vectors were inequivalent.</returns>
         public static bool operator !=(FPVector2 a, FPVector2 b)
         {
-            return a.X != b.X || a.Y != b.Y;
+            return a.x != b.x || a.y != b.y;
         }
 
         /// <summary>
@@ -417,7 +418,7 @@ namespace BEPUutilities
         /// <param name="other">An object to compare with this object.</param>
         public bool Equals(FPVector2 other)
         {
-            return X == other.X && Y == other.Y;
+            return x == other.x && y == other.y;
         }
 
         /// <summary>
@@ -445,7 +446,7 @@ namespace BEPUutilities
         /// <filterpriority>2</filterpriority>
         public override int GetHashCode()
         {
-            return X.GetHashCode() + Y.GetHashCode();
+            return x.GetHashCode() + y.GetHashCode();
         }
 
 

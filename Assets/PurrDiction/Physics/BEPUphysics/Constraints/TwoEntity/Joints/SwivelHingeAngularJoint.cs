@@ -250,9 +250,9 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
                 FPVector3.Divide(ref jacobianA, FP.Sqrt(length), out jacobianA);
             else
                 jacobianA = new FPVector3();
-            jacobianB.X = -jacobianA.X;
-            jacobianB.Y = -jacobianA.Y;
-            jacobianB.Z = -jacobianA.Z;
+            jacobianB.x = -jacobianA.x;
+            jacobianB.y = -jacobianA.y;
+            jacobianB.z = -jacobianA.z;
 
 
             //****** EFFECTIVE MASS MATRIX ******//

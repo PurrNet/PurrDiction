@@ -58,9 +58,9 @@ namespace BEPUphysics.CollisionShapes
         /// <param name="result">Contains the transformed X coordinate of input X, transformed Y coordinate of input Y, and transformed Z coordinate of input Z.</param>
         protected void TransformLocalExtremePoints(ref FPVector3 x, ref FPVector3 y, ref FPVector3 z, ref Matrix3x3 transform, out FPVector3 result)
         {
-            result.X = x.X * transform.M11 + x.Y * transform.M21 + x.Z * transform.M31;
-            result.Y = y.X * transform.M12 + y.Y * transform.M22 + y.Z * transform.M32;
-            result.Z = z.X * transform.M13 + z.Y * transform.M23 + z.Z * transform.M33;
+            result.x = x.x * transform.M11 + x.y * transform.M21 + x.z * transform.M31;
+            result.y = y.x * transform.M12 + y.y * transform.M22 + y.z * transform.M32;
+            result.z = z.x * transform.M13 + z.y * transform.M23 + z.z * transform.M33;
         }
     }
 }

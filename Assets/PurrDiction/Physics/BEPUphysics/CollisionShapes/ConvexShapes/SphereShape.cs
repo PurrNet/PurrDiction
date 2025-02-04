@@ -78,12 +78,12 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
 #if !WINDOWS
             boundingBox = new FPBoundingBox();
 #endif
-            boundingBox.Min.X = shapeTransform.Position.X - collisionMargin;
-            boundingBox.Min.Y = shapeTransform.Position.Y - collisionMargin;
-            boundingBox.Min.Z = shapeTransform.Position.Z - collisionMargin;
-            boundingBox.Max.X = shapeTransform.Position.X + collisionMargin;
-            boundingBox.Max.Y = shapeTransform.Position.Y + collisionMargin;
-            boundingBox.Max.Z = shapeTransform.Position.Z + collisionMargin;
+            boundingBox.Min.x = shapeTransform.Position.x - collisionMargin;
+            boundingBox.Min.y = shapeTransform.Position.y - collisionMargin;
+            boundingBox.Min.z = shapeTransform.Position.z - collisionMargin;
+            boundingBox.Max.x = shapeTransform.Position.x + collisionMargin;
+            boundingBox.Max.y = shapeTransform.Position.y + collisionMargin;
+            boundingBox.Max.z = shapeTransform.Position.z + collisionMargin;
         }
 
 

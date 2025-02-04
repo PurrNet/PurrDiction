@@ -101,16 +101,16 @@ namespace BEPUutilities
 #else
                 Vector3 vector;
 #endif
-                vector.X = M31;
-                vector.Y = M32;
-                vector.Z = M33;
+                vector.x = M31;
+                vector.y = M32;
+                vector.z = M33;
                 return vector;
             }
             set
             {
-                M31 = value.X;
-                M32 = value.Y;
-                M33 = value.Z;
+                M31 = value.x;
+                M32 = value.y;
+                M33 = value.z;
             }
         }
 
@@ -126,16 +126,16 @@ namespace BEPUutilities
 #else
                 Vector3 vector;
 #endif
-                vector.X = -M21;
-                vector.Y = -M22;
-                vector.Z = -M23;
+                vector.x = -M21;
+                vector.y = -M22;
+                vector.z = -M23;
                 return vector;
             }
             set
             {
-                M21 = -value.X;
-                M22 = -value.Y;
-                M23 = -value.Z;
+                M21 = -value.x;
+                M22 = -value.y;
+                M23 = -value.z;
             }
         }
 
@@ -151,16 +151,16 @@ namespace BEPUutilities
 #else
                 Vector3 vector;
 #endif
-                vector.X = -M31;
-                vector.Y = -M32;
-                vector.Z = -M33;
+                vector.x = -M31;
+                vector.y = -M32;
+                vector.z = -M33;
                 return vector;
             }
             set
             {
-                M31 = -value.X;
-                M32 = -value.Y;
-                M33 = -value.Z;
+                M31 = -value.x;
+                M32 = -value.y;
+                M33 = -value.z;
             }
         }
 
@@ -176,16 +176,16 @@ namespace BEPUutilities
 #else
                 Vector3 vector;
 #endif
-                vector.X = -M11;
-                vector.Y = -M12;
-                vector.Z = -M13;
+                vector.x = -M11;
+                vector.y = -M12;
+                vector.z = -M13;
                 return vector;
             }
             set
             {
-                M11 = -value.X;
-                M12 = -value.Y;
-                M13 = -value.Z;
+                M11 = -value.x;
+                M12 = -value.y;
+                M13 = -value.z;
             }
         }
 
@@ -201,16 +201,16 @@ namespace BEPUutilities
 #else
                 Vector3 vector;
 #endif
-                vector.X = M11;
-                vector.Y = M12;
-                vector.Z = M13;
+                vector.x = M11;
+                vector.y = M12;
+                vector.z = M13;
                 return vector;
             }
             set
             {
-                M11 = value.X;
-                M12 = value.Y;
-                M13 = value.Z;
+                M11 = value.x;
+                M12 = value.y;
+                M13 = value.z;
             }
         }
 
@@ -226,16 +226,16 @@ namespace BEPUutilities
 #else
                 Vector3 vector;
 #endif
-                vector.X = M21;
-                vector.Y = M22;
-                vector.Z = M23;
+                vector.x = M21;
+                vector.y = M22;
+                vector.z = M23;
                 return vector;
             }
             set
             {
-                M21 = value.X;
-                M22 = value.Y;
-                M23 = value.Z;
+                M21 = value.x;
+                M22 = value.y;
+                M23 = value.z;
             }
         }
 
@@ -379,13 +379,13 @@ namespace BEPUutilities
         public static void CreateCrossProduct(ref FPVector3 v, out Matrix3x3 result)
         {
             result.M11 = F64.C0;
-            result.M12 = -v.Z;
-            result.M13 = v.Y;
-            result.M21 = v.Z;
+            result.M12 = -v.z;
+            result.M13 = v.y;
+            result.M21 = v.z;
             result.M22 = F64.C0;
-            result.M23 = -v.X;
-            result.M31 = -v.Y;
-            result.M32 = v.X;
+            result.M23 = -v.x;
+            result.M31 = -v.y;
+            result.M32 = v.x;
             result.M33 = F64.C0;
         }
 
@@ -458,7 +458,7 @@ namespace BEPUutilities
         /// <param name="matrix">Scaling matrix.</param>
         public static void CreateScale(ref FPVector3 scale, out Matrix3x3 matrix)
         {
-            matrix = new Matrix3x3 {M11 = scale.X, M22 = scale.Y, M33 = scale.Z};
+            matrix = new Matrix3x3 {M11 = scale.x, M22 = scale.y, M33 = scale.z};
         }
 
         /// <summary>
@@ -468,7 +468,7 @@ namespace BEPUutilities
         /// <returns>Scaling matrix.</returns>
         public static Matrix3x3 CreateScale(ref FPVector3 scale)
         {
-            var matrix = new Matrix3x3 {M11 = scale.X, M22 = scale.Y, M33 = scale.Z};
+            var matrix = new Matrix3x3 {M11 = scale.x, M22 = scale.y, M33 = scale.z};
             return matrix;
         }
 
@@ -1040,15 +1040,15 @@ namespace BEPUutilities
         /// <param name="result">Product of the transformation.</param>
         public static void Transform(ref FPVector3 v, ref Matrix3x3 matrix, out FPVector3 result)
         {
-            FP vX = v.X;
-            FP vY = v.Y;
-            FP vZ = v.Z;
+            FP vX = v.x;
+            FP vY = v.y;
+            FP vZ = v.z;
 #if !WINDOWS
             result = new FPVector3();
 #endif
-            result.X = vX * matrix.M11 + vY * matrix.M21 + vZ * matrix.M31;
-            result.Y = vX * matrix.M12 + vY * matrix.M22 + vZ * matrix.M32;
-            result.Z = vX * matrix.M13 + vY * matrix.M23 + vZ * matrix.M33;
+            result.x = vX * matrix.M11 + vY * matrix.M21 + vZ * matrix.M31;
+            result.y = vX * matrix.M12 + vY * matrix.M22 + vZ * matrix.M32;
+            result.z = vX * matrix.M13 + vY * matrix.M23 + vZ * matrix.M33;
         }
 
 
@@ -1064,13 +1064,13 @@ namespace BEPUutilities
 #if !WINDOWS
             result = new FPVector3();
 #endif
-            FP vX = v.X;
-            FP vY = v.Y;
-            FP vZ = v.Z;
+            FP vX = v.x;
+            FP vY = v.y;
+            FP vZ = v.z;
 
-            result.X = vX * matrix.M11 + vY * matrix.M21 + vZ * matrix.M31;
-            result.Y = vX * matrix.M12 + vY * matrix.M22 + vZ * matrix.M32;
-            result.Z = vX * matrix.M13 + vY * matrix.M23 + vZ * matrix.M33;
+            result.x = vX * matrix.M11 + vY * matrix.M21 + vZ * matrix.M31;
+            result.y = vX * matrix.M12 + vY * matrix.M22 + vZ * matrix.M32;
+            result.z = vX * matrix.M13 + vY * matrix.M23 + vZ * matrix.M33;
             return result;
         }
 
@@ -1082,15 +1082,15 @@ namespace BEPUutilities
         /// <param name="result">Product of the transformation.</param>
         public static void TransformTranspose(ref FPVector3 v, ref Matrix3x3 matrix, out FPVector3 result)
         {
-            FP vX = v.X;
-            FP vY = v.Y;
-            FP vZ = v.Z;
+            FP vX = v.x;
+            FP vY = v.y;
+            FP vZ = v.z;
 #if !WINDOWS
             result = new FPVector3();
 #endif
-            result.X = vX * matrix.M11 + vY * matrix.M12 + vZ * matrix.M13;
-            result.Y = vX * matrix.M21 + vY * matrix.M22 + vZ * matrix.M23;
-            result.Z = vX * matrix.M31 + vY * matrix.M32 + vZ * matrix.M33;
+            result.x = vX * matrix.M11 + vY * matrix.M12 + vZ * matrix.M13;
+            result.y = vX * matrix.M21 + vY * matrix.M22 + vZ * matrix.M23;
+            result.z = vX * matrix.M31 + vY * matrix.M32 + vZ * matrix.M33;
         }
 
         /// <summary>
@@ -1101,16 +1101,16 @@ namespace BEPUutilities
         /// <returns>Product of the transformation.</returns>
         public static FPVector3 TransformTranspose(FPVector3 v, Matrix3x3 matrix)
         {
-            FP vX = v.X;
-            FP vY = v.Y;
-            FP vZ = v.Z;
+            FP vX = v.x;
+            FP vY = v.y;
+            FP vZ = v.z;
             FPVector3 result;
 #if !WINDOWS
             result = new FPVector3();
 #endif
-            result.X = vX * matrix.M11 + vY * matrix.M12 + vZ * matrix.M13;
-            result.Y = vX * matrix.M21 + vY * matrix.M22 + vZ * matrix.M23;
-            result.Z = vX * matrix.M31 + vY * matrix.M32 + vZ * matrix.M33;
+            result.x = vX * matrix.M11 + vY * matrix.M12 + vZ * matrix.M13;
+            result.y = vX * matrix.M21 + vY * matrix.M22 + vZ * matrix.M23;
+            result.z = vX * matrix.M31 + vY * matrix.M32 + vZ * matrix.M33;
             return result;
         }
 
@@ -1257,18 +1257,18 @@ namespace BEPUutilities
         /// <param name="result">Matrix representing the quaternion's orientation.</param>
         public static void CreateFromQuaternion(ref FPQuaternion quaternion, out Matrix3x3 result)
         {
-            FP qX2 = quaternion.X + quaternion.X;
-            FP qY2 = quaternion.Y + quaternion.Y;
-            FP qZ2 = quaternion.Z + quaternion.Z;
-            FP XX = qX2 * quaternion.X;
-            FP YY = qY2 * quaternion.Y;
-            FP ZZ = qZ2 * quaternion.Z;
-            FP XY = qX2 * quaternion.Y;
-            FP XZ = qX2 * quaternion.Z;
-            FP XW = qX2 * quaternion.W;
-            FP YZ = qY2 * quaternion.Z;
-            FP YW = qY2 * quaternion.W;
-            FP ZW = qZ2 * quaternion.W;
+            FP qX2 = quaternion.x + quaternion.x;
+            FP qY2 = quaternion.y + quaternion.y;
+            FP qZ2 = quaternion.z + quaternion.z;
+            FP XX = qX2 * quaternion.x;
+            FP YY = qY2 * quaternion.y;
+            FP ZZ = qZ2 * quaternion.z;
+            FP XY = qX2 * quaternion.y;
+            FP XZ = qX2 * quaternion.z;
+            FP XW = qX2 * quaternion.w;
+            FP YZ = qY2 * quaternion.z;
+            FP YW = qY2 * quaternion.w;
+            FP ZW = qZ2 * quaternion.w;
 
             result.M11 = F64.C1 - YY - ZZ;
             result.M21 = XY - ZW;
@@ -1303,17 +1303,17 @@ namespace BEPUutilities
         /// <param name="result">Outer product result.</param>
         public static void CreateOuterProduct(ref FPVector3 a, ref FPVector3 b, out Matrix3x3 result)
         {
-            result.M11 = a.X * b.X;
-            result.M12 = a.X * b.Y;
-            result.M13 = a.X * b.Z;
+            result.M11 = a.x * b.x;
+            result.M12 = a.x * b.y;
+            result.M13 = a.x * b.z;
 
-            result.M21 = a.Y * b.X;
-            result.M22 = a.Y * b.Y;
-            result.M23 = a.Y * b.Z;
+            result.M21 = a.y * b.x;
+            result.M22 = a.y * b.y;
+            result.M23 = a.y * b.z;
 
-            result.M31 = a.Z * b.X;
-            result.M32 = a.Z * b.Y;
-            result.M33 = a.Z * b.Z;
+            result.M31 = a.z * b.x;
+            result.M32 = a.z * b.y;
+            result.M33 = a.z * b.z;
         }
 
         /// <summary>
@@ -1337,26 +1337,26 @@ namespace BEPUutilities
         /// <param name="result">Matrix representing the rotation.</param>
         public static void CreateFromAxisAngle(ref FPVector3 axis, FP angle, out Matrix3x3 result)
         {
-            FP xx = axis.X * axis.X;
-            FP yy = axis.Y * axis.Y;
-            FP zz = axis.Z * axis.Z;
-            FP xy = axis.X * axis.Y;
-            FP xz = axis.X * axis.Z;
-            FP yz = axis.Y * axis.Z;
+            FP xx = axis.x * axis.x;
+            FP yy = axis.y * axis.y;
+            FP zz = axis.z * axis.z;
+            FP xy = axis.x * axis.y;
+            FP xz = axis.x * axis.z;
+            FP yz = axis.y * axis.z;
 
             FP sinAngle = FP.Sin(angle);
             FP oneMinusCosAngle = F64.C1 - FP.Cos(angle);
 
             result.M11 = F64.C1 + oneMinusCosAngle * (xx - F64.C1);
-            result.M21 = -axis.Z * sinAngle + oneMinusCosAngle * xy;
-            result.M31 = axis.Y * sinAngle + oneMinusCosAngle * xz;
+            result.M21 = -axis.z * sinAngle + oneMinusCosAngle * xy;
+            result.M31 = axis.y * sinAngle + oneMinusCosAngle * xz;
 
-            result.M12 = axis.Z * sinAngle + oneMinusCosAngle * xy;
+            result.M12 = axis.z * sinAngle + oneMinusCosAngle * xy;
             result.M22 = F64.C1 + oneMinusCosAngle * (yy - F64.C1);
-            result.M32 = -axis.X * sinAngle + oneMinusCosAngle * yz;
+            result.M32 = -axis.x * sinAngle + oneMinusCosAngle * yz;
 
-            result.M13 = -axis.Y * sinAngle + oneMinusCosAngle * xz;
-            result.M23 = axis.X * sinAngle + oneMinusCosAngle * yz;
+            result.M13 = -axis.y * sinAngle + oneMinusCosAngle * xz;
+            result.M23 = axis.x * sinAngle + oneMinusCosAngle * yz;
             result.M33 = F64.C1 + oneMinusCosAngle * (zz - F64.C1);
         }
 

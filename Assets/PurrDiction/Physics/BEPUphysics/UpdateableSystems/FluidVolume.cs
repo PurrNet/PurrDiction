@@ -366,14 +366,14 @@ namespace BEPUphysics.UpdateableSystems
             RigidTransform localTransform;
             RigidTransform.MultiplyByInverse(ref collidable.worldTransform, ref surfaceTransform, out localTransform);
             collidable.Shape.GetBoundingBox(ref localTransform, out entityBoundingBox);
-            if (entityBoundingBox.Min.Y > F64.C0)
+            if (entityBoundingBox.Min.y > F64.C0)
             {
                 //Fish out of the water.  Don't need to do raycast tests on objects not at the boundary.
                 submergedVolume = F64.C0;
                 submergedCenter = collidable.worldTransform.Position;
                 return;
             }
-            if (entityBoundingBox.Max.Y < F64.C0)
+            if (entityBoundingBox.Max.y < F64.C0)
             {
                 submergedVolume = collidable.entity.CollisionInformation.Shape.Volume;
                 submergedCenter = collidable.worldTransform.Position;
@@ -384,8 +384,8 @@ namespace BEPUphysics.UpdateableSystems
 			FP perColumnArea;
             GetSamplingOrigin(ref entityBoundingBox, out xSpacing, out zSpacing, out perColumnArea, out origin);
 
-			FP boundingBoxHeight = entityBoundingBox.Max.Y - entityBoundingBox.Min.Y;
-			FP maxLength = -entityBoundingBox.Min.Y;
+			FP boundingBoxHeight = entityBoundingBox.Max.y - entityBoundingBox.Min.y;
+			FP maxLength = -entityBoundingBox.Min.y;
             submergedCenter = new FPVector3();
             submergedVolume = F64.C0;
             for (int i = 0; i < samplePointsPerDimension; i++)
@@ -413,8 +413,8 @@ namespace BEPUphysics.UpdateableSystems
         {
 			//Compute spacing and increment informaiton.
 			FP samplePointsPerDimensionFix64 = (FP)samplePointsPerDimension;
-			FP widthIncrement = (entityBoundingBox.Max.X - entityBoundingBox.Min.X) / samplePointsPerDimensionFix64;
-			FP lengthIncrement = (entityBoundingBox.Max.Z - entityBoundingBox.Min.Z) / samplePointsPerDimensionFix64;
+			FP widthIncrement = (entityBoundingBox.Max.x - entityBoundingBox.Min.x) / samplePointsPerDimensionFix64;
+			FP lengthIncrement = (entityBoundingBox.Max.z - entityBoundingBox.Min.z) / samplePointsPerDimensionFix64;
             xSpacing = new FPVector3(widthIncrement, F64.C0, F64.C0);
             zSpacing = new FPVector3(F64.C0, F64.C0, lengthIncrement);
             FPQuaternion.Transform(ref xSpacing, ref surfaceTransform.Orientation, out xSpacing);
@@ -499,7 +499,7 @@ namespace BEPUphysics.UpdateableSystems
 
                 //Transform the hit into local space.
                 RigidTransform.TransformByInverse(ref rayHit.Location, ref surfaceTransform, out rayHit.Location);
-				FP bottomY = rayHit.Location.Y;
+				FP bottomY = rayHit.Location.y;
 				FP bottom = rayHit.T;
                 FPVector3 bottomPosition = rayHit.Location;
                 if (collidable.RayCast(ray, boundingBoxHeight - rayHit.T, out rayHit))

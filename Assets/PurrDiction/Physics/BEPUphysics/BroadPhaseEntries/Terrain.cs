@@ -147,18 +147,18 @@ namespace BEPUphysics.BroadPhaseEntries
                 //Use the down direction rather than the thicknessOffset to determine which
                 //component of the bounding box to subtract, since the down direction contains all
                 //previous extra thickness.
-                if (down.X < F64.C0)
-                    boundingBox.Min.X += thicknessOffset.X;
+                if (down.x < F64.C0)
+                    boundingBox.Min.x += thicknessOffset.x;
                 else
-                    boundingBox.Max.X += thicknessOffset.X;
-                if (down.Y < F64.C0)
-                    boundingBox.Min.Y += thicknessOffset.Y;
+                    boundingBox.Max.x += thicknessOffset.x;
+                if (down.y < F64.C0)
+                    boundingBox.Min.y += thicknessOffset.y;
                 else
-                    boundingBox.Max.Y += thicknessOffset.Y;
-                if (down.Z < F64.C0)
-                    boundingBox.Min.Z += thicknessOffset.Z;
+                    boundingBox.Max.y += thicknessOffset.y;
+                if (down.z < F64.C0)
+                    boundingBox.Min.z += thicknessOffset.z;
                 else
-                    boundingBox.Max.Z += thicknessOffset.Z;
+                    boundingBox.Max.z += thicknessOffset.z;
 
                 thickness = value;
             }
@@ -198,18 +198,18 @@ namespace BEPUphysics.BroadPhaseEntries
             Shape.GetBoundingBox(ref worldTransform, out boundingBox);
             //Include the thickness of the terrain.
             FPVector3 thicknessOffset = FPVector3.Normalize(worldTransform.LinearTransform.Down) * thickness;
-            if (thicknessOffset.X < F64.C0)
-                boundingBox.Min.X += thicknessOffset.X;
+            if (thicknessOffset.x < F64.C0)
+                boundingBox.Min.x += thicknessOffset.x;
             else
-                boundingBox.Max.X += thicknessOffset.X;
-            if (thicknessOffset.Y < F64.C0)
-                boundingBox.Min.Y += thicknessOffset.Y;
+                boundingBox.Max.x += thicknessOffset.x;
+            if (thicknessOffset.y < F64.C0)
+                boundingBox.Min.y += thicknessOffset.y;
             else
-                boundingBox.Max.Y += thicknessOffset.Y;
-            if (thicknessOffset.Z < F64.C0)
-                boundingBox.Min.Z += thicknessOffset.Z;
+                boundingBox.Max.y += thicknessOffset.y;
+            if (thicknessOffset.z < F64.C0)
+                boundingBox.Min.z += thicknessOffset.z;
             else
-                boundingBox.Max.Z += thicknessOffset.Z;
+                boundingBox.Max.z += thicknessOffset.z;
         }
 
 

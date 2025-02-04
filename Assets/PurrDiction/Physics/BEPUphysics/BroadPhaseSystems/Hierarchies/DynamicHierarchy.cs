@@ -226,7 +226,7 @@ namespace BEPUphysics.BroadPhaseSystems.Hierarchies
             //Entities do not set up their own bounding box before getting stuck in here.  If they're all zeroed out, the tree will be horrible.
             FPVector3 offset;
             FPVector3.Subtract(ref entry.boundingBox.Max, ref entry.boundingBox.Min, out offset);
-            if (FP.SafeMul(FP.SafeMul(offset.X, offset.Y), offset.Z) == F64.C0)
+            if (FP.SafeMul(FP.SafeMul(offset.x, offset.y), offset.z) == F64.C0)
                 entry.UpdateBoundingBox();
             //Could buffer additions to get a better construction in the tree.
             var node = leafNodes.Take();
@@ -245,7 +245,7 @@ namespace BEPUphysics.BroadPhaseSystems.Hierarchies
                     FPBoundingBox.CreateMerged(ref node.BoundingBox, ref root.BoundingBox, out root.BoundingBox);
                     var internalNode = (InternalNode)root;
                     FPVector3.Subtract(ref root.BoundingBox.Max, ref root.BoundingBox.Min, out offset);
-                    internalNode.currentVolume = FP.SafeMul(FP.SafeMul(offset.X, offset.Y), offset.Z);
+                    internalNode.currentVolume = FP.SafeMul(FP.SafeMul(offset.x, offset.y), offset.z);
                     //internalNode.maximumVolume = internalNode.currentVolume * InternalNode.MaximumVolumeScale;
                     //The caller is responsible for the merge.
                     var treeNode = root;
@@ -332,7 +332,7 @@ namespace BEPUphysics.BroadPhaseSystems.Hierarchies
             if (root != null)
             {
                 var offset = root.BoundingBox.Max - root.BoundingBox.Min;
-                var volume = FP.SafeMul(FP.SafeMul(offset.X, offset.Y), offset.Z);
+                var volume = FP.SafeMul(FP.SafeMul(offset.x, offset.y), offset.z);
                 if (volume < F64.C1em9)
                     return F64.C0;
                 return root.MeasureSubtreeCost() / volume;

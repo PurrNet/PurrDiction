@@ -323,9 +323,9 @@ namespace BEPUphysics.Constraints.TwoEntity.JointLimits
                 }
 
                 jacobianB.Normalize();
-                jacobianA.X = -jacobianB.X;
-                jacobianA.Y = -jacobianB.Y;
-                jacobianA.Z = -jacobianB.Z;
+                jacobianA.x = -jacobianB.x;
+                jacobianA.y = -jacobianB.y;
+                jacobianA.z = -jacobianB.z;
             }
             else
             {
@@ -340,9 +340,9 @@ namespace BEPUphysics.Constraints.TwoEntity.JointLimits
                 }
 
                 jacobianA.Normalize();
-                jacobianB.X = -jacobianA.X;
-                jacobianB.Y = -jacobianA.Y;
-                jacobianB.Z = -jacobianA.Z;
+                jacobianB.x = -jacobianA.x;
+                jacobianB.y = -jacobianA.y;
+                jacobianB.z = -jacobianA.z;
             }
 
             //****** VELOCITY BIAS ******//

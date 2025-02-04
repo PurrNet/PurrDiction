@@ -337,9 +337,9 @@ namespace BEPUphysics.Constraints.TwoEntity.Motors
 #else
                 Vector3 separation;
 #endif
-                separation.X = worldAnchorB.X - worldAnchorA.X;
-                separation.Y = worldAnchorB.Y - worldAnchorA.Y;
-                separation.Z = worldAnchorB.Z - worldAnchorA.Z;
+                separation.x = worldAnchorB.x - worldAnchorA.x;
+                separation.y = worldAnchorB.y - worldAnchorA.y;
+                separation.z = worldAnchorB.z - worldAnchorA.z;
 
                 FPVector3.Dot(ref separation, ref worldAxis, out error);
 
@@ -363,9 +363,9 @@ namespace BEPUphysics.Constraints.TwoEntity.Motors
 
             //Compute jacobians
             jLinearA = worldAxis;
-            jLinearB.X = -jLinearA.X;
-            jLinearB.Y = -jLinearA.Y;
-            jLinearB.Z = -jLinearA.Z;
+            jLinearB.x = -jLinearA.x;
+            jLinearB.y = -jLinearA.y;
+            jLinearB.z = -jLinearA.z;
             FPVector3.Cross(ref rA, ref jLinearA, out jAngularA);
             FPVector3.Cross(ref worldOffsetB, ref jLinearB, out jAngularB);
 

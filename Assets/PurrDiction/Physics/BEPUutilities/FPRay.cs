@@ -40,9 +40,9 @@ namespace BEPUutilities
         public bool Intersects(ref FPBoundingBox boundingBox, out FP t)
         {
 			FP tmin = F64.C0, tmax = FP.MaxValue;
-            if (FP.Abs(Direction.X) < Toolbox.Epsilon)
+            if (FP.Abs(Direction.x) < Toolbox.Epsilon)
             {
-                if (Position.X < boundingBox.Min.X || Position.X > boundingBox.Max.X)
+                if (Position.x < boundingBox.Min.x || Position.x > boundingBox.Max.x)
                 {
                     //If the ray isn't pointing along the axis at all, and is outside of the box's interval, then it
                     //can't be intersecting.
@@ -52,9 +52,9 @@ namespace BEPUutilities
             }
             else
             {
-                var inverseDirection = F64.C1 / Direction.X;
-                var t1 = (boundingBox.Min.X - Position.X) * inverseDirection;
-                var t2 = (boundingBox.Max.X - Position.X) * inverseDirection;
+                var inverseDirection = F64.C1 / Direction.x;
+                var t1 = (boundingBox.Min.x - Position.x) * inverseDirection;
+                var t2 = (boundingBox.Max.x - Position.x) * inverseDirection;
                 if (t1 > t2)
                 {
 					FP temp = t1;
@@ -69,9 +69,9 @@ namespace BEPUutilities
                     return false;
                 }
             }
-            if (FP.Abs(Direction.Y) < Toolbox.Epsilon)
+            if (FP.Abs(Direction.y) < Toolbox.Epsilon)
             {
-                if (Position.Y < boundingBox.Min.Y || Position.Y > boundingBox.Max.Y)
+                if (Position.y < boundingBox.Min.y || Position.y > boundingBox.Max.y)
                 {
                     //If the ray isn't pointing along the axis at all, and is outside of the box's interval, then it
                     //can't be intersecting.
@@ -81,9 +81,9 @@ namespace BEPUutilities
             }
             else
             {
-                var inverseDirection = F64.C1 / Direction.Y;
-                var t1 = (boundingBox.Min.Y - Position.Y) * inverseDirection;
-                var t2 = (boundingBox.Max.Y - Position.Y) * inverseDirection;
+                var inverseDirection = F64.C1 / Direction.y;
+                var t1 = (boundingBox.Min.y - Position.y) * inverseDirection;
+                var t2 = (boundingBox.Max.y - Position.y) * inverseDirection;
                 if (t1 > t2)
                 {
 					FP temp = t1;
@@ -98,9 +98,9 @@ namespace BEPUutilities
                     return false;
                 }
             }
-            if (FP.Abs(Direction.Z) < Toolbox.Epsilon)
+            if (FP.Abs(Direction.z) < Toolbox.Epsilon)
             {
-                if (Position.Z < boundingBox.Min.Z || Position.Z > boundingBox.Max.Z)
+                if (Position.z < boundingBox.Min.z || Position.z > boundingBox.Max.z)
                 {
                     //If the ray isn't pointing along the axis at all, and is outside of the box's interval, then it
                     //can't be intersecting.
@@ -110,9 +110,9 @@ namespace BEPUutilities
             }
             else
             {
-                var inverseDirection = F64.C1 / Direction.Z;
-                var t1 = (boundingBox.Min.Z - Position.Z) * inverseDirection;
-                var t2 = (boundingBox.Max.Z - Position.Z) * inverseDirection;
+                var inverseDirection = F64.C1 / Direction.z;
+                var t1 = (boundingBox.Min.z - Position.z) * inverseDirection;
+                var t2 = (boundingBox.Max.z - Position.z) * inverseDirection;
                 if (t1 > t2)
                 {
 					FP temp = t1;

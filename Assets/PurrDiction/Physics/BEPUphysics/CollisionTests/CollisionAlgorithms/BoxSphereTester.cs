@@ -32,9 +32,9 @@ namespace BEPUphysics.CollisionTests.CollisionAlgorithms
 #else
             Vector3 localClosestPoint;
 #endif
-            localClosestPoint.X = MathHelper.Clamp(localPosition.X, -box.halfWidth, box.halfWidth);
-            localClosestPoint.Y = MathHelper.Clamp(localPosition.Y, -box.halfHeight, box.halfHeight);
-            localClosestPoint.Z = MathHelper.Clamp(localPosition.Z, -box.halfLength, box.halfLength);
+            localClosestPoint.x = MathHelper.Clamp(localPosition.x, -box.halfWidth, box.halfWidth);
+            localClosestPoint.y = MathHelper.Clamp(localPosition.y, -box.halfHeight, box.halfHeight);
+            localClosestPoint.z = MathHelper.Clamp(localPosition.z, -box.halfLength, box.halfLength);
 
             RigidTransform.Transform(ref localClosestPoint, ref boxTransform, out contact.Position);
 
@@ -59,23 +59,23 @@ namespace BEPUphysics.CollisionTests.CollisionAlgorithms
             {
                 //Inside of the box.
                 FPVector3 penetrationDepths;
-                penetrationDepths.X = localClosestPoint.X < F64.C0 ? localClosestPoint.X + box.halfWidth : box.halfWidth - localClosestPoint.X;
-                penetrationDepths.Y = localClosestPoint.Y < F64.C0 ? localClosestPoint.Y + box.halfHeight : box.halfHeight - localClosestPoint.Y;
-                penetrationDepths.Z = localClosestPoint.Z < F64.C0 ? localClosestPoint.Z + box.halfLength : box.halfLength - localClosestPoint.Z;
-                if (penetrationDepths.X < penetrationDepths.Y && penetrationDepths.X < penetrationDepths.Z)
+                penetrationDepths.x = localClosestPoint.x < F64.C0 ? localClosestPoint.x + box.halfWidth : box.halfWidth - localClosestPoint.x;
+                penetrationDepths.y = localClosestPoint.y < F64.C0 ? localClosestPoint.y + box.halfHeight : box.halfHeight - localClosestPoint.y;
+                penetrationDepths.z = localClosestPoint.z < F64.C0 ? localClosestPoint.z + box.halfLength : box.halfLength - localClosestPoint.z;
+                if (penetrationDepths.x < penetrationDepths.y && penetrationDepths.x < penetrationDepths.z)
                 {
-                    contact.Normal = localClosestPoint.X > F64.C0 ? Toolbox.RightVector : Toolbox.LeftVector; 
-                    contact.PenetrationDepth = penetrationDepths.X;
+                    contact.Normal = localClosestPoint.x > F64.C0 ? Toolbox.RightVector : Toolbox.LeftVector; 
+                    contact.PenetrationDepth = penetrationDepths.x;
                 }
-                else if (penetrationDepths.Y < penetrationDepths.Z)
+                else if (penetrationDepths.y < penetrationDepths.z)
                 {
-                    contact.Normal = localClosestPoint.Y > F64.C0 ? Toolbox.UpVector : Toolbox.DownVector; 
-                    contact.PenetrationDepth = penetrationDepths.Y;
+                    contact.Normal = localClosestPoint.y > F64.C0 ? Toolbox.UpVector : Toolbox.DownVector; 
+                    contact.PenetrationDepth = penetrationDepths.y;
                 }
                 else
                 {
-                    contact.Normal = localClosestPoint.Z > F64.C0 ? Toolbox.BackVector : Toolbox.ForwardVector; 
-                    contact.PenetrationDepth = penetrationDepths.Z;
+                    contact.Normal = localClosestPoint.z > F64.C0 ? Toolbox.BackVector : Toolbox.ForwardVector; 
+                    contact.PenetrationDepth = penetrationDepths.z;
                 }
                 contact.PenetrationDepth += sphere.collisionMargin;
                 FPQuaternion.Transform(ref contact.Normal, ref boxTransform.Orientation, out contact.Normal);

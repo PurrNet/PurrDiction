@@ -175,8 +175,8 @@ namespace BEPUik
                 jacobian = new FPVector3();
             }
 
-            angularJacobianA = new Matrix3x3 { M11 = jacobian.X, M12 = jacobian.Y, M13 = jacobian.Z };
-            angularJacobianB = new Matrix3x3 { M11 = -jacobian.X, M12 = -jacobian.Y, M13 = -jacobian.Z };
+            angularJacobianA = new Matrix3x3 { M11 = jacobian.x, M12 = jacobian.y, M13 = jacobian.z };
+            angularJacobianB = new Matrix3x3 { M11 = -jacobian.x, M12 = -jacobian.y, M13 = -jacobian.z };
 
 
 

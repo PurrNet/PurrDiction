@@ -49,7 +49,7 @@ namespace BEPUphysics.BroadPhaseSystems.SortAndSweep
             //Entities do not set up their own bounding box before getting stuck in here.  If they're all zeroed out, the tree will be horrible.
             FPVector3 offset;
             FPVector3.Subtract(ref entry.boundingBox.Max, ref entry.boundingBox.Min, out offset);
-            if (offset.X * offset.Y * offset.Z == F64.C0)
+            if (offset.x * offset.y * offset.z == F64.C0)
                 entry.UpdateBoundingBox();
             //binary search for the approximately correct location.  This helps prevent large first-frame sort times.
             int minIndex = 0; //inclusive
@@ -58,9 +58,9 @@ namespace BEPUphysics.BroadPhaseSystems.SortAndSweep
             while (maxIndex - minIndex > 0)
             {
                 index = (maxIndex + minIndex) / 2;
-                if (entries.Elements[index].boundingBox.Min.X > entry.boundingBox.Min.X)
+                if (entries.Elements[index].boundingBox.Min.x > entry.boundingBox.Min.x)
                     maxIndex = index;
-                else if (entries.Elements[index].boundingBox.Min.X < entry.boundingBox.Min.X)
+                else if (entries.Elements[index].boundingBox.Min.x < entry.boundingBox.Min.x)
                     minIndex = ++index;
                 else
                     break; //Found an equal value!
@@ -94,7 +94,7 @@ namespace BEPUphysics.BroadPhaseSystems.SortAndSweep
                 var entry = entries.Elements[i];
                 for (int j = i - 1; j >= 0; j--)
                 {
-                    if (entry.boundingBox.Min.X < entries.Elements[j].boundingBox.Min.X)
+                    if (entry.boundingBox.Min.x < entries.Elements[j].boundingBox.Min.x)
                     {
                         entries.Elements[j + 1] = entries.Elements[j];
                         entries.Elements[j] = entry;
@@ -146,7 +146,7 @@ namespace BEPUphysics.BroadPhaseSystems.SortAndSweep
                 var entry = entries.Elements[i];
                 for (int j = i - 1; j >= 0; j--)
                 {
-                    if (entry.boundingBox.Min.X < entries.Elements[j].boundingBox.Min.X)
+                    if (entry.boundingBox.Min.x < entries.Elements[j].boundingBox.Min.x)
                     {
                         entries.Elements[j + 1] = entries.Elements[j];
                         entries.Elements[j] = entry;
@@ -160,10 +160,10 @@ namespace BEPUphysics.BroadPhaseSystems.SortAndSweep
             for (int i = 0; i < entries.Count; i++)
             {
                 FPBoundingBox a = entries.Elements[i].boundingBox;
-                for (int j = i + 1; j < entries.Count && a.Max.X >= entries.Elements[j].boundingBox.Min.X; j++)
+                for (int j = i + 1; j < entries.Count && a.Max.x >= entries.Elements[j].boundingBox.Min.x; j++)
                 {
-                    if (!(a.Min.Y > entries.Elements[j].boundingBox.Max.Y || a.Max.Y < entries.Elements[j].boundingBox.Min.Y ||
-                          a.Min.Z > entries.Elements[j].boundingBox.Max.Z || a.Max.Z < entries.Elements[j].boundingBox.Min.Z))
+                    if (!(a.Min.y > entries.Elements[j].boundingBox.Max.y || a.Max.y < entries.Elements[j].boundingBox.Min.y ||
+                          a.Min.z > entries.Elements[j].boundingBox.Max.z || a.Max.z < entries.Elements[j].boundingBox.Min.z))
                     {
                         TryToAddOverlap(entries.Elements[i], entries.Elements[j]);
                     }
@@ -186,10 +186,10 @@ namespace BEPUphysics.BroadPhaseSystems.SortAndSweep
             for (int i = intervalLength * segment; i < end; i++)
             {
                 FPBoundingBox a = entries.Elements[i].boundingBox;
-                for (int j = i + 1; j < entries.Count && a.Max.X >= entries.Elements[j].boundingBox.Min.X; j++)
+                for (int j = i + 1; j < entries.Count && a.Max.x >= entries.Elements[j].boundingBox.Min.x; j++)
                 {
-                    if (!(a.Min.Y > entries.Elements[j].boundingBox.Max.Y || a.Max.Y < entries.Elements[j].boundingBox.Min.Y ||
-                          a.Min.Z > entries.Elements[j].boundingBox.Max.Z || a.Max.Z < entries.Elements[j].boundingBox.Min.Z))
+                    if (!(a.Min.y > entries.Elements[j].boundingBox.Max.y || a.Max.y < entries.Elements[j].boundingBox.Min.y ||
+                          a.Min.z > entries.Elements[j].boundingBox.Max.z || a.Max.z < entries.Elements[j].boundingBox.Min.z))
                     {
                         TryToAddOverlap(entries.Elements[i], entries.Elements[j]);
                     }
@@ -213,7 +213,7 @@ namespace BEPUphysics.BroadPhaseSystems.SortAndSweep
                 var entry = entries.Elements[i];
                 for (int j = i - 1; j >= 0; j--)
                 {
-                    if (entry.boundingBox.Min.X < entries.Elements[j].boundingBox.Min.X)
+                    if (entry.boundingBox.Min.x < entries.Elements[j].boundingBox.Min.x)
                     {
                         entries.Elements[j + 1] = entries.Elements[j];
                         entries.Elements[j] = entry;
@@ -260,7 +260,7 @@ namespace BEPUphysics.BroadPhaseSystems.SortAndSweep
                 if (aIndex < aEnd && bIndex < bEnd)
                 {
                     //Compare the element at a to the one at b.
-                    if (entries.Elements[aIndex].boundingBox.Min.X < entries.Elements[bIndex].boundingBox.Min.X)
+                    if (entries.Elements[aIndex].boundingBox.Min.x < entries.Elements[bIndex].boundingBox.Min.x)
                     {
                         //a was the minimum element.  Put it into the buffer and increment the considered a index.
                         backbuffer.Elements[bufferIndex] = entries.Elements[aIndex++];

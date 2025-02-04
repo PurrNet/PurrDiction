@@ -43,20 +43,20 @@ namespace BEPUphysics.CollisionTests.Manifolds
                 FPVector3.Multiply(ref transformedVelocity, dt, out transformedVelocity);
 
 
-                if (transformedVelocity.X > F64.C0)
-                    boundingBox.Max.X += transformedVelocity.X;
+                if (transformedVelocity.x > F64.C0)
+                    boundingBox.Max.x += transformedVelocity.x;
                 else
-                    boundingBox.Min.X += transformedVelocity.X;
+                    boundingBox.Min.x += transformedVelocity.x;
 
-                if (transformedVelocity.Y > F64.C0)
-                    boundingBox.Max.Y += transformedVelocity.Y;
+                if (transformedVelocity.y > F64.C0)
+                    boundingBox.Max.y += transformedVelocity.y;
                 else
-                    boundingBox.Min.Y += transformedVelocity.Y;
+                    boundingBox.Min.y += transformedVelocity.y;
 
-                if (transformedVelocity.Z > F64.C0)
-                    boundingBox.Max.Z += transformedVelocity.Z;
+                if (transformedVelocity.z > F64.C0)
+                    boundingBox.Max.z += transformedVelocity.z;
                 else
-                    boundingBox.Min.Z += transformedVelocity.Z;
+                    boundingBox.Min.z += transformedVelocity.z;
             }
 
 

@@ -206,9 +206,9 @@ namespace BEPUutilities
 #if !WINDOWS
             result = new FPVector3();
 #endif
-            result.X = matrix.M11 * v.X + matrix.M12 * v.Y;
-            result.Y = matrix.M21 * v.X + matrix.M22 * v.Y;
-            result.Z = matrix.M31 * v.X + matrix.M32 * v.Y;
+            result.x = matrix.M11 * v.x + matrix.M12 * v.y;
+            result.y = matrix.M21 * v.x + matrix.M22 * v.y;
+            result.z = matrix.M31 * v.x + matrix.M32 * v.y;
         }
 
         /// <summary>
@@ -222,8 +222,8 @@ namespace BEPUutilities
 #if !WINDOWS
             result = new FPVector2();
 #endif
-            result.X = v.X * matrix.M11 + v.Y * matrix.M21 + v.Z * matrix.M31;
-            result.Y = v.X * matrix.M12 + v.Y * matrix.M22 + v.Z * matrix.M32;
+            result.x = v.x * matrix.M11 + v.y * matrix.M21 + v.z * matrix.M31;
+            result.y = v.x * matrix.M12 + v.y * matrix.M22 + v.z * matrix.M32;
         }
 
 

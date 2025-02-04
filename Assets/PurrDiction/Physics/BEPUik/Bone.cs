@@ -198,7 +198,7 @@ namespace BEPUik
             //Update the orientation based on the angular velocity.
             FPVector3 increment;
             FPVector3.Multiply(ref angularVelocity, F64.C0p5, out increment);
-            var multiplier = new FPQuaternion(increment.X, increment.Y, increment.Z, F64.C0);
+            var multiplier = new FPQuaternion(increment.x, increment.y, increment.z, F64.C0);
             FPQuaternion.Multiply(ref multiplier, ref Orientation, out multiplier);
             FPQuaternion.Add(ref Orientation, ref multiplier, out Orientation);
             Orientation.Normalize();

@@ -271,9 +271,9 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
             }
 
             jacobianB.Normalize();
-            jacobianA.X = -jacobianB.X;
-            jacobianA.Y = -jacobianB.Y;
-            jacobianA.Z = -jacobianB.Z;
+            jacobianA.x = -jacobianB.x;
+            jacobianA.y = -jacobianB.y;
+            jacobianA.z = -jacobianB.z;
 
             //****** VELOCITY BIAS ******//
             //Compute the correction velocity.

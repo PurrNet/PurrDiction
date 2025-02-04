@@ -93,13 +93,13 @@ namespace BEPUphysics.Constraints.Collision
                 FP lambda = F64.C0;
                 if (entityA != null)
                 {
-                    lambda = entityA.linearVelocity.X * linearAX + entityA.linearVelocity.Y * linearAY + entityA.linearVelocity.Z * linearAZ +
-                             entityA.angularVelocity.X * angularAX + entityA.angularVelocity.Y * angularAY + entityA.angularVelocity.Z * angularAZ;
+                    lambda = entityA.linearVelocity.x * linearAX + entityA.linearVelocity.y * linearAY + entityA.linearVelocity.z * linearAZ +
+                             entityA.angularVelocity.x * angularAX + entityA.angularVelocity.y * angularAY + entityA.angularVelocity.z * angularAZ;
                 }
                 if (entityB != null)
                 {
-                    lambda += -entityB.linearVelocity.X * linearAX - entityB.linearVelocity.Y * linearAY - entityB.linearVelocity.Z * linearAZ +
-                              entityB.angularVelocity.X * angularBX + entityB.angularVelocity.Y * angularBY + entityB.angularVelocity.Z * angularBZ;
+                    lambda += -entityB.linearVelocity.x * linearAX - entityB.linearVelocity.y * linearAY - entityB.linearVelocity.z * linearAZ +
+                              entityB.angularVelocity.x * angularBX + entityB.angularVelocity.y * angularBY + entityB.angularVelocity.z * angularBZ;
                 }
                 return lambda;
             }
@@ -119,9 +119,9 @@ namespace BEPUphysics.Constraints.Collision
             entityBDynamic = entityB != null && entityB.isDynamic;
 
             //Set up the jacobians.
-            linearAX = -contact.Normal.X;
-            linearAY = -contact.Normal.Y;
-            linearAZ = -contact.Normal.Z;
+            linearAX = -contact.Normal.x;
+            linearAY = -contact.Normal.y;
+            linearAZ = -contact.Normal.z;
             //linearBX = -linearAX;
             //linearBY = -linearAY;
             //linearBZ = -linearAZ;
@@ -132,9 +132,9 @@ namespace BEPUphysics.Constraints.Collision
             if (entityA != null)
             {
                 FPVector3.Subtract(ref contact.Position, ref entityA.position, out ra);
-                angularAX = (ra.Y * linearAZ) - (ra.Z * linearAY);
-                angularAY = (ra.Z * linearAX) - (ra.X * linearAZ);
-                angularAZ = (ra.X * linearAY) - (ra.Y * linearAX);
+                angularAX = (ra.y * linearAZ) - (ra.z * linearAY);
+                angularAY = (ra.z * linearAX) - (ra.x * linearAZ);
+                angularAZ = (ra.x * linearAY) - (ra.y * linearAX);
             }
 
 
@@ -142,9 +142,9 @@ namespace BEPUphysics.Constraints.Collision
             if (entityB != null)
             {
                 FPVector3.Subtract(ref contact.Position, ref entityB.position, out rb);
-                angularBX = (linearAY * rb.Z) - (linearAZ * rb.Y);
-                angularBY = (linearAZ * rb.X) - (linearAX * rb.Z);
-                angularBZ = (linearAX * rb.Y) - (linearAY * rb.X);
+                angularBX = (linearAY * rb.z) - (linearAZ * rb.y);
+                angularBY = (linearAZ * rb.x) - (linearAX * rb.z);
+                angularBZ = (linearAX * rb.y) - (linearAY * rb.x);
             }
 
 
@@ -247,25 +247,25 @@ namespace BEPUphysics.Constraints.Collision
 #else
             Vector3 linear, angular;
 #endif
-            linear.X = accumulatedImpulse * linearAX;
-            linear.Y = accumulatedImpulse * linearAY;
-            linear.Z = accumulatedImpulse * linearAZ;
+            linear.x = accumulatedImpulse * linearAX;
+            linear.y = accumulatedImpulse * linearAY;
+            linear.z = accumulatedImpulse * linearAZ;
             if (entityADynamic)
             {
-                angular.X = accumulatedImpulse * angularAX;
-                angular.Y = accumulatedImpulse * angularAY;
-                angular.Z = accumulatedImpulse * angularAZ;
+                angular.x = accumulatedImpulse * angularAX;
+                angular.y = accumulatedImpulse * angularAY;
+                angular.z = accumulatedImpulse * angularAZ;
                 entityA.ApplyLinearImpulse(ref linear);
                 entityA.ApplyAngularImpulse(ref angular);
             }
             if (entityBDynamic)
             {
-                linear.X = -linear.X;
-                linear.Y = -linear.Y;
-                linear.Z = -linear.Z;
-                angular.X = accumulatedImpulse * angularBX;
-                angular.Y = accumulatedImpulse * angularBY;
-                angular.Z = accumulatedImpulse * angularBZ;
+                linear.x = -linear.x;
+                linear.y = -linear.y;
+                linear.z = -linear.z;
+                angular.x = accumulatedImpulse * angularBX;
+                angular.y = accumulatedImpulse * angularBY;
+                angular.z = accumulatedImpulse * angularBZ;
                 entityB.ApplyLinearImpulse(ref linear);
                 entityB.ApplyAngularImpulse(ref angular);
             }
@@ -295,25 +295,25 @@ namespace BEPUphysics.Constraints.Collision
 #else
             Vector3 linear, angular;
 #endif
-            linear.X = lambda * linearAX;
-            linear.Y = lambda * linearAY;
-            linear.Z = lambda * linearAZ;
+            linear.x = lambda * linearAX;
+            linear.y = lambda * linearAY;
+            linear.z = lambda * linearAZ;
             if (entityADynamic)
             {
-                angular.X = lambda * angularAX;
-                angular.Y = lambda * angularAY;
-                angular.Z = lambda * angularAZ;
+                angular.x = lambda * angularAX;
+                angular.y = lambda * angularAY;
+                angular.z = lambda * angularAZ;
                 entityA.ApplyLinearImpulse(ref linear);
                 entityA.ApplyAngularImpulse(ref angular);
             }
             if (entityBDynamic)
             {
-                linear.X = -linear.X;
-                linear.Y = -linear.Y;
-                linear.Z = -linear.Z;
-                angular.X = lambda * angularBX;
-                angular.Y = lambda * angularBY;
-                angular.Z = lambda * angularBZ;
+                linear.x = -linear.x;
+                linear.y = -linear.y;
+                linear.z = -linear.z;
+                angular.x = lambda * angularBX;
+                angular.y = lambda * angularBY;
+                angular.z = lambda * angularBZ;
                 entityB.ApplyLinearImpulse(ref linear);
                 entityB.ApplyAngularImpulse(ref angular);
             }

@@ -288,16 +288,16 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
             //Compute jacobians
             if (currentDistance > Toolbox.Epsilon)
             {
-                jLinearB.X = separation.X / currentDistance;
-                jLinearB.Y = separation.Y / currentDistance;
-                jLinearB.Z = separation.Z / currentDistance;
+                jLinearB.x = separation.x / currentDistance;
+                jLinearB.y = separation.y / currentDistance;
+                jLinearB.z = separation.z / currentDistance;
             }
             else
                 jLinearB = Toolbox.ZeroVector;
 
-            jLinearA.X = -jLinearB.X;
-            jLinearA.Y = -jLinearB.Y;
-            jLinearA.Z = -jLinearB.Z;
+            jLinearA.x = -jLinearB.x;
+            jLinearA.y = -jLinearB.y;
+            jLinearA.z = -jLinearB.z;
 
             FPVector3.Cross(ref offsetA, ref jLinearB, out jAngularA);
             //Still need to negate angular A.  It's done after the effective mass matrix.
@@ -346,9 +346,9 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
 
             velocityToImpulse = F64.C1 / (softness + velocityToImpulse);
             //Finish computing jacobian; it's down here as an optimization (since it didn't need to be negated in mass matrix)
-            jAngularA.X = -jAngularA.X;
-            jAngularA.Y = -jAngularA.Y;
-            jAngularA.Z = -jAngularA.Z;
+            jAngularA.x = -jAngularA.x;
+            jAngularA.y = -jAngularA.y;
+            jAngularA.z = -jAngularA.z;
 
             //Compute bias velocity
             error = distance - currentDistance;

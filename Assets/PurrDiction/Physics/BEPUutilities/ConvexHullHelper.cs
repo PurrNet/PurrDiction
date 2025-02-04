@@ -292,14 +292,14 @@ namespace BEPUutilities
             for (int i = 0; i < points.Count; ++i)
             {
                 var v = points.Elements[i];
-                if (v.X > maximumX)
+                if (v.x > maximumX)
                 {
-                    maximumX = v.X;
+                    maximumX = v.x;
                     maximumXIndex = i;
                 }
-                else if (v.X < minimumX)
+                else if (v.x < minimumX)
                 {
-                    minimumX = v.X;
+                    minimumX = v.x;
                     minimumXIndex = i;
                 }
             }

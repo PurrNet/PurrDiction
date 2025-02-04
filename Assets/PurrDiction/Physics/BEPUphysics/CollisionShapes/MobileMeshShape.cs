@@ -384,28 +384,28 @@ namespace BEPUphysics.CollisionShapes
                 {
                     FPVector3 v;
                     triangleMesh.Data.GetVertexPosition(i, out v);
-                    if (v.X > box.Max.X)
-                        box.Max.X = v.X;
-                    if (v.X < box.Min.X)
-                        box.Min.X = v.X;
-                    if (v.Y > box.Max.Y)
-                        box.Max.Y = v.Y;
-                    if (v.Y < box.Min.Y)
-                        box.Min.Y = v.Y;
-                    if (v.Z > box.Max.Z)
-                        box.Max.Z = v.Z;
-                    if (v.Z < box.Min.Z)
-                        box.Min.Z = v.Z;
+                    if (v.x > box.Max.x)
+                        box.Max.x = v.x;
+                    if (v.x < box.Min.x)
+                        box.Min.x = v.x;
+                    if (v.y > box.Max.y)
+                        box.Max.y = v.y;
+                    if (v.y < box.Min.y)
+                        box.Min.y = v.y;
+                    if (v.z > box.Max.z)
+                        box.Max.z = v.z;
+                    if (v.z < box.Min.z)
+                        box.Min.z = v.z;
                 }
                 //Add the corners.  This will overestimate the size of the surface a bit.
                 hullVertices.Add(box.Min);
                 hullVertices.Add(box.Max);
-                hullVertices.Add(new FPVector3(box.Min.X, box.Min.Y, box.Max.Z));
-                hullVertices.Add(new FPVector3(box.Min.X, box.Max.Y, box.Min.Z));
-                hullVertices.Add(new FPVector3(box.Max.X, box.Min.Y, box.Min.Z));
-                hullVertices.Add(new FPVector3(box.Min.X, box.Max.Y, box.Max.Z));
-                hullVertices.Add(new FPVector3(box.Max.X, box.Max.Y, box.Min.Z));
-                hullVertices.Add(new FPVector3(box.Max.X, box.Min.Y, box.Max.Z));
+                hullVertices.Add(new FPVector3(box.Min.x, box.Min.y, box.Max.z));
+                hullVertices.Add(new FPVector3(box.Min.x, box.Max.y, box.Min.z));
+                hullVertices.Add(new FPVector3(box.Max.x, box.Min.y, box.Min.z));
+                hullVertices.Add(new FPVector3(box.Min.x, box.Max.y, box.Max.z));
+                hullVertices.Add(new FPVector3(box.Max.x, box.Max.y, box.Min.z));
+                hullVertices.Add(new FPVector3(box.Max.x, box.Min.y, box.Max.z));
             }
         }
 
@@ -604,13 +604,13 @@ namespace BEPUphysics.CollisionShapes
             AffineTransform.Multiply(ref shapeTransform, ref transform, out transform);
 
             GetBoundingBox(ref transform.LinearTransform, out boundingBox);
-            boundingBox.Max.X += transform.Translation.X;
-            boundingBox.Max.Y += transform.Translation.Y;
-            boundingBox.Max.Z += transform.Translation.Z;
+            boundingBox.Max.x += transform.Translation.x;
+            boundingBox.Max.y += transform.Translation.y;
+            boundingBox.Max.z += transform.Translation.z;
 
-            boundingBox.Min.X += transform.Translation.X;
-            boundingBox.Min.Y += transform.Translation.Y;
-            boundingBox.Min.Z += transform.Translation.Z;
+            boundingBox.Min.x += transform.Translation.x;
+            boundingBox.Min.y += transform.Translation.y;
+            boundingBox.Min.z += transform.Translation.z;
 
         }
 

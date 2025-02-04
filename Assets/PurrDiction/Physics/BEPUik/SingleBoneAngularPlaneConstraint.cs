@@ -31,14 +31,14 @@ namespace BEPUik
 
             angularJacobian = new Matrix3x3
             {
-                M11 = jacobian.X,
-                M12 = jacobian.Y,
-                M13 = jacobian.Z,
+                M11 = jacobian.x,
+                M12 = jacobian.y,
+                M13 = jacobian.z,
             };
 
 
-            FPVector3.Dot(ref boneAxis, ref PlaneNormal, out velocityBias.X);
-            velocityBias.X = -errorCorrectionFactor * velocityBias.X;
+            FPVector3.Dot(ref boneAxis, ref PlaneNormal, out velocityBias.x);
+            velocityBias.x = -errorCorrectionFactor * velocityBias.x;
 
 
         }

@@ -39,13 +39,13 @@ namespace BEPUutilities
         public FPVector3[] GetCorners()
         {
             var toReturn = new FPVector3[8];
-            toReturn[0] = new FPVector3(Min.X, Max.Y, Max.Z);
+            toReturn[0] = new FPVector3(Min.x, Max.y, Max.z);
             toReturn[1] = Max;
-            toReturn[2] = new FPVector3(Max.X, Min.Y, Max.Z);
-            toReturn[3] = new FPVector3(Min.X, Min.Y, Max.Z);
-            toReturn[4] = new FPVector3(Min.X, Max.Y, Min.Z);
-            toReturn[5] = new FPVector3(Max.X, Max.Y, Min.Z);
-            toReturn[6] = new FPVector3(Max.X, Min.Y, Min.Z);
+            toReturn[2] = new FPVector3(Max.x, Min.y, Max.z);
+            toReturn[3] = new FPVector3(Min.x, Min.y, Max.z);
+            toReturn[4] = new FPVector3(Min.x, Max.y, Min.z);
+            toReturn[5] = new FPVector3(Max.x, Max.y, Min.z);
+            toReturn[6] = new FPVector3(Max.x, Min.y, Min.z);
             toReturn[7] = Min;
             return toReturn;
         }
@@ -58,9 +58,9 @@ namespace BEPUutilities
         /// <returns>Whether the bounding boxes intersected.</returns>
         public bool Intersects(FPBoundingBox boundingBox)
         {
-            if (boundingBox.Min.X > Max.X || boundingBox.Min.Y > Max.Y || boundingBox.Min.Z > Max.Z)
+            if (boundingBox.Min.x > Max.x || boundingBox.Min.y > Max.y || boundingBox.Min.z > Max.z)
                 return false;
-            if (Min.X > boundingBox.Max.X || Min.Y > boundingBox.Max.Y || Min.Z > boundingBox.Max.Z)
+            if (Min.x > boundingBox.Max.x || Min.y > boundingBox.Max.y || Min.z > boundingBox.Max.z)
                 return false;
             return true;
 
@@ -73,12 +73,12 @@ namespace BEPUutilities
         /// <param name="intersects">Whether the bounding boxes intersect.</param>
         public void Intersects(ref FPBoundingBox boundingBox, out bool intersects)
         {
-            if (boundingBox.Min.X > Max.X || boundingBox.Min.Y > Max.Y || boundingBox.Min.Z > Max.Z)
+            if (boundingBox.Min.x > Max.x || boundingBox.Min.y > Max.y || boundingBox.Min.z > Max.z)
             {
                 intersects = false;
                 return;
             }
-            if (Min.X > boundingBox.Max.X || Min.Y > boundingBox.Max.Y || Min.Z > boundingBox.Max.Z)
+            if (Min.x > boundingBox.Max.x || Min.y > boundingBox.Max.y || Min.z > boundingBox.Max.z)
             {
                 intersects = false;
                 return;
@@ -94,26 +94,26 @@ namespace BEPUutilities
         public void Intersects(ref FPBoundingSphere boundingSphere, out bool intersects)
         {
             FPVector3 clampedLocation;
-            if (boundingSphere.Center.X > Max.X)
-                clampedLocation.X = Max.X;
-            else if (boundingSphere.Center.X < Min.X)
-                clampedLocation.X = Min.X;
+            if (boundingSphere.Center.x > Max.x)
+                clampedLocation.x = Max.x;
+            else if (boundingSphere.Center.x < Min.x)
+                clampedLocation.x = Min.x;
             else
-                clampedLocation.X = boundingSphere.Center.X;
+                clampedLocation.x = boundingSphere.Center.x;
 
-            if (boundingSphere.Center.Y > Max.Y)
-                clampedLocation.Y = Max.Y;
-            else if (boundingSphere.Center.Y < Min.Y)
-                clampedLocation.Y = Min.Y;
+            if (boundingSphere.Center.y > Max.y)
+                clampedLocation.y = Max.y;
+            else if (boundingSphere.Center.y < Min.y)
+                clampedLocation.y = Min.y;
             else
-                clampedLocation.Y = boundingSphere.Center.Y;
+                clampedLocation.y = boundingSphere.Center.y;
 
-            if (boundingSphere.Center.Z > Max.Z)
-                clampedLocation.Z = Max.Z;
-            else if (boundingSphere.Center.Z < Min.Z)
-                clampedLocation.Z = Min.Z;
+            if (boundingSphere.Center.z > Max.z)
+                clampedLocation.z = Max.z;
+            else if (boundingSphere.Center.z < Min.z)
+                clampedLocation.z = Min.z;
             else
-                clampedLocation.Z = boundingSphere.Center.Z;
+                clampedLocation.z = boundingSphere.Center.z;
 
 			FP distanceSquared;
             FPVector3.DistanceSquared(ref clampedLocation, ref boundingSphere.Center, out distanceSquared);
@@ -130,14 +130,14 @@ namespace BEPUutilities
 
         public ContainmentType Contains(ref FPBoundingBox boundingBox)
         {
-            if (Max.X < boundingBox.Min.X || Min.X > boundingBox.Max.X ||
-                Max.Y < boundingBox.Min.Y || Min.Y > boundingBox.Max.Y ||
-                Max.Z < boundingBox.Min.Z || Min.Z > boundingBox.Max.Z)
+            if (Max.x < boundingBox.Min.x || Min.x > boundingBox.Max.x ||
+                Max.y < boundingBox.Min.y || Min.y > boundingBox.Max.y ||
+                Max.z < boundingBox.Min.z || Min.z > boundingBox.Max.z)
                 return ContainmentType.Disjoint;
             //It is known to be at least intersecting. Is it contained?
-            if (Min.X <= boundingBox.Min.X && Max.X >= boundingBox.Max.X &&
-                Min.Y <= boundingBox.Min.Y && Max.Y >= boundingBox.Max.Y &&
-                Min.Z <= boundingBox.Min.Z && Max.Z >= boundingBox.Max.Z)
+            if (Min.x <= boundingBox.Min.x && Max.x >= boundingBox.Max.x &&
+                Min.y <= boundingBox.Min.y && Max.y >= boundingBox.Max.y &&
+                Min.z <= boundingBox.Min.z && Max.z >= boundingBox.Max.z)
                 return ContainmentType.Contains;
             return ContainmentType.Intersects;
         }
@@ -159,20 +159,20 @@ namespace BEPUutilities
             for (int i = points.Count - 1; i >= 1; i--)
             {
                 FPVector3 v = points[i];
-                if (v.X < aabb.Min.X)
-                    aabb.Min.X = v.X;
-                else if (v.X > aabb.Max.X)
-                    aabb.Max.X = v.X;
+                if (v.x < aabb.Min.x)
+                    aabb.Min.x = v.x;
+                else if (v.x > aabb.Max.x)
+                    aabb.Max.x = v.x;
 
-                if (v.Y < aabb.Min.Y)
-                    aabb.Min.Y = v.Y;
-                else if (v.Y > aabb.Max.Y)
-                    aabb.Max.Y = v.Y;
+                if (v.y < aabb.Min.y)
+                    aabb.Min.y = v.y;
+                else if (v.y > aabb.Max.y)
+                    aabb.Max.y = v.y;
 
-                if (v.Z < aabb.Min.Z)
-                    aabb.Min.Z = v.Z;
-                else if (v.Z > aabb.Max.Z)
-                    aabb.Max.Z = v.Z;
+                if (v.z < aabb.Min.z)
+                    aabb.Min.z = v.z;
+                else if (v.z > aabb.Max.z)
+                    aabb.Max.z = v.z;
             }
             return aabb;
         }
@@ -187,31 +187,31 @@ namespace BEPUutilities
         /// <param name="merged">Smallest bounding box which contains the two input bounding boxes.</param>
         public static void CreateMerged(ref FPBoundingBox a, ref FPBoundingBox b, out FPBoundingBox merged)
         {
-            if (a.Min.X < b.Min.X)
-                merged.Min.X = a.Min.X;
+            if (a.Min.x < b.Min.x)
+                merged.Min.x = a.Min.x;
             else
-                merged.Min.X = b.Min.X;
-            if (a.Min.Y < b.Min.Y)
-                merged.Min.Y = a.Min.Y;
+                merged.Min.x = b.Min.x;
+            if (a.Min.y < b.Min.y)
+                merged.Min.y = a.Min.y;
             else
-                merged.Min.Y = b.Min.Y;
-            if (a.Min.Z < b.Min.Z)
-                merged.Min.Z = a.Min.Z;
+                merged.Min.y = b.Min.y;
+            if (a.Min.z < b.Min.z)
+                merged.Min.z = a.Min.z;
             else
-                merged.Min.Z = b.Min.Z;
+                merged.Min.z = b.Min.z;
 
-            if (a.Max.X > b.Max.X)
-                merged.Max.X = a.Max.X;
+            if (a.Max.x > b.Max.x)
+                merged.Max.x = a.Max.x;
             else
-                merged.Max.X = b.Max.X;
-            if (a.Max.Y > b.Max.Y)
-                merged.Max.Y = a.Max.Y;
+                merged.Max.x = b.Max.x;
+            if (a.Max.y > b.Max.y)
+                merged.Max.y = a.Max.y;
             else
-                merged.Max.Y = b.Max.Y;
-            if (a.Max.Z > b.Max.Z)
-                merged.Max.Z = a.Max.Z;
+                merged.Max.y = b.Max.y;
+            if (a.Max.z > b.Max.z)
+                merged.Max.z = a.Max.z;
             else
-                merged.Max.Z = b.Max.Z;
+                merged.Max.z = b.Max.z;
         }
 
 
@@ -222,13 +222,13 @@ namespace BEPUutilities
         /// <param name="boundingBox">Bounding box created from the bounding sphere.</param>
         public static void CreateFromSphere(ref FPBoundingSphere boundingSphere, out FPBoundingBox boundingBox)
         {
-            boundingBox.Min.X = boundingSphere.Center.X - boundingSphere.Radius;
-            boundingBox.Min.Y = boundingSphere.Center.Y - boundingSphere.Radius;
-            boundingBox.Min.Z = boundingSphere.Center.Z - boundingSphere.Radius;
+            boundingBox.Min.x = boundingSphere.Center.x - boundingSphere.Radius;
+            boundingBox.Min.y = boundingSphere.Center.y - boundingSphere.Radius;
+            boundingBox.Min.z = boundingSphere.Center.z - boundingSphere.Radius;
 
-            boundingBox.Max.X = boundingSphere.Center.X + boundingSphere.Radius;
-            boundingBox.Max.Y = boundingSphere.Center.Y + boundingSphere.Radius;
-            boundingBox.Max.Z = boundingSphere.Center.Z + boundingSphere.Radius;
+            boundingBox.Max.x = boundingSphere.Center.x + boundingSphere.Radius;
+            boundingBox.Max.y = boundingSphere.Center.y + boundingSphere.Radius;
+            boundingBox.Max.z = boundingSphere.Center.z + boundingSphere.Radius;
         }
 
     }

@@ -83,9 +83,9 @@ namespace BEPUik
 #endif
             if (currentDistance > Toolbox.Epsilon)
             {
-                linearA.X = separation.X / currentDistance;
-                linearA.Y = separation.Y / currentDistance;
-                linearA.Z = separation.Z / currentDistance;
+                linearA.x = separation.x / currentDistance;
+                linearA.y = separation.y / currentDistance;
+                linearA.z = separation.z / currentDistance;
 
                 velocityBias = new FPVector3(errorCorrectionFactor * (currentDistance - distance), F64.C0, F64.C0);
             }
@@ -101,10 +101,10 @@ namespace BEPUik
             FPVector3.Cross(ref linearA, ref offsetB, out angularB);
 
             //Put all the 1x3 jacobians into a 3x3 matrix representation.
-            linearJacobianA = new Matrix3x3 { M11 = linearA.X, M12 = linearA.Y, M13 = linearA.Z };
-            linearJacobianB = new Matrix3x3 { M11 = -linearA.X, M12 = -linearA.Y, M13 = -linearA.Z };
-            angularJacobianA = new Matrix3x3 { M11 = angularA.X, M12 = angularA.Y, M13 = angularA.Z };
-            angularJacobianB = new Matrix3x3 { M11 = angularB.X, M12 = angularB.Y, M13 = angularB.Z };
+            linearJacobianA = new Matrix3x3 { M11 = linearA.x, M12 = linearA.y, M13 = linearA.z };
+            linearJacobianB = new Matrix3x3 { M11 = -linearA.x, M12 = -linearA.y, M13 = -linearA.z };
+            angularJacobianA = new Matrix3x3 { M11 = angularA.x, M12 = angularA.y, M13 = angularA.z };
+            angularJacobianB = new Matrix3x3 { M11 = angularB.x, M12 = angularB.y, M13 = angularB.z };
 
         }
     }

@@ -303,13 +303,13 @@ namespace BEPUutilities
         /// <param name="result">Product of the transformation.</param>
         public static void Transform(ref FPVector2 v, ref Matrix2x2 matrix, out FPVector2 result)
         {
-            FP vX = v.X;
-            FP vY = v.Y;
+            FP vX = v.x;
+            FP vY = v.y;
 #if !WINDOWS
             result = new FPVector2();
 #endif
-            result.X = vX * matrix.M11 + vY * matrix.M21;
-            result.Y = vX * matrix.M12 + vY * matrix.M22;
+            result.x = vX * matrix.M11 + vY * matrix.M21;
+            result.y = vX * matrix.M12 + vY * matrix.M22;
         }
 
         /// <summary>

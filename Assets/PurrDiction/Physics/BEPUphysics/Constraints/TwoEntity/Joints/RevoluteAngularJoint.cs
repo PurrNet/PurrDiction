@@ -138,8 +138,8 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
 #else
                 Vector2 lambda;
 #endif
-                FPVector3.Dot(ref worldConstrainedAxis1, ref velocity, out lambda.X);
-                FPVector3.Dot(ref worldConstrainedAxis2, ref velocity, out lambda.Y);
+                FPVector3.Dot(ref worldConstrainedAxis1, ref velocity, out lambda.x);
+                FPVector3.Dot(ref worldConstrainedAxis2, ref velocity, out lambda.y);
                 return lambda;
             }
         }
@@ -235,13 +235,13 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
             FPVector3 error;
             FPVector3.Cross(ref worldAxisA, ref worldAxisB, out error);
 
-            FPVector3.Dot(ref error, ref worldConstrainedAxis1, out this.error.X);
-            FPVector3.Dot(ref error, ref worldConstrainedAxis2, out this.error.Y);
+            FPVector3.Dot(ref error, ref worldConstrainedAxis1, out this.error.x);
+            FPVector3.Dot(ref error, ref worldConstrainedAxis2, out this.error.y);
             FP errorReduction;
             springSettings.ComputeErrorReductionAndSoftness(dt, F64.C1 / dt, out errorReduction, out softness);
             errorReduction = -errorReduction;
-            biasVelocity.X = errorReduction * this.error.X;
-            biasVelocity.Y = errorReduction * this.error.Y;
+            biasVelocity.x = errorReduction * this.error.x;
+            biasVelocity.y = errorReduction * this.error.y;
 
 
             //Ensure that the corrective velocity doesn't exceed the max.
@@ -249,8 +249,8 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
             if (length > maxCorrectiveVelocitySquared)
             {
                 FP multiplier = maxCorrectiveVelocity / FP.Sqrt(length);
-                biasVelocity.X *= multiplier;
-                biasVelocity.Y *= multiplier;
+                biasVelocity.x *= multiplier;
+                biasVelocity.y *= multiplier;
             }
 
             FPVector3 axis1I, axis2I;
@@ -302,9 +302,9 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
 #else
             Vector3 impulse;
 #endif
-            impulse.X = worldConstrainedAxis1.X * accumulatedImpulse.X + worldConstrainedAxis2.X * accumulatedImpulse.Y;
-            impulse.Y = worldConstrainedAxis1.Y * accumulatedImpulse.X + worldConstrainedAxis2.Y * accumulatedImpulse.Y;
-            impulse.Z = worldConstrainedAxis1.Z * accumulatedImpulse.X + worldConstrainedAxis2.Z * accumulatedImpulse.Y;
+            impulse.x = worldConstrainedAxis1.x * accumulatedImpulse.x + worldConstrainedAxis2.x * accumulatedImpulse.y;
+            impulse.y = worldConstrainedAxis1.y * accumulatedImpulse.x + worldConstrainedAxis2.y * accumulatedImpulse.y;
+            impulse.z = worldConstrainedAxis1.z * accumulatedImpulse.x + worldConstrainedAxis2.z * accumulatedImpulse.y;
             if (connectionA.isDynamic)
             {
                 connectionA.ApplyAngularImpulse(ref impulse);
@@ -333,8 +333,8 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
 #else
             Vector2 lambda;
 #endif
-            FPVector3.Dot(ref worldConstrainedAxis1, ref velocity, out lambda.X);
-            FPVector3.Dot(ref worldConstrainedAxis2, ref velocity, out lambda.Y);
+            FPVector3.Dot(ref worldConstrainedAxis1, ref velocity, out lambda.x);
+            FPVector3.Dot(ref worldConstrainedAxis2, ref velocity, out lambda.y);
             FPVector2.Add(ref lambda, ref biasVelocity, out lambda);
             FPVector2 softnessImpulse;
             FPVector2.Multiply(ref accumulatedImpulse, softness, out softnessImpulse);
@@ -348,9 +348,9 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
 #else
             Vector3 impulse;
 #endif
-            impulse.X = worldConstrainedAxis1.X * lambda.X + worldConstrainedAxis2.X * lambda.Y;
-            impulse.Y = worldConstrainedAxis1.Y * lambda.X + worldConstrainedAxis2.Y * lambda.Y;
-            impulse.Z = worldConstrainedAxis1.Z * lambda.X + worldConstrainedAxis2.Z * lambda.Y;
+            impulse.x = worldConstrainedAxis1.x * lambda.x + worldConstrainedAxis2.x * lambda.y;
+            impulse.y = worldConstrainedAxis1.y * lambda.x + worldConstrainedAxis2.y * lambda.y;
+            impulse.z = worldConstrainedAxis1.z * lambda.x + worldConstrainedAxis2.z * lambda.y;
             if (connectionA.isDynamic)
             {
                 connectionA.ApplyAngularImpulse(ref impulse);
@@ -361,7 +361,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
                 connectionB.ApplyAngularImpulse(ref impulse);
             }
 
-            return (FP.Abs(lambda.X) + FP.Abs(lambda.Y));
+            return (FP.Abs(lambda.x) + FP.Abs(lambda.y));
         }
 
 

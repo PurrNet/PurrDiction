@@ -248,9 +248,9 @@ namespace BEPUphysics.Constraints.TwoEntity.Motors
 
             //Compute the jacobians
             jacobianA = basis.primaryAxis;
-            jacobianB.X = -jacobianA.X;
-            jacobianB.Y = -jacobianA.Y;
-            jacobianB.Z = -jacobianA.Z;
+            jacobianB.x = -jacobianA.x;
+            jacobianB.y = -jacobianA.y;
+            jacobianB.z = -jacobianA.z;
 
 
             //****** EFFECTIVE MASS MATRIX ******//

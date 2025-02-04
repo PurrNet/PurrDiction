@@ -65,28 +65,28 @@ namespace BEPUphysics.CollisionShapes
                 FPVector3 vertex;
                 triangleMesh.Data.GetVertexPosition(i, out vertex);
                 Matrix3x3.Transform(ref vertex, ref transform.LinearTransform, out vertex);
-                if (vertex.X < minX)
-                    minX = vertex.X;
-                if (vertex.X > maxX)
-                    maxX = vertex.X;
+                if (vertex.x < minX)
+                    minX = vertex.x;
+                if (vertex.x > maxX)
+                    maxX = vertex.x;
 
-                if (vertex.Y < minY)
-                    minY = vertex.Y;
-                if (vertex.Y > maxY)
-                    maxY = vertex.Y;
+                if (vertex.y < minY)
+                    minY = vertex.y;
+                if (vertex.y > maxY)
+                    maxY = vertex.y;
 
-                if (vertex.Z < minZ)
-                    minZ = vertex.Z;
-                if (vertex.Z > maxZ)
-                    maxZ = vertex.Z;
+                if (vertex.z < minZ)
+                    minZ = vertex.z;
+                if (vertex.z > maxZ)
+                    maxZ = vertex.z;
             }
-            boundingBox.Min.X = transform.Translation.X + minX;
-            boundingBox.Min.Y = transform.Translation.Y + minY;
-            boundingBox.Min.Z = transform.Translation.Z + minZ;
+            boundingBox.Min.x = transform.Translation.x + minX;
+            boundingBox.Min.y = transform.Translation.y + minY;
+            boundingBox.Min.z = transform.Translation.z + minZ;
             
-            boundingBox.Max.X = transform.Translation.X + maxX;
-            boundingBox.Max.Y = transform.Translation.Y + maxY;
-            boundingBox.Max.Z = transform.Translation.Z + maxZ;
+            boundingBox.Max.x = transform.Translation.x + maxX;
+            boundingBox.Max.y = transform.Translation.y + maxY;
+            boundingBox.Max.z = transform.Translation.z + maxZ;
         }
     }
 }

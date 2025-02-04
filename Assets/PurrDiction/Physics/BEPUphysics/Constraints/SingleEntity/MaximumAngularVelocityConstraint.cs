@@ -138,20 +138,20 @@ namespace BEPUphysics.Constraints.SingleEntity
                 {
                     //max / impulse gives some value 0 < x < 1.  Basically, normalize the vector (divide by the length) and scale by the maximum.
                     FP multiplier = maxForceDt / FP.Sqrt(forceMagnitude);
-                    accumulatedImpulse.X *= multiplier;
-                    accumulatedImpulse.Y *= multiplier;
-                    accumulatedImpulse.Z *= multiplier;
+                    accumulatedImpulse.x *= multiplier;
+                    accumulatedImpulse.y *= multiplier;
+                    accumulatedImpulse.z *= multiplier;
 
                     //Since the limit was exceeded by this corrective impulse, limit it so that the accumulated impulse remains constrained.
-                    impulse.X = accumulatedImpulse.X - previousAccumulatedImpulse.X;
-                    impulse.Y = accumulatedImpulse.Y - previousAccumulatedImpulse.Y;
-                    impulse.Z = accumulatedImpulse.Z - previousAccumulatedImpulse.Z;
+                    impulse.x = accumulatedImpulse.x - previousAccumulatedImpulse.x;
+                    impulse.y = accumulatedImpulse.y - previousAccumulatedImpulse.y;
+                    impulse.z = accumulatedImpulse.z - previousAccumulatedImpulse.z;
                 }
 
                 entity.ApplyAngularImpulse(ref impulse);
 
 
-                return (FP.Abs(impulse.X) + FP.Abs(impulse.Y) + FP.Abs(impulse.Z));
+                return (FP.Abs(impulse.x) + FP.Abs(impulse.y) + FP.Abs(impulse.z));
             }
 
             return F64.C0;

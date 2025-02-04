@@ -52,9 +52,9 @@ namespace BEPUphysics.Constraints.Collision
             {
                 FP lambda = F64.C0;
                 if (entityA != null)
-                    lambda = entityA.angularVelocity.X * angularX + entityA.angularVelocity.Y * angularY + entityA.angularVelocity.Z * angularZ;
+                    lambda = entityA.angularVelocity.x * angularX + entityA.angularVelocity.y * angularY + entityA.angularVelocity.z * angularZ;
                 if (entityB != null)
-                    lambda -= entityB.angularVelocity.X * angularX + entityB.angularVelocity.Y * angularY + entityB.angularVelocity.Z * angularZ;
+                    lambda -= entityB.angularVelocity.x * angularX + entityB.angularVelocity.y * angularY + entityB.angularVelocity.z * angularZ;
                 return lambda;
             }
         }
@@ -88,18 +88,18 @@ namespace BEPUphysics.Constraints.Collision
 #else
             Vector3 angular;
 #endif
-            angular.X = lambda * angularX;
-            angular.Y = lambda * angularY;
-            angular.Z = lambda * angularZ;
+            angular.x = lambda * angularX;
+            angular.y = lambda * angularY;
+            angular.z = lambda * angularZ;
             if (entityADynamic)
             {
                 entityA.ApplyAngularImpulse(ref angular);
             }
             if (entityBDynamic)
             {
-                angular.X = -angular.X;
-                angular.Y = -angular.Y;
-                angular.Z = -angular.Z;
+                angular.x = -angular.x;
+                angular.y = -angular.y;
+                angular.z = -angular.z;
                 entityB.ApplyAngularImpulse(ref angular);
             }
 
@@ -120,9 +120,9 @@ namespace BEPUphysics.Constraints.Collision
 
             //Compute the jacobian......  Real hard!
             FPVector3 normal = contactManifoldConstraint.penetrationConstraints.Elements[0].contact.Normal;
-            angularX = normal.X;
-            angularY = normal.Y;
-            angularZ = normal.Z;
+            angularX = normal.x;
+            angularY = normal.y;
+            angularZ = normal.z;
 
             //Compute inverse effective mass matrix
             FP entryA, entryB;
@@ -157,7 +157,7 @@ namespace BEPUphysics.Constraints.Collision
             //Set up friction and find maximum friction force
             FPVector3 relativeSlidingVelocity = contactManifoldConstraint.SlidingFriction.relativeVelocity;
             friction = FP.Abs(relativeAngularVelocity) > CollisionResponseSettings.StaticFrictionVelocityThreshold ||
-					   FP.Abs(relativeSlidingVelocity.X) + FP.Abs(relativeSlidingVelocity.Y) + FP.Abs(relativeSlidingVelocity.Z) > CollisionResponseSettings.StaticFrictionVelocityThreshold
+					   FP.Abs(relativeSlidingVelocity.x) + FP.Abs(relativeSlidingVelocity.y) + FP.Abs(relativeSlidingVelocity.z) > CollisionResponseSettings.StaticFrictionVelocityThreshold
                            ? contactManifoldConstraint.materialInteraction.KineticFriction
                            : contactManifoldConstraint.materialInteraction.StaticFriction;
             friction *= CollisionResponseSettings.TwistFrictionFactor;
@@ -188,18 +188,18 @@ namespace BEPUphysics.Constraints.Collision
 #else
             Vector3 angular;
 #endif
-            angular.X = accumulatedImpulse * angularX;
-            angular.Y = accumulatedImpulse * angularY;
-            angular.Z = accumulatedImpulse * angularZ;
+            angular.x = accumulatedImpulse * angularX;
+            angular.y = accumulatedImpulse * angularY;
+            angular.z = accumulatedImpulse * angularZ;
             if (entityADynamic)
             {
                 entityA.ApplyAngularImpulse(ref angular);
             }
             if (entityBDynamic)
             {
-                angular.X = -angular.X;
-                angular.Y = -angular.Y;
-                angular.Z = -angular.Z;
+                angular.x = -angular.x;
+                angular.y = -angular.y;
+                angular.z = -angular.z;
                 entityB.ApplyAngularImpulse(ref angular);
             }
         }

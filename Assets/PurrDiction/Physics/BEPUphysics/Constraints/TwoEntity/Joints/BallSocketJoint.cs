@@ -270,9 +270,9 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
             if (length > maxCorrectiveVelocitySquared)
             {
                 FP multiplier = maxCorrectiveVelocity / FP.Sqrt(length);
-                biasVelocity.X *= multiplier;
-                biasVelocity.Y *= multiplier;
-                biasVelocity.Z *= multiplier;
+                biasVelocity.x *= multiplier;
+                biasVelocity.y *= multiplier;
+                biasVelocity.z *= multiplier;
             }
 
    
@@ -294,9 +294,9 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
 #endif
             if (connectionA.isDynamic)
             {
-                linear.X = -accumulatedImpulse.X;
-                linear.Y = -accumulatedImpulse.Y;
-                linear.Z = -accumulatedImpulse.Z;
+                linear.x = -accumulatedImpulse.x;
+                linear.y = -accumulatedImpulse.y;
+                linear.z = -accumulatedImpulse.z;
                 connectionA.ApplyLinearImpulse(ref linear);
                 FPVector3 taImpulse;
                 FPVector3.Cross(ref worldOffsetA, ref linear, out taImpulse);
@@ -332,9 +332,9 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
             FPVector3.Cross(ref connectionB.angularVelocity, ref worldOffsetB, out cross);
             FPVector3.Add(ref connectionB.linearVelocity, ref cross, out bVel);
 
-            lambda.X = aVel.X - bVel.X + biasVelocity.X - softness * accumulatedImpulse.X;
-            lambda.Y = aVel.Y - bVel.Y + biasVelocity.Y - softness * accumulatedImpulse.Y;
-            lambda.Z = aVel.Z - bVel.Z + biasVelocity.Z - softness * accumulatedImpulse.Z;
+            lambda.x = aVel.x - bVel.x + biasVelocity.x - softness * accumulatedImpulse.x;
+            lambda.y = aVel.y - bVel.y + biasVelocity.y - softness * accumulatedImpulse.y;
+            lambda.z = aVel.z - bVel.z + biasVelocity.z - softness * accumulatedImpulse.z;
 
             //Turn the velocity into an impulse.
             Matrix3x3.Transform(ref lambda, ref massMatrix, out lambda);
@@ -351,9 +351,9 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
 #endif
             if (connectionA.isDynamic)
             {
-                linear.X = -lambda.X;
-                linear.Y = -lambda.Y;
-                linear.Z = -lambda.Z;
+                linear.x = -lambda.x;
+                linear.y = -lambda.y;
+                linear.z = -lambda.z;
                 connectionA.ApplyLinearImpulse(ref linear);
                 FPVector3 taImpulse;
                 FPVector3.Cross(ref worldOffsetA, ref linear, out taImpulse);
@@ -367,9 +367,9 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
                 connectionB.ApplyAngularImpulse(ref tbImpulse);
             }
 
-            return (FP.Abs(lambda.X) +
-					FP.Abs(lambda.Y) +
-					FP.Abs(lambda.Z));
+            return (FP.Abs(lambda.x) +
+					FP.Abs(lambda.y) +
+					FP.Abs(lambda.z));
         }
     }
 }

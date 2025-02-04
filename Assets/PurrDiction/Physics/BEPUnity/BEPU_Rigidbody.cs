@@ -210,7 +210,7 @@ namespace BEPUphysics.Unity
             
             MathConverter.Convert(ref worldSize, out var bepuSize);
             
-            var e = new BoxShape(bepuSize.X, bepuSize.Y, bepuSize.Z);
+            var e = new BoxShape(bepuSize.x, bepuSize.y, bepuSize.z);
             _entities.Add(new CompoundShapeEntry(e, new RigidTransform(bepuPos, FPQuaternion.Identity), 1));
         }
         

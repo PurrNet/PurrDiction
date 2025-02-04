@@ -172,11 +172,11 @@ namespace BEPUphysics.Vehicle
         {
             get
             {
-                FP velocity = vehicleEntity.linearVelocity.X * linearAX + vehicleEntity.linearVelocity.Y * linearAY + vehicleEntity.linearVelocity.Z * linearAZ +
-                            vehicleEntity.angularVelocity.X * angularAX + vehicleEntity.angularVelocity.Y * angularAY + vehicleEntity.angularVelocity.Z * angularAZ;
+                FP velocity = vehicleEntity.linearVelocity.x * linearAX + vehicleEntity.linearVelocity.y * linearAY + vehicleEntity.linearVelocity.z * linearAZ +
+                            vehicleEntity.angularVelocity.x * angularAX + vehicleEntity.angularVelocity.y * angularAY + vehicleEntity.angularVelocity.z * angularAZ;
                 if (supportEntity != null)
-                    velocity += -supportEntity.linearVelocity.X * linearAX - supportEntity.linearVelocity.Y * linearAY - supportEntity.linearVelocity.Z * linearAZ +
-                                supportEntity.angularVelocity.X * angularBX + supportEntity.angularVelocity.Y * angularBY + supportEntity.angularVelocity.Z * angularBZ;
+                    velocity += -supportEntity.linearVelocity.x * linearAX - supportEntity.linearVelocity.y * linearAY - supportEntity.linearVelocity.z * linearAZ +
+                                supportEntity.angularVelocity.x * angularBX + supportEntity.angularVelocity.y * angularBY + supportEntity.angularVelocity.z * angularBZ;
                 return velocity;
             }
         }
@@ -200,25 +200,25 @@ namespace BEPUphysics.Vehicle
 #else
             Vector3 linear, angular;
 #endif
-            linear.X = lambda * linearAX;
-            linear.Y = lambda * linearAY;
-            linear.Z = lambda * linearAZ;
+            linear.x = lambda * linearAX;
+            linear.y = lambda * linearAY;
+            linear.z = lambda * linearAZ;
             if (vehicleEntity.isDynamic)
             {
-                angular.X = lambda * angularAX;
-                angular.Y = lambda * angularAY;
-                angular.Z = lambda * angularAZ;
+                angular.x = lambda * angularAX;
+                angular.y = lambda * angularAY;
+                angular.z = lambda * angularAZ;
                 vehicleEntity.ApplyLinearImpulse(ref linear);
                 vehicleEntity.ApplyAngularImpulse(ref angular);
             }
             if (supportIsDynamic)
             {
-                linear.X = -linear.X;
-                linear.Y = -linear.Y;
-                linear.Z = -linear.Z;
-                angular.X = lambda * angularBX;
-                angular.Y = lambda * angularBY;
-                angular.Z = lambda * angularBZ;
+                linear.x = -linear.x;
+                linear.y = -linear.y;
+                linear.z = -linear.z;
+                angular.x = lambda * angularBX;
+                angular.y = lambda * angularBY;
+                angular.z = lambda * angularBZ;
                 supportEntity.ApplyLinearImpulse(ref linear);
                 supportEntity.ApplyAngularImpulse(ref angular);
             }
@@ -245,19 +245,19 @@ namespace BEPUphysics.Vehicle
             }
             slidingFrictionAxis.Normalize();
 
-            linearAX = slidingFrictionAxis.X;
-            linearAY = slidingFrictionAxis.Y;
-            linearAZ = slidingFrictionAxis.Z;
+            linearAX = slidingFrictionAxis.x;
+            linearAY = slidingFrictionAxis.y;
+            linearAZ = slidingFrictionAxis.z;
 
             //angular A = Ra x N
-            angularAX = (wheel.ra.Y * linearAZ) - (wheel.ra.Z * linearAY);
-            angularAY = (wheel.ra.Z * linearAX) - (wheel.ra.X * linearAZ);
-            angularAZ = (wheel.ra.X * linearAY) - (wheel.ra.Y * linearAX);
+            angularAX = (wheel.ra.y * linearAZ) - (wheel.ra.z * linearAY);
+            angularAY = (wheel.ra.z * linearAX) - (wheel.ra.x * linearAZ);
+            angularAZ = (wheel.ra.x * linearAY) - (wheel.ra.y * linearAX);
 
             //Angular B = N x Rb
-            angularBX = (linearAY * wheel.rb.Z) - (linearAZ * wheel.rb.Y);
-            angularBY = (linearAZ * wheel.rb.X) - (linearAX * wheel.rb.Z);
-            angularBZ = (linearAX * wheel.rb.Y) - (linearAY * wheel.rb.X);
+            angularBX = (linearAY * wheel.rb.z) - (linearAZ * wheel.rb.y);
+            angularBY = (linearAZ * wheel.rb.x) - (linearAX * wheel.rb.z);
+            angularBZ = (linearAX * wheel.rb.y) - (linearAY * wheel.rb.x);
 
             //Compute inverse effective mass matrix
             FP entryA, entryB;
@@ -306,25 +306,25 @@ namespace BEPUphysics.Vehicle
 #else
             Vector3 linear, angular;
 #endif
-            linear.X = accumulatedImpulse * linearAX;
-            linear.Y = accumulatedImpulse * linearAY;
-            linear.Z = accumulatedImpulse * linearAZ;
+            linear.x = accumulatedImpulse * linearAX;
+            linear.y = accumulatedImpulse * linearAY;
+            linear.z = accumulatedImpulse * linearAZ;
             if (vehicleEntity.isDynamic)
             {
-                angular.X = accumulatedImpulse * angularAX;
-                angular.Y = accumulatedImpulse * angularAY;
-                angular.Z = accumulatedImpulse * angularAZ;
+                angular.x = accumulatedImpulse * angularAX;
+                angular.y = accumulatedImpulse * angularAY;
+                angular.z = accumulatedImpulse * angularAZ;
                 vehicleEntity.ApplyLinearImpulse(ref linear);
                 vehicleEntity.ApplyAngularImpulse(ref angular);
             }
             if (supportIsDynamic)
             {
-                linear.X = -linear.X;
-                linear.Y = -linear.Y;
-                linear.Z = -linear.Z;
-                angular.X = accumulatedImpulse * angularBX;
-                angular.Y = accumulatedImpulse * angularBY;
-                angular.Z = accumulatedImpulse * angularBZ;
+                linear.x = -linear.x;
+                linear.y = -linear.y;
+                linear.z = -linear.z;
+                angular.x = accumulatedImpulse * angularBX;
+                angular.y = accumulatedImpulse * angularBY;
+                angular.z = accumulatedImpulse * angularBZ;
                 supportEntity.ApplyLinearImpulse(ref linear);
                 supportEntity.ApplyAngularImpulse(ref angular);
             }

@@ -136,11 +136,11 @@ namespace BEPUik
             FPVector3.Subtract(ref worldPoint, ref worldNearPoint, out error3D);
 
             FPVector2 error;
-            FPVector3.Dot(ref error3D, ref worldRestrictedAxis1, out error.X);
-            FPVector3.Dot(ref error3D, ref worldRestrictedAxis2, out error.Y);
+            FPVector3.Dot(ref error3D, ref worldRestrictedAxis1, out error.x);
+            FPVector3.Dot(ref error3D, ref worldRestrictedAxis2, out error.y);
 
-            velocityBias.X = errorCorrectionFactor * error.X;
-            velocityBias.Y = errorCorrectionFactor * error.Y;
+            velocityBias.x = errorCorrectionFactor * error.x;
+            velocityBias.y = errorCorrectionFactor * error.y;
 
 
             //Set up the jacobians
@@ -153,32 +153,32 @@ namespace BEPUik
             //Put all the 1x3 jacobians into a 3x3 matrix representation.
             linearJacobianA = new Matrix3x3
             {
-                M11 = worldRestrictedAxis1.X,
-                M12 = worldRestrictedAxis1.Y,
-                M13 = worldRestrictedAxis1.Z,
-                M21 = worldRestrictedAxis2.X,
-                M22 = worldRestrictedAxis2.Y,
-                M23 = worldRestrictedAxis2.Z
+                M11 = worldRestrictedAxis1.x,
+                M12 = worldRestrictedAxis1.y,
+                M13 = worldRestrictedAxis1.z,
+                M21 = worldRestrictedAxis2.x,
+                M22 = worldRestrictedAxis2.y,
+                M23 = worldRestrictedAxis2.z
             };
             Matrix3x3.Negate(ref linearJacobianA, out linearJacobianB);
 
             angularJacobianA = new Matrix3x3
             {
-                M11 = angularA1.X,
-                M12 = angularA1.Y,
-                M13 = angularA1.Z,
-                M21 = angularA2.X,
-                M22 = angularA2.Y,
-                M23 = angularA2.Z
+                M11 = angularA1.x,
+                M12 = angularA1.y,
+                M13 = angularA1.z,
+                M21 = angularA2.x,
+                M22 = angularA2.y,
+                M23 = angularA2.z
             };
             angularJacobianB = new Matrix3x3
             {
-                M11 = angularB1.X,
-                M12 = angularB1.Y,
-                M13 = angularB1.Z,
-                M21 = angularB2.X,
-                M22 = angularB2.Y,
-                M23 = angularB2.Z
+                M11 = angularB1.x,
+                M12 = angularB1.y,
+                M13 = angularB1.z,
+                M21 = angularB2.x,
+                M22 = angularB2.y,
+                M23 = angularB2.z
             };
         }
     }

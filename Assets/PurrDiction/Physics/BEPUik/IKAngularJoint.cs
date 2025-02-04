@@ -55,9 +55,9 @@ namespace BEPUik
             FPVector3 axis;
             FPQuaternion.GetAxisAngleFromQuaternion(ref error, out axis, out angle);
 
-            velocityBias.X = errorCorrectionFactor * axis.X * angle;
-            velocityBias.Y = errorCorrectionFactor * axis.Y * angle;
-            velocityBias.Z = errorCorrectionFactor * axis.Z * angle;
+            velocityBias.x = errorCorrectionFactor * axis.x * angle;
+            velocityBias.y = errorCorrectionFactor * axis.y * angle;
+            velocityBias.z = errorCorrectionFactor * axis.z * angle;
 
 
         }

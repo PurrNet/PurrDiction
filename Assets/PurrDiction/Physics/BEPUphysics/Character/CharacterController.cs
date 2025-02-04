@@ -521,9 +521,9 @@ namespace BEPUphysics.Character
                 //Expand the bounding box up and down using the step height.
                 FPVector3 expansion;
                 FPVector3.Multiply(ref down, StepManager.MaximumStepHeight, out expansion);
-                expansion.X = FP.Abs(expansion.X);
-                expansion.Y = FP.Abs(expansion.Y);
-                expansion.Z = FP.Abs(expansion.Z);
+                expansion.x = FP.Abs(expansion.x);
+                expansion.y = FP.Abs(expansion.y);
+                expansion.z = FP.Abs(expansion.z);
 
                 //When the character climbs a step, it teleports horizontally a little to gain support. Expand the bounding box to accommodate the margin.
                 //Compute the expansion caused by the extra radius along each axis.
@@ -543,12 +543,12 @@ namespace BEPUphysics.Character
                 //Since the test axes we're using are all standard directions ({0,0,1}, {0,1,0}, and {0,0,1}), most of the cross product logic simplifies out, and we are left with:
                 var horizontalExpansionAmount = Body.CollisionInformation.Shape.CollisionMargin * F64.C1p1;
                 FPVector3 squaredDown;
-                squaredDown.X = down.X * down.X;
-                squaredDown.Y = down.Y * down.Y;
-                squaredDown.Z = down.Z * down.Z;
-                expansion.X += horizontalExpansionAmount * FP.Sqrt(squaredDown.Y + squaredDown.Z);
-                expansion.Y += horizontalExpansionAmount * FP.Sqrt(squaredDown.X + squaredDown.Z);
-                expansion.Z += horizontalExpansionAmount * FP.Sqrt(squaredDown.X + squaredDown.Y);
+                squaredDown.x = down.x * down.x;
+                squaredDown.y = down.y * down.y;
+                squaredDown.z = down.z * down.z;
+                expansion.x += horizontalExpansionAmount * FP.Sqrt(squaredDown.y + squaredDown.z);
+                expansion.y += horizontalExpansionAmount * FP.Sqrt(squaredDown.x + squaredDown.z);
+                expansion.z += horizontalExpansionAmount * FP.Sqrt(squaredDown.x + squaredDown.y);
 
                 FPVector3.Add(ref expansion, ref boundingBox.Max, out boundingBox.Max);
                 FPVector3.Subtract(ref boundingBox.Min, ref expansion, out boundingBox.Min);

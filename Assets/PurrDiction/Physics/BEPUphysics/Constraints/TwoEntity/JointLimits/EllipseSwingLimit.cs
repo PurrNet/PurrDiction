@@ -271,9 +271,9 @@ namespace BEPUphysics.Constraints.TwoEntity.JointLimits
             //Just like you can dot an axis with angular velocity to get a velocity around that axis,
             //dotting an axis with the axis-angle representation gets the angle of rotation around that axis.
             //(As far as the constraint is concerned, anyway.)
-            axisAngle.X = axis.X * angle;
-            axisAngle.Y = axis.Y * angle;
-            axisAngle.Z = axis.Z * angle;
+            axisAngle.x = axis.x * angle;
+            axisAngle.y = axis.y * angle;
+            axisAngle.z = axis.z * angle;
 
             FP angleX;
             FPVector3.Dot(ref axisAngle, ref basis.xAxis, out angleX);
@@ -318,8 +318,8 @@ namespace BEPUphysics.Constraints.TwoEntity.JointLimits
 #else
             Vector2 tangent;
 #endif
-            tangent.X = F64.C2 * angleX / maxAngleXSquared;
-            tangent.Y = F64.C2 * angleY / maxAngleYSquared;
+            tangent.x = F64.C2 * angleX / maxAngleXSquared;
+            tangent.y = F64.C2 * angleY / maxAngleYSquared;
 
             //The tangent is then taken into world space using the basis.
 
@@ -329,13 +329,13 @@ namespace BEPUphysics.Constraints.TwoEntity.JointLimits
             FPQuaternion.Transform(ref basis.xAxis, ref relativeRotation, out sphereTangentX);
             FPQuaternion.Transform(ref basis.yAxis, ref relativeRotation, out sphereTangentY);
 
-            FPVector3.Multiply(ref sphereTangentX, tangent.X, out jacobianA); //not actually jA, just storing it there.
-            FPVector3.Multiply(ref sphereTangentY, tangent.Y, out jacobianB); //not actually jB, just storing it there.
+            FPVector3.Multiply(ref sphereTangentX, tangent.x, out jacobianA); //not actually jA, just storing it there.
+            FPVector3.Multiply(ref sphereTangentY, tangent.y, out jacobianB); //not actually jB, just storing it there.
             FPVector3.Add(ref jacobianA, ref jacobianB, out jacobianA);
 
-            jacobianB.X = -jacobianA.X;
-            jacobianB.Y = -jacobianA.Y;
-            jacobianB.Z = -jacobianA.Z;
+            jacobianB.x = -jacobianA.x;
+            jacobianB.y = -jacobianA.y;
+            jacobianB.z = -jacobianA.z;
 
 
             FP errorReduction;

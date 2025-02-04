@@ -306,10 +306,10 @@ namespace BEPUphysics.Character
 
             //Find the lowest point on the collision shape.
             convexShape.GetLocalExtremePointWithoutMargin(ref Toolbox.DownVector, out extremePoint);
-            BottomDistance = -extremePoint.Y + convexShape.collisionMargin;
+            BottomDistance = -extremePoint.y + convexShape.collisionMargin;
 
             convexShape.GetLocalExtremePointWithoutMargin(ref Toolbox.RightVector, out extremePoint);
-            FP rayCastInnerRadius = MathHelper.Max((extremePoint.X + convexShape.collisionMargin) * F64.C0p8, extremePoint.X);
+            FP rayCastInnerRadius = MathHelper.Max((extremePoint.x + convexShape.collisionMargin) * F64.C0p8, extremePoint.x);
 
             //Vertically, the rays will start at the same height as the character's center.
             //While they could be started lower on a cylinder, that wouldn't always work for a sphere or capsule: the origin might end up outside of the shape!

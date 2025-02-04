@@ -301,9 +301,9 @@ namespace BEPUphysics.Constraints.TwoEntity.Motors
             }
 
             jacobianB.Normalize();
-            jacobianA.X = -jacobianB.X;
-            jacobianA.Y = -jacobianB.Y;
-            jacobianA.Z = -jacobianB.Z;
+            jacobianA.x = -jacobianB.x;
+            jacobianA.y = -jacobianB.y;
+            jacobianA.z = -jacobianB.z;
 
             //Update the maximum force
             ComputeMaxForces(settings.maximumForce, dt);

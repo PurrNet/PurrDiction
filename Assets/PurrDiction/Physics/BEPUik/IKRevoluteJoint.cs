@@ -139,21 +139,21 @@ namespace BEPUik
 
             angularJacobianA = new Matrix3x3
             {
-                M11 = worldConstrainedAxis1.X,
-                M12 = worldConstrainedAxis1.Y,
-                M13 = worldConstrainedAxis1.Z,
-                M21 = worldConstrainedAxis2.X,
-                M22 = worldConstrainedAxis2.Y,
-                M23 = worldConstrainedAxis2.Z
+                M11 = worldConstrainedAxis1.x,
+                M12 = worldConstrainedAxis1.y,
+                M13 = worldConstrainedAxis1.z,
+                M21 = worldConstrainedAxis2.x,
+                M22 = worldConstrainedAxis2.y,
+                M23 = worldConstrainedAxis2.z
             };
             Matrix3x3.Negate(ref angularJacobianA, out angularJacobianB);
 
 
             FPVector2 constraintSpaceError;
-            FPVector3.Dot(ref error, ref worldConstrainedAxis1, out constraintSpaceError.X);
-            FPVector3.Dot(ref error, ref worldConstrainedAxis2, out constraintSpaceError.Y);
-            velocityBias.X = errorCorrectionFactor * constraintSpaceError.X;
-            velocityBias.Y = errorCorrectionFactor * constraintSpaceError.Y;
+            FPVector3.Dot(ref error, ref worldConstrainedAxis1, out constraintSpaceError.x);
+            FPVector3.Dot(ref error, ref worldConstrainedAxis2, out constraintSpaceError.y);
+            velocityBias.x = errorCorrectionFactor * constraintSpaceError.x;
+            velocityBias.y = errorCorrectionFactor * constraintSpaceError.y;
 
 
         }

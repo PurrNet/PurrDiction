@@ -323,16 +323,16 @@ namespace BEPUphysics.Constraints.TwoEntity.JointLimits
                 //If it's beyond the max, all of the jacobians are reversed compared to what they are when it's below the min.
                 if (distance > Toolbox.Epsilon)
                 {
-                    jLinearA.X = separation.X / distance;
-                    jLinearA.Y = separation.Y / distance;
-                    jLinearA.Z = separation.Z / distance;
+                    jLinearA.x = separation.x / distance;
+                    jLinearA.y = separation.y / distance;
+                    jLinearA.z = separation.z / distance;
                 }
                 else
                     jLinearB = Toolbox.ZeroVector;
 
-                jLinearB.X = -jLinearA.X;
-                jLinearB.Y = -jLinearA.Y;
-                jLinearB.Z = -jLinearA.Z;
+                jLinearB.x = -jLinearA.x;
+                jLinearB.y = -jLinearA.y;
+                jLinearB.z = -jLinearA.z;
 
                 FPVector3.Cross(ref jLinearA, ref offsetA, out jAngularA);
                 //Still need to negate angular A.  It's done after the effective mass matrix.
@@ -342,16 +342,16 @@ namespace BEPUphysics.Constraints.TwoEntity.JointLimits
             {
                 if (distance > Toolbox.Epsilon)
                 {
-                    jLinearB.X = separation.X / distance;
-                    jLinearB.Y = separation.Y / distance;
-                    jLinearB.Z = separation.Z / distance;
+                    jLinearB.x = separation.x / distance;
+                    jLinearB.y = separation.y / distance;
+                    jLinearB.z = separation.z / distance;
                 }
                 else
                     jLinearB = Toolbox.ZeroVector;
 
-                jLinearA.X = -jLinearB.X;
-                jLinearA.Y = -jLinearB.Y;
-                jLinearA.Z = -jLinearB.Z;
+                jLinearA.x = -jLinearB.x;
+                jLinearA.y = -jLinearB.y;
+                jLinearA.z = -jLinearB.z;
 
                 FPVector3.Cross(ref offsetA, ref jLinearB, out jAngularA);
                 //Still need to negate angular A.  It's done after the effective mass matrix.
@@ -404,9 +404,9 @@ namespace BEPUphysics.Constraints.TwoEntity.JointLimits
 
             velocityToImpulse = F64.C1 / (softness + velocityToImpulse);
             //Finish computing jacobian; it's down here as an optimization (since it didn't need to be negated in mass matrix)
-            jAngularA.X = -jAngularA.X;
-            jAngularA.Y = -jAngularA.Y;
-            jAngularA.Z = -jAngularA.Z;
+            jAngularA.x = -jAngularA.x;
+            jAngularA.y = -jAngularA.y;
+            jAngularA.z = -jAngularA.z;
 
             //Compute bias velocity
             if (distance > maximumLength)

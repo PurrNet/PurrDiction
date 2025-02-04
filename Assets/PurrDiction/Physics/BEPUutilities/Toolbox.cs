@@ -709,7 +709,7 @@ namespace BEPUutilities
             }
             else
             {
-                FP denom = ab.X * ab.X + ab.Y * ab.Y + ab.Z * ab.Z;
+                FP denom = ab.x * ab.x + ab.y * ab.y + ab.z * ab.z;
                 if (t >= denom)
                 {
                     closestPoint = b;
@@ -750,7 +750,7 @@ namespace BEPUutilities
             }
             else
             {
-                FP denom = ab.X * ab.X + ab.Y * ab.Y + ab.Z * ab.Z;
+                FP denom = ab.x * ab.x + ab.y * ab.y + ab.z * ab.z;
                 if (t >= denom)
                 {
                     //t = 1;//Don't need this for returning purposes.
@@ -800,7 +800,7 @@ namespace BEPUutilities
             }
             else
             {
-                FP denom = ab.X * ab.X + ab.Y * ab.Y + ab.Z * ab.Z;
+                FP denom = ab.x * ab.x + ab.y * ab.y + ab.z * ab.z;
                 if (t >= denom)
                 {
                     subsimplex.Add(j);
@@ -1138,7 +1138,7 @@ namespace BEPUutilities
             {
                 GetClosestPointOnTriangleToPoint(ref a, ref b, ref c, ref p, out q);
                 FPVector3.Subtract(ref q, ref p, out pq);
-				FP sqDist = pq.X * pq.X + pq.Y * pq.Y + pq.Z * pq.Z;
+				FP sqDist = pq.x * pq.x + pq.y * pq.y + pq.z * pq.z;
                 // Update best closest point if (squared) distance is less than current best
                 if (sqDist < bestSqDist)
                 {
@@ -1151,7 +1151,7 @@ namespace BEPUutilities
             {
                 GetClosestPointOnTriangleToPoint(ref a, ref c, ref d, ref p, out q);
                 FPVector3.Subtract(ref q, ref p, out pq);
-				FP sqDist = pq.X * pq.X + pq.Y * pq.Y + pq.Z * pq.Z;
+				FP sqDist = pq.x * pq.x + pq.y * pq.y + pq.z * pq.z;
                 if (sqDist < bestSqDist)
                 {
                     bestSqDist = sqDist;
@@ -1163,7 +1163,7 @@ namespace BEPUutilities
             {
                 GetClosestPointOnTriangleToPoint(ref a, ref d, ref b, ref p, out q);
                 FPVector3.Subtract(ref q, ref p, out pq);
-				FP sqDist = pq.X * pq.X + pq.Y * pq.Y + pq.Z * pq.Z;
+				FP sqDist = pq.x * pq.x + pq.y * pq.y + pq.z * pq.z;
                 if (sqDist < bestSqDist)
                 {
                     bestSqDist = sqDist;
@@ -1175,7 +1175,7 @@ namespace BEPUutilities
             {
                 GetClosestPointOnTriangleToPoint(ref b, ref d, ref c, ref p, out q);
                 FPVector3.Subtract(ref q, ref p, out pq);
-				FP sqDist = pq.X * pq.X + pq.Y * pq.Y + pq.Z * pq.Z;
+				FP sqDist = pq.x * pq.x + pq.y * pq.y + pq.z * pq.z;
                 if (sqDist < bestSqDist)
                 {
                     closestPoint = q;
@@ -1211,7 +1211,7 @@ namespace BEPUutilities
             {
                 GetClosestPointOnTriangleToPoint(ref a, ref b, ref c, ref p, subsimplex, out q);
                 FPVector3.Subtract(ref q, ref p, out pq);
-				FP sqDist = pq.X * pq.X + pq.Y * pq.Y + pq.Z * pq.Z;
+				FP sqDist = pq.x * pq.x + pq.y * pq.y + pq.z * pq.z;
                 // Update best closest point if (squared) distance is less than current best
                 if (sqDist < bestSqDist)
                 {
@@ -1224,7 +1224,7 @@ namespace BEPUutilities
             {
                 GetClosestPointOnTriangleToPoint(ref a, ref c, ref d, ref p, subsimplex, out q);
                 FPVector3.Subtract(ref q, ref p, out pq);
-				FP sqDist = pq.X * pq.X + pq.Y * pq.Y + pq.Z * pq.Z;
+				FP sqDist = pq.x * pq.x + pq.y * pq.y + pq.z * pq.z;
                 if (sqDist < bestSqDist)
                 {
                     bestSqDist = sqDist;
@@ -1236,7 +1236,7 @@ namespace BEPUutilities
             {
                 GetClosestPointOnTriangleToPoint(ref a, ref d, ref b, ref p, subsimplex, out q);
                 FPVector3.Subtract(ref q, ref p, out pq);
-				FP sqDist = pq.X * pq.X + pq.Y * pq.Y + pq.Z * pq.Z;
+				FP sqDist = pq.x * pq.x + pq.y * pq.y + pq.z * pq.z;
                 if (sqDist < bestSqDist)
                 {
                     bestSqDist = sqDist;
@@ -1248,7 +1248,7 @@ namespace BEPUutilities
             {
                 GetClosestPointOnTriangleToPoint(ref b, ref d, ref c, ref p, subsimplex, out q);
                 FPVector3.Subtract(ref q, ref p, out pq);
-				FP sqDist = pq.X * pq.X + pq.Y * pq.Y + pq.Z * pq.Z;
+				FP sqDist = pq.x * pq.x + pq.y * pq.y + pq.z * pq.z;
                 if (sqDist < bestSqDist)
                 {
                     closestPoint = q;
@@ -1378,22 +1378,22 @@ namespace BEPUutilities
 				//subsimplex is the entire tetrahedron, can only occur when objects intersect!  Determinants of each of the tetrahedrons based on triangles composing the sides and the point itself.
 				//This is basically computing the volume of parallelepipeds (triple scalar product).
 				//Could be quicker just to do it directly.
-				FP abcd = (new Matrix(tetrahedron[0].X, tetrahedron[0].Y, tetrahedron[0].Z, F64.C1,
-                                         tetrahedron[1].X, tetrahedron[1].Y, tetrahedron[1].Z, F64.C1,
-                                         tetrahedron[2].X, tetrahedron[2].Y, tetrahedron[2].Z, F64.C1,
-                                         tetrahedron[3].X, tetrahedron[3].Y, tetrahedron[3].Z, F64.C1)).Determinant();
-				FP pbcd = (new Matrix(p.X, p.Y, p.Z, F64.C1,
-                                         tetrahedron[1].X, tetrahedron[1].Y, tetrahedron[1].Z, F64.C1,
-                                         tetrahedron[2].X, tetrahedron[2].Y, tetrahedron[2].Z, F64.C1,
-                                         tetrahedron[3].X, tetrahedron[3].Y, tetrahedron[3].Z, F64.C1)).Determinant();
-				FP apcd = (new Matrix(tetrahedron[0].X, tetrahedron[0].Y, tetrahedron[0].Z, F64.C1,
-                                         p.X, p.Y, p.Z, F64.C1,
-                                         tetrahedron[2].X, tetrahedron[2].Y, tetrahedron[2].Z, F64.C1,
-                                         tetrahedron[3].X, tetrahedron[3].Y, tetrahedron[3].Z, F64.C1)).Determinant();
-				FP abpd = (new Matrix(tetrahedron[0].X, tetrahedron[0].Y, tetrahedron[0].Z, F64.C1,
-                                         tetrahedron[1].X, tetrahedron[1].Y, tetrahedron[1].Z, F64.C1,
-                                         p.X, p.Y, p.Z, F64.C1,
-                                         tetrahedron[3].X, tetrahedron[3].Y, tetrahedron[3].Z, F64.C1)).Determinant();
+				FP abcd = (new Matrix(tetrahedron[0].x, tetrahedron[0].y, tetrahedron[0].z, F64.C1,
+                                         tetrahedron[1].x, tetrahedron[1].y, tetrahedron[1].z, F64.C1,
+                                         tetrahedron[2].x, tetrahedron[2].y, tetrahedron[2].z, F64.C1,
+                                         tetrahedron[3].x, tetrahedron[3].y, tetrahedron[3].z, F64.C1)).Determinant();
+				FP pbcd = (new Matrix(p.x, p.y, p.z, F64.C1,
+                                         tetrahedron[1].x, tetrahedron[1].y, tetrahedron[1].z, F64.C1,
+                                         tetrahedron[2].x, tetrahedron[2].y, tetrahedron[2].z, F64.C1,
+                                         tetrahedron[3].x, tetrahedron[3].y, tetrahedron[3].z, F64.C1)).Determinant();
+				FP apcd = (new Matrix(tetrahedron[0].x, tetrahedron[0].y, tetrahedron[0].z, F64.C1,
+                                         p.x, p.y, p.z, F64.C1,
+                                         tetrahedron[2].x, tetrahedron[2].y, tetrahedron[2].z, F64.C1,
+                                         tetrahedron[3].x, tetrahedron[3].y, tetrahedron[3].z, F64.C1)).Determinant();
+				FP abpd = (new Matrix(tetrahedron[0].x, tetrahedron[0].y, tetrahedron[0].z, F64.C1,
+                                         tetrahedron[1].x, tetrahedron[1].y, tetrahedron[1].z, F64.C1,
+                                         p.x, p.y, p.z, F64.C1,
+                                         tetrahedron[3].x, tetrahedron[3].y, tetrahedron[3].z, F64.C1)).Determinant();
                 abcd = F64.C1 / abcd;
                 baryCoords.Add(pbcd * abcd); //u
                 baryCoords.Add(apcd * abcd); //v
@@ -1491,20 +1491,20 @@ namespace BEPUutilities
         /// <param name="sweep">Sweep to expand the bounding box with.</param>
         public static void ExpandBoundingBox(ref FPBoundingBox boundingBox, ref FPVector3 sweep)
         {
-            if (sweep.X > F64.C0)
-                boundingBox.Max.X += sweep.X;
+            if (sweep.x > F64.C0)
+                boundingBox.Max.x += sweep.x;
             else
-                boundingBox.Min.X += sweep.X;
+                boundingBox.Min.x += sweep.x;
 
-            if (sweep.Y > F64.C0)
-                boundingBox.Max.Y += sweep.Y;
+            if (sweep.y > F64.C0)
+                boundingBox.Max.y += sweep.y;
             else
-                boundingBox.Min.Y += sweep.Y;
+                boundingBox.Min.y += sweep.y;
 
-            if (sweep.Z > F64.C0)
-                boundingBox.Max.Z += sweep.Z;
+            if (sweep.z > F64.C0)
+                boundingBox.Max.z += sweep.z;
             else
-                boundingBox.Min.Z += sweep.Z;
+                boundingBox.Min.z += sweep.z;
         }
 
         /// <summary>
@@ -1520,61 +1520,61 @@ namespace BEPUutilities
             aabb = new FPBoundingBox();
 #endif
             //X axis
-            if (a.X > b.X && a.X > c.X)
+            if (a.x > b.x && a.x > c.x)
             {
                 //A is max
-                aabb.Max.X = a.X;
-                aabb.Min.X = b.X > c.X ? c.X : b.X;
+                aabb.Max.x = a.x;
+                aabb.Min.x = b.x > c.x ? c.x : b.x;
             }
-            else if (b.X > c.X)
+            else if (b.x > c.x)
             {
                 //B is max
-                aabb.Max.X = b.X;
-                aabb.Min.X = a.X > c.X ? c.X : a.X;
+                aabb.Max.x = b.x;
+                aabb.Min.x = a.x > c.x ? c.x : a.x;
             }
             else
             {
                 //C is max
-                aabb.Max.X = c.X;
-                aabb.Min.X = a.X > b.X ? b.X : a.X;
+                aabb.Max.x = c.x;
+                aabb.Min.x = a.x > b.x ? b.x : a.x;
             }
             //Y axis
-            if (a.Y > b.Y && a.Y > c.Y)
+            if (a.y > b.y && a.y > c.y)
             {
                 //A is max
-                aabb.Max.Y = a.Y;
-                aabb.Min.Y = b.Y > c.Y ? c.Y : b.Y;
+                aabb.Max.y = a.y;
+                aabb.Min.y = b.y > c.y ? c.y : b.y;
             }
-            else if (b.Y > c.Y)
+            else if (b.y > c.y)
             {
                 //B is max
-                aabb.Max.Y = b.Y;
-                aabb.Min.Y = a.Y > c.Y ? c.Y : a.Y;
+                aabb.Max.y = b.y;
+                aabb.Min.y = a.y > c.y ? c.y : a.y;
             }
             else
             {
                 //C is max
-                aabb.Max.Y = c.Y;
-                aabb.Min.Y = a.Y > b.Y ? b.Y : a.Y;
+                aabb.Max.y = c.y;
+                aabb.Min.y = a.y > b.y ? b.y : a.y;
             }
             //Z axis
-            if (a.Z > b.Z && a.Z > c.Z)
+            if (a.z > b.z && a.z > c.z)
             {
                 //A is max
-                aabb.Max.Z = a.Z;
-                aabb.Min.Z = b.Z > c.Z ? c.Z : b.Z;
+                aabb.Max.z = a.z;
+                aabb.Min.z = b.z > c.z ? c.z : b.z;
             }
-            else if (b.Z > c.Z)
+            else if (b.z > c.z)
             {
                 //B is max
-                aabb.Max.Z = b.Z;
-                aabb.Min.Z = a.Z > c.Z ? c.Z : a.Z;
+                aabb.Max.z = b.z;
+                aabb.Min.z = a.z > c.z ? c.z : a.z;
             }
             else
             {
                 //C is max
-                aabb.Max.Z = c.Z;
-                aabb.Min.Z = a.Z > b.Z ? b.Z : a.Z;
+                aabb.Max.z = c.z;
+                aabb.Min.z = a.z > b.z ? b.z : a.z;
             }
         }
 
@@ -1648,7 +1648,7 @@ namespace BEPUutilities
             FPVector3 halfspin;
             Matrix3x3.Transform(ref angularMomentum, ref tempInertiaTensorInverse, out halfspin);
             FPVector3.Multiply(ref halfspin, F64.C0p5, out halfspin);
-            var halfspinQuaternion = new FPQuaternion(halfspin.X, halfspin.Y, halfspin.Z, F64.C0);
+            var halfspinQuaternion = new FPQuaternion(halfspin.x, halfspin.y, halfspin.z, F64.C0);
             FPQuaternion.Multiply(ref halfspinQuaternion, ref normalizedOrientation, out orientationChange);
         }
 
@@ -1670,31 +1670,31 @@ namespace BEPUutilities
             FPVector3.Subtract(ref c, ref a, out ac);
             FPVector3 triangleNormal;
             FPVector3.Cross(ref ab, ref ac, out triangleNormal);
-            FP x = triangleNormal.X < F64.C0 ? -triangleNormal.X : triangleNormal.X;
-            FP y = triangleNormal.Y < F64.C0 ? -triangleNormal.Y : triangleNormal.Y;
-            FP z = triangleNormal.Z < F64.C0 ? -triangleNormal.Z : triangleNormal.Z;
+            FP x = triangleNormal.x < F64.C0 ? -triangleNormal.x : triangleNormal.x;
+            FP y = triangleNormal.y < F64.C0 ? -triangleNormal.y : triangleNormal.y;
+            FP z = triangleNormal.z < F64.C0 ? -triangleNormal.z : triangleNormal.z;
 
             FP numeratorU, numeratorV, denominator;
             if (x >= y && x >= z)
             {
                 //The projection of the triangle on the YZ plane is the largest.
-                numeratorU = (p.Y - b.Y) * (b.Z - c.Z) - (b.Y - c.Y) * (p.Z - b.Z); //PBC
-                numeratorV = (p.Y - c.Y) * (c.Z - a.Z) - (c.Y - a.Y) * (p.Z - c.Z); //PCA
-                denominator = triangleNormal.X;
+                numeratorU = (p.y - b.y) * (b.z - c.z) - (b.y - c.y) * (p.z - b.z); //PBC
+                numeratorV = (p.y - c.y) * (c.z - a.z) - (c.y - a.y) * (p.z - c.z); //PCA
+                denominator = triangleNormal.x;
             }
             else if (y >= z)
             {
                 //The projection of the triangle on the XZ plane is the largest.
-                numeratorU = (p.X - b.X) * (b.Z - c.Z) - (b.X - c.X) * (p.Z - b.Z); //PBC
-                numeratorV = (p.X - c.X) * (c.Z - a.Z) - (c.X - a.X) * (p.Z - c.Z); //PCA
-                denominator = -triangleNormal.Y;
+                numeratorU = (p.x - b.x) * (b.z - c.z) - (b.x - c.x) * (p.z - b.z); //PBC
+                numeratorV = (p.x - c.x) * (c.z - a.z) - (c.x - a.x) * (p.z - c.z); //PCA
+                denominator = -triangleNormal.y;
             }
             else
             {
                 //The projection of the triangle on the XY plane is the largest.
-                numeratorU = (p.X - b.X) * (b.Y - c.Y) - (b.X - c.X) * (p.Y - b.Y); //PBC
-                numeratorV = (p.X - c.X) * (c.Y - a.Y) - (c.X - a.X) * (p.Y - c.Y); //PCA
-                denominator = triangleNormal.Z;
+                numeratorU = (p.x - b.x) * (b.y - c.y) - (b.x - c.x) * (p.y - b.y); //PBC
+                numeratorV = (p.x - c.x) * (c.y - a.y) - (c.x - a.x) * (p.y - c.y); //PCA
+                denominator = triangleNormal.z;
             }
 
             if (denominator < F64.Cm1em9 || denominator > F64.C1em9)

@@ -91,9 +91,9 @@ namespace BEPUutilities
                 var element = points.Elements[i];
                 var cell = new BlockedCell
                 {
-                    X = (int)FP.Floor(element.X / cellSize),
-                    Y = (int)FP.Floor(element.Y / cellSize),
-                    Z = (int)FP.Floor(element.Z / cellSize) 
+                    X = (int)FP.Floor(element.x / cellSize),
+                    Y = (int)FP.Floor(element.y / cellSize),
+                    Z = (int)FP.Floor(element.z / cellSize) 
                 };
                 if (set.Contains(cell))
                 {

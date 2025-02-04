@@ -33,7 +33,7 @@ namespace BEPUphysics.Character
             get { return movementDirection; }
             set
             {
-                if (movementDirection.X != value.X || movementDirection.Y != value.Y) //Fix64ing point comparison is perfectly fine here. Any bitwise variation should go through.
+                if (movementDirection.x != value.x || movementDirection.y != value.y) //Fix64ing point comparison is perfectly fine here. Any bitwise variation should go through.
                 {
                     characterBody.ActivityInformation.Activate();
 
@@ -179,9 +179,9 @@ namespace BEPUphysics.Character
             }
 
 
-            FPVector3.Multiply(ref horizontalForwardDirection, movementDirection.Y, out movementDirection3d);
+            FPVector3.Multiply(ref horizontalForwardDirection, movementDirection.y, out movementDirection3d);
             FPVector3 strafeComponent;
-            FPVector3.Multiply(ref strafeDirection, movementDirection.X, out strafeComponent);
+            FPVector3.Multiply(ref strafeDirection, movementDirection.x, out strafeComponent);
             FPVector3.Add(ref strafeComponent, ref movementDirection3d, out movementDirection3d);
 
         }
@@ -396,8 +396,8 @@ namespace BEPUphysics.Character
 
 
             //Compute the target velocity (in constraint space) for this frame.  The hard work has already been done.
-            targetVelocity.X = isTryingToMove ? TargetSpeed : F64.C0;
-            targetVelocity.Y = F64.C0;
+            targetVelocity.x = isTryingToMove ? TargetSpeed : F64.C0;
+            targetVelocity.y = F64.C0;
 
             //Compute the effective mass matrix.
             if (supportEntity != null && supportEntity.IsDynamic)
@@ -488,8 +488,8 @@ namespace BEPUphysics.Character
                         //The error in world space is now available.  We can't use this error to directly create a velocity bias, though.
                         //It needs to be transformed into constraint space where the constraint operates.
                         //Use the jacobians!
-                        FPVector3.Dot(ref error, ref linearJacobianA1, out positionCorrectionBias.X);
-                        FPVector3.Dot(ref error, ref linearJacobianA2, out positionCorrectionBias.Y);
+                        FPVector3.Dot(ref error, ref linearJacobianA1, out positionCorrectionBias.x);
+                        FPVector3.Dot(ref error, ref linearJacobianA2, out positionCorrectionBias.y);
                         //Scale the error so that a portion of the error is resolved each frame.
                         FPVector2.Multiply(ref positionCorrectionBias, F64.C0p2 / dt, out positionCorrectionBias);
                     }
@@ -522,11 +522,11 @@ namespace BEPUphysics.Character
             Vector3 impulse;
             Vector3 torque;
 #endif
-            FP x = accumulatedImpulse.X;
-            FP y = accumulatedImpulse.Y;
-            impulse.X = linearJacobianA1.X * x + linearJacobianA2.X * y;
-            impulse.Y = linearJacobianA1.Y * x + linearJacobianA2.Y * y;
-            impulse.Z = linearJacobianA1.Z * x + linearJacobianA2.Z * y;
+            FP x = accumulatedImpulse.x;
+            FP y = accumulatedImpulse.y;
+            impulse.x = linearJacobianA1.x * x + linearJacobianA2.x * y;
+            impulse.y = linearJacobianA1.y * x + linearJacobianA2.y * y;
+            impulse.z = linearJacobianA1.z * x + linearJacobianA2.z * y;
 
             characterBody.ApplyLinearImpulse(ref impulse);
 
@@ -536,9 +536,9 @@ namespace BEPUphysics.Character
 
                 x *= supportForceFactor;
                 y *= supportForceFactor;
-                torque.X = x * angularJacobianB1.X + y * angularJacobianB2.X;
-                torque.Y = x * angularJacobianB1.Y + y * angularJacobianB2.Y;
-                torque.Z = x * angularJacobianB1.Z + y * angularJacobianB2.Z;
+                torque.x = x * angularJacobianB1.x + y * angularJacobianB2.x;
+                torque.y = x * angularJacobianB1.y + y * angularJacobianB2.y;
+                torque.z = x * angularJacobianB1.z + y * angularJacobianB2.z;
 
 
                 supportEntity.ApplyLinearImpulse(ref impulse);
@@ -572,8 +572,8 @@ namespace BEPUphysics.Character
                 //The constraint is not permitted to slow down the character; only speed it up.
                 //This offers a hole for an exploit; by jumping and curving just right,
                 //the character can accelerate beyond its maximum speed.  A bit like an HL2 speed run.
-                accumulatedImpulse.X = MathHelper.Clamp(accumulatedImpulse.X + lambda.X, F64.C0, maxForceDt);
-                accumulatedImpulse.Y = F64.C0;
+                accumulatedImpulse.x = MathHelper.Clamp(accumulatedImpulse.x + lambda.x, F64.C0, maxForceDt);
+                accumulatedImpulse.y = F64.C0;
             }
             else
             {
@@ -584,9 +584,9 @@ namespace BEPUphysics.Character
                 {
                     FPVector2.Multiply(ref accumulatedImpulse, maxForceDt / FP.Sqrt(length), out accumulatedImpulse);
                 }
-                if (isTryingToMove && accumulatedImpulse.X > maxAccelerationForceDt)
+                if (isTryingToMove && accumulatedImpulse.x > maxAccelerationForceDt)
                 {
-                    accumulatedImpulse.X = maxAccelerationForceDt;
+                    accumulatedImpulse.x = maxAccelerationForceDt;
                 }
             }
             FPVector2.Subtract(ref accumulatedImpulse, ref previousAccumulatedImpulse, out lambda);
@@ -601,11 +601,11 @@ namespace BEPUphysics.Character
             Vector3 impulse;
             Vector3 torque;
 #endif
-            FP x = lambda.X;
-            FP y = lambda.Y;
-            impulse.X = linearJacobianA1.X * x + linearJacobianA2.X * y;
-            impulse.Y = linearJacobianA1.Y * x + linearJacobianA2.Y * y;
-            impulse.Z = linearJacobianA1.Z * x + linearJacobianA2.Z * y;
+            FP x = lambda.x;
+            FP y = lambda.y;
+            impulse.x = linearJacobianA1.x * x + linearJacobianA2.x * y;
+            impulse.y = linearJacobianA1.y * x + linearJacobianA2.y * y;
+            impulse.z = linearJacobianA1.z * x + linearJacobianA2.z * y;
 
             characterBody.ApplyLinearImpulse(ref impulse);
 
@@ -615,15 +615,15 @@ namespace BEPUphysics.Character
 
                 x *= supportForceFactor;
                 y *= supportForceFactor;
-                torque.X = x * angularJacobianB1.X + y * angularJacobianB2.X;
-                torque.Y = x * angularJacobianB1.Y + y * angularJacobianB2.Y;
-                torque.Z = x * angularJacobianB1.Z + y * angularJacobianB2.Z;
+                torque.x = x * angularJacobianB1.x + y * angularJacobianB2.x;
+                torque.y = x * angularJacobianB1.y + y * angularJacobianB2.y;
+                torque.z = x * angularJacobianB1.z + y * angularJacobianB2.z;
 
                 supportEntity.ApplyLinearImpulse(ref impulse);
                 supportEntity.ApplyAngularImpulse(ref torque);
             }
 
-            return (FP.Abs(lambda.X) + FP.Abs(lambda.Y));
+            return (FP.Abs(lambda.x) + FP.Abs(lambda.y));
 
 
         }
@@ -646,20 +646,20 @@ namespace BEPUphysics.Character
                 Vector2 relativeVelocity;
 #endif
 
-                FPVector3.Dot(ref linearJacobianA1, ref characterBody.linearVelocity, out relativeVelocity.X);
-                FPVector3.Dot(ref linearJacobianA2, ref characterBody.linearVelocity, out relativeVelocity.Y);
+                FPVector3.Dot(ref linearJacobianA1, ref characterBody.linearVelocity, out relativeVelocity.x);
+                FPVector3.Dot(ref linearJacobianA2, ref characterBody.linearVelocity, out relativeVelocity.y);
 
                 FP x, y;
                 if (supportEntity != null)
                 {
                     FPVector3.Dot(ref linearJacobianB1, ref supportEntity.linearVelocity, out x);
                     FPVector3.Dot(ref linearJacobianB2, ref supportEntity.linearVelocity, out y);
-                    relativeVelocity.X += x;
-                    relativeVelocity.Y += y;
+                    relativeVelocity.x += x;
+                    relativeVelocity.y += y;
                     FPVector3.Dot(ref angularJacobianB1, ref supportEntity.angularVelocity, out x);
                     FPVector3.Dot(ref angularJacobianB2, ref supportEntity.angularVelocity, out y);
-                    relativeVelocity.X += x;
-                    relativeVelocity.Y += y;
+                    relativeVelocity.x += x;
+                    relativeVelocity.y += y;
 
                 }
                 return relativeVelocity;
@@ -701,9 +701,9 @@ namespace BEPUphysics.Character
             {
 
                 FPVector3 impulse;
-                impulse.X = accumulatedImpulse.X * linearJacobianA1.X + accumulatedImpulse.Y * linearJacobianA2.X;
-                impulse.Y = accumulatedImpulse.X * linearJacobianA1.Y + accumulatedImpulse.Y * linearJacobianA2.Y;
-                impulse.Z = accumulatedImpulse.X * linearJacobianA1.Z + accumulatedImpulse.Y * linearJacobianA2.Z;
+                impulse.x = accumulatedImpulse.x * linearJacobianA1.x + accumulatedImpulse.y * linearJacobianA2.x;
+                impulse.y = accumulatedImpulse.x * linearJacobianA1.y + accumulatedImpulse.y * linearJacobianA2.y;
+                impulse.z = accumulatedImpulse.x * linearJacobianA1.z + accumulatedImpulse.y * linearJacobianA2.z;
                 return impulse;
             }
         }

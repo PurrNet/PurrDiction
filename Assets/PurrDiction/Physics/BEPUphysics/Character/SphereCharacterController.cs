@@ -384,18 +384,18 @@ namespace BEPUphysics.Character
                 //The expansion allows the downward pointing raycast to collect hit points.
                 FPVector3 expansion = SupportFinder.MaximumAssistedDownStepHeight * down;
                 FPBoundingBox box = Body.CollisionInformation.BoundingBox;
-                if (down.X < F64.C0)
-                    box.Min.X += expansion.X;
+                if (down.x < F64.C0)
+                    box.Min.x += expansion.x;
                 else
-                    box.Max.X += expansion.X;
-                if (down.Y < F64.C0)
-                    box.Min.Y += expansion.Y;
+                    box.Max.x += expansion.x;
+                if (down.y < F64.C0)
+                    box.Min.y += expansion.y;
                 else
-                    box.Max.Y += expansion.Y;
-                if (down.Z < F64.C0)
-                    box.Min.Z += expansion.Z;
+                    box.Max.y += expansion.y;
+                if (down.z < F64.C0)
+                    box.Min.z += expansion.z;
                 else
-                    box.Max.Z += expansion.Z;
+                    box.Max.z += expansion.z;
                 Body.CollisionInformation.BoundingBox = box;
             }
 

@@ -101,9 +101,9 @@ namespace BEPUphysics.Vehicle
             Matrix.Transform(ref wheel.suspension.localDirection, ref worldTransform, out worldDirection);
 
             FP length = wheel.suspension.currentLength;
-            newPosition.X = worldAttachmentPoint.X + worldDirection.X * length;
-            newPosition.Y = worldAttachmentPoint.Y + worldDirection.Y * length;
-            newPosition.Z = worldAttachmentPoint.Z + worldDirection.Z * length;
+            newPosition.x = worldAttachmentPoint.x + worldDirection.x * length;
+            newPosition.y = worldAttachmentPoint.y + worldDirection.y * length;
+            newPosition.z = worldAttachmentPoint.z + worldDirection.z * length;
 
             Matrix spinTransform;
 
@@ -216,25 +216,25 @@ namespace BEPUphysics.Vehicle
             FPBoundingBox boundingBox;
             shape.GetBoundingBox(ref initialTransform, out boundingBox);
             var expansion = wheel.suspension.localDirection * wheel.suspension.restLength;
-            if (expansion.X > F64.C0)
-                boundingBox.Max.X += expansion.X;
-            else if (expansion.X < F64.C0)
-                boundingBox.Min.X += expansion.X;
+            if (expansion.x > F64.C0)
+                boundingBox.Max.x += expansion.x;
+            else if (expansion.x < F64.C0)
+                boundingBox.Min.x += expansion.x;
 
-            if (expansion.Y > F64.C0)
-                boundingBox.Max.Y += expansion.Y;
-            else if (expansion.Y < F64.C0)
-                boundingBox.Min.Y += expansion.Y;
+            if (expansion.y > F64.C0)
+                boundingBox.Max.y += expansion.y;
+            else if (expansion.y < F64.C0)
+                boundingBox.Min.y += expansion.y;
 
-            if (expansion.Z > F64.C0)
-                boundingBox.Max.Z += expansion.Z;
-            else if (expansion.Z < F64.C0)
-                boundingBox.Min.Z += expansion.Z;
+            if (expansion.z > F64.C0)
+                boundingBox.Max.z += expansion.z;
+            else if (expansion.z < F64.C0)
+                boundingBox.Min.z += expansion.z;
 
 
-            detector.Width = boundingBox.Max.X - boundingBox.Min.X;
-            detector.Height = boundingBox.Max.Y - boundingBox.Min.Y;
-            detector.Length = boundingBox.Max.Z - boundingBox.Min.Z;
+            detector.Width = boundingBox.Max.x - boundingBox.Min.x;
+            detector.Height = boundingBox.Max.y - boundingBox.Min.y;
+            detector.Length = boundingBox.Max.z - boundingBox.Min.z;
         }
 
         /// <summary>
@@ -248,9 +248,9 @@ namespace BEPUphysics.Vehicle
             Vector3 newPosition;
 #endif
 
-            newPosition.X = wheel.suspension.worldAttachmentPoint.X + wheel.suspension.worldDirection.X * wheel.suspension.restLength * F64.C0p5;
-            newPosition.Y = wheel.suspension.worldAttachmentPoint.Y + wheel.suspension.worldDirection.Y * wheel.suspension.restLength * F64.C0p5;
-            newPosition.Z = wheel.suspension.worldAttachmentPoint.Z + wheel.suspension.worldDirection.Z * wheel.suspension.restLength * F64.C0p5;
+            newPosition.x = wheel.suspension.worldAttachmentPoint.x + wheel.suspension.worldDirection.x * wheel.suspension.restLength * F64.C0p5;
+            newPosition.y = wheel.suspension.worldAttachmentPoint.y + wheel.suspension.worldDirection.y * wheel.suspension.restLength * F64.C0p5;
+            newPosition.z = wheel.suspension.worldAttachmentPoint.z + wheel.suspension.worldDirection.z * wheel.suspension.restLength * F64.C0p5;
 
             detector.Position = newPosition;
             if (IncludeSteeringTransformInCast)

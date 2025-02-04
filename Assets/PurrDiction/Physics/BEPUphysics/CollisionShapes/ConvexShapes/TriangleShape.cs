@@ -158,9 +158,9 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
 
             //Compute the inertia tensor.
             var v = new Matrix3x3(
-                vA.X, vA.Y, vA.Z,
-                vB.X, vB.Y, vB.Z,
-                vC.X, vC.Y, vC.Z);
+                vA.x, vA.y, vA.z,
+                vB.x, vB.y, vB.z,
+                vC.x, vC.y, vC.z);
             var s = new Matrix3x3(
 				F64.C2, F64.C1, F64.C1,
 				F64.C1, F64.C2, F64.C1,
@@ -204,12 +204,12 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
             FPVector3.Max(ref a, ref b, out boundingBox.Max);
             FPVector3.Max(ref c, ref boundingBox.Max, out boundingBox.Max);
 
-            boundingBox.Min.X += shapeTransform.Position.X - collisionMargin;
-            boundingBox.Min.Y += shapeTransform.Position.Y - collisionMargin;
-            boundingBox.Min.Z += shapeTransform.Position.Z - collisionMargin;
-            boundingBox.Max.X += shapeTransform.Position.X + collisionMargin;
-            boundingBox.Max.Y += shapeTransform.Position.Y + collisionMargin;
-            boundingBox.Max.Z += shapeTransform.Position.Z + collisionMargin;
+            boundingBox.Min.x += shapeTransform.Position.x - collisionMargin;
+            boundingBox.Min.y += shapeTransform.Position.y - collisionMargin;
+            boundingBox.Min.z += shapeTransform.Position.z - collisionMargin;
+            boundingBox.Max.x += shapeTransform.Position.x + collisionMargin;
+            boundingBox.Max.y += shapeTransform.Position.y + collisionMargin;
+            boundingBox.Max.z += shapeTransform.Position.z + collisionMargin;
         }
 
 
@@ -260,25 +260,25 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
             //I = I + [ (-j * j)  (j * j + z * z)  (-j * z) ]
             //	      [ (-j * z)  (-j * z)  (j * j + j * j) ]
 
-            FP i = vA.X - center.X;
-            FP j = vA.Y - center.Y;
-            FP k = vA.Z - center.Z;
+            FP i = vA.x - center.x;
+            FP j = vA.y - center.y;
+            FP k = vA.z - center.z;
             //localInertiaTensor += new Matrix(j * j + k * k, -j * j, -j * k, 0, -j * j, j * j + k * k, -j * k, 0, -j * k, -j * k, j * j + j * j, 0, 0, 0, 0, 0); //No mass per point.
             var volumeDistribution = new Matrix3x3(massPerPoint * (j * j + k * k), massPerPoint * (-i * j), massPerPoint * (-i * k),
                                                    massPerPoint * (-i * j), massPerPoint * (i * i + k * k), massPerPoint * (-j * k),
                                                    massPerPoint * (-i * k), massPerPoint * (-j * k), massPerPoint * (i * i + j * j));
 
-            i = vB.X - center.X;
-            j = vB.Y - center.Y;
-            k = vB.Z - center.Z;
+            i = vB.x - center.x;
+            j = vB.y - center.y;
+            k = vB.z - center.z;
             var pointContribution = new Matrix3x3(massPerPoint * (j * j + k * k), massPerPoint * (-i * j), massPerPoint * (-i * k),
                                                   massPerPoint * (-i * j), massPerPoint * (i * i + k * k), massPerPoint * (-j * k),
                                                   massPerPoint * (-i * k), massPerPoint * (-j * k), massPerPoint * (i * i + j * j));
             Matrix3x3.Add(ref volumeDistribution, ref pointContribution, out volumeDistribution);
 
-            i = vC.X - center.X;
-            j = vC.Y - center.Y;
-            k = vC.Z - center.Z;
+            i = vC.x - center.x;
+            j = vC.y - center.y;
+            k = vC.z - center.z;
             pointContribution = new Matrix3x3(massPerPoint * (j * j + k * k), massPerPoint * (-i * j), massPerPoint * (-i * k),
                                               massPerPoint * (-i * j), massPerPoint * (i * i + k * k), massPerPoint * (-j * k),
                                               massPerPoint * (-i * k), massPerPoint * (-j * k), massPerPoint * (i * i + j * j));

@@ -426,15 +426,15 @@ namespace BEPUphysics.DataStructures
                 FPVector3 offset;
                 FP originalAVolume, originalBVolume;
                 FPVector3.Subtract(ref childA.BoundingBox.Max, ref childA.BoundingBox.Min, out offset);
-                originalAVolume = offset.X * offset.Y * offset.Z;
+                originalAVolume = offset.x * offset.y * offset.z;
                 FPVector3.Subtract(ref childB.BoundingBox.Max, ref childB.BoundingBox.Min, out offset);
-                originalBVolume = offset.X * offset.Y * offset.Z;
+                originalBVolume = offset.x * offset.y * offset.z;
 
                 FP mergedAVolume, mergedBVolume;
                 FPVector3.Subtract(ref mergedA.Max, ref mergedA.Min, out offset);
-                mergedAVolume = offset.X * offset.Y * offset.Z;
+                mergedAVolume = offset.x * offset.y * offset.z;
                 FPVector3.Subtract(ref mergedB.Max, ref mergedB.Min, out offset);
-                mergedBVolume = offset.X * offset.Y * offset.Z;
+                mergedBVolume = offset.x * offset.y * offset.z;
 
                 //Could use factor increase or absolute difference
                 if (mergedAVolume - originalAVolume < mergedBVolume - originalBVolume)
@@ -615,12 +615,12 @@ namespace BEPUphysics.DataStructures
                 this.element = element;
                 BoundingBox = element.BoundingBox;
                 //Having an ever-so-slight margin allows the hierarchy use a volume metric even for degenerate shapes (consider a flat tessellated plane).
-                BoundingBox.Max.X += LeafMargin;
-                BoundingBox.Max.Y += LeafMargin;
-                BoundingBox.Max.Z += LeafMargin;
-                BoundingBox.Min.X -= LeafMargin;
-                BoundingBox.Min.Y -= LeafMargin;
-                BoundingBox.Min.Z -= LeafMargin;
+                BoundingBox.Max.x += LeafMargin;
+                BoundingBox.Max.y += LeafMargin;
+                BoundingBox.Max.z += LeafMargin;
+                BoundingBox.Min.x -= LeafMargin;
+                BoundingBox.Min.y -= LeafMargin;
+                BoundingBox.Min.z -= LeafMargin;
             }
 
             internal override void GetOverlaps(ref FPBoundingBox boundingBox, IList<T> outputOverlappedElements)
@@ -693,12 +693,12 @@ namespace BEPUphysics.DataStructures
             {
                 BoundingBox = element.BoundingBox;
                 //Having an ever-so-slight margin allows the hierarchy use a volume metric even for degenerate shapes (consider a flat tessellated plane).
-                BoundingBox.Max.X += LeafMargin;
-                BoundingBox.Max.Y += LeafMargin;
-                BoundingBox.Max.Z += LeafMargin;
-                BoundingBox.Min.X -= LeafMargin;
-                BoundingBox.Min.Y -= LeafMargin;
-                BoundingBox.Min.Z -= LeafMargin;
+                BoundingBox.Max.x += LeafMargin;
+                BoundingBox.Max.y += LeafMargin;
+                BoundingBox.Max.z += LeafMargin;
+                BoundingBox.Min.x -= LeafMargin;
+                BoundingBox.Min.y -= LeafMargin;
+                BoundingBox.Min.z -= LeafMargin;
             }
 
             internal override bool RemoveBrute(T entry, out Node replacementNode)

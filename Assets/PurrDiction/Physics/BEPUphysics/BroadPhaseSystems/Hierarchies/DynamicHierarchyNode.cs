@@ -203,15 +203,15 @@ namespace BEPUphysics.BroadPhaseSystems.Hierarchies
             FPVector3 offset;
             FP originalAVolume, originalBVolume;
             FPVector3.Subtract(ref childA.BoundingBox.Max, ref childA.BoundingBox.Min, out offset);
-            originalAVolume = FP.SafeMul(FP.SafeMul(offset.X, offset.Y), offset.Z);
+            originalAVolume = FP.SafeMul(FP.SafeMul(offset.x, offset.y), offset.z);
             FPVector3.Subtract(ref childB.BoundingBox.Max, ref childB.BoundingBox.Min, out offset);
-            originalBVolume = FP.SafeMul(FP.SafeMul(offset.X, offset.Y), offset.Z);
+            originalBVolume = FP.SafeMul(FP.SafeMul(offset.x, offset.y), offset.z);
 
             FP mergedAVolume, mergedBVolume;
             FPVector3.Subtract(ref mergedA.Max, ref mergedA.Min, out offset);
-            mergedAVolume = FP.SafeMul(FP.SafeMul(offset.X, offset.Y), offset.Z);
+            mergedAVolume = FP.SafeMul(FP.SafeMul(offset.x, offset.y), offset.z);
             FPVector3.Subtract(ref mergedB.Max, ref mergedB.Min, out offset);
-            mergedBVolume = FP.SafeMul(FP.SafeMul(offset.X, offset.Y), offset.Z);
+            mergedBVolume = FP.SafeMul(FP.SafeMul(offset.x, offset.y), offset.z);
 
             //Could use factor increase or absolute difference
             if (mergedAVolume - originalAVolume < mergedBVolume - originalBVolume)
@@ -294,7 +294,7 @@ namespace BEPUphysics.BroadPhaseSystems.Hierarchies
             childB.Refit();
             FPBoundingBox.CreateMerged(ref childA.BoundingBox, ref childB.BoundingBox, out BoundingBox);
             //Fix64 DEBUGlastVolume = currentVolume;
-            currentVolume = FP.SafeMul(FP.SafeMul(BoundingBox.Max.X - BoundingBox.Min.X, BoundingBox.Max.Y - BoundingBox.Min.Y), BoundingBox.Max.Z - BoundingBox.Min.Z);
+            currentVolume = FP.SafeMul(FP.SafeMul(BoundingBox.Max.x - BoundingBox.Min.x, BoundingBox.Max.y - BoundingBox.Min.y), BoundingBox.Max.z - BoundingBox.Min.z);
             //if (Math.Abs(currentVolume - DEBUGlastVolume) > .000001 * (DEBUGlastVolume + currentVolume))
             //    Debug.WriteLine(":Break>:)");
         }
@@ -336,16 +336,16 @@ namespace BEPUphysics.BroadPhaseSystems.Hierarchies
             }
             FPVector3 offset;
             FPVector3.Subtract(ref BoundingBox.Max, ref BoundingBox.Min, out offset);
-            currentVolume = FP.SafeMul(FP.SafeMul(offset.X, offset.Y), offset.Z);
+            currentVolume = FP.SafeMul(FP.SafeMul(offset.x, offset.y), offset.z);
             maximumVolume = FP.SafeMul(currentVolume, MaximumVolumeScale);
 
             //Pick an axis and sort along it.
-            if (offset.X > offset.Y && offset.X > offset.Z)
+            if (offset.x > offset.y && offset.x > offset.z)
             {
                 //Maximum variance axis is X.
                 Array.Sort(leafNodes.Elements, begin, end - begin, xComparer);
             }
-            else if (offset.Y > offset.Z)
+            else if (offset.y > offset.z)
             {
                 //Maximum variance axis is Y.  
                 Array.Sort(leafNodes.Elements, begin, end - begin, yComparer);
@@ -433,7 +433,7 @@ namespace BEPUphysics.BroadPhaseSystems.Hierarchies
                 childB.PostRefit(splitDepth, currentDepth + 1);
             }
             FPBoundingBox.CreateMerged(ref childA.BoundingBox, ref childB.BoundingBox, out BoundingBox);
-            currentVolume = FP.SafeMul(FP.SafeMul(BoundingBox.Max.X - BoundingBox.Min.X, BoundingBox.Max.Y - BoundingBox.Min.Y), BoundingBox.Max.Z - BoundingBox.Min.Z);
+            currentVolume = FP.SafeMul(FP.SafeMul(BoundingBox.Max.x - BoundingBox.Min.x, BoundingBox.Max.y - BoundingBox.Min.y), BoundingBox.Max.z - BoundingBox.Min.z);
         }
 
         internal override void GetMultithreadedOverlaps(Node opposingNode, int splitDepth, int currentDepth, DynamicHierarchy owner, RawList<DynamicHierarchy.NodePair> multithreadingSourceOverlaps)
@@ -618,7 +618,7 @@ namespace BEPUphysics.BroadPhaseSystems.Hierarchies
         {
             FPVector3 offset;
             FPVector3.Subtract(ref BoundingBox.Max, ref BoundingBox.Min, out offset);
-            return FP.SafeMul(FP.SafeMul(offset.X, offset.Y), offset.Z) + ChildA.MeasureSubtreeCost() + childB.MeasureSubtreeCost();
+            return FP.SafeMul(FP.SafeMul(offset.x, offset.y), offset.z) + ChildA.MeasureSubtreeCost() + childB.MeasureSubtreeCost();
         }
 
 
@@ -630,21 +630,21 @@ namespace BEPUphysics.BroadPhaseSystems.Hierarchies
         {
             public int Compare(LeafNode x, LeafNode y)
             {
-                return x.BoundingBox.Min.X < y.BoundingBox.Min.X ? -1 : 1;
+                return x.BoundingBox.Min.x < y.BoundingBox.Min.x ? -1 : 1;
             }
         }
         class YComparer : IComparer<LeafNode>
         {
             public int Compare(LeafNode x, LeafNode y)
             {
-                return x.BoundingBox.Min.Y < y.BoundingBox.Min.Y ? -1 : 1;
+                return x.BoundingBox.Min.y < y.BoundingBox.Min.y ? -1 : 1;
             }
         }
         class ZComparer : IComparer<LeafNode>
         {
             public int Compare(LeafNode x, LeafNode y)
             {
-                return x.BoundingBox.Min.Z < y.BoundingBox.Min.Z ? -1 : 1;
+                return x.BoundingBox.Min.z < y.BoundingBox.Min.z ? -1 : 1;
             }
         }
     }
@@ -745,7 +745,7 @@ namespace BEPUphysics.BroadPhaseSystems.Hierarchies
             FPBoundingBox.CreateMerged(ref BoundingBox, ref node.BoundingBox, out newTreeNode.BoundingBox);
             FPVector3 offset;
             FPVector3.Subtract(ref newTreeNode.BoundingBox.Max, ref newTreeNode.BoundingBox.Min, out offset);
-            newTreeNode.currentVolume = FP.SafeMul(FP.SafeMul(offset.X, offset.Y), offset.Z);
+            newTreeNode.currentVolume = FP.SafeMul(FP.SafeMul(offset.x, offset.y), offset.z);
             //newTreeNode.maximumVolume = newTreeNode.currentVolume * InternalNode.MaximumVolumeScale;
             newTreeNode.childA = this;
             newTreeNode.childB = node;
@@ -852,7 +852,7 @@ namespace BEPUphysics.BroadPhaseSystems.Hierarchies
             //Not much value in attempting to assign variable cost to leaves vs internal nodes for this diagnostic.
             FPVector3 offset;
             FPVector3.Subtract(ref BoundingBox.Max, ref BoundingBox.Min, out offset);
-            return FP.SafeMul(FP.SafeMul(offset.X, offset.Y), offset.Z);
+            return FP.SafeMul(FP.SafeMul(offset.x, offset.y), offset.z);
         }
     }
 }

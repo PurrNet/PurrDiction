@@ -37,15 +37,15 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
         public static void GetPointContribution(FP pointWeight, ref FPVector3 center, ref FPVector3 point, out Matrix3x3 contribution)
         {
             FPVector3.Subtract(ref point, ref center, out point);
-			FP xx = pointWeight * point.X * point.X;
-			FP yy = pointWeight * point.Y * point.Y;
-			FP zz = pointWeight * point.Z * point.Z;
+			FP xx = pointWeight * point.x * point.x;
+			FP yy = pointWeight * point.y * point.y;
+			FP zz = pointWeight * point.z * point.z;
             contribution.M11 = yy + zz;
             contribution.M22 = xx + zz;
             contribution.M33 = xx + yy;
-            contribution.M12 = -pointWeight * point.X * point.Y;
-            contribution.M13 = -pointWeight * point.X * point.Z;
-            contribution.M23 = -pointWeight * point.Y * point.Z;
+            contribution.M12 = -pointWeight * point.x * point.y;
+            contribution.M13 = -pointWeight * point.x * point.z;
+            contribution.M23 = -pointWeight * point.y * point.z;
             contribution.M21 = contribution.M12;
             contribution.M31 = contribution.M13;
             contribution.M32 = contribution.M23;
@@ -364,21 +364,21 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
                 FPVector3 v4 = vertices[triangleIndices[i + 2]];
 
                 //Determinant is 6 * volume.  It's signed, though; the mesh isn't necessarily convex and the origin isn't necessarily in the mesh even if it is convex.
-                FP scaledTetrahedronVolume = v2.X * (v3.Z * v4.Y - v3.Y * v4.Z) -
-                                                v3.X * (v2.Z * v4.Y - v2.Y * v4.Z) +
-                                                v4.X * (v2.Z * v3.Y - v2.Y * v3.Z);
+                FP scaledTetrahedronVolume = v2.x * (v3.z * v4.y - v3.y * v4.z) -
+                                                v3.x * (v2.z * v4.y - v2.y * v4.z) +
+                                                v4.x * (v2.z * v3.y - v2.y * v3.z);
 
                 scaledVolume += scaledTetrahedronVolume;
 
-                a += scaledTetrahedronVolume * (v2.Y * v2.Y + v2.Y * v3.Y + v3.Y * v3.Y + v2.Y * v4.Y + v3.Y * v4.Y + v4.Y * v4.Y +
-                                                v2.Z * v2.Z + v2.Z * v3.Z + v3.Z * v3.Z + v2.Z * v4.Z + v3.Z * v4.Z + v4.Z * v4.Z);
-                b += scaledTetrahedronVolume * (v2.X * v2.X + v2.X * v3.X + v3.X * v3.X + v2.X * v4.X + v3.X * v4.X + v4.X * v4.X +
-                                                v2.Z * v2.Z + v2.Z * v3.Z + v3.Z * v3.Z + v2.Z * v4.Z + v3.Z * v4.Z + v4.Z * v4.Z);
-                c += scaledTetrahedronVolume * (v2.X * v2.X + v2.X * v3.X + v3.X * v3.X + v2.X * v4.X + v3.X * v4.X + v4.X * v4.X +
-                                                v2.Y * v2.Y + v2.Y * v3.Y + v3.Y * v3.Y + v2.Y * v4.Y + v3.Y * v4.Y + v4.Y * v4.Y);
-                ao += scaledTetrahedronVolume * (F64.C2 * v2.Y * v2.Z + v3.Y * v2.Z + v4.Y * v2.Z + v2.Y * v3.Z + F64.C2 * v3.Y * v3.Z + v4.Y * v3.Z + v2.Y * v4.Z + v3.Y * v4.Z + F64.C2 * v4.Y * v4.Z);
-                bo += scaledTetrahedronVolume * (F64.C2 * v2.X * v2.Z + v3.X * v2.Z + v4.X * v2.Z + v2.X * v3.Z + F64.C2 * v3.X * v3.Z + v4.X * v3.Z + v2.X * v4.Z + v3.X * v4.Z + F64.C2 * v4.X * v4.Z);
-                co += scaledTetrahedronVolume * (F64.C2 * v2.X * v2.Y + v3.X * v2.Y + v4.X * v2.Y + v2.X * v3.Y + F64.C2 * v3.X * v3.Y + v4.X * v3.Y + v2.X * v4.Y + v3.X * v4.Y + F64.C2 * v4.X * v4.Y);
+                a += scaledTetrahedronVolume * (v2.y * v2.y + v2.y * v3.y + v3.y * v3.y + v2.y * v4.y + v3.y * v4.y + v4.y * v4.y +
+                                                v2.z * v2.z + v2.z * v3.z + v3.z * v3.z + v2.z * v4.z + v3.z * v4.z + v4.z * v4.z);
+                b += scaledTetrahedronVolume * (v2.x * v2.x + v2.x * v3.x + v3.x * v3.x + v2.x * v4.x + v3.x * v4.x + v4.x * v4.x +
+                                                v2.z * v2.z + v2.z * v3.z + v3.z * v3.z + v2.z * v4.z + v3.z * v4.z + v4.z * v4.z);
+                c += scaledTetrahedronVolume * (v2.x * v2.x + v2.x * v3.x + v3.x * v3.x + v2.x * v4.x + v3.x * v4.x + v4.x * v4.x +
+                                                v2.y * v2.y + v2.y * v3.y + v3.y * v3.y + v2.y * v4.y + v3.y * v4.y + v4.y * v4.y);
+                ao += scaledTetrahedronVolume * (F64.C2 * v2.y * v2.z + v3.y * v2.z + v4.y * v2.z + v2.y * v3.z + F64.C2 * v3.y * v3.z + v4.y * v3.z + v2.y * v4.z + v3.y * v4.z + F64.C2 * v4.y * v4.z);
+                bo += scaledTetrahedronVolume * (F64.C2 * v2.x * v2.z + v3.x * v2.z + v4.x * v2.z + v2.x * v3.z + F64.C2 * v3.x * v3.z + v4.x * v3.z + v2.x * v4.z + v3.x * v4.z + F64.C2 * v4.x * v4.z);
+                co += scaledTetrahedronVolume * (F64.C2 * v2.x * v2.y + v3.x * v2.y + v4.x * v2.y + v2.x * v3.y + F64.C2 * v3.x * v3.y + v4.x * v3.y + v2.x * v4.y + v3.x * v4.y + F64.C2 * v4.x * v4.y);
             }
             volume = scaledVolume / F64.C6;
             FP scaledDensity = F64.C1 / volume;
@@ -425,9 +425,9 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
                 FPVector3 v4 = vertices[triangleIndices[i + 2]];
 
                 //Determinant is 6 * volume.  It's signed, though; the mesh isn't necessarily convex and the origin isn't necessarily in the mesh even if it is convex.
-                FP scaledTetrahedronVolume = v2.X * (v3.Z * v4.Y - v3.Y * v4.Z) -
-                                                v3.X * (v2.Z * v4.Y - v2.Y * v4.Z) +
-                                                v4.X * (v2.Z * v3.Y - v2.Y * v3.Z);
+                FP scaledTetrahedronVolume = v2.x * (v3.z * v4.y - v3.y * v4.z) -
+                                                v3.x * (v2.z * v4.y - v2.y * v4.z) +
+                                                v4.x * (v2.z * v3.y - v2.y * v3.z);
 
                 scaledVolume += scaledTetrahedronVolume;
 
@@ -437,15 +437,15 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
                 FPVector3.Multiply(ref tetrahedronCentroid, scaledTetrahedronVolume, out tetrahedronCentroid);
                 FPVector3.Add(ref tetrahedronCentroid, ref summedCenter, out summedCenter);
 
-                a += scaledTetrahedronVolume * (v2.Y * v2.Y + v2.Y * v3.Y + v3.Y * v3.Y + v2.Y * v4.Y + v3.Y * v4.Y + v4.Y * v4.Y +
-                                                v2.Z * v2.Z + v2.Z * v3.Z + v3.Z * v3.Z + v2.Z * v4.Z + v3.Z * v4.Z + v4.Z * v4.Z);
-                b += scaledTetrahedronVolume * (v2.X * v2.X + v2.X * v3.X + v3.X * v3.X + v2.X * v4.X + v3.X * v4.X + v4.X * v4.X +
-                                                v2.Z * v2.Z + v2.Z * v3.Z + v3.Z * v3.Z + v2.Z * v4.Z + v3.Z * v4.Z + v4.Z * v4.Z);
-                c += scaledTetrahedronVolume * (v2.X * v2.X + v2.X * v3.X + v3.X * v3.X + v2.X * v4.X + v3.X * v4.X + v4.X * v4.X +
-                                                v2.Y * v2.Y + v2.Y * v3.Y + v3.Y * v3.Y + v2.Y * v4.Y + v3.Y * v4.Y + v4.Y * v4.Y);
-                ao += scaledTetrahedronVolume * (F64.C2 * v2.Y * v2.Z + v3.Y * v2.Z + v4.Y * v2.Z + v2.Y * v3.Z + F64.C2 * v3.Y * v3.Z + v4.Y * v3.Z + v2.Y * v4.Z + v3.Y * v4.Z + F64.C2 * v4.Y * v4.Z);
-                bo += scaledTetrahedronVolume * (F64.C2 * v2.X * v2.Z + v3.X * v2.Z + v4.X * v2.Z + v2.X * v3.Z + F64.C2 * v3.X * v3.Z + v4.X * v3.Z + v2.X * v4.Z + v3.X * v4.Z + F64.C2 * v4.X * v4.Z);
-                co += scaledTetrahedronVolume * (F64.C2 * v2.X * v2.Y + v3.X * v2.Y + v4.X * v2.Y + v2.X * v3.Y + F64.C2 * v3.X * v3.Y + v4.X * v3.Y + v2.X * v4.Y + v3.X * v4.Y + F64.C2 * v4.X * v4.Y);
+                a += scaledTetrahedronVolume * (v2.y * v2.y + v2.y * v3.y + v3.y * v3.y + v2.y * v4.y + v3.y * v4.y + v4.y * v4.y +
+                                                v2.z * v2.z + v2.z * v3.z + v3.z * v3.z + v2.z * v4.z + v3.z * v4.z + v4.z * v4.z);
+                b += scaledTetrahedronVolume * (v2.x * v2.x + v2.x * v3.x + v3.x * v3.x + v2.x * v4.x + v3.x * v4.x + v4.x * v4.x +
+                                                v2.z * v2.z + v2.z * v3.z + v3.z * v3.z + v2.z * v4.z + v3.z * v4.z + v4.z * v4.z);
+                c += scaledTetrahedronVolume * (v2.x * v2.x + v2.x * v3.x + v3.x * v3.x + v2.x * v4.x + v3.x * v4.x + v4.x * v4.x +
+                                                v2.y * v2.y + v2.y * v3.y + v3.y * v3.y + v2.y * v4.y + v3.y * v4.y + v4.y * v4.y);
+                ao += scaledTetrahedronVolume * (F64.C2 * v2.y * v2.z + v3.y * v2.z + v4.y * v2.z + v2.y * v3.z + F64.C2 * v3.y * v3.z + v4.y * v3.z + v2.y * v4.z + v3.y * v4.z + F64.C2 * v4.y * v4.z);
+                bo += scaledTetrahedronVolume * (F64.C2 * v2.x * v2.z + v3.x * v2.z + v4.x * v2.z + v2.x * v3.z + F64.C2 * v3.x * v3.z + v4.x * v3.z + v2.x * v4.z + v3.x * v4.z + F64.C2 * v4.x * v4.z);
+                co += scaledTetrahedronVolume * (F64.C2 * v2.x * v2.y + v3.x * v2.y + v4.x * v2.y + v2.x * v3.y + F64.C2 * v3.x * v3.y + v4.x * v3.y + v2.x * v4.y + v3.x * v4.y + F64.C2 * v4.x * v4.y);
             }
             if (scaledVolume < Toolbox.Epsilon)
             {

@@ -46,22 +46,22 @@ namespace BEPUik
 
             angularJacobian = new Matrix3x3
             {
-                M11 = constrainedAxis1.X,
-                M12 = constrainedAxis1.Y,
-                M13 = constrainedAxis1.Z,
-                M21 = constrainedAxis2.X,
-                M22 = constrainedAxis2.Y,
-                M23 = constrainedAxis2.Z
+                M11 = constrainedAxis1.x,
+                M12 = constrainedAxis1.y,
+                M13 = constrainedAxis1.z,
+                M21 = constrainedAxis2.x,
+                M22 = constrainedAxis2.y,
+                M23 = constrainedAxis2.z
             };
 
 
             FPVector3 error;
             FPVector3.Cross(ref boneAxis, ref freeAxis, out error);
             FPVector2 constraintSpaceError;
-            FPVector3.Dot(ref error, ref constrainedAxis1, out constraintSpaceError.X);
-            FPVector3.Dot(ref error, ref constrainedAxis2, out constraintSpaceError.Y);
-            velocityBias.X = errorCorrectionFactor * constraintSpaceError.X;
-            velocityBias.Y = errorCorrectionFactor * constraintSpaceError.Y;
+            FPVector3.Dot(ref error, ref constrainedAxis1, out constraintSpaceError.x);
+            FPVector3.Dot(ref error, ref constrainedAxis2, out constraintSpaceError.y);
+            velocityBias.x = errorCorrectionFactor * constraintSpaceError.x;
+            velocityBias.y = errorCorrectionFactor * constraintSpaceError.y;
 
 
         }

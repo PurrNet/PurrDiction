@@ -200,20 +200,20 @@ namespace BEPUphysics.BroadPhaseEntries.MobileCollidables
             {
                 bool useExtraExpansion = MotionSettings.UseExtraExpansionForContinuousBoundingBoxes && entity.PositionUpdateMode == PositionUpdateMode.Continuous;
                 FP velocityScaling = useExtraExpansion ? 2 : 1;
-                if (entity.linearVelocity.X > F64.C0)
-                    boundingBox.Max.X += entity.linearVelocity.X * dt * velocityScaling;
+                if (entity.linearVelocity.x > F64.C0)
+                    boundingBox.Max.x += entity.linearVelocity.x * dt * velocityScaling;
                 else
-                    boundingBox.Min.X += entity.linearVelocity.X * dt * velocityScaling;
+                    boundingBox.Min.x += entity.linearVelocity.x * dt * velocityScaling;
 
-                if (entity.linearVelocity.Y > F64.C0)
-                    boundingBox.Max.Y += entity.linearVelocity.Y * dt * velocityScaling;
+                if (entity.linearVelocity.y > F64.C0)
+                    boundingBox.Max.y += entity.linearVelocity.y * dt * velocityScaling;
                 else
-                    boundingBox.Min.Y += entity.linearVelocity.Y * dt * velocityScaling;
+                    boundingBox.Min.y += entity.linearVelocity.y * dt * velocityScaling;
 
-                if (entity.linearVelocity.Z > F64.C0)
-                    boundingBox.Max.Z += entity.linearVelocity.Z * dt * velocityScaling;
+                if (entity.linearVelocity.z > F64.C0)
+                    boundingBox.Max.z += entity.linearVelocity.z * dt * velocityScaling;
                 else
-                    boundingBox.Min.Z += entity.linearVelocity.Z * dt * velocityScaling;
+                    boundingBox.Min.z += entity.linearVelocity.z * dt * velocityScaling;
 
 
 
@@ -236,13 +236,13 @@ namespace BEPUphysics.BroadPhaseEntries.MobileCollidables
                     expansion = FP.Sqrt(expansion) * dt;
 
 
-                    boundingBox.Min.X -= expansion;
-                    boundingBox.Min.Y -= expansion;
-                    boundingBox.Min.Z -= expansion;
+                    boundingBox.Min.x -= expansion;
+                    boundingBox.Min.y -= expansion;
+                    boundingBox.Min.z -= expansion;
 
-                    boundingBox.Max.X += expansion;
-                    boundingBox.Max.Y += expansion;
-                    boundingBox.Max.Z += expansion;
+                    boundingBox.Max.x += expansion;
+                    boundingBox.Max.y += expansion;
+                    boundingBox.Max.z += expansion;
 
                 }
 

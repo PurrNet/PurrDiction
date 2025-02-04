@@ -38,8 +38,8 @@ namespace BEPUphysics.BroadPhaseSystems.SortAndSweep
 
         internal static void ComputeCell(ref FPVector3 v, out Int2 cell)
         {
-            cell.Y = (int)FP.Floor(v.Y * cellSizeInverse);
-            cell.Z = (int)FP.Floor(v.Z * cellSizeInverse);
+            cell.Y = (int)FP.Floor(v.y * cellSizeInverse);
+            cell.Z = (int)FP.Floor(v.z * cellSizeInverse);
         }
 
         
@@ -84,7 +84,7 @@ namespace BEPUphysics.BroadPhaseSystems.SortAndSweep
             //Entities do not set up their own bounding box before getting stuck in here.  If they're all zeroed out, the tree will be horrible.
             FPVector3 offset;
             FPVector3.Subtract(ref entry.boundingBox.Max, ref entry.boundingBox.Min, out offset);
-            if (offset.X * offset.Y * offset.Z == F64.C0)
+            if (offset.x * offset.y * offset.z == F64.C0)
                 entry.UpdateBoundingBox();
             var newEntry = entryPool.Take();
             newEntry.Initialize(entry);

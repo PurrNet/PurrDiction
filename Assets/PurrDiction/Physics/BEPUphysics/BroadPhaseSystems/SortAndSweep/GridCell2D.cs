@@ -23,9 +23,9 @@ namespace BEPUphysics.BroadPhaseSystems.SortAndSweep
             while (maxIndex - minIndex > 0)
             {
                 index = (maxIndex + minIndex) / 2;
-                if (entries.Elements[index].item.boundingBox.Min.X > x)
+                if (entries.Elements[index].item.boundingBox.Min.x > x)
                     maxIndex = index;
-                else if (entries.Elements[index].item.boundingBox.Min.X < x)
+                else if (entries.Elements[index].item.boundingBox.Min.x < x)
                     minIndex = ++index;
                 else
                     break; //Found an equal value!
@@ -37,7 +37,7 @@ namespace BEPUphysics.BroadPhaseSystems.SortAndSweep
         internal void Add(Grid2DEntry entry)
         {
             //binary search for the approximately correct location.  This helps prevent large first-frame sort times.
-            entries.Insert(GetIndex(entry.item.boundingBox.Min.X), entry);
+            entries.Insert(GetIndex(entry.item.boundingBox.Min.x), entry);
         }
 
         internal void Remove(Grid2DEntry entry)
@@ -53,7 +53,7 @@ namespace BEPUphysics.BroadPhaseSystems.SortAndSweep
                 var entry = entries.Elements[i];
                 for (int j = i - 1; j >= 0; j--)
                 {
-                    if (entry.item.boundingBox.Min.X < entries.Elements[j].item.boundingBox.Min.X)
+                    if (entry.item.boundingBox.Min.x < entries.Elements[j].item.boundingBox.Min.x)
                     {
                         entries.Elements[j + 1] = entries.Elements[j];
                         entries.Elements[j] = entry;
@@ -68,10 +68,10 @@ namespace BEPUphysics.BroadPhaseSystems.SortAndSweep
                 Grid2DEntry a = entries.Elements[i];
                 Grid2DEntry b;
                 //TODO: Microoptimize
-                for (int j = i + 1; j < entries.Count && a.item.boundingBox.Max.X >= (b = entries.Elements[j]).item.boundingBox.Min.X; j++)
+                for (int j = i + 1; j < entries.Count && a.item.boundingBox.Max.x >= (b = entries.Elements[j]).item.boundingBox.Min.x; j++)
                 {
-                    if (!(a.item.boundingBox.Min.Y > b.item.boundingBox.Max.Y || a.item.boundingBox.Max.Y < b.item.boundingBox.Min.Y ||
-                          a.item.boundingBox.Min.Z > b.item.boundingBox.Max.Z || a.item.boundingBox.Max.Z < b.item.boundingBox.Min.Z))
+                    if (!(a.item.boundingBox.Min.y > b.item.boundingBox.Max.y || a.item.boundingBox.Max.y < b.item.boundingBox.Min.y ||
+                          a.item.boundingBox.Min.z > b.item.boundingBox.Max.z || a.item.boundingBox.Max.z < b.item.boundingBox.Min.z))
                     {
                         //Now we know this pair is overlapping, but we do not know if this overlap is already added.
                         //Rather than use a hashset or other heavy structure to check, rely on the rules of the grid.

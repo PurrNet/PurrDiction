@@ -198,7 +198,7 @@ namespace BEPUphysics.Constraints.SingleEntity
             FPVector3.Cross(ref r, ref lambda, out taImpulse);
             entity.ApplyAngularImpulse(ref taImpulse);
 
-            return (FP.Abs(lambda.X) + FP.Abs(lambda.Y) + FP.Abs(lambda.Z));
+            return (FP.Abs(lambda.x) + FP.Abs(lambda.y) + FP.Abs(lambda.z));
         }
 
         ///<summary>
@@ -232,9 +232,9 @@ namespace BEPUphysics.Constraints.SingleEntity
                     if (length > settings.servo.maxCorrectiveVelocitySquared)
                     {
                         FP multiplier = settings.servo.maxCorrectiveVelocity / FP.Sqrt(length);
-                        biasVelocity.X *= multiplier;
-                        biasVelocity.Y *= multiplier;
-                        biasVelocity.Z *= multiplier;
+                        biasVelocity.x *= multiplier;
+                        biasVelocity.y *= multiplier;
+                        biasVelocity.z *= multiplier;
                     }
                 }
                 else

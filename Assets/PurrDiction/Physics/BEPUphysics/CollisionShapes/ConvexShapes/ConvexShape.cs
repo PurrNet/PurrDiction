@@ -163,13 +163,13 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
             TransformLocalExtremePoints(ref left, ref down, ref forward, ref o, out negative);
 
             //The positive and negative vectors represent the X, Y and Z coordinates of the extreme points in world space along the world space axes.
-            boundingBox.Max.X = shapeTransform.Position.X + positive.X + collisionMargin;
-            boundingBox.Max.Y = shapeTransform.Position.Y + positive.Y + collisionMargin;
-            boundingBox.Max.Z = shapeTransform.Position.Z + positive.Z + collisionMargin;
+            boundingBox.Max.x = shapeTransform.Position.x + positive.x + collisionMargin;
+            boundingBox.Max.y = shapeTransform.Position.y + positive.y + collisionMargin;
+            boundingBox.Max.z = shapeTransform.Position.z + positive.z + collisionMargin;
 
-            boundingBox.Min.X = shapeTransform.Position.X + negative.X - collisionMargin;
-            boundingBox.Min.Y = shapeTransform.Position.Y + negative.Y - collisionMargin;
-            boundingBox.Min.Z = shapeTransform.Position.Z + negative.Z - collisionMargin;
+            boundingBox.Min.x = shapeTransform.Position.x + negative.x - collisionMargin;
+            boundingBox.Min.y = shapeTransform.Position.y + negative.y - collisionMargin;
+            boundingBox.Min.z = shapeTransform.Position.z + negative.z - collisionMargin;
 
         }
 
@@ -271,13 +271,13 @@ namespace BEPUphysics.CollisionShapes.ConvexShapes
             TransformLocalExtremePoints(ref left, ref down, ref forward, ref transform.LinearTransform, out negative);
 
             //The positive and negative vectors represent the X, Y and Z coordinates of the extreme points in world space along the world space axes.
-            boundingBox.Max.X = transform.Translation.X + positive.X;
-            boundingBox.Max.Y = transform.Translation.Y + positive.Y;
-            boundingBox.Max.Z = transform.Translation.Z + positive.Z;
+            boundingBox.Max.x = transform.Translation.x + positive.x;
+            boundingBox.Max.y = transform.Translation.y + positive.y;
+            boundingBox.Max.z = transform.Translation.z + positive.z;
 
-            boundingBox.Min.X = transform.Translation.X + negative.X;
-            boundingBox.Min.Y = transform.Translation.Y + negative.Y;
-            boundingBox.Min.Z = transform.Translation.Z + negative.Z;
+            boundingBox.Min.x = transform.Translation.x + negative.x;
+            boundingBox.Min.y = transform.Translation.y + negative.y;
+            boundingBox.Min.z = transform.Translation.z + negative.z;
         }
 
 

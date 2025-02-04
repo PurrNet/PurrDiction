@@ -85,8 +85,8 @@ namespace BEPUik
             FPVector3 hingeAxis;
             FPVector3.Cross(ref axisA, ref axisB, out hingeAxis);
 
-            angularJacobianA = new Matrix3x3 { M11 = hingeAxis.X, M12 = hingeAxis.Y, M13 = hingeAxis.Z };
-            angularJacobianB = new Matrix3x3 { M11 = -hingeAxis.X, M12 = -hingeAxis.Y, M13 = -hingeAxis.Z };
+            angularJacobianA = new Matrix3x3 { M11 = hingeAxis.x, M12 = hingeAxis.y, M13 = hingeAxis.z };
+            angularJacobianB = new Matrix3x3 { M11 = -hingeAxis.x, M12 = -hingeAxis.y, M13 = -hingeAxis.z };
 
             //Note how we've computed the jacobians despite the limit being potentially inactive.
             //This is to enable 'speculative' limits.

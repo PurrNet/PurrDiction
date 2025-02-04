@@ -735,9 +735,9 @@ namespace BEPUphysics.Entities
 #else
             FPVector3 positionDifference = new FPVector3();
 #endif
-            positionDifference.X = location.X - position.X;
-            positionDifference.Y = location.Y - position.Y;
-            positionDifference.Z = location.Z - position.Z;
+            positionDifference.x = location.x - position.x;
+            positionDifference.y = location.y - position.y;
+            positionDifference.z = location.z - position.z;
 
             FPVector3 cross;
             FPVector3.Cross(ref positionDifference, ref impulse, out cross);
@@ -756,9 +756,9 @@ namespace BEPUphysics.Entities
         /// <param name="impulse">Impulse to apply.</param>
         public void ApplyLinearImpulse(ref FPVector3 impulse)
         {
-            linearVelocity.X += impulse.X * inverseMass;
-            linearVelocity.Y += impulse.Y * inverseMass;
-            linearVelocity.Z += impulse.Z * inverseMass;
+            linearVelocity.x += impulse.x * inverseMass;
+            linearVelocity.y += impulse.y * inverseMass;
+            linearVelocity.z += impulse.z * inverseMass;
             MathChecker.Validate(linearVelocity);
 
         }
@@ -782,9 +782,9 @@ namespace BEPUphysics.Entities
             
             MathChecker.Validate(angularMomentum);
 #else
-            angularVelocity.X += impulse.X * inertiaTensorInverse.M11 + impulse.Y * inertiaTensorInverse.M21 + impulse.Z * inertiaTensorInverse.M31;
-            angularVelocity.Y += impulse.X * inertiaTensorInverse.M12 + impulse.Y * inertiaTensorInverse.M22 + impulse.Z * inertiaTensorInverse.M32;
-            angularVelocity.Z += impulse.X * inertiaTensorInverse.M13 + impulse.Y * inertiaTensorInverse.M23 + impulse.Z * inertiaTensorInverse.M33;
+            angularVelocity.x += impulse.x * inertiaTensorInverse.M11 + impulse.y * inertiaTensorInverse.M21 + impulse.z * inertiaTensorInverse.M31;
+            angularVelocity.y += impulse.x * inertiaTensorInverse.M12 + impulse.y * inertiaTensorInverse.M22 + impulse.z * inertiaTensorInverse.M32;
+            angularVelocity.z += impulse.x * inertiaTensorInverse.M13 + impulse.y * inertiaTensorInverse.M23 + impulse.z * inertiaTensorInverse.M33;
 #endif
 
             MathChecker.Validate(angularVelocity);
@@ -1115,7 +1115,7 @@ namespace BEPUphysics.Entities
             FPVector3 increment;
 
             FPVector3.Multiply(ref angularVelocity, dt * F64.C0p5, out increment);
-            var multiplier = new FPQuaternion(increment.X, increment.Y, increment.Z, F64.C0);
+            var multiplier = new FPQuaternion(increment.x, increment.y, increment.z, F64.C0);
             FPQuaternion.Multiply(ref multiplier, ref orientation, out multiplier);
             FPQuaternion.Add(ref orientation, ref multiplier, out orientation);
             orientation.Normalize();
