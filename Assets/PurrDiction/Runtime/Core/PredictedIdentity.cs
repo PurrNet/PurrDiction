@@ -130,8 +130,6 @@ namespace PurrNet.Prediction
         
         internal abstract void UpdateView(float deltaTime);
         
-        internal abstract void AddViewFrame();
-
         internal abstract void GetLatestUnityState();
         
         public abstract void WriteLatestState(BitPacker packer);
@@ -283,9 +281,10 @@ namespace PurrNet.Prediction
         
         public override void UpdateRollbackInterpolationState(FP delta, bool accumulateError)
         {
-            _viewState?.Dispose();
-            var copy = fullPredictedState.DeepCopy();
+            var copy = fullPredictedState.DeepCopy().DeepCopy();
             ModifyRollbackViewState(ref copy.state, delta, accumulateError);
+            
+            _viewState?.Dispose();
             _viewState = copy;
         }
 
@@ -342,19 +341,16 @@ namespace PurrNet.Prediction
 
         public override void ClearInput() { }
 
-        internal override void AddViewFrame()
+        internal override void UpdateView(float deltaTime)
         {
             if (_interpolatedState == null)
                 return;
             
             if (_viewState.HasValue)
+            {
                 _interpolatedState.Add(_viewState.Value);
-        }
-
-        internal override void UpdateView(float deltaTime)
-        {
-            if (_interpolatedState == null)
-                return;
+                _viewState = null;
+            }
 
             UpdateView(_interpolatedState.Advance(deltaTime).state, _stateHistory.Count > 0 ? _stateHistory[^1].state : null);
         }

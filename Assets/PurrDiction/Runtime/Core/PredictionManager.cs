@@ -350,7 +350,6 @@ namespace PurrNet.Prediction
                     for (var systemIdx = 0; systemIdx < count; systemIdx++)
                     {
                         _systems[systemIdx].UpdateRollbackInterpolationState(tickDelta, false);
-                        _systems[systemIdx].AddViewFrame();
                     }
                 }
 
@@ -384,7 +383,6 @@ namespace PurrNet.Prediction
                     var system = _systems[systemIdx];
                     system.GetLatestUnityState();
                     system.UpdateRollbackInterpolationState(tickDelta, false);
-                    system.AddViewFrame();
                     
                     if (system.IsOwner(myPlayer))
                         system.WriteInput(localTick, frame);
@@ -502,7 +500,6 @@ namespace PurrNet.Prediction
             for (var j = 0; j < scount; j++)
             {
                 _systems[j].UpdateRollbackInterpolationState(tickDelta, true);
-                _systems[j].AddViewFrame();
             }
         }
         
