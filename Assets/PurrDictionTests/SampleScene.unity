@@ -394,8 +394,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f14e0e7bb0217cc418ed3e3a4678eb3d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _maxInterpolationBuffer: 2
-  _updateView: 1
 --- !u!1 &1119166738
 GameObject:
   m_ObjectHideFlags: 0
@@ -672,8 +670,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ef978d1ab6f2cb8429879e1a2e303a2c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _maxInterpolationBuffer: 2
-  _updateView: 1
   _colliders: []
 --- !u!4 &1936988193
 Transform:

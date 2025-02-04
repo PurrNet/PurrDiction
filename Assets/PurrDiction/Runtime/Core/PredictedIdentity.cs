@@ -129,6 +129,8 @@ namespace PurrNet.Prediction
         internal abstract void ResetInterpolation();
         
         internal abstract void UpdateView(float deltaTime);
+        
+        internal abstract void AddViewFrame();
 
         internal abstract void GetLatestUnityState();
         
@@ -243,9 +245,9 @@ namespace PurrNet.Prediction
             var copy = fullPredictedState.DeepCopy();
             
             // if TickRate is 30, then this should be 2
-            var interpolationBuffer = (int)FP.Max(world.tickRate / (FP)15, 1);
+            var interpolationBuffer = (int)FP.Max(world.tickRate / (FP)10, 2);
             
-            _interpolatedState = new Interpolated<FULL_STATE>(FULLInterpolate, (float)world.tickDelta, copy, interpolationBuffer);
+            _interpolatedState = new Interpolated<FULL_STATE>(FULLInterpolate, 1f / world.tickRate, copy, interpolationBuffer);
             _stateHistory = new History<FULL_STATE>(world.tickRate * 5);
             _stateHistory.Write(0, copy);
         }
@@ -311,18 +313,6 @@ namespace PurrNet.Prediction
         
         protected virtual void SetUnityState(STATE state) {}
 
-        public virtual void WriteState(ulong tick, BitPacker packer)
-        {
-            if (!_stateHistory.Read(tick, out var state))
-            {
-                PurrLogger.LogError($"Failed to write state at tick {tick}");
-                return;
-            }
-            
-            Packer<STATE>.Write(packer, state.state);
-            Packer<PredictedIdentityState>.Write(packer, state.prediction);
-        }
-
         public override void WriteLatestState(BitPacker packer)
         {
             Packer<STATE>.Write(packer, fullPredictedState.state);
@@ -351,14 +341,20 @@ namespace PurrNet.Prediction
         public override void QueueInput(BitPacker packer) { }
 
         public override void ClearInput() { }
-        
+
+        internal override void AddViewFrame()
+        {
+            if (_interpolatedState == null)
+                return;
+            
+            if (_viewState.HasValue)
+                _interpolatedState.Add(_viewState.Value);
+        }
+
         internal override void UpdateView(float deltaTime)
         {
             if (_interpolatedState == null)
                 return;
-
-            if (_viewState.HasValue)
-                _interpolatedState.Add(_viewState.Value);
 
             UpdateView(_interpolatedState.Advance(deltaTime).state, _stateHistory.Count > 0 ? _stateHistory[^1].state : null);
         }

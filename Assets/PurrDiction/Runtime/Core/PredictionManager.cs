@@ -348,7 +348,10 @@ namespace PurrNet.Prediction
                 if (cachedIsClient)
                 {
                     for (var systemIdx = 0; systemIdx < count; systemIdx++)
+                    {
                         _systems[systemIdx].UpdateRollbackInterpolationState(tickDelta, false);
+                        _systems[systemIdx].AddViewFrame();
+                    }
                 }
 
                 for (var systemIdx = 0; systemIdx < count; systemIdx++)
@@ -381,7 +384,8 @@ namespace PurrNet.Prediction
                     var system = _systems[systemIdx];
                     system.GetLatestUnityState();
                     system.UpdateRollbackInterpolationState(tickDelta, false);
-
+                    system.AddViewFrame();
+                    
                     if (system.IsOwner(myPlayer))
                         system.WriteInput(localTick, frame);
                 }
@@ -496,7 +500,10 @@ namespace PurrNet.Prediction
             
             var scount = _systems.Count;
             for (var j = 0; j < scount; j++)
+            {
                 _systems[j].UpdateRollbackInterpolationState(tickDelta, true);
+                _systems[j].AddViewFrame();
+            }
         }
         
         private ulong? _tickToRollbackFrom;
@@ -586,7 +593,7 @@ namespace PurrNet.Prediction
             int count = _systems.Count;
 
             for (var i = 0; i < count; i++)
-                _systems[i].UpdateView(Time.unscaledDeltaTime);
+                _systems[i].UpdateView(Time.deltaTime);
         }
 
         public bool TryGetPrefab(int pid, out GameObject prefab)
