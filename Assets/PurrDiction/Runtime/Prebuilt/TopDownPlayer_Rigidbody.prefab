@@ -118,12 +118,13 @@ GameObject:
   m_Component:
   - component: {fileID: 6783926950543639956}
   - component: {fileID: 3197743756577459601}
+  - component: {fileID: -8475172177162126593}
   - component: {fileID: 1845762276655744996}
   - component: {fileID: 2756729784649837662}
   - component: {fileID: 4230114255477379906}
   - component: {fileID: 3826029466696574374}
   m_Layer: 0
-  m_Name: RigidbodyPlayer
+  m_Name: TopDownPlayer_Rigidbody
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -162,6 +163,22 @@ MonoBehaviour:
   rigidbody: {fileID: 3826029466696574374}
   maxSpeed: 5
   acceleration: 30
+--- !u!114 &-8475172177162126593
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2990978637306053845}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8cade1e5f0ada234ea36354783251f0d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  rigidbody: {fileID: 3826029466696574374}
+  offensiveForce: 10
+  receiveMultiplier: 0.3
+  centerOffset: {x: 0, y: 0, z: 0}
 --- !u!114 &1845762276655744996
 MonoBehaviour:
   m_ObjectHideFlags: 0
