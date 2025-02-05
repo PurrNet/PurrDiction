@@ -119,6 +119,7 @@ GameObject:
   - component: {fileID: 6783926950543639956}
   - component: {fileID: 3197743756577459601}
   - component: {fileID: -8475172177162126593}
+  - component: {fileID: -7240536664798445757}
   - component: {fileID: 1845762276655744996}
   - component: {fileID: 2756729784649837662}
   - component: {fileID: 4230114255477379906}
@@ -178,7 +179,27 @@ MonoBehaviour:
   rigidbody: {fileID: 3826029466696574374}
   offensiveForce: 10
   receiveMultiplier: 0.3
+  offsetType: 0
   centerOffset: {x: 0, y: 0, z: 0}
+--- !u!114 &-7240536664798445757
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2990978637306053845}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f2e62faadd444c846a5a8717786336e0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _repeatInputFactor: 0.8
+  _extrapolateInput: 1
+  projectile: {fileID: 8579794327781336704, guid: 214baaa516cac5d40b514d7aea4005b6, type: 3}
+  shootKey: 323
+  shootCooldown: 0.5
+  spawnOffset: {x: 0, y: 0, z: 1}
+  projectileInitialVelocity: 10
 --- !u!114 &1845762276655744996
 MonoBehaviour:
   m_ObjectHideFlags: 0
