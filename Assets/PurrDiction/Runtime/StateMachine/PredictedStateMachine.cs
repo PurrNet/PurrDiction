@@ -5,8 +5,8 @@ using UnityEngine;
 
 namespace PurrNet.Prediction.StateMachine
 {
-    [AddComponentMenu("PurrDiction/State machine")]
-    public class PredictedStateMachine : PredictedIdentity<SMState>
+    [AddComponentMenu("PurrDiction/Predicted State machine")]
+    public class PredictedStateMachine : PredictedIdentity<PredictedStateMachine.SMState>
     {
         [SerializeField] private List<SerializableInterface<IPredictedStateNodeBase>> _wrappedStates = 
             new List<SerializableInterface<IPredictedStateNodeBase>>();
@@ -23,8 +23,6 @@ namespace PurrNet.Prediction.StateMachine
                 return _states[currentState.stateIndex];
             }
         }
-
-        
         
 #if UNITY_EDITOR
         public IPredictedStateNodeBase _previousStateNode;
@@ -35,6 +33,7 @@ namespace PurrNet.Prediction.StateMachine
         private void Awake()
         {
             _states = _wrappedStates.Select(wrapped => wrapped.Value).ToList();
+            _currentStateNode = _states.FirstOrDefault();
     
             for (var i = 0; i < _states.Count; i++)
             {
@@ -84,7 +83,6 @@ namespace PurrNet.Prediction.StateMachine
         {
             if (_states.Count == 0) return;
             var nextIndex = (currentState.stateIndex + 1) % _states.Count;
-            Debug.Log($"Wanted: {currentState.wantedState} | Current: {currentState.stateIndex} | Next: {nextIndex}");
             SetState(nextIndex);
         }
 
@@ -119,6 +117,12 @@ namespace PurrNet.Prediction.StateMachine
             copy.wantedState = index;
             currentState = copy;
         }
+    
+        public struct SMState : IPredictedData<SMState>
+        {
+            public int wantedState;
+            public int stateIndex;
+        }
     }
     
     [System.Serializable]
@@ -138,11 +142,5 @@ namespace PurrNet.Prediction.StateMachine
             }
             set => _object = value as Object;
         }
-    }
-    
-    public struct SMState : IPredictedData<SMState>
-    {
-        public int wantedState;
-        public int stateIndex;
     }
 }
