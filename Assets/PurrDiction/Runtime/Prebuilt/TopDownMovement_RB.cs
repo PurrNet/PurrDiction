@@ -1,4 +1,3 @@
-using System;
 using BEPUutilities;
 using ConversionHelper;
 using FixMath.NET;
@@ -9,7 +8,7 @@ namespace PurrNet.Prediction.Prebuilt
 {
     [RequireComponent(typeof(PredictedRigidbody))]
     [AddComponentMenu("PurrDiction/Prebuilt/Rigidbody/Top Down Movement")]
-    public class TopDownMovement : PredictedIdentity<TopDownMovement.Input, TopDownMovement.State>
+    public class TopDownMovement_RB : PredictedIdentity<TopDownMovement_RB.Input, TopDownMovement_RB.State>
     {
         [SerializeField] private Rigidbody rigidbody;
         [SerializeField] private float maxSpeed = 5;
