@@ -5,6 +5,7 @@ using UnityEngine;
 namespace PurrNet.Prediction.Prebuilt
 {
     [RequireComponent(typeof(PredictedRigidbody))]
+    [AddComponentMenu("PurrDiction/Prebuilt/Rigidbody/Knockback")]
     public class RigidbodyKnockback : PredictedIdentity<RigidbodyKnockback.KnockbackData>
     {
         [SerializeField] private Rigidbody rigidbody;
@@ -19,7 +20,12 @@ namespace PurrNet.Prediction.Prebuilt
         [SerializeField] private OffsetType offsetType;
         
         [Tooltip("Offset from object used to calculate where the force is applied from and to - Used for directional calculation")]
-        [SerializeField] private Vector3 centerOffset;
+        [SerializeField] private Vector3 receiveKnockbackOffset, giveKnockbackOffset;
+
+#if UNITY_EDITOR
+        [Header("Debug")] 
+        [SerializeField] private bool drawGizmos = true;
+#endif
 
         private void Reset()
         {
@@ -33,10 +39,10 @@ namespace PurrNet.Prediction.Prebuilt
             switch (offsetType)
             {
                 case OffsetType.Local:
-                    direction = (transform.TransformPoint(centerOffset) - otherPosition).normalized;
+                    direction = (transform.TransformPoint(receiveKnockbackOffset) - otherPosition).normalized;
                     break;
                 case OffsetType.World:
-                    direction = (transform.position + centerOffset - otherPosition).normalized;
+                    direction = (transform.position + receiveKnockbackOffset - otherPosition).normalized;
                     break;
             }
 
@@ -65,29 +71,39 @@ namespace PurrNet.Prediction.Prebuilt
                 switch (offsetType)
                 {
                     case OffsetType.Local:
-                        knockback.Knockback(transform.TransformPoint(centerOffset), offensiveForce);
+                        knockback.Knockback(transform.TransformPoint(giveKnockbackOffset), offensiveForce);
                         break;
                     case OffsetType.World:
-                        knockback.Knockback(transform.position + centerOffset, offensiveForce);
+                        knockback.Knockback(transform.position + giveKnockbackOffset, offensiveForce);
                         break;
                 }
             }
         }
 
+#if UNITY_EDITOR
         private void OnDrawGizmosSelected()
         {
+            if (!drawGizmos)
+                return;
+            
             switch (offsetType)
             {
                 case OffsetType.Local:
                     Gizmos.color = Color.red;
-                    Gizmos.DrawWireSphere(transform.TransformPoint(centerOffset), 0.1f);
+                    Gizmos.DrawWireSphere(transform.TransformPoint(receiveKnockbackOffset), 0.1f);
+                    Gizmos.color = Color.magenta;
+                    Gizmos.DrawWireSphere(transform.TransformPoint(giveKnockbackOffset), 0.1f);
                     break;
                 case OffsetType.World:
                     Gizmos.color = Color.red;
-                    Gizmos.DrawWireSphere(transform.position + centerOffset, 0.1f);
+                    Gizmos.DrawWireSphere(transform.position + receiveKnockbackOffset, 0.1f);
+                    Gizmos.color = Color.magenta;
+                    Gizmos.DrawWireSphere(transform.position + giveKnockbackOffset, 0.1f);
                     break;
             }
         }
+#endif
+        
 
         public struct KnockbackData : IPredictedData<KnockbackData>
         {

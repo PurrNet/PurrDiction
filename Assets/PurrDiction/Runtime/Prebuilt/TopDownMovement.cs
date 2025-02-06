@@ -8,6 +8,7 @@ using UnityEngine.InputSystem;
 namespace PurrNet.Prediction.Prebuilt
 {
     [RequireComponent(typeof(PredictedRigidbody))]
+    [AddComponentMenu("PurrDiction/Prebuilt/Rigidbody/Top Down Movement")]
     public class TopDownMovement : PredictedIdentity<TopDownMovement.Input, TopDownMovement.State>
     {
         [SerializeField] private Rigidbody rigidbody;

@@ -24,7 +24,7 @@ namespace PurrNet.Prediction
         LateUpdate
     }
     
-    [DefaultExecutionOrder(1000)]
+    [DefaultExecutionOrder(1000)][AddComponentMenu("PurrDiction/Prediction Manager")]
     public class PredictionManager : NetworkIdentity
     {
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterAssembliesLoaded)]

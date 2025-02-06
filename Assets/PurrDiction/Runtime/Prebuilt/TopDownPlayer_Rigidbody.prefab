@@ -119,6 +119,7 @@ GameObject:
   - component: {fileID: 6783926950543639956}
   - component: {fileID: 3197743756577459601}
   - component: {fileID: -8475172177162126593}
+  - component: {fileID: 6369278995832117784}
   - component: {fileID: -7240536664798445757}
   - component: {fileID: 1845762276655744996}
   - component: {fileID: 2756729784649837662}
@@ -180,7 +181,36 @@ MonoBehaviour:
   offensiveForce: 10
   receiveMultiplier: 0.3
   offsetType: 0
-  centerOffset: {x: 0, y: 0, z: 0}
+  receiveKnockbackOffset: {x: 0, y: 0.62, z: 0}
+  giveKnockbackOffset: {x: 0, y: -0.47, z: 0}
+  drawGizmos: 1
+--- !u!114 &6369278995832117784
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2990978637306053845}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a4ff0afb993b0f149b0d414e2d9bd15d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _repeatInputFactor: 0.8
+  _extrapolateInput: 1
+  jumpKey: 32
+  rigidbody: {fileID: 3826029466696574374}
+  jumpCooldown: 0.5
+  jumpForce: 10
+  upOrientation: 0
+  groundCheckRadius: 0.25
+  groundCheckOffset: {x: 0, y: -1, z: 0}
+  groundLayer:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  gravityAirTimeMultiplier: 25
+  maxFallSpeed: 10
+  drawGizmos: 1
 --- !u!114 &-7240536664798445757
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -200,6 +230,7 @@ MonoBehaviour:
   shootCooldown: 0.5
   spawnOffset: {x: 0, y: 0, z: 1}
   projectileInitialVelocity: 10
+  drawGizmos: 1
 --- !u!114 &1845762276655744996
 MonoBehaviour:
   m_ObjectHideFlags: 0

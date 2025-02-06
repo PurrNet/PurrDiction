@@ -5,6 +5,7 @@ using UnityEngine;
 
 namespace PurrNet.Prediction.StateMachine
 {
+    [AddComponentMenu("PurrDiction/State machine")]
     public class PredictedStateMachine : PredictedIdentity<SMState>
     {
         [SerializeField] private List<SerializableInterface<IPredictedStateNodeBase>> _wrappedStates = 

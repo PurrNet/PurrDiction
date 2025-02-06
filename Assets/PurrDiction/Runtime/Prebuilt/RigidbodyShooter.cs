@@ -5,6 +5,7 @@ using UnityEngine;
 
 namespace PurrNet.Prediction.Prebuilt
 {
+    [AddComponentMenu("PurrDiction/Prebuilt/Rigidbody/Projectile shooter")]
     public class RigidbodyShooter : PredictedIdentity<RigidbodyShooter.ShootInput, RigidbodyShooter.ShootData>
     {
         [SerializeField] private GameObject projectile;
@@ -13,6 +14,11 @@ namespace PurrNet.Prediction.Prebuilt
         [SerializeField] private Vector3 spawnOffset = Vector3.forward;
         [SerializeField] private float projectileInitialVelocity = 10;
 
+#if UNITY_EDITOR
+        [Header("Debug")] 
+        [SerializeField] private bool drawGizmos = true;
+#endif
+        
         protected override ShootData GetInitialState()
         {
             var state = new ShootData()
@@ -50,11 +56,15 @@ namespace PurrNet.Prediction.Prebuilt
                 PurrLogger.LogError($"Failed to get Rigidbody component from projectile ({projectile.gameObject.name})", projectile);
         }
 
+#if UNITY_EDITOR
         private void OnDrawGizmosSelected()
         {
+            if (!drawGizmos)
+                return;
             Gizmos.color = Color.yellow;
             Gizmos.DrawWireSphere(transform.TransformPoint(spawnOffset), 0.2f);
         }
+#endif
 
         protected override ShootInput GetInput()
         {

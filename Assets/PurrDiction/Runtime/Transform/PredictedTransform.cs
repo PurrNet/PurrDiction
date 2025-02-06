@@ -4,6 +4,7 @@ using UnityEngine;
 
 namespace PurrNet.Prediction
 {
+    [AddComponentMenu("PurrDiction/Predicted Transform")]
     public class PredictedTransform : PredictedIdentity<PredictedTransformState>
     {
         [SerializeField, PurrLock] private Transform _graphics;
