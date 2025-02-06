@@ -1,0 +1,45 @@
+using System;
+using System.Collections.Generic;
+using PurrNet.Prediction.StateMachine;
+using UnityEngine;
+
+namespace PurrNet.Prediction.Tests
+{
+    public class TestState : PredictedStateNode<TestState.StateData>
+    {
+        public static List<TestState> Instances = new();
+        
+        private void Awake()
+        {
+            Instances.Add(this);
+        }
+
+        protected override void OnDestroy()
+        {
+            base.OnDestroy();
+            Instances.Remove(this);
+        }
+
+        public static void NextState()
+        {
+            Instances[0].machine.Next();
+        }
+        
+        [ContextMenu("Force next state")]
+        private void ForceNextState()
+        {
+            NextState();
+        }
+
+        public override void Enter()
+        {
+            base.Enter();
+            Debug.Log($"Entered state: {gameObject.name}");
+        }
+
+        public struct StateData : IPredictedData<StateData>
+        {
+            
+        }
+    }
+}
