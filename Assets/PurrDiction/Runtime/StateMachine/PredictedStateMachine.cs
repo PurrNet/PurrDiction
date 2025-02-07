@@ -29,6 +29,9 @@ namespace PurrNet.Prediction.StateMachine
         public IPredictedStateNodeBase _nextStateNode;
         public IPredictedStateNodeBase _currentStateNode;
 #endif
+        
+        private int _previousViewStateIndex = -1;
+        private int _previousVerifiedViewStateIndex = -1;
     
         private void Awake()
         {
@@ -41,6 +44,30 @@ namespace PurrNet.Prediction.StateMachine
                     continue;
                 var state = _states[i];
                 state.Setup(this);
+            }
+        }
+
+        protected override void UpdateView(SMState interpolatedState, SMState? verified)
+        {
+            if (verified.HasValue)
+            {
+                if(verified.Value.stateIndex != _previousVerifiedViewStateIndex)
+                {
+                    if(_previousVerifiedViewStateIndex > -1 && _states[_previousVerifiedViewStateIndex] != null)
+                        _states[_previousVerifiedViewStateIndex].ViewExit(true);
+                    _previousVerifiedViewStateIndex = verified.Value.stateIndex;
+                    if(_previousVerifiedViewStateIndex > -1 && _states[_previousVerifiedViewStateIndex] != null)
+                        _states[_previousVerifiedViewStateIndex].ViewEnter(true);
+                }
+            }
+            
+            if(interpolatedState.stateIndex != _previousViewStateIndex)
+            {
+                if(_previousViewStateIndex > -1 && _states[_previousViewStateIndex] != null)
+                    _states[_previousViewStateIndex].ViewExit(false);
+                _previousViewStateIndex = interpolatedState.stateIndex;
+                if(_previousViewStateIndex > -1 && _states[_previousViewStateIndex] != null)
+                    _states[_previousViewStateIndex].ViewEnter(false);
             }
         }
 

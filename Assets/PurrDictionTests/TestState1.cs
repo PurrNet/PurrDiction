@@ -5,9 +5,9 @@ using UnityEngine;
 
 namespace PurrNet.Prediction.Tests
 {
-    public class TestState : PredictedStateNode<TestState.StateData>
+    public class TestState1 : PredictedStateNode<TestState1.StateData>
     {
-        public static List<TestState> Instances = new();
+        public static List<TestState1> Instances = new();
         
         private void Awake()
         {

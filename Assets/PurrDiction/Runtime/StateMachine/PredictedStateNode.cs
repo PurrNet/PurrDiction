@@ -8,8 +8,10 @@ namespace PurrNet.Prediction.StateMachine
     {
         void Setup(PredictedStateMachine stateMachine);
         void Enter();
+        void ViewEnter(bool isVerified);
         void StateSimulate(FP delta);
         void Exit();
+        void ViewExit(bool isVerified);
     }
 
     public abstract class PredictedStateNode<T> : PredictedIdentity<T>, IPredictedStateNodeBase 
@@ -23,10 +25,10 @@ namespace PurrNet.Prediction.StateMachine
         }
         
         public virtual void Enter() {}
-
+        public virtual void ViewEnter(bool isVerified) { }
         public virtual void StateSimulate(FP delta) { }
-        
         public virtual void Exit() {}
+        public virtual void ViewExit(bool isVerified) { }
     }
     
     public abstract class PredictedStateNode<TInput, T> : PredictedIdentity<TInput, T>, IPredictedStateNodeBase 
@@ -40,7 +42,9 @@ namespace PurrNet.Prediction.StateMachine
         }
 
         public virtual void Enter() { }
+        public virtual void ViewEnter(bool isVerified) { }
         public virtual void StateSimulate(FP delta) { }
         public virtual void Exit() { }
+        public virtual void ViewExit(bool isVerified) { }
     }
 }
