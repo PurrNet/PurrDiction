@@ -36,7 +36,9 @@ namespace PurrNet.Prediction.StateMachine
         private void Awake()
         {
             _states = _wrappedStates.Select(wrapped => wrapped.Value).ToList();
+#if UNITY_EDITOR
             _currentStateNode = _states.FirstOrDefault();
+#endif
     
             for (var i = 0; i < _states.Count; i++)
             {
