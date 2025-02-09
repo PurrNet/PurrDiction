@@ -24,7 +24,7 @@ namespace PurrNet.Prediction.Tests
         {
             base.ViewEnter(isVerified);
             
-            Debug.Log($"View entered state: {gameObject.name} | {isVerified}");
+            //Debug.Log($"View entered state: {gameObject.name} | {isVerified}");
         }
 
         public static void NextState()
@@ -41,7 +41,7 @@ namespace PurrNet.Prediction.Tests
         public override void Enter()
         {
             base.Enter();
-            Debug.Log($"Entered state: {gameObject.name}");
+            //Debug.Log($"Entered state: {gameObject.name}");
         }
 
         public struct StateData : IPredictedData<StateData>
