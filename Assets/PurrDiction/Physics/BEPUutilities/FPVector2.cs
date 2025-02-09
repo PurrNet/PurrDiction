@@ -18,6 +18,16 @@ namespace BEPUutilities
         /// Y component of the vector.
         /// </summary>
         [FormerlySerializedAs("Y")] public FP y;
+        
+        /// <summary>
+        /// Returns the magnitude of the vector.
+        /// </summary>
+        public FP magnitude => Length();
+        
+        /// <summary>
+        /// Return the normalized vector
+        /// </summary>
+        public FPVector2 normalized => Normalize(this);
 
         /// <summary>
         /// Constructs a new two dimensional vector.

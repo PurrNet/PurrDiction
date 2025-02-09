@@ -23,7 +23,15 @@ namespace BEPUutilities
         /// </summary>
         public FP z;
         
+        /// <summary>
+        /// Returns the magnitude of the vector.
+        /// </summary>
         public FP magnitude => FP.Sqrt(x * x + y * y + z * z);
+        
+        /// <summary>
+        /// Returns the normalized version of the vector.
+        /// </summary>
+        public FPVector3 normalized => this / magnitude;
 
         /// <summary>
         /// Constructs a new 3d vector.
