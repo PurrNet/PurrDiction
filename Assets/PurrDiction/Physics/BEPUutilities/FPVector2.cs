@@ -55,7 +55,8 @@ namespace BEPUutilities
         /// <returns>Length of the vector.</returns>
         public FP Length()
         {
-            return FP.Sqrt(x * x + y * y);
+            FP lengthSquared = x * x + y * y;
+            return lengthSquared <= FP.Zero ? FP.Zero : FP.Sqrt(lengthSquared);
         }
 
         /// <summary>

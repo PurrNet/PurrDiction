@@ -619,6 +619,9 @@ namespace FixMath.NET
         /// The argument was negative.
         /// </exception>
         public static FP Sqrt(FP x) {
+	        if (x.RawValue < 0)
+		        return FP.Zero;
+	        
             var xl = x.RawValue;
             if (xl < 0) {
                 // We cannot represent infinities like Single and Double, and Sqrt is
