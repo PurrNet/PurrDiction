@@ -762,6 +762,14 @@ namespace BEPUphysics.Entities
             MathChecker.Validate(linearVelocity);
 
         }
+        public void ApplyLinearImpulse(FPVector3 impulse)
+        {
+            linearVelocity.x += impulse.x * inverseMass;
+            linearVelocity.y += impulse.y * inverseMass;
+            linearVelocity.z += impulse.z * inverseMass;
+            MathChecker.Validate(linearVelocity);
+
+        }
         /// <summary>
         /// Applies an angular velocity change to the entity using the given impulse.
         /// This method does not wake up the object or perform any other nonessential operation;

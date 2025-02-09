@@ -17,8 +17,6 @@ namespace PurrNet.Prediction
         public FPQuaternion orientation;
         public FPVector3 linearVelocity;
         public FPVector3 angularVelocity;
-        public FPVector3 pendingAccelerationForce;
-        public FPVector3 pendingImpulseForce;
     }
     
     public class BepuRigidbody : PredictedIdentity<BepuRigidbodyState>
@@ -105,9 +103,7 @@ namespace PurrNet.Prediction
                 position = transform.position.ToFPVector3(),
                 orientation = transform.rotation.ToFPQuaternion(),
                 linearVelocity = default,
-                angularVelocity = default,
-                pendingAccelerationForce = default,
-                pendingImpulseForce = default
+                angularVelocity = default
             };
         }
 
@@ -121,19 +117,6 @@ namespace PurrNet.Prediction
                 state.linearVelocity += _space.ForceUpdater.Gravity * delta;
             }
 
-            if (state.pendingAccelerationForce != FPVector3.zero)
-            {
-                var force = state.pendingAccelerationForce * delta;
-                _entity.ApplyLinearImpulse(ref force);
-                state.pendingAccelerationForce = FPVector3.zero;
-            }
-
-            if (state.pendingImpulseForce != FPVector3.zero)
-            {
-                _entity.ApplyLinearImpulse(ref state.pendingImpulseForce);
-                state.pendingImpulseForce = FPVector3.zero;
-            }
-
             state.position = _entity.Position;
             state.orientation = _entity.Orientation;
             state.linearVelocity = _entity.LinearVelocity;
@@ -143,6 +126,25 @@ namespace PurrNet.Prediction
             transform.rotation = state.orientation.ToQuaternion();
         }
 
+        protected override void GetUnityState(ref BepuRigidbodyState state)
+        {
+            if (_entity == null)
+                return;
+            
+            state.position = _entity.Position;
+            state.orientation = _entity.Orientation;
+            state.linearVelocity = _entity.LinearVelocity;
+            state.angularVelocity = _entity.AngularVelocity;
+        }
+
+        protected override void SetUnityState(BepuRigidbodyState state)
+        {
+            _entity.Position = state.position;
+            _entity.Orientation = state.orientation;
+            _entity.LinearVelocity = state.linearVelocity;
+            _entity.AngularVelocity = state.angularVelocity;
+        }
+
         public void AddForce(FPVector3 force, ForceMode mode = ForceMode.Force)
         {
             var state = currentState;
@@ -150,16 +152,16 @@ namespace PurrNet.Prediction
             switch (mode)
             {
                 case ForceMode.Force:
-                    state.pendingAccelerationForce += force;
+                    _entity.ApplyLinearImpulse(force * predictionManager.tickDelta);
                     break;
                 case ForceMode.Impulse:
-                    state.pendingImpulseForce += force;
+                    _entity.ApplyLinearImpulse(force);
                     break;
                 case ForceMode.Acceleration:
-                    state.pendingAccelerationForce += force * _mass;
+                    _entity.ApplyLinearImpulse(force * mass * predictionManager.tickDelta);
                     break;
                 case ForceMode.VelocityChange:
-                    state.linearVelocity += force;
+                    _entity.LinearVelocity += force;
                     break;
             }
             
