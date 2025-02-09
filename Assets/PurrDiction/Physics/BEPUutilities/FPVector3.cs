@@ -22,6 +22,8 @@ namespace BEPUutilities
         /// Z component of the vector.
         /// </summary>
         public FP z;
+        
+        public FP magnitude => FP.Sqrt(x * x + y * y + z * z);
 
         /// <summary>
         /// Constructs a new 3d vector.
