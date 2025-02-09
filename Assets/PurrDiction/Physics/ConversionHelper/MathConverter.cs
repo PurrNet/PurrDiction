@@ -13,6 +13,14 @@ namespace ConversionHelper
             toReturn.y = (float)bepuVector.y;
             return toReturn;
         }
+        
+        public static Vector2 ToVector2(this BEPUutilities.FPVector2 bepuVector)
+        {
+            Vector2 toReturn;
+            toReturn.x = (float)bepuVector.x;
+            toReturn.y = (float)bepuVector.y;
+            return toReturn;
+        }
 
         public static void Convert(ref BEPUutilities.FPVector2 bepuVector, out Vector2 unityVector)
         {
@@ -21,6 +29,14 @@ namespace ConversionHelper
         }
 
         public static BEPUutilities.FPVector2 Convert(Vector2 unityVector)
+        {
+            BEPUutilities.FPVector2 toReturn;
+            toReturn.x = (FP)unityVector.x;
+            toReturn.y = (FP)unityVector.y;
+            return toReturn;
+        }
+
+        public static BEPUutilities.FPVector2 ToFPVector2(this Vector2 unityVector)
         {
             BEPUutilities.FPVector2 toReturn;
             toReturn.x = (FP)unityVector.x;
@@ -43,6 +59,15 @@ namespace ConversionHelper
             toReturn.z = (float)bepuVector.z;
             return toReturn;
         }
+        
+        public static Vector3 ToVector3(this BEPUutilities.FPVector3 bepuVector)
+        {
+            Vector3 toReturn;
+            toReturn.x = (float)bepuVector.x;
+            toReturn.y = (float)bepuVector.y;
+            toReturn.z = (float)bepuVector.z;
+            return toReturn;
+        }
 
         public static void Convert(ref BEPUutilities.FPVector3 bepuVector, out Vector3 unityVector)
         {
@@ -52,6 +77,15 @@ namespace ConversionHelper
         }
 
         public static BEPUutilities.FPVector3 Convert(Vector3 unityVector)
+        {
+            BEPUutilities.FPVector3 toReturn;
+            toReturn.x = (FP)unityVector.x;
+            toReturn.y = (FP)unityVector.y;
+            toReturn.z = (FP)unityVector.z;
+            return toReturn;
+        }
+        
+        public static BEPUutilities.FPVector3 ToFPVector3(this Vector3 unityVector)
         {
             BEPUutilities.FPVector3 toReturn;
             toReturn.x = (FP)unityVector.x;
@@ -204,8 +238,27 @@ namespace ConversionHelper
             toReturn.w = (float)quaternion.w;
             return toReturn;
         }
+        public static Quaternion ToQuaternion(this BEPUutilities.FPQuaternion quaternion)
+        {
+            Quaternion toReturn;
+            toReturn.x = (float)quaternion.x;
+            toReturn.y = (float)quaternion.y;
+            toReturn.z = (float)quaternion.z;
+            toReturn.w = (float)quaternion.w;
+            return toReturn;
+        }
 
         public static BEPUutilities.FPQuaternion Convert(Quaternion quaternion)
+        {
+            BEPUutilities.FPQuaternion toReturn;
+            toReturn.x = (FP)quaternion.x;
+            toReturn.y = (FP)quaternion.y;
+            toReturn.z = (FP)quaternion.z;
+            toReturn.w = (FP)quaternion.w;
+            return toReturn;
+        }
+
+        public static BEPUutilities.FPQuaternion ToFPQuaternion(this Quaternion quaternion)
         {
             BEPUutilities.FPQuaternion toReturn;
             toReturn.x = (FP)quaternion.x;
