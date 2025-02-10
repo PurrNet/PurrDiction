@@ -712,6 +712,7 @@ MonoBehaviour:
   - {fileID: 2990978637306053845, guid: 610a1af2ceed86e43bfa0c30ef05a2da, type: 3}
   - {fileID: 8579794327781336704, guid: 214baaa516cac5d40b514d7aea4005b6, type: 3}
   - {fileID: 3175525107310279005, guid: ea589cf0c4e17ab44bc2b8c9fc24f361, type: 3}
+  - {fileID: 3175525107310279005, guid: ad1574bf3ea23ea42b4c137abee54767, type: 3}
 --- !u!4 &1558659896
 Transform:
   m_ObjectHideFlags: 0
@@ -739,7 +740,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1a1392aa1bc3d3b4a9ef31b6e6d8d4b5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _playerPrefab: {fileID: 3175525107310279005, guid: ea589cf0c4e17ab44bc2b8c9fc24f361, type: 3}
+  _playerPrefab: {fileID: 3175525107310279005, guid: ad1574bf3ea23ea42b4c137abee54767, type: 3}
   _destroyOnDisconnect: 0
   spawnPoints: []
 --- !u!114 &1558659898
@@ -754,6 +755,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fbcae780a73c23e4ca273610ae9c9129, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  drawStaticMeshes: 1
+  drawVelocity: 1
+  drawDynamicColliders: 1
   totalEntities: 0
 --- !u!1 &1660917233 stripped
 GameObject:
@@ -773,6 +777,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   mesh: {fileID: -470067213634067786, guid: 1ba35f4f41071d544a21361c5e953974, type: 3}
+  drawGizmos: 0
 --- !u!1 &1793795275
 GameObject:
   m_ObjectHideFlags: 0
@@ -1191,6 +1196,8 @@ MonoBehaviour:
       RawValue: 429496729
     depth:
       RawValue: 429496729600
+    mesh: {fileID: 0}
+    convex: 0
   _isKinematic: 1
   _mass:
     RawValue: 4294967296

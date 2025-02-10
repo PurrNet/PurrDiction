@@ -1,5 +1,6 @@
 ﻿using System;
 using FixMath.NET;
+using UnityEngine;
 
 namespace PurrNet.Prediction
 {
@@ -8,7 +9,7 @@ namespace PurrNet.Prediction
         Sphere,
         Box,
         Capsule,
-        
+        Mesh,
     }
     
     [Serializable]
@@ -19,5 +20,7 @@ namespace PurrNet.Prediction
         public FP width;
         public FP height;
         public FP depth;
+        public Mesh mesh;
+        public bool convex;
     }
 }

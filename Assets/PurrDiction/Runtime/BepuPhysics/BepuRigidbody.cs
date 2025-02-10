@@ -1,5 +1,4 @@
 using BEPUphysics.Entities;
-using BEPUphysics.Entities.Prefabs;
 using BEPUutilities;
 using ConversionHelper;
 using FixMath.NET;
@@ -70,7 +69,7 @@ namespace PurrNet.Prediction
 
         private void CreateEntity()
         {
-            _entity = new CompoundBody(BepuColliderFactory.Create(transform, _colliders), _mass);
+            _entity = BepuColliderFactory.Create(transform, _colliders, mass);
             
             if (_isKinematic)
                 _entity.BecomeKinematic();
