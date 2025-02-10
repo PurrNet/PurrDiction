@@ -9,6 +9,7 @@ namespace PurrNet.Prediction
     public class BepuStaticMesh : MonoBehaviour
     {
         [SerializeField] private Mesh mesh;
+        [SerializeField] private bool drawGizmos;
 
         private StaticMesh _staticMesh;
         private BEPUphysics.Space _space;
@@ -63,6 +64,9 @@ namespace PurrNet.Prediction
 #if UNITY_EDITOR
         private void OnDrawGizmosSelected()
         {
+            if (!drawGizmos)
+                return;
+            
             if (mesh == null) return;
 
             var worldVertices = mesh.vertices;
