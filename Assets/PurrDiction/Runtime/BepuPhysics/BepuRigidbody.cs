@@ -1,6 +1,3 @@
-using System;
-using BEPUphysics.CollisionShapes;
-using BEPUphysics.CollisionShapes.ConvexShapes;
 using BEPUphysics.Entities;
 using BEPUphysics.Entities.Prefabs;
 using BEPUutilities;
@@ -19,6 +16,7 @@ namespace PurrNet.Prediction
         public FPVector3 angularVelocity;
     }
     
+    [AddComponentMenu("PurrDiction/BEPU/Bepu Rigidbody")]
     public class BepuRigidbody : PredictedIdentity<BepuRigidbodyState>
     {
         [Header("Bepu Rigidbody")]

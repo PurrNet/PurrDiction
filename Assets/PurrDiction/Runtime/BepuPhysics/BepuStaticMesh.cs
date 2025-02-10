@@ -6,6 +6,7 @@ using UnityEngine;
 
 namespace PurrNet.Prediction
 {
+    [AddComponentMenu("PurrDiction/BEPU/Bepu Static Mesh Collider")]
     public class BepuStaticMesh : MonoBehaviour
     {
         [SerializeField] private Mesh mesh;
