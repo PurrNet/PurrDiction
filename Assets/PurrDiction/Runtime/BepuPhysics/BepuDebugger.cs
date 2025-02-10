@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using BEPUphysics.BroadPhaseEntries;
 using BEPUphysics.CollisionShapes;
 using BEPUphysics.CollisionShapes.ConvexShapes;
 using BEPUutilities;
@@ -10,22 +12,47 @@ namespace PurrNet.Prediction
     public class BepuDebugger : MonoBehaviour
     {
         #if UNITY_EDITOR
-        private BEPUphysics.Space _space;
+        [SerializeField] private bool drawStaticMeshes = true;
+        [SerializeField] private bool drawVelocity = true;
+        [SerializeField] private bool drawDynamicColliders = true;
 
         [PurrReadOnly, SerializeField] private int totalEntities;
+        
+        private List<StaticMesh> staticMeshes = new List<StaticMesh>();
+        private BEPUphysics.Space _space;
         
         private void Start()
         {
             _space = FindFirstObjectByType<PredictionManager>().physics;
         }
-
+        
+        public void RegisterStaticMesh(StaticMesh mesh)
+        {
+            if (mesh != null && !staticMeshes.Contains(mesh))
+            {
+                staticMeshes.Add(mesh);
+            }
+        }
+        
         private void OnDrawGizmos()
         {
-            if (_space == null)
-                return;
+            if (_space == null) return;
 
+            if (drawDynamicColliders)
+                DrawDynamicColliders();
+
+            if (drawStaticMeshes)
+                DrawStaticMeshes();
+
+            if (drawVelocity)
+                DrawVelocity();
+        }
+
+        private void DrawDynamicColliders()
+        {
             Gizmos.color = Color.yellow;
             totalEntities = _space.Entities.Count;
+            
             foreach (var entity in _space.Entities)
             {
                 var position = entity.Position.ToVector3();
@@ -34,12 +61,11 @@ namespace PurrNet.Prediction
                 {
                     case BoxShape boxShape:
                         Gizmos.matrix = Matrix4x4.TRS(position, orientation, Vector3.one);
-                        Gizmos.DrawWireCube(Vector3.zero, 
-                            new Vector3(
-                                (float)boxShape.Width, 
-                                (float)boxShape.Height, 
-                                (float)boxShape.Length
-                            ));
+                        Gizmos.DrawWireCube(Vector3.zero, new Vector3(
+                            (float)boxShape.Width, 
+                            (float)boxShape.Height, 
+                            (float)boxShape.Length
+                        ));
                         Gizmos.matrix = Matrix4x4.identity;
                         break;
 
@@ -66,6 +92,7 @@ namespace PurrNet.Prediction
                             position - orientation * (Vector3.up * halfHeight - Vector3.right * radius)
                         );
                         break;
+
                     case CompoundShape compoundShape:
                         foreach (var entry in compoundShape.Shapes)
                         {
@@ -101,7 +128,10 @@ namespace PurrNet.Prediction
                         break;
                 }
             }
+        }
 
+        private void DrawVelocity()
+        {
             Gizmos.color = Color.red;
             foreach (var entity in _space.Entities)
             {
@@ -111,6 +141,27 @@ namespace PurrNet.Prediction
                         entity.Position.ToVector3(), 
                         entity.LinearVelocity.ToVector3() / 2
                     );
+                }
+            }
+        }
+
+        private void DrawStaticMeshes()
+        {
+            Gizmos.color = Color.cyan;
+            foreach (var staticMesh in staticMeshes)
+            {
+                var vertices = staticMesh.Mesh.Data.Vertices;
+                var indices = staticMesh.Mesh.Data.Indices;
+
+                for (int i = 0; i < indices.Length; i += 3)
+                {
+                    Vector3 v0 = MathConverter.Convert(vertices[indices[i]]);
+                    Vector3 v1 = MathConverter.Convert(vertices[indices[i + 1]]);
+                    Vector3 v2 = MathConverter.Convert(vertices[indices[i + 2]]);
+
+                    Gizmos.DrawLine(v0, v1);
+                    Gizmos.DrawLine(v1, v2);
+                    Gizmos.DrawLine(v2, v0);
                 }
             }
         }

@@ -79,9 +79,6 @@ namespace BEPUphysics.Entities.Prefabs
             Initialize(collidable, mass);
             Position = center;
         }
-
-
-
     }
 
 
