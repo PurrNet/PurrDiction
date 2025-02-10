@@ -14,6 +14,7 @@ namespace PurrNet.Prediction
 
         private StaticMesh _staticMesh;
         private BEPUphysics.Space _space;
+        private PredictionManager _predictionManager;
 
         private void Start()
         {
@@ -23,16 +24,29 @@ namespace PurrNet.Prediction
                                     $"\n <color=yellow>Please click on the imported model and enable `Read/Write` and apply the settings</color>", this);
                 return;
             }
-            
-            _space = FindFirstObjectByType<PredictionManager>().physics;
+
+            _predictionManager = FindFirstObjectByType<PredictionManager>(FindObjectsInactive.Include);
+
+            if (_predictionManager.physics == null)
+                _predictionManager.onPhysicsSet += OnPhysicsSet;
+            else
+                OnPhysicsSet();
+        }
+
+        private void OnPhysicsSet()
+        {
+            _space = _predictionManager.physics;
             if (_space == null)
             {
                 PurrLogger.LogException($"No physics space found in scene!", this);
                 return;
             }
             CreateEntity();
+            _predictionManager.onPhysicsSet -= OnPhysicsSet;
+            
 #if UNITY_EDITOR
-            FindFirstObjectByType<BepuDebugger>()?.RegisterStaticMesh(_staticMesh);
+            var debugger = FindFirstObjectByType<BepuDebugger>(FindObjectsInactive.Include);
+            debugger?.RegisterStaticMesh(_staticMesh);
 #endif
         }
 
@@ -42,6 +56,9 @@ namespace PurrNet.Prediction
             {
                 _space.Remove(_staticMesh);
             }
+            
+            if(_predictionManager)
+                _predictionManager.onPhysicsSet -= OnPhysicsSet;
         }
 
         private void CreateEntity()

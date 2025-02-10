@@ -40,6 +40,7 @@ namespace PurrNet.Prediction
         readonly List<PredictedIdentity> _systems = new ();
         
         public BEPUphysics.Space physics { get; private set; }
+        internal Action onPhysicsSet;
         
         public static bool TryGetInstance(int sceneHandle, out PredictionManager world)
         {
@@ -49,7 +50,6 @@ namespace PurrNet.Prediction
         private void Awake()
         {
             _instances[gameObject.scene.handle] = this;
-
             switch (_physicsProvider)
             {
                 case PredictionPhysicsProvider.UnityPhysics3D:
@@ -66,6 +66,7 @@ namespace PurrNet.Prediction
                             Gravity = new BEPUutilities.FPVector3(0, -9.81M, 0)
                         }
                     };
+                    onPhysicsSet?.Invoke();
                     break;
             }
         }
