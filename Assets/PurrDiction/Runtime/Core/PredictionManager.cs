@@ -309,6 +309,8 @@ namespace PurrNet.Prediction
             var cachedIsServer = isServer;
             var cachedIsClient = isClient;
             
+            isSimulating = true;
+            
             for (var systemIdx = 0; systemIdx < _systems.Count; systemIdx++)
             {
                 var system = _systems[systemIdx];
@@ -391,19 +393,45 @@ namespace PurrNet.Prediction
                 
                 SendInputToServer(localTick, frame);
             }
+            
+            isSimulating = false;
 
             localTick += 1;
             localTickInContext = localTick;
         }
 
+        /// <summary>
+        /// Is the prediction manager currently replaying a frame?
+        /// </summary>
         [UsedImplicitly]
         public bool isReplaying
+        {
+            get; private set;
+        }
+        
+        /// <summary>
+        /// Is the prediction manager currently simulating a frame?
+        /// This includes replaying frames.
+        /// If this is false nothing should act on the state of the game and expect it to be correct.
+        /// </summary>
+        [UsedImplicitly]
+        public bool isSimulating
+        {
+            get; private set;
+        }
+        
+        /// <summary>
+        /// True if the prediction manager is currently in the physics pass.
+        /// </summary>
+        [UsedImplicitly]
+        public bool isInPhysicsPass
         {
             get; private set;
         }
 
         private void DoPhysicsPass()
         {
+            isInPhysicsPass = true;
             switch (_physicsProvider)
             {
                 case PredictionPhysicsProvider.None:
@@ -428,6 +456,7 @@ namespace PurrNet.Prediction
                 default:
                     throw new NotImplementedException();
             }
+            isInPhysicsPass = false;
         }
         
         BitPacker _lastFrame;
@@ -481,6 +510,7 @@ namespace PurrNet.Prediction
                     break;
             }
             
+            isSimulating = true;
             for (ulong simTick = clientTick + 1; simTick < localTick; simTick++)
             {
                 localTickInContext = simTick;
@@ -493,6 +523,7 @@ namespace PurrNet.Prediction
                 for (var j = 0; j < _systems.Count; j++)
                     _systems[j].GetLatestUnityState();
             }
+            isSimulating = false;
             
             localTickInContext = localTick;
             isReplaying = false;

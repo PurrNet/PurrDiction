@@ -256,6 +256,13 @@ namespace PurrNet.Prediction
         /// </summary>
         /// <returns>The initial state of the object.</returns>
         protected virtual void GetUnityState(ref STATE state) {}
+        
+        public delegate void ModifyStateDelegate(ref STATE state);
+        
+        public void ModifyState(ModifyStateDelegate modify)
+        {
+            modify(ref fullPredictedState.state);
+        }
 
         internal override void GetLatestUnityState()
         {

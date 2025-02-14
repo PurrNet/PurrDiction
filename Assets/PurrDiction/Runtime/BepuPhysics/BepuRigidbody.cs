@@ -21,7 +21,7 @@ namespace PurrNet.Prediction
         [Header("Bepu Rigidbody")]
         [SerializeField] private BepuColliderDefinition[] _colliders;
         [SerializeField] private bool _isKinematic;
-        [SerializeField] private FP _mass = F64.C1;
+        [SerializeField] private FP _mass = FP.C1;
         
         private Entity _entity;
         private BEPUphysics.Space _space;
@@ -37,28 +37,27 @@ namespace PurrNet.Prediction
                 _entity.LinearVelocity = value;
             }
         }
-        public FPVector3 angularVelocity => currentState.angularVelocity;
-        public FP mass => _mass;
         
-        //public Entity BepuEntity => _entity;
+        public FPVector3 angularVelocity => currentState.angularVelocity;
+        
+        public FP mass => _mass;
 
         public override void Setup(NetworkManager manager, PredictionManager world, uint id)
         {
-            base.Setup(manager, world, id);
-            
-            if (!world)
-            {
-                PurrLogger.LogException($"Predicted Identity does not have a prediction manager!", this);
+            if (!isFreshSpawn)
                 return;
-            }
             
             _space = world.physics;
+            
             if (_space == null)
             {
-                PurrLogger.LogException($"No physics space found in scene!", this);
+                PurrLogger.LogException($"To use BepuRigidbody you need to select <b>BEPUPhysics</b> as a provider in the PredictionManager.", this);
+                base.Setup(manager, world, id);
                 return;
             }
+            
             CreateEntity();
+            base.Setup(manager, world, id);
         }
 
         protected override void OnDestroy()
@@ -105,14 +104,15 @@ namespace PurrNet.Prediction
             state.linearVelocity = _entity.LinearVelocity;
             state.angularVelocity = _entity.AngularVelocity;
             
-            transform.position = state.position.ToVector3();
-            transform.rotation = state.orientation.ToQuaternion();
+            transform.SetPositionAndRotation(
+                state.position.ToVector3(),
+                state.orientation.ToQuaternion());
         }
 
         protected override void GetUnityState(ref BepuRigidbodyState state)
         {
-            if (_entity == null)
-                return;
+            /*if (_entity == null)
+                return;*/
             
             state.position = _entity.Position;
             state.orientation = _entity.Orientation;
@@ -130,8 +130,6 @@ namespace PurrNet.Prediction
 
         public void AddForce(FPVector3 force, ForceMode mode = ForceMode.Force)
         {
-            var state = currentState;
-            
             switch (mode)
             {
                 case ForceMode.Force:
@@ -146,12 +144,13 @@ namespace PurrNet.Prediction
                 case ForceMode.VelocityChange:
                     _entity.LinearVelocity += force;
                     break;
+                default:
+                    PurrLogger.LogException($"Force mode <b>{mode}</b> not implemented!", this);
+                    break;
             }
-            
-            currentState = state;
         }
         
-        #if UNITY_EDITOR
+#if UNITY_EDITOR
         private void OnDrawGizmosSelected()
         {
             if (_colliders == null) 

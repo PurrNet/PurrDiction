@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using BEPUphysics.BroadPhaseEntries.MobileCollidables;
 using BEPUphysics.CollisionShapes;
 using BEPUphysics.CollisionShapes.ConvexShapes;
 using BEPUphysics.Entities;
@@ -22,7 +21,7 @@ namespace PurrNet.Prediction
             for (int i = 0; i < colliders.Length; i++)
             {
                 var collider = colliders[i];
-                EntityShape shape = collider.type switch
+                var shape = collider.type switch
                 {
                     BepuColliderType.Sphere => new SphereShape(collider.radius),
                     BepuColliderType.Box => new BoxShape(collider.width, collider.height, collider.depth),

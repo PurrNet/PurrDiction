@@ -1056,4 +1056,56 @@ namespace FixMath.NET
             RawValue = value * ONE;
         }
     }
+
+	public partial struct FP
+	{
+		public static readonly FP C0 = 0;
+		public static readonly FP C1 = 1;
+		public static readonly FP C180 = 180;
+		public static readonly FP C2 = 2;
+		public static readonly FP C3 = 3;
+		public static readonly FP C5 = 5;
+		public static readonly FP C6 = 6;
+		public static readonly FP C16 = 16;
+		public static readonly FP C24 = 24;
+		public static readonly FP C50 = 50;
+		public static readonly FP C60 = 60;
+		public static readonly FP C120 = 120;
+		public static readonly FP C0p001 = 0.001m;
+		public static readonly FP C0p5 = 0.5m;
+		public static readonly FP C0p25 = 0.25m;
+		public static readonly FP C1em09 = 1e-9m;
+		public static readonly FP C1em9 = 1e-9m;
+		public static readonly FP Cm1em9 = -1e-9m;
+		public static readonly FP C1em14 = 1e-14m;		
+		public static readonly FP C0p1 = 0.1m;
+		public static readonly FP OneThird = 1/(FP)3;
+		public static readonly FP C0p75 = 0.75m;
+		public static readonly FP C0p15 = 0.15m;
+		public static readonly FP C0p3 = 0.3m;
+		public static readonly FP C0p0625 = 0.0625m;
+		public static readonly FP C0p99 = .99m;
+		public static readonly FP C0p9 = .9m;
+		public static readonly FP C1p5 = 1.5m;
+		public static readonly FP C1p1 = 1.1m;
+        public static readonly FP Half = One / 2;
+        public static readonly FP OneEighth = One / 8;
+		public static readonly FP FourThirds = new FP(4) / 3;
+		public static readonly FP TwoFifths = new FP(2) / 5;
+		public static readonly FP C0p2 = 0.2m;
+		public static readonly FP C0p8 = 0.8m;
+		public static readonly FP C0p01 = 0.01m;
+		public static readonly FP C1em7 = 1e-7m;
+		public static readonly FP C1em5 = 1e-5m;
+		public static readonly FP C1em4 = 1e-4m;
+		public static readonly FP C1em10 = 1e-10m;
+		public static readonly FP Cm0p25 = -0.25m;
+		public static readonly FP Cm0p9999 = -0.9999m;
+		public static readonly FP C1m1em12 = One - 1e-12m;
+		public static readonly FP GoldenRatio = One + Sqrt(5) / 2;
+		public static readonly FP OneTwelfth = One / 12;
+		public static readonly FP C0p0833333333 = .0833333333m;
+		public static readonly FP C90000 = 90000;
+		public static readonly FP C600000 = 600000;
+	}
 }
