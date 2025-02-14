@@ -3,6 +3,7 @@ using ConversionHelper;
 using FixMath.NET;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Serialization;
 
 namespace PurrNet.Prediction.Prebuilt
 {
@@ -10,7 +11,8 @@ namespace PurrNet.Prediction.Prebuilt
     [AddComponentMenu("PurrDiction/Prebuilt/Rigidbody/Top Down Movement")]
     public class TopDownMovement_RB : PredictedIdentity<TopDownMovement_RB.Input, TopDownMovement_RB.State>
     {
-        [SerializeField] private Rigidbody rigidbody;
+        [FormerlySerializedAs("rigidbody")]
+        [SerializeField] private Rigidbody _rigidbody;
         [SerializeField] private float maxSpeed = 5;
         [SerializeField] private float acceleration = 30;
         private Camera _camera;
@@ -24,11 +26,13 @@ namespace PurrNet.Prediction.Prebuilt
 
         private void Reset()
         {
-            if(!TryGetComponent(out rigidbody))
-                rigidbody = gameObject.AddComponent<Rigidbody>();
+            if(!TryGetComponent(out _rigidbody))
+                _rigidbody = gameObject.AddComponent<Rigidbody>();
 
-            rigidbody.linearDamping = 3;
-            rigidbody.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+            _rigidbody.linearDamping = 3;
+            
+            // ReSharper disable once BitwiseOperatorOnEnumWithoutFlags
+            _rigidbody.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
         }
 
         protected override Input GetInput()
@@ -49,14 +53,14 @@ namespace PurrNet.Prediction.Prebuilt
             movement.Normalize();
             var floatMovement = MathConverter.Convert(movement);
             
-            rigidbody.AddForce(floatMovement * acceleration);
+            _rigidbody.AddForce(floatMovement * acceleration);
             
-            var flatMovement = new Vector3(rigidbody.linearVelocity.x, 0, rigidbody.linearVelocity.z);
+            var flatMovement = new Vector3(_rigidbody.linearVelocity.x, 0, _rigidbody.linearVelocity.z);
             if (flatMovement.magnitude > maxSpeed)
             {
                 flatMovement = flatMovement.normalized * maxSpeed;
-                flatMovement.y = rigidbody.linearVelocity.y;
-                rigidbody.linearVelocity = flatMovement;
+                flatMovement.y = _rigidbody.linearVelocity.y;
+                _rigidbody.linearVelocity = flatMovement;
             }
 
             if (floatMovement != Vector3.zero)
@@ -65,7 +69,7 @@ namespace PurrNet.Prediction.Prebuilt
                 state.rotation = (FP)rotation;
             }
             
-            rigidbody.rotation = Quaternion.Euler(0, (float)state.rotation, 0);
+            _rigidbody.rotation = Quaternion.Euler(0, (float)state.rotation, 0);
         }
         
         private FPVector3 GetCameraRelativeMovement(Vector2 inputDirection)

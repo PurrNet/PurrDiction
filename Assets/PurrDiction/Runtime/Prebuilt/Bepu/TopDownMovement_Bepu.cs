@@ -3,6 +3,7 @@ using ConversionHelper;
 using FixMath.NET;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Serialization;
 
 namespace PurrNet.Prediction.Prebuilt
 {
@@ -10,9 +11,13 @@ namespace PurrNet.Prediction.Prebuilt
     [RequireComponent(typeof(BepuRigidbody))]
     public class TopDownMovement_Bepu : PredictedIdentity<TopDownMovement_Bepu.Input, TopDownMovement_Bepu.State>
     {
-        [SerializeField] private BepuRigidbody rigidbody;
-        [SerializeField] private FP maxSpeed = 5;
-        [SerializeField] private FP acceleration = 30;
+        [FormerlySerializedAs("rigidbody")] 
+        [SerializeField] private BepuRigidbody _rigidbody;
+        [FormerlySerializedAs("maxSpeed")] 
+        [SerializeField] private FP _maxSpeed = 5;
+        [FormerlySerializedAs("acceleration")] 
+        [SerializeField] private FP _acceleration = 30;
+        
         private Camera _camera;
         
         private void Awake()
@@ -24,8 +29,8 @@ namespace PurrNet.Prediction.Prebuilt
         
         private void Reset()
         {
-            if(!TryGetComponent(out rigidbody))
-                rigidbody = gameObject.AddComponent<BepuRigidbody>();
+            if(!TryGetComponent(out _rigidbody))
+                _rigidbody = gameObject.AddComponent<BepuRigidbody>();
 
         }
 
@@ -46,12 +51,12 @@ namespace PurrNet.Prediction.Prebuilt
             
             input.Value.moveDirection.Normalize();
             
-            rigidbody.AddForce(input.Value.moveDirection * acceleration);
-            var flatVelocity = new FPVector2(rigidbody.linearVelocity.x, rigidbody.linearVelocity.z);
-            if (flatVelocity.magnitude > maxSpeed)
+            _rigidbody.AddForce(input.Value.moveDirection * _acceleration);
+            var flatVelocity = new FPVector2(_rigidbody.linearVelocity.x, _rigidbody.linearVelocity.z);
+            if (flatVelocity.magnitude > _maxSpeed)
             {
-                flatVelocity = flatVelocity.normalized * maxSpeed;
-                rigidbody.linearVelocity = new FPVector3(flatVelocity.x, rigidbody.linearVelocity.y, flatVelocity.y);
+                flatVelocity = flatVelocity.normalized * _maxSpeed;
+                _rigidbody.linearVelocity = new FPVector3(flatVelocity.x, _rigidbody.linearVelocity.y, flatVelocity.y);
             }
         }
         

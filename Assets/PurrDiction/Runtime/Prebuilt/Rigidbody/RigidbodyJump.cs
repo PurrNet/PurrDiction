@@ -1,6 +1,6 @@
-using System;
 using FixMath.NET;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace PurrNet.Prediction.Prebuilt
 {
@@ -9,7 +9,8 @@ namespace PurrNet.Prediction.Prebuilt
     public class RigidbodyJump : PredictedIdentity<RigidbodyJump.JumpInput, RigidbodyJump.JumpData>
     {
         [SerializeField] private KeyCode jumpKey = KeyCode.Space;
-        [SerializeField] private Rigidbody rigidbody;
+        [FormerlySerializedAs("rigidbody")] 
+        [SerializeField] private Rigidbody _rigidbody;
         [SerializeField] private float jumpCooldown = 0.5f;
         [SerializeField] private float jumpForce = 10;
         [SerializeField] private UpDirection upOrientation;
@@ -31,8 +32,8 @@ namespace PurrNet.Prediction.Prebuilt
         
         private void Reset()
         {
-            if(!TryGetComponent(out rigidbody))
-                rigidbody = gameObject.AddComponent<Rigidbody>();
+            if(!TryGetComponent(out _rigidbody))
+                _rigidbody = gameObject.AddComponent<Rigidbody>();
         }
 
         protected override void Simulate(JumpInput? input, ref JumpData state, FP delta)
@@ -45,8 +46,8 @@ namespace PurrNet.Prediction.Prebuilt
             if (!isGrounded)
             {
                 state.timeInAir += delta;
-                if(rigidbody.linearVelocity.magnitude < maxFallSpeed)
-                    rigidbody.AddForce(Vector3.down * ((float)state.timeInAir * gravityAirTimeMultiplier), ForceMode.Acceleration);
+                if(_rigidbody.linearVelocity.magnitude < maxFallSpeed)
+                    _rigidbody.AddForce(Vector3.down * ((float)state.timeInAir * gravityAirTimeMultiplier), ForceMode.Acceleration);
             }
             else
             {
@@ -61,10 +62,10 @@ namespace PurrNet.Prediction.Prebuilt
                 switch (upOrientation)
                 {
                     case UpDirection.World:
-                        rigidbody.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+                        _rigidbody.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
                         break;
                     case UpDirection.Local:
-                        rigidbody.AddForce(transform.up * jumpForce, ForceMode.Impulse);
+                        _rigidbody.AddForce(transform.up * jumpForce, ForceMode.Impulse);
                         break;
                 }
             }

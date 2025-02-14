@@ -61,8 +61,10 @@ namespace PurrNet.Prediction
             CreateEntity();
         }
 
-        private void OnDestroy()
+        protected override void OnDestroy()
         {
+            base.OnDestroy();
+            
             if (_space != null && _entity != null)
                 _space.Remove(_entity);
         }
