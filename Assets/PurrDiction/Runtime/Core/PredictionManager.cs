@@ -247,6 +247,7 @@ namespace PurrNet.Prediction
             if (player == localPlayer)
                 return;
 
+            _clientTicks[player] = new Queue<ulong>();
             MakeSureWeHaveLastFrame();
             SyncFullState(player, tickRate, tickDelta.RawValue, _lastServerFrame);
         }
@@ -477,6 +478,7 @@ namespace PurrNet.Prediction
                 if (clientLocalTick == 0)
                     return;
 
+                _lastVerifiedTick = clientLocalTick;
                 _tickToRollbackFrom = clientLocalTick;
             }
         }
@@ -536,7 +538,8 @@ namespace PurrNet.Prediction
         }
         
         private ulong? _tickToRollbackFrom;
-        
+        private ulong _lastVerifiedTick;
+
         private void OnPostTick()
         {
             if (_tickToRollbackFrom.HasValue)
