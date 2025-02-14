@@ -25,6 +25,32 @@ namespace PurrNet.Prediction
         
         private Entity _entity;
         private BEPUphysics.Space _space;
+        
+        public FPVector3 position
+        {
+            get => _entity.Position;
+            set => _entity.Position = value;
+        }
+        
+        public FPQuaternion rotation
+        {
+            get => _entity.Orientation;
+            set => _entity.Orientation = value;
+        }
+        
+        public bool isKinematic
+        {
+            get => _isKinematic;
+            set
+            {
+                _isKinematic = value;
+                if (_entity == null)
+                    return;
+                if (_isKinematic)
+                    _entity.BecomeKinematic();
+                else _entity.BecomeDynamic((FP)_mass);
+            }
+        }
 
         public FPVector3 linearVelocity
         {
@@ -137,6 +163,64 @@ namespace PurrNet.Prediction
                     break;
                 case ForceMode.Acceleration:
                     _entity.ApplyLinearImpulse(force * mass * predictionManager.tickDelta);
+                    break;
+                case ForceMode.VelocityChange:
+                    _entity.LinearVelocity += force;
+                    break;
+                default:
+                    PurrLogger.LogException($"Force mode <b>{mode}</b> not implemented!", this);
+                    break;
+            }
+        }
+        
+        public void AddTorque(FPVector3 torque, ForceMode mode = ForceMode.Force)
+        {
+            if (_entity == null)
+                return;
+            
+            _entity.ActivityInformation.Activate();
+
+            switch (mode)
+            {
+                case ForceMode.Force:
+                    _entity.ApplyAngularImpulse(ref torque);
+                    break;
+                case ForceMode.Impulse:
+                    torque *= (FP)Time.fixedDeltaTime;
+                    _entity.ApplyAngularImpulse(ref torque);
+                    break;
+                case ForceMode.Acceleration:
+                    torque *= (FP)Time.fixedDeltaTime * (FP)_mass;
+                    _entity.ApplyAngularImpulse(ref torque);
+                    break;
+                case ForceMode.VelocityChange:
+                    _entity.AngularVelocity += torque;
+                    break;
+                default:
+                    PurrLogger.LogException($"Force mode <b>{mode}</b> not implemented!", this);
+                    break;
+            }
+        }
+        
+        public void AddForceAtPosition(FPVector3 force, FPVector3 pos, ForceMode mode = ForceMode.Force)
+        {
+            if (_entity == null)
+                return;
+            
+            _entity.ActivityInformation.Activate();
+
+            switch (mode)
+            {
+                case ForceMode.Force:
+                    _entity.ApplyImpulse(ref force, ref pos);
+                    break;
+                case ForceMode.Impulse:
+                    force *= (FP)Time.fixedDeltaTime;
+                    _entity.ApplyImpulse(ref force, ref pos);
+                    break;
+                case ForceMode.Acceleration:
+                    force *= (FP)Time.fixedDeltaTime * (FP)_mass;
+                    _entity.ApplyImpulse(ref force, ref pos);
                     break;
                 case ForceMode.VelocityChange:
                     _entity.LinearVelocity += force;
