@@ -111,9 +111,6 @@ namespace PurrNet.Prediction
 
         protected override void GetUnityState(ref BepuRigidbodyState state)
         {
-            /*if (_entity == null)
-                return;*/
-            
             state.position = _entity.Position;
             state.orientation = _entity.Orientation;
             state.linearVelocity = _entity.LinearVelocity;

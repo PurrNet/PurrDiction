@@ -776,8 +776,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cdf2f9ae2d3ed0a46a7d5e44719b84ea, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  mesh: {fileID: -470067213634067786, guid: 1ba35f4f41071d544a21361c5e953974, type: 3}
-  drawGizmos: 0
+  _mesh: {fileID: -470067213634067786, guid: 1ba35f4f41071d544a21361c5e953974, type: 3}
+  _drawGizmos: 0
 --- !u!1 &1793795275
 GameObject:
   m_ObjectHideFlags: 0
@@ -954,13 +954,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8cade1e5f0ada234ea36354783251f0d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  rigidbody: {fileID: 1936988197}
-  offensiveForce: 10
-  receiveMultiplier: 1
-  offsetType: 1
-  receiveKnockbackOffset: {x: 0, y: 0, z: 0}
-  giveKnockbackOffset: {x: 0, y: 0, z: 0}
-  drawGizmos: 1
+  _rigidbody: {fileID: 1936988197}
+  _offensiveForce: 10
+  _receiveMultiplier: 1
+  _offsetType: 1
+  _receiveKnockbackOffset: {x: 0, y: 0, z: 0}
+  _giveKnockbackOffset: {x: 0, y: 0, z: 0}
+  _drawGizmos: 1
 --- !u!114 &1936988195
 MonoBehaviour:
   m_ObjectHideFlags: 0

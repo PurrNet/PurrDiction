@@ -9,8 +9,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5001935011197805880}
-  - component: {fileID: 1000503148862048864}
   - component: {fileID: 3918903839480659094}
+  - component: {fileID: 1000503148862048864}
   - component: {fileID: 4958840750858015635}
   m_Layer: 0
   m_Name: Bepu_Test_Sphere
@@ -35,6 +35,21 @@ Transform:
   - {fileID: 4133313166747596254}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &3918903839480659094
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3175525107310279005}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 98dbb08343eac044895b9b52872bcb49, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _graphics: {fileID: 4133313166747596254}
+  _characterControllerPatch: 1
+  _interpolationSettings: {fileID: 11400000, guid: 4a8aa8e44e23cfd4a8d4387ef3f36173, type: 2}
 --- !u!114 &1000503148862048864
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -62,21 +77,6 @@ MonoBehaviour:
   _isKinematic: 0
   _mass:
     RawValue: 4294967296
---- !u!114 &3918903839480659094
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3175525107310279005}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 98dbb08343eac044895b9b52872bcb49, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _graphics: {fileID: 4133313166747596254}
-  _characterControllerPatch: 1
-  _interpolationSettings: {fileID: 11400000, guid: 4a8aa8e44e23cfd4a8d4387ef3f36173, type: 2}
 --- !u!114 &4958840750858015635
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -91,10 +91,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _repeatInputFactor: 0.8
   _extrapolateInput: 1
-  rigidbody: {fileID: 1000503148862048864}
-  maxSpeed:
+  _rigidbody: {fileID: 1000503148862048864}
+  _maxSpeed:
     RawValue: 21474836480
-  acceleration:
+  _acceleration:
     RawValue: 128849018880
 --- !u!1 &8010950194088133054
 GameObject:
