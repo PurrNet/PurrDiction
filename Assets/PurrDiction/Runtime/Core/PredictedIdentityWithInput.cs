@@ -36,6 +36,7 @@ namespace PurrNet.Prediction
         internal override void EvaluateAndRegisterLocalInput(ulong localTick)
         {
             _lastInput = GetInput();
+            SanitizeInput(ref _lastInput);
             _inputHistory.Write(localTick, _lastInput);
         }
         
@@ -119,11 +120,19 @@ namespace PurrNet.Prediction
         }
         
         readonly Queue<INPUT> _queuedInputs = new();
+        
+        /// <summary>
+        /// Sanitize the input before using it.
+        /// Use this to clamp values or prevent invalid input.
+        /// </summary>
+        /// <param name="input"></param>
+        protected virtual void SanitizeInput(ref INPUT input) { }
 
         public override void QueueInput(BitPacker packer)
         {
             INPUT input = default;
             Packer<INPUT>.Read(packer, ref input);
+            SanitizeInput(ref input);
             _queuedInputs.Enqueue(input);
         }
 
