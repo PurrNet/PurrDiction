@@ -3,14 +3,15 @@ using BEPUphysics.BroadPhaseEntries;
 using ConversionHelper;
 using PurrNet.Logging;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace PurrNet.Prediction
 {
     [AddComponentMenu("PurrDiction/BEPU/Bepu Static Mesh Collider")]
     public class BepuStaticMesh : MonoBehaviour
     {
-        [SerializeField] private Mesh mesh;
-        [SerializeField] private bool drawGizmos;
+        [FormerlySerializedAs("mesh")] [SerializeField] private Mesh _mesh;
+        [FormerlySerializedAs("drawGizmos")] [SerializeField] private bool _drawGizmos;
 
         private StaticMesh _staticMesh;
         private BEPUphysics.Space _space;
@@ -18,14 +19,18 @@ namespace PurrNet.Prediction
 
         private void Start()
         {
-            if (!mesh.isReadable)
+            if (!_mesh.isReadable)
             {
-                PurrLogger.LogError($"Can't handle static mesh {mesh.name} because it is not readable! (GameObject: {gameObject.name}) " +
+                PurrLogger.LogError($"Can't handle static mesh {_mesh.name} because it is not readable! (GameObject: {gameObject.name}) " +
                                     $"\n <color=yellow>Please click on the imported model and enable `Read/Write` and apply the settings</color>", this);
                 return;
             }
 
-            _predictionManager = FindFirstObjectByType<PredictionManager>(FindObjectsInactive.Include);
+            if (!PredictionManager.TryGetInstance(gameObject.scene.handle, out _predictionManager))
+            {
+                PurrLogger.LogError($"No prediction manager found in scene!", this);
+                return;
+            }
 
             if (_predictionManager.physics == null)
                 _predictionManager.onPhysicsSet += OnPhysicsSet;
@@ -64,12 +69,12 @@ namespace PurrNet.Prediction
         private void CreateEntity()
         {
             var indices = new List<int>();
-            for (int i = 0; i < mesh.subMeshCount; i++)
+            for (int i = 0; i < _mesh.subMeshCount; i++)
             {
-                indices.AddRange(mesh.GetIndices(i));
+                indices.AddRange(_mesh.GetIndices(i));
             }
 
-            var worldVertices = mesh.vertices;
+            var worldVertices = _mesh.vertices;
             for (int i = 0; i < worldVertices.Length; i++)
             {
                 worldVertices[i] = transform.TransformPoint(worldVertices[i]);
@@ -82,21 +87,21 @@ namespace PurrNet.Prediction
 #if UNITY_EDITOR
         private void OnDrawGizmosSelected()
         {
-            if (!drawGizmos)
+            if (!_drawGizmos)
                 return;
             
-            if (mesh == null) return;
+            if (_mesh == null) return;
 
-            var worldVertices = mesh.vertices;
+            var worldVertices = _mesh.vertices;
             for (int i = 0; i < worldVertices.Length; i++)
             {
                 worldVertices[i] = transform.TransformPoint(worldVertices[i]);
             }
 
             var indices = new List<int>();
-            for (int i = 0; i < mesh.subMeshCount; i++)
+            for (int i = 0; i < _mesh.subMeshCount; i++)
             {
-                indices.AddRange(mesh.GetIndices(i));
+                indices.AddRange(_mesh.GetIndices(i));
             }
 
             Gizmos.color = Color.green;

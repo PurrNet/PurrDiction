@@ -7,7 +7,7 @@ namespace ConversionHelper
     public static class MathConverter
     {
         //Vector2
-        public static Vector2 Convert(BEPUutilities.FPVector2 bepuVector)
+        public static Vector2 Convert(FPVector2 bepuVector)
         {
             Vector2 toReturn;
             toReturn.x = (float)bepuVector.x;
@@ -15,7 +15,7 @@ namespace ConversionHelper
             return toReturn;
         }
         
-        public static Vector2 ToVector2(this BEPUutilities.FPVector2 bepuVector)
+        public static Vector2 ToVector2(this FPVector2 bepuVector)
         {
             Vector2 toReturn;
             toReturn.x = (float)bepuVector.x;
@@ -23,36 +23,36 @@ namespace ConversionHelper
             return toReturn;
         }
 
-        public static void Convert(ref BEPUutilities.FPVector2 bepuVector, out Vector2 unityVector)
+        public static void Convert(ref FPVector2 bepuVector, out Vector2 unityVector)
         {
             unityVector.x = (float)bepuVector.x;
             unityVector.y = (float)bepuVector.y;
         }
 
-        public static BEPUutilities.FPVector2 Convert(Vector2 unityVector)
+        public static FPVector2 Convert(Vector2 unityVector)
         {
-            BEPUutilities.FPVector2 toReturn;
+            FPVector2 toReturn;
             toReturn.x = (FP)unityVector.x;
             toReturn.y = (FP)unityVector.y;
             return toReturn;
         }
 
-        public static BEPUutilities.FPVector2 ToFPVector2(this Vector2 unityVector)
+        public static FPVector2 ToFPVector2(this Vector2 unityVector)
         {
-            BEPUutilities.FPVector2 toReturn;
+            FPVector2 toReturn;
             toReturn.x = (FP)unityVector.x;
             toReturn.y = (FP)unityVector.y;
             return toReturn;
         }
 
-        public static void Convert(ref Vector2 unityVector, out BEPUutilities.FPVector2 bepuVector)
+        public static void Convert(ref Vector2 unityVector, out FPVector2 bepuVector)
         {
             bepuVector.x = (FP)unityVector.x;
             bepuVector.y = (FP)unityVector.y;
         }
 
         //Vector3
-        public static Vector3 Convert(BEPUutilities.FPVector3 bepuVector)
+        public static Vector3 Convert(FPVector3 bepuVector)
         {
             Vector3 toReturn;
             toReturn.x = (float)bepuVector.x;
@@ -61,7 +61,7 @@ namespace ConversionHelper
             return toReturn;
         }
         
-        public static Vector3 ToVector3(this BEPUutilities.FPVector3 bepuVector)
+        public static Vector3 ToVector3(this FPVector3 bepuVector)
         {
             Vector3 toReturn;
             toReturn.x = (float)bepuVector.x;
@@ -70,39 +70,39 @@ namespace ConversionHelper
             return toReturn;
         }
 
-        public static void Convert(ref BEPUutilities.FPVector3 bepuVector, out Vector3 unityVector)
+        public static void Convert(ref FPVector3 bepuVector, out Vector3 unityVector)
         {
             unityVector.x = (float)bepuVector.x;
             unityVector.y = (float)bepuVector.y;
             unityVector.z = (float)bepuVector.z;
         }
 
-        public static BEPUutilities.FPVector3 Convert(Vector3 unityVector)
+        public static FPVector3 Convert(Vector3 unityVector)
         {
-            BEPUutilities.FPVector3 toReturn;
+            FPVector3 toReturn;
             toReturn.x = (FP)unityVector.x;
             toReturn.y = (FP)unityVector.y;
             toReturn.z = (FP)unityVector.z;
             return toReturn;
         }
         
-        public static BEPUutilities.FPVector3 ToFPVector3(this Vector3 unityVector)
+        public static FPVector3 ToFPVector3(this Vector3 unityVector)
         {
-            BEPUutilities.FPVector3 toReturn;
+            FPVector3 toReturn;
             toReturn.x = (FP)unityVector.x;
             toReturn.y = (FP)unityVector.y;
             toReturn.z = (FP)unityVector.z;
             return toReturn;
         }
 
-        public static void Convert(ref Vector3 unityVector, out BEPUutilities.FPVector3 bepuVector)
+        public static void Convert(ref Vector3 unityVector, out FPVector3 bepuVector)
         {
             bepuVector.x = (FP)unityVector.x;
             bepuVector.y = (FP)unityVector.y;
             bepuVector.z = (FP)unityVector.z;
         }
 
-        public static Vector3[] Convert(BEPUutilities.FPVector3[] bepuVectors)
+        public static Vector3[] Convert(FPVector3[] bepuVectors)
         {
             Vector3[] unityVectors = new Vector3[bepuVectors.Length];
             for (int i = 0; i < bepuVectors.Length; i++)
@@ -113,9 +113,9 @@ namespace ConversionHelper
 
         }
 
-        public static BEPUutilities.FPVector3[] Convert(Vector3[] unityVectors)
+        public static FPVector3[] Convert(Vector3[] unityVectors)
         {
-            var bepuVectors = new BEPUutilities.FPVector3[unityVectors.Length];
+            var bepuVectors = new FPVector3[unityVectors.Length];
             for (int i = 0; i < unityVectors.Length; i++)
             {
                 Convert(ref unityVectors[i], out bepuVectors[i]);
@@ -125,19 +125,19 @@ namespace ConversionHelper
         }
 
         //Matrix
-        public static Matrix4x4 Convert(BEPUutilities.Matrix matrix)
+        public static Matrix4x4 Convert(Matrix matrix)
         {
             Convert(ref matrix, out var toReturn);
             return toReturn;
         }
 
-        public static BEPUutilities.Matrix Convert(Matrix4x4 matrix)
+        public static Matrix Convert(Matrix4x4 matrix)
         {
-            Convert(ref matrix, out BEPUutilities.Matrix toReturn);
+            Convert(ref matrix, out Matrix toReturn);
             return toReturn;
         }
 
-        public static void Convert(ref BEPUutilities.Matrix matrix, out Matrix4x4 unityMatrix)
+        public static void Convert(ref Matrix matrix, out Matrix4x4 unityMatrix)
         {
             unityMatrix.m00 = (float)matrix.M11;
             unityMatrix.m01 = (float)matrix.M12;
@@ -161,7 +161,7 @@ namespace ConversionHelper
 
         }
 
-        public static void Convert(ref Matrix4x4 matrix, out BEPUutilities.Matrix bepuMatrix)
+        public static void Convert(ref Matrix4x4 matrix, out Matrix bepuMatrix)
         {
             bepuMatrix.M11 = (FP)matrix.m00;
             bepuMatrix.M12 = (FP)matrix.m01;
@@ -184,13 +184,13 @@ namespace ConversionHelper
             bepuMatrix.M44 = (FP)matrix.m33;
         }
 
-        public static Matrix4x4 Convert(BEPUutilities.Matrix3x3 matrix)
+        public static Matrix4x4 Convert(Matrix3x3 matrix)
         {
             Convert(ref matrix, out var toReturn);
             return toReturn;
         }
 
-        public static void Convert(ref BEPUutilities.Matrix3x3 matrix, out Matrix4x4 unityMatrix)
+        public static void Convert(ref Matrix3x3 matrix, out Matrix4x4 unityMatrix)
         {
             unityMatrix.m00 = (float)matrix.M11;
             unityMatrix.m01 = (float)matrix.M12;
@@ -213,7 +213,7 @@ namespace ConversionHelper
             unityMatrix.m33 = 1;
         }
 
-        public static void Convert(ref Matrix4x4 matrix, out BEPUutilities.Matrix3x3 bepuMatrix)
+        public static void Convert(ref Matrix4x4 matrix, out Matrix3x3 bepuMatrix)
         {
             bepuMatrix.M11 = (FP)matrix.m00;
             bepuMatrix.M12 = (FP)matrix.m01;
@@ -230,7 +230,7 @@ namespace ConversionHelper
         }
 
         //Quaternion
-        public static Quaternion Convert(BEPUutilities.FPQuaternion quaternion)
+        public static Quaternion Convert(FPQuaternion quaternion)
         {
             Quaternion toReturn;
             toReturn.x = (float)quaternion.x;
@@ -239,7 +239,7 @@ namespace ConversionHelper
             toReturn.w = (float)quaternion.w;
             return toReturn;
         }
-        public static Quaternion ToQuaternion(this BEPUutilities.FPQuaternion quaternion)
+        public static Quaternion ToQuaternion(this FPQuaternion quaternion)
         {
             Quaternion toReturn;
             toReturn.x = (float)quaternion.x;
@@ -249,9 +249,9 @@ namespace ConversionHelper
             return toReturn;
         }
 
-        public static BEPUutilities.FPQuaternion Convert(Quaternion quaternion)
+        public static FPQuaternion Convert(Quaternion quaternion)
         {
-            BEPUutilities.FPQuaternion toReturn;
+            FPQuaternion toReturn;
             toReturn.x = (FP)quaternion.x;
             toReturn.y = (FP)quaternion.y;
             toReturn.z = (FP)quaternion.z;
@@ -259,9 +259,9 @@ namespace ConversionHelper
             return toReturn;
         }
 
-        public static BEPUutilities.FPQuaternion ToFPQuaternion(this Quaternion quaternion)
+        public static FPQuaternion ToFPQuaternion(this Quaternion quaternion)
         {
-            BEPUutilities.FPQuaternion toReturn;
+            FPQuaternion toReturn;
             toReturn.x = (FP)quaternion.x;
             toReturn.y = (FP)quaternion.y;
             toReturn.z = (FP)quaternion.z;
@@ -269,7 +269,7 @@ namespace ConversionHelper
             return toReturn;
         }
 
-        public static void Convert(ref BEPUutilities.FPQuaternion bepuQuaternion, out Quaternion quaternion)
+        public static void Convert(ref FPQuaternion bepuQuaternion, out Quaternion quaternion)
         {
             quaternion.x = (float)bepuQuaternion.x;
             quaternion.y = (float)bepuQuaternion.y;
@@ -277,7 +277,7 @@ namespace ConversionHelper
             quaternion.w = (float)bepuQuaternion.w;
         }
 
-        public static void Convert(ref Quaternion quaternion, out  BEPUutilities.FPQuaternion bepuQuaternion)
+        public static void Convert(ref Quaternion quaternion, out  FPQuaternion bepuQuaternion)
         {
             bepuQuaternion.x = (FP)quaternion.x;
             bepuQuaternion.y = (FP)quaternion.y;
@@ -286,9 +286,9 @@ namespace ConversionHelper
         }
 
         //Ray
-        public static BEPUutilities.FPRay Convert(Ray ray)
+        public static FPRay Convert(Ray ray)
         {
-            BEPUutilities.FPRay toReturn;
+            FPRay toReturn;
             
             var position = ray.origin;
             var direction = ray.direction;
@@ -299,7 +299,7 @@ namespace ConversionHelper
             return toReturn;
         }
 
-        public static void Convert(ref Ray ray, out BEPUutilities.FPRay bepuRay)
+        public static void Convert(ref Ray ray, out FPRay bepuRay)
         {
             var position = ray.origin;
             var direction = ray.direction;
@@ -308,14 +308,14 @@ namespace ConversionHelper
             Convert(ref direction, out bepuRay.Direction);
         }
 
-        public static Ray Convert(BEPUutilities.FPRay ray)
+        public static Ray Convert(FPRay ray)
         {
             Convert(ref ray.Position, out var position);
             Convert(ref ray.Direction, out var direction);
             return new Ray(position, direction);
         }
 
-        public static void Convert(ref BEPUutilities.FPRay ray, out Ray unityRay)
+        public static void Convert(ref FPRay ray, out Ray unityRay)
         {
             Convert(ref ray.Position, out var pos);
             Convert(ref ray.Direction, out var dir);
@@ -324,7 +324,7 @@ namespace ConversionHelper
         }
 
         //BoundingBox
-        public static Bounds Convert(BEPUutilities.FPBoundingBox boundingBox)
+        public static Bounds Convert(FPBoundingBox boundingBox)
         {
             Bounds toReturn = new();
             Convert(ref boundingBox.Min, out var min);
@@ -333,9 +333,9 @@ namespace ConversionHelper
             return toReturn;
         }
 
-        public static BEPUutilities.FPBoundingBox Convert(Bounds boundingBox)
+        public static FPBoundingBox Convert(Bounds boundingBox)
         {
-            BEPUutilities.FPBoundingBox toReturn;
+            FPBoundingBox toReturn;
             var min = boundingBox.min;
             var max = boundingBox.max;
             Convert(ref min, out toReturn.Min);
@@ -343,7 +343,7 @@ namespace ConversionHelper
             return toReturn;
         }
 
-        public static void Convert(ref BEPUutilities.FPBoundingBox boundingBox, out Bounds unityBoundingBox)
+        public static void Convert(ref FPBoundingBox boundingBox, out Bounds unityBoundingBox)
         {
             Convert(ref boundingBox.Min, out var min);
             Convert(ref boundingBox.Max, out var max);
@@ -352,7 +352,7 @@ namespace ConversionHelper
             unityBoundingBox.SetMinMax(min, max);
         }
 
-        public static void Convert(ref Bounds boundingBox, out BEPUutilities.FPBoundingBox bepuBoundingBox)
+        public static void Convert(ref Bounds boundingBox, out FPBoundingBox bepuBoundingBox)
         {
             var min = boundingBox.min;
             var max = boundingBox.max;
@@ -362,28 +362,28 @@ namespace ConversionHelper
         }
 
         //Plane
-        public static Plane Convert(BEPUutilities.FPPlane plane)
+        public static Plane Convert(FPPlane plane)
         {
             Convert(ref plane.Normal, out var normal);
             return new Plane(normal, (float)plane.D);
         }
 
-        public static BEPUutilities.FPPlane Convert(Plane plane)
+        public static FPPlane Convert(Plane plane)
         {
-            BEPUutilities.FPPlane toReturn;
+            FPPlane toReturn;
             var normal = plane.normal;
             Convert(ref normal, out toReturn.Normal);
             toReturn.D = (FP)plane.distance;
             return toReturn;
         }
 
-        public static void Convert(ref BEPUutilities.FPPlane plane, out Plane unityPlane)
+        public static void Convert(ref FPPlane plane, out Plane unityPlane)
         {
             Convert(ref plane.Normal, out var normal);
             unityPlane = new Plane(normal, (float)plane.D);
         }
 
-        public static void Convert(ref Plane plane, out BEPUutilities.FPPlane bepuPlane)
+        public static void Convert(ref Plane plane, out FPPlane bepuPlane)
         {
             var normal = plane.normal;
             Convert(ref normal, out bepuPlane.Normal);
