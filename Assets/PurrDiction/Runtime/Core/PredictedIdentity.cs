@@ -69,6 +69,12 @@ namespace PurrNet.Prediction
         
         internal bool isFreshSpawn = true;
 
+        [UsedByIL]
+        public bool IsSimulating()
+        {
+            return predictionManager.isSimulating;
+        }
+
         public virtual void Setup(NetworkManager manager, PredictionManager world, uint id)
         {
             if (!isFreshSpawn)

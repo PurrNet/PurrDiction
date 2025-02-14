@@ -20,6 +20,7 @@ namespace PurrNet.Prediction.Tests
         }
 
 
+        [SimulationOnly]
         private void OnCollisionEnter(Collision other)
         {
             var copy = currentState;
