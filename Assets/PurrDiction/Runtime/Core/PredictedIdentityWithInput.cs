@@ -55,6 +55,7 @@ namespace PurrNet.Prediction
                 switch (_extrapolateInput)
                 {
                     case true when _inputHistory.TryGetClosest(tick, out var extrainput, out var distanceInTicks):
+                        ModifyExtrapolatedInput(ref extrainput);
                         uint maxInputs = (uint)Mathf.CeilToInt(_repeatInputFactor * 10 / ((float)delta * 60));
                         if (distanceInTicks <= maxInputs)
                              Simulate(extrainput, ref fullPredictedState.state, delta);
@@ -69,6 +70,11 @@ namespace PurrNet.Prediction
                 }
             }
         }
+        
+        /// <summary>
+        /// Modify the extrapolated input before it is used to simulate the state.
+        /// </summary>
+        protected virtual void ModifyExtrapolatedInput(ref INPUT input) { }
 
         internal override void SimulateLocal(FP delta)
         {
