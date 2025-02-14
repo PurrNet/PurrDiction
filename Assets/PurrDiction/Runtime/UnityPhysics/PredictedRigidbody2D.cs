@@ -7,7 +7,18 @@ namespace PurrNet.Prediction
     [AddComponentMenu("PurrDiction/Unity Rigidbody/Predicted Rigidbody 2D")]
     public class PredictedRigidbody2D : PredictedIdentity<UnityRigidbody2DState>
     {
+        public delegate void OnCollisionDelegate(Collision2D other);
+        public delegate void OnTriggerDelegate(Collider2D other);
+        
         [SerializeField] private Rigidbody2D _rigidbody;
+        
+        public event OnCollisionDelegate onCollisionEnter;
+        public event OnCollisionDelegate onCollisionExit;
+        public event OnCollisionDelegate onCollisionStay;
+        
+        public event OnTriggerDelegate onTriggerEnter;
+        public event OnTriggerDelegate onTriggerExit;
+        public event OnTriggerDelegate onTriggerStay;
 
         private void Reset()
         {
@@ -36,6 +47,54 @@ namespace PurrNet.Prediction
             _rigidbody.linearVelocity = state.linearVelocity;
             _rigidbody.angularVelocity = state.angularVelocity;
             _rigidbody.linearDamping = state.linearDamping;
+        }
+        
+        private void OnCollisionEnter2D(Collision2D other)
+        {
+            if (!predictionManager.isSimulating)
+                return;
+
+            onCollisionEnter?.Invoke(other);
+        }
+        
+        private void OnCollisionExit2D(Collision2D other)
+        {
+            if (!predictionManager.isSimulating)
+                return;
+
+            onCollisionExit?.Invoke(other);
+        }
+        
+        private void OnCollisionStay2D(Collision2D other)
+        {
+            if (!predictionManager.isSimulating)
+                return;
+
+            onCollisionStay?.Invoke(other);
+        }
+        
+        private void OnTriggerEnter2D(Collider2D other)
+        {
+            if (!predictionManager.isSimulating)
+                return;
+
+            onTriggerEnter?.Invoke(other);
+        }
+        
+        private void OnTriggerExit2D(Collider2D other)
+        {
+            if (!predictionManager.isSimulating)
+                return;
+
+            onTriggerExit?.Invoke(other);
+        }
+        
+        private void OnTriggerStay2D(Collider2D other)
+        {
+            if (!predictionManager.isSimulating)
+                return;
+
+            onTriggerStay?.Invoke(other);
         }
     }
 }
