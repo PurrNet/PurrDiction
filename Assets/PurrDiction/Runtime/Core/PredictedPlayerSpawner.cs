@@ -35,6 +35,9 @@ namespace PurrNet.Prediction
 
         public override void Subscribe(NetworkManager manager, bool asServer)
         {
+            if (!gameObject.activeInHierarchy)
+                return;
+            
             if (asServer && manager.TryGetModule(out ScenePlayersModule scenePlayersModule, true))
             {
                 scenePlayersModule.onPlayerLoadedScene += OnPlayerLoadedScene;

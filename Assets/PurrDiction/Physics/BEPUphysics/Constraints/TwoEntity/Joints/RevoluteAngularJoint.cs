@@ -274,7 +274,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
             }
             else
             {
-                throw new InvalidOperationException("Cannot constrain two kinematic bodies.");
+                throw new InvalidOperationException($"Cannot constrain two kinematic bodies.");
             }
 
             FPVector3.Dot(ref axis1I, ref worldConstrainedAxis1, out effectiveMassMatrix.M11);

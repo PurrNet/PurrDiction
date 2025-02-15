@@ -1,3 +1,4 @@
+using System;
 using BEPUphysics.Entities;
 using BEPUutilities;
 using ConversionHelper;
@@ -7,16 +8,8 @@ using UnityEngine;
 
 namespace PurrNet.Prediction
 {
-    public struct BepuRigidbodyState : IPredictedData<BepuRigidbodyState>
-    {
-        public FPVector3 position;
-        public FPQuaternion orientation;
-        public FPVector3 linearVelocity;
-        public FPVector3 angularVelocity;
-    }
-    
     [AddComponentMenu("PurrDiction/BEPU/Bepu Rigidbody")]
-    public class BepuRigidbody : PredictedIdentity<BepuRigidbodyState>
+    public class BepuRigidbody : PredictedIdentity<BepuRigidbody.BepuRigidbodyState>
     {
         [Header("Bepu Rigidbody")]
         [SerializeField] private BepuColliderDefinition[] _colliders;
@@ -25,6 +18,9 @@ namespace PurrNet.Prediction
         
         private Entity _entity;
         private BEPUphysics.Space _space;
+        public Action onEntityCreated;
+        
+        public Entity entity => _entity;
         
         public FPVector3 position
         {
@@ -102,6 +98,7 @@ namespace PurrNet.Prediction
                 _entity.BecomeKinematic();
             
             _space.Add(_entity);
+            onEntityCreated?.Invoke();
         }
 
         protected override BepuRigidbodyState GetInitialState()
@@ -240,5 +237,13 @@ namespace PurrNet.Prediction
             BepuColliderFactory.DrawGizmos(transform, _colliders);
         }
 #endif
+        
+        public struct BepuRigidbodyState : IPredictedData<BepuRigidbodyState>
+        {
+            public FPVector3 position;
+            public FPQuaternion orientation;
+            public FPVector3 linearVelocity;
+            public FPVector3 angularVelocity;
+        }
     }
 }
