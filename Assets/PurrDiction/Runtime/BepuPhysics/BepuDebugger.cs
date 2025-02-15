@@ -163,6 +163,53 @@ namespace PurrNet.Prediction
                 }
             }
         }
+        
+        public static void DrawHingeJoint(
+            Vector3 position, 
+            Vector3 axis, 
+            Vector3 testAxis, 
+            float angleLimitation,
+            Transform connectedBody = null)
+        {
+            Vector3 normalizedAxis = axis.normalized;
+        
+            if (!Application.isPlaying && connectedBody != null)
+            {
+                Vector3 toConnected = (connectedBody.position - position).normalized;
+                testAxis = Vector3.Cross(normalizedAxis, toConnected).normalized;
+                testAxis = Quaternion.AngleAxis(-90, normalizedAxis) * testAxis;
+            }
+        
+            Gizmos.color = Color.blue;
+            Gizmos.DrawRay(position, normalizedAxis);
+        
+            Gizmos.color = Color.yellow;
+            var minAngle = -(angleLimitation / 2);
+            var maxAngle = angleLimitation / 2;
+            Quaternion minRot = Quaternion.AngleAxis(minAngle, normalizedAxis);
+            Quaternion maxRot = Quaternion.AngleAxis(maxAngle, normalizedAxis);
+        
+            Gizmos.DrawRay(position, minRot * testAxis);
+            Gizmos.DrawRay(position, maxRot * testAxis);
+        
+            int segments = 20;
+            float angleStep = (maxAngle - minAngle) / segments;
+            Vector3 prev = position + minRot * testAxis;
+        
+            for(int i = 1; i <= segments; i++)
+            {
+                float angle = minAngle + (angleStep * i);
+                Vector3 next = position + (Quaternion.AngleAxis(angle, normalizedAxis) * testAxis);
+                Gizmos.DrawLine(prev, next);
+                prev = next;
+            }
+
+            if (connectedBody != null)
+            {
+                Gizmos.color = Color.green;
+                Gizmos.DrawLine(position, new Vector3(connectedBody.position.x, position.y, connectedBody.position.z));
+            }
+        }
         #endif
     }
 }

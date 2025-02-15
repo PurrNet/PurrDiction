@@ -95,71 +95,37 @@ namespace PurrNet.Prediction
         }
 
 #if UNITY_EDITOR
-    private Vector3 _initialTestAxis;
-    private bool _initialized;
-    
-    private void OnDrawGizmosSelected()
-    {
-        Vector3 position = transform.position;
-        Vector3 normalizedAxis = _axis.normalized;
-        Vector3 testAxis;
-
-        if (Application.isPlaying)
+        private Vector3 _initialTestAxis;
+        private bool _initialized;
+        
+        private void OnDrawGizmosSelected()
         {
-            if (!_initialized)
+            Vector3 testAxis;
+            if (Application.isPlaying)
             {
-                Vector3 toConnected = (connectedBody.transform.position - position).normalized;
-                _initialTestAxis = Vector3.Cross(normalizedAxis, toConnected).normalized;
-                _initialTestAxis = Quaternion.AngleAxis(-90, normalizedAxis) * _initialTestAxis;
-                _initialized = true;
-            }
-            testAxis = _initialTestAxis;
-        }
-        else
-        {
-            if (connectedBody != null)
-            {
-                Vector3 toConnected = (connectedBody.transform.position - position).normalized;
-                testAxis = Vector3.Cross(normalizedAxis, toConnected).normalized;
-                testAxis = Quaternion.AngleAxis(-90, normalizedAxis) * testAxis;
+                if (!_initialized && connectedBody != null)
+                {
+                    Vector3 toConnected = (connectedBody.transform.position - transform.position).normalized;
+                    _initialTestAxis = Vector3.Cross(_axis.normalized, toConnected).normalized;
+                    _initialTestAxis = Quaternion.AngleAxis(-90, _axis.normalized) * _initialTestAxis;
+                    _initialized = true;
+                }
+                testAxis = _initialTestAxis;
             }
             else
             {
-                testAxis = (Mathf.Abs(Vector3.Dot(normalizedAxis, Vector3.up)) > 0.9f ? 
-                    Vector3.right : Vector3.Cross(Vector3.up, normalizedAxis)).normalized;
+                testAxis = (Mathf.Abs(Vector3.Dot(_axis.normalized, Vector3.up)) > 0.9f ? 
+                    Vector3.right : Vector3.Cross(Vector3.up, _axis.normalized)).normalized;
             }
-        }
-        
-        Gizmos.color = Color.blue;
-        Gizmos.DrawRay(position, normalizedAxis);
-        
-        Gizmos.color = Color.yellow;
-        var minAngle = -(angleLimitation / 2);
-        var maxAngle = angleLimitation / 2;
-        Quaternion minRot = Quaternion.AngleAxis((float)minAngle, normalizedAxis);
-        Quaternion maxRot = Quaternion.AngleAxis((float)maxAngle, normalizedAxis);
-        
-        Gizmos.DrawRay(position, minRot * testAxis);
-        Gizmos.DrawRay(position, maxRot * testAxis);
-        
-        int segments = 20;
-        float angleStep = ((float)maxAngle - (float)minAngle) / segments;
-        Vector3 prev = position + minRot * testAxis;
-        
-        for(int i = 1; i <= segments; i++)
-        {
-            float angle = (float)minAngle + (angleStep * i);
-            Vector3 next = position + (Quaternion.AngleAxis(angle, normalizedAxis) * testAxis);
-            Gizmos.DrawLine(prev, next);
-            prev = next;
-        }
 
-        if (connectedBody != null)
-        {
-            Gizmos.color = Color.green;
-            Gizmos.DrawLine(position, new Vector3(connectedBody.transform.position.x, position.y,  connectedBody.transform.position.z));
+            BepuDebugger.DrawHingeJoint(
+                transform.position,
+                _axis,
+                testAxis,
+                (float)angleLimitation,
+                connectedBody ? connectedBody.transform : null
+            );
         }
-    }
 #endif
 
         public struct BepuHingeJointState : IPredictedData<BepuHingeJointState> { }
