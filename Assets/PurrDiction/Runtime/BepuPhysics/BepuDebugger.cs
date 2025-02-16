@@ -2,9 +2,11 @@ using System.Collections.Generic;
 using BEPUphysics.BroadPhaseEntries;
 using BEPUphysics.CollisionShapes;
 using BEPUphysics.CollisionShapes.ConvexShapes;
+using BEPUphysics.Constraints.SolverGroups;
 using BEPUphysics.Entities;
 using BEPUutilities;
 using ConversionHelper;
+using FixMath.NET;
 using PurrNet.Utils;
 using UnityEngine;
 
@@ -16,10 +18,12 @@ namespace PurrNet.Prediction
         [SerializeField] private bool drawStaticMeshes = true;
         [SerializeField] private bool drawVelocity = true;
         [SerializeField] private bool drawDynamicColliders = true;
+        [SerializeField] private bool drawJoints = true;
 
         [PurrReadOnly, SerializeField] private int totalEntities;
         
-        private List<StaticMesh> staticMeshes = new List<StaticMesh>();
+        private List<StaticMesh> _staticMeshes = new List<StaticMesh>();
+        private List<BepuHingeJoint> _hingeJoints = new List<BepuHingeJoint>();
         private BEPUphysics.Space _space;
         
         private void Start()
@@ -29,9 +33,17 @@ namespace PurrNet.Prediction
         
         public void RegisterStaticMesh(StaticMesh mesh)
         {
-            if (mesh != null && !staticMeshes.Contains(mesh))
+            if (mesh != null && !_staticMeshes.Contains(mesh))
             {
-                staticMeshes.Add(mesh);
+                _staticMeshes.Add(mesh);
+            }
+        }
+        
+        public void RegisterHingeJoint(BepuHingeJoint hingeJoint)
+        {
+            if (hingeJoint != null && !_hingeJoints.Contains(hingeJoint))
+            {
+                _hingeJoints.Add(hingeJoint);
             }
         }
         
@@ -47,6 +59,9 @@ namespace PurrNet.Prediction
 
             if (drawVelocity)
                 DrawVelocity();
+
+            if (drawJoints)
+                DrawJoints();
         }
 
         private void DrawDynamicColliders()
@@ -146,7 +161,7 @@ namespace PurrNet.Prediction
         private void DrawStaticMeshes()
         {
             Gizmos.color = Color.cyan;
-            foreach (var staticMesh in staticMeshes)
+            foreach (var staticMesh in _staticMeshes)
             {
                 var vertices = staticMesh.Mesh.Data.Vertices;
                 var indices = staticMesh.Mesh.Data.Indices;
@@ -161,6 +176,16 @@ namespace PurrNet.Prediction
                     Gizmos.DrawLine(v1, v2);
                     Gizmos.DrawLine(v2, v0);
                 }
+            }
+        }
+
+        private void DrawJoints()
+        {
+            foreach (var joint in _hingeJoints)
+            {
+                if (!joint.initialized)
+                    continue;
+                DrawHingeJoint(joint.transform.position, joint.axis, joint.initialTestAxis, (float)joint.angleLimitation, joint.connectedBody?.transform);
             }
         }
         
