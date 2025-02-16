@@ -12,38 +12,51 @@ namespace PurrNet.Prediction.Editor
         
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
-            // Save the original label width
+            position = EditorGUI.PrefixLabel(position, GUIUtility.GetControlID(FocusType.Passive), label);
+
+            xValue = property.FindPropertyRelative("x");
+            yValue = property.FindPropertyRelative("y");
+            zValue = property.FindPropertyRelative("z");
+            
             float originalLabelWidth = EditorGUIUtility.labelWidth;
-    
-            // Set a smaller label width for the axis labels
-            xValue = property.FindPropertyRelative("X");
-            yValue = property.FindPropertyRelative("Y");
-            zValue = property.FindPropertyRelative("Z");
-    
-            // Draw the main label
-            position = EditorGUI.PrefixLabel(position, label);
-    
-            // Calculate the width for each field
-            float fieldWidth = position.width / 3;
-    
-            // Draw the X, Y, and Z fields with their labels
-            var xRect = new Rect(position.x, position.y, fieldWidth - 3, position.height);
-            var yRect = new Rect(position.x + fieldWidth + 2, position.y, fieldWidth - 3, position.height);
-            var zRect = new Rect(position.x + 4 + 2 * fieldWidth, position.y, fieldWidth - 4, position.height);
-    
-            EditorGUIUtility.labelWidth = 12f; // Adjust this value as needed
-            EditorGUI.PropertyField(xRect, xValue, new GUIContent("X"));
-            EditorGUI.PropertyField(yRect, yValue, new GUIContent("Y"));
-            EditorGUI.PropertyField(zRect, zValue, new GUIContent("Z"));
-    
-            // Restore the original label width
-            EditorGUIUtility.labelWidth = originalLabelWidth;
-    
-            // If any of the values change, apply the changes
-            if (GUI.changed)
+            int originalIndent = EditorGUI.indentLevel;
+            
+            EditorGUI.indentLevel = 0;
+            
+            float fieldWidth = position.width / 3f;
+            float spacing = 2f;
+            float labelWidth = 14f;
+
+            Rect xRect = new Rect(position.x, position.y, fieldWidth - spacing, position.height);
+            Rect yRect = new Rect(position.x + fieldWidth, position.y, fieldWidth - spacing, position.height);
+            Rect zRect = new Rect(position.x + 2 * fieldWidth, position.y, fieldWidth - spacing, position.height);
+
+            var labelStyle = new GUIStyle(EditorStyles.label)
             {
-                property.serializedObject.ApplyModifiedProperties();
+                normal = { textColor = new Color(0.7f, 0.7f, 0.7f) }
+            };
+
+            EditorGUIUtility.labelWidth = labelWidth;
+            
+            using (var check = new EditorGUI.ChangeCheckScope())
+            {
+                EditorGUI.LabelField(new Rect(xRect.x, xRect.y, labelWidth, xRect.height), "X", labelStyle);
+                EditorGUI.PropertyField(xRect, xValue, new GUIContent("X"));
+
+                EditorGUI.LabelField(new Rect(yRect.x, yRect.y, labelWidth, yRect.height), "Y", labelStyle);
+                EditorGUI.PropertyField(yRect, yValue, new GUIContent("Y"));
+
+                EditorGUI.LabelField(new Rect(zRect.x, zRect.y, labelWidth, zRect.height), "Z", labelStyle);
+                EditorGUI.PropertyField(zRect, zValue, new GUIContent("Z"));
+
+                if (check.changed)
+                {
+                    property.serializedObject.ApplyModifiedProperties();
+                }
             }
+
+            EditorGUIUtility.labelWidth = originalLabelWidth;
+            EditorGUI.indentLevel = originalIndent;
         }
     }
 }

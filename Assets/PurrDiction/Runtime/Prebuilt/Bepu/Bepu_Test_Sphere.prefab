@@ -74,6 +74,13 @@ MonoBehaviour:
       RawValue: 0
     mesh: {fileID: 0}
     convex: 0
+    offset:
+      x:
+        RawValue: 0
+      y:
+        RawValue: 4294967296
+      z:
+        RawValue: 0
   _isKinematic: 0
   _mass:
     RawValue: 4294967296

@@ -1,4 +1,5 @@
 ﻿using System;
+using BEPUutilities;
 using FixMath.NET;
 using UnityEngine;
 
@@ -22,5 +23,6 @@ namespace PurrNet.Prediction
         public FP depth;
         public Mesh mesh;
         public bool convex;
+        public FPVector3 offset;
     }
 }

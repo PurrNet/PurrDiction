@@ -15,8 +15,8 @@ namespace PurrNet.Prediction.Editor
             switch (type)
             {
                 case BepuColliderType.Sphere:
-                    height += EditorGUIUtility.singleLineHeight + 
-                             EditorGUIUtility.standardVerticalSpacing * 2;
+                    height += (EditorGUIUtility.singleLineHeight + 
+                             EditorGUIUtility.standardVerticalSpacing) * 2;
                     break;
                 case BepuColliderType.Box:
                     height += (EditorGUIUtility.singleLineHeight + 
@@ -63,22 +63,26 @@ namespace PurrNet.Prediction.Editor
                 {
                     case BepuColliderType.Sphere:
                         DrawProperty(ref yOffset, position, property, "radius");
+                        DrawProperty(ref yOffset, position, property, "offset");
                         break;
 
                     case BepuColliderType.Box:
                         DrawProperty(ref yOffset, position, property, "width");
                         DrawProperty(ref yOffset, position, property, "height");
                         DrawProperty(ref yOffset, position, property, "depth");
+                        DrawProperty(ref yOffset, position, property, "offset");
                         break;
 
                     case BepuColliderType.Capsule:
                         DrawProperty(ref yOffset, position, property, "radius");
                         DrawProperty(ref yOffset, position, property, "height");
+                        DrawProperty(ref yOffset, position, property, "offset");
                         break;
 
                     case BepuColliderType.Mesh:
                         DrawProperty(ref yOffset, position, property, "mesh");
                         DrawProperty(ref yOffset, position, property, "convex");
+                        DrawProperty(ref yOffset, position, property, "offset");
                         break;
                 }
 
