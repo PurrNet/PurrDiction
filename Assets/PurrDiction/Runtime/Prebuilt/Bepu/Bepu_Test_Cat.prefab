@@ -59,7 +59,7 @@ MonoBehaviour:
     depth:
       RawValue: 0
     mesh: {fileID: -470067213634067786, guid: 1ba35f4f41071d544a21361c5e953974, type: 3}
-    convex: 1
+    convex: 0
   _isKinematic: 0
   _mass:
     RawValue: 4294967296
@@ -92,10 +92,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _repeatInputFactor: 0.8
   _extrapolateInput: 1
-  rigidbody: {fileID: 1000503148862048864}
-  maxSpeed:
+  _rigidbody: {fileID: 1000503148862048864}
+  _maxSpeed:
     RawValue: 21474836480
-  acceleration:
+  _acceleration:
     RawValue: 128849018880
 --- !u!1 &8010950194088133054
 GameObject:

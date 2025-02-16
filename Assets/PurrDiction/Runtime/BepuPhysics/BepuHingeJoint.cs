@@ -23,12 +23,18 @@ namespace PurrNet.Prediction
         public RevoluteLimit limitJoint => _limitJoint;
         public Vector3 axis => _axis;
         public FP angleLimitation => _angleLimitation;
-        public BepuRigidbody connectedBody => _connectedBody;
+        public BepuRigidbody connectedBody => _connectedBody ? _connectedBody : null;
 
         public override void Setup(NetworkManager manager, PredictionManager world, uint id)
         {
-            if (!isFreshSpawn || !_connectedBody)
+            if (!isFreshSpawn)
                 return;
+
+            if (!_connectedBody)
+            {
+                PurrLogger.LogError($"BepuHingeJoint requires a connected body to work!", this);
+                return;
+            }
 
             if (!TryGetComponent(out BepuRigidbody self))
                 return;
@@ -95,6 +101,9 @@ namespace PurrNet.Prediction
         protected override void Simulate(ref BepuHingeJointState state, FP delta)
         {
             base.Simulate(ref state, delta);
+            if (!_connectedBody)
+                return;
+            
             if(_hingeJoint != null) _hingeJoint.Update(delta);
             if(_limitJoint != null) _limitJoint.Update(delta);
         }
