@@ -78,12 +78,22 @@ MonoBehaviour:
       x:
         RawValue: 0
       y:
-        RawValue: 4294967296
+        RawValue: 0
       z:
         RawValue: 0
   _isKinematic: 0
   _mass:
     RawValue: 4294967296
+  _linearDrag:
+    RawValue: 0
+  _angularDrag:
+    RawValue: 0
+  _freezePositionX: 0
+  _freezePositionY: 0
+  _freezePositionZ: 0
+  _freezeRotationX: 0
+  _freezeRotationY: 0
+  _freezeRotationZ: 0
 --- !u!114 &4958840750858015635
 MonoBehaviour:
   m_ObjectHideFlags: 0

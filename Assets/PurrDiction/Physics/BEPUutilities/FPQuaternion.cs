@@ -144,8 +144,22 @@ namespace BEPUutilities
             }
         }
 
+        public static FPQuaternion CreateFromEuler(FPVector3 euler)
+        {
+            FP cx = FP.Cos(euler.x * FP.C0p5);
+            FP sx = FP.Sin(euler.x * FP.C0p5);
+            FP cy = FP.Cos(euler.y * FP.C0p5);
+            FP sy = FP.Sin(euler.y * FP.C0p5);
+            FP cz = FP.Cos(euler.z * FP.C0p5);
+            FP sz = FP.Sin(euler.z * FP.C0p5);
 
-
+            FPQuaternion q;
+            q.w = cx * cy * cz + sx * sy * sz;
+            q.x = sx * cy * cz - cx * sy * sz;
+            q.y = cx * sy * cz + sx * cy * sz;
+            q.z = cx * cy * sz - sx * sy * cz;
+            return q;
+        }
 
         /// <summary>
         /// Constructs a quaternion from a rotation matrix.

@@ -607,6 +607,7 @@ GameObject:
   m_Component:
   - component: {fileID: 845066762}
   - component: {fileID: 845066761}
+  - component: {fileID: 845066763}
   m_Layer: 0
   m_Name: Test
   m_TagString: Untagged
@@ -648,6 +649,16 @@ MonoBehaviour:
   _isKinematic: 0
   _mass:
     RawValue: 4294967296
+  _linearDrag:
+    RawValue: 0
+  _angularDrag:
+    RawValue: 644245094
+  _freezePositionX: 0
+  _freezePositionY: 0
+  _freezePositionZ: 0
+  _freezeRotationX: 0
+  _freezeRotationY: 0
+  _freezeRotationZ: 0
 --- !u!4 &845066762
 Transform:
   m_ObjectHideFlags: 0
@@ -664,6 +675,21 @@ Transform:
   - {fileID: 463302133}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &845066763
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 845066760}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 98dbb08343eac044895b9b52872bcb49, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _graphics: {fileID: 0}
+  _characterControllerPatch: 1
+  _interpolationSettings: {fileID: 11400000, guid: 4a8aa8e44e23cfd4a8d4387ef3f36173, type: 2}
 --- !u!1001 &970653693
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1349,6 +1375,7 @@ GameObject:
   - component: {fileID: 1969785456}
   - component: {fileID: 1969785455}
   - component: {fileID: 1969785454}
+  - component: {fileID: 1969785457}
   m_Layer: 0
   m_Name: Joint
   m_TagString: Untagged
@@ -1390,6 +1417,16 @@ MonoBehaviour:
   _isKinematic: 1
   _mass:
     RawValue: 4294967296
+  _linearDrag:
+    RawValue: 0
+  _angularDrag:
+    RawValue: 644245094
+  _freezePositionX: 0
+  _freezePositionY: 0
+  _freezePositionZ: 0
+  _freezeRotationX: 0
+  _freezeRotationY: 0
+  _freezeRotationZ: 0
 --- !u!114 &1969785455
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1422,6 +1459,21 @@ Transform:
   - {fileID: 720044099}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1969785457
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1969785453}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 98dbb08343eac044895b9b52872bcb49, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _graphics: {fileID: 0}
+  _characterControllerPatch: 1
+  _interpolationSettings: {fileID: 11400000, guid: 4a8aa8e44e23cfd4a8d4387ef3f36173, type: 2}
 --- !u!1 &1997087625
 GameObject:
   m_ObjectHideFlags: 0
@@ -1435,6 +1487,7 @@ GameObject:
   - component: {fileID: 1997087627}
   - component: {fileID: 1997087630}
   - component: {fileID: 1997087631}
+  - component: {fileID: 1997087632}
   m_Layer: 0
   m_Name: Plane
   m_TagString: Untagged
@@ -1565,6 +1618,31 @@ MonoBehaviour:
   _isKinematic: 1
   _mass:
     RawValue: 4294967296
+  _linearDrag:
+    RawValue: 0
+  _angularDrag:
+    RawValue: 644245094
+  _freezePositionX: 0
+  _freezePositionY: 0
+  _freezePositionZ: 0
+  _freezeRotationX: 0
+  _freezeRotationY: 0
+  _freezeRotationZ: 0
+--- !u!114 &1997087632
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1997087625}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 98dbb08343eac044895b9b52872bcb49, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _graphics: {fileID: 0}
+  _characterControllerPatch: 1
+  _interpolationSettings: {fileID: 11400000, guid: 4a8aa8e44e23cfd4a8d4387ef3f36173, type: 2}
 --- !u!1 &1999688760
 GameObject:
   m_ObjectHideFlags: 0

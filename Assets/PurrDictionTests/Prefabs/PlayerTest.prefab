@@ -160,8 +160,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 98dbb08343eac044895b9b52872bcb49, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _maxInterpolationBuffer: 3
-  _updateView: 1
   _graphics: {fileID: 6680935653974138748}
   _characterControllerPatch: 1
   _interpolationSettings: {fileID: 11400000, guid: 4a8aa8e44e23cfd4a8d4387ef3f36173, type: 2}
@@ -177,8 +175,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 939517533de889a4f948d4e2041fb798, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _maxInterpolationBuffer: 2
-  _updateView: 0
   _rigidbody: {fileID: 3826029466696574374}
 --- !u!114 &1085109774632596692
 MonoBehaviour:
@@ -192,8 +188,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2daa0d781088f654e8252f83fdc8a584, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _maxInterpolationBuffer: 2
-  _updateView: 1
   _repeatInputFactor: 0.8
   _extrapolateInput: 1
   _projectile: {fileID: 208167536026591109, guid: eb91489127ad82e4cbc003840e08c8f8, type: 3}
@@ -230,7 +224,7 @@ Rigidbody:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2990978637306053845}
   serializedVersion: 4
-  m_Mass: 1
+  m_Mass: 20
   m_Drag: 0
   m_AngularDrag: 2
   m_CenterOfMass: {x: 0, y: 0, z: 0}
@@ -261,8 +255,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3d5fadb47a9f2134db85c4ffed35eae5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _maxInterpolationBuffer: 2
-  _updateView: 1
   _wrappedStates:
   - _object: {fileID: 7869050440099779299}
   - _object: {fileID: 7396793433136830489}
@@ -397,8 +389,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eda6738422b210b46a3c75be939656e2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _maxInterpolationBuffer: 2
-  _updateView: 1
   _repeatInputFactor: 0.8
   _extrapolateInput: 1
 --- !u!1 &7869050440099779299
@@ -445,7 +435,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eda6738422b210b46a3c75be939656e2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _maxInterpolationBuffer: 2
-  _updateView: 1
   _repeatInputFactor: 0.8
   _extrapolateInput: 1

@@ -249,6 +249,19 @@ namespace ConversionHelper
             return toReturn;
         }
 
+        public static FPVector3 ToEuler(this FPQuaternion quaternion)
+        {
+            FP sqx = quaternion.x * quaternion.x;
+            FP sqy = quaternion.y * quaternion.y;
+            FP sqz = quaternion.z * quaternion.z;
+            FP sqw = quaternion.w * quaternion.w;
+
+            FPVector3 euler;
+            euler.y = FP.Atan2(FP.C2 * (quaternion.w * quaternion.y - quaternion.x * quaternion.z), sqw - sqx - sqy + sqz);
+            euler.x = FP.Atan2(FP.C2 * (quaternion.w * quaternion.x - quaternion.y * quaternion.z), sqw - sqx + sqy - sqz);
+            euler.z = FP.Atan2(FP.C2 * (quaternion.w * quaternion.z - quaternion.x * quaternion.y), sqw + sqx - sqy - sqz);
+            return euler;
+        }
         public static FPQuaternion Convert(Quaternion quaternion)
         {
             FPQuaternion toReturn;

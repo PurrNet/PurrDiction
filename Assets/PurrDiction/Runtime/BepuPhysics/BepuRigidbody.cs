@@ -9,15 +9,28 @@ using UnityEngine;
 namespace PurrNet.Prediction
 {
     [AddComponentMenu("PurrDiction/BEPU/Bepu Rigidbody")]
+    [RequireComponent(typeof(PredictedTransform))]
     public class BepuRigidbody : PredictedIdentity<BepuRigidbody.BepuRigidbodyState>
     {
-        [Header("Bepu Rigidbody")]
         [SerializeField] private BepuColliderDefinition[] _colliders;
         [SerializeField] private bool _isKinematic;
         [SerializeField] private FP _mass = FP.C1;
         
+        [SerializeField] private FP _linearDrag = FP.C0;
+        [SerializeField] private FP _angularDrag = FP.C0p15;
+        
+        [Header("Constraints")]
+        [SerializeField] private bool _freezePositionX;
+        [SerializeField] private bool _freezePositionY;
+        [SerializeField] private bool _freezePositionZ;
+        [SerializeField] private bool _freezeRotationX;
+        [SerializeField] private bool _freezeRotationY;
+        [SerializeField] private bool _freezeRotationZ;
+        
         private Entity _entity;
         private BEPUphysics.Space _space;
+        private FPVector3 _lockedPosition;
+        private FPQuaternion _lockedRotation;
         public Action onEntityCreated;
         
         public Entity entity => _entity;
@@ -33,6 +46,7 @@ namespace PurrNet.Prediction
             get => _entity.Orientation;
             set => _entity.Orientation = value;
         }
+        
         
         public bool isKinematic
         {
@@ -63,22 +77,109 @@ namespace PurrNet.Prediction
         public FPVector3 angularVelocity => currentState.angularVelocity;
         
         public FP mass => _mass;
+        
+        public FP drag
+        {
+            get => _linearDrag;
+            set => _linearDrag = FP.Max(FP.C0, value);
+        }
+    
+        public FP angularDrag
+        {
+            get => _angularDrag;
+            set => _angularDrag = FP.Max(FP.C0, value);
+        }
+
+        #region Constraints
+
+        public bool freezePositionX
+        {
+            get => _freezePositionX;
+            set
+            {
+                _freezePositionX = value;
+                if (value) _lockedPosition.x = _entity?.Position.x ?? FP.C0;
+                UpdateConstraints();
+            }
+        }
+
+        public bool freezePositionY
+        {
+            get => _freezePositionY;
+            set
+            {
+                _freezePositionY = value;
+                if (value) _lockedPosition.y = _entity?.Position.y ?? FP.C0;
+                UpdateConstraints();
+            }
+        }
+
+        public bool freezePositionZ
+        {
+            get => _freezePositionZ;
+            set
+            {
+                _freezePositionZ = value;
+                if (value) _lockedPosition.z = _entity?.Position.z ?? FP.C0;
+                UpdateConstraints();
+            }
+        }
+
+        public bool freezeRotationX
+        {
+            get => _freezeRotationX;
+            set
+            {
+                _freezeRotationX = value;
+                if (value) _lockedRotation = _entity?.Orientation ?? FPQuaternion.Identity;
+                UpdateConstraints();
+            }
+        }
+
+        public bool freezeRotationY
+        {
+            get => _freezeRotationY;
+            set
+            {
+                _freezeRotationY = value;
+                if (value) _lockedRotation = _entity?.Orientation ?? FPQuaternion.Identity;
+                UpdateConstraints();
+            }
+        }
+
+        public bool freezeRotationZ
+        {
+            get => _freezeRotationZ;
+            set
+            {
+                _freezeRotationZ = value;
+                if (value) _lockedRotation = _entity?.Orientation ?? FPQuaternion.Identity;
+                UpdateConstraints();
+            }
+        }
+
+        #endregion
 
         public override void Setup(NetworkManager manager, PredictionManager world, uint id)
         {
             if (!isFreshSpawn)
                 return;
-            
+        
             _space = world.physics;
-            
+        
             if (_space == null)
             {
                 PurrLogger.LogException($"To use BepuRigidbody you need to select <b>BEPUPhysics</b> as a provider in the PredictionManager.", this);
                 base.Setup(manager, world, id);
                 return;
             }
-            
+        
             CreateEntity();
+        
+            _lockedPosition = _entity.Position;
+            _lockedRotation = _entity.Orientation;
+            UpdateConstraints();
+        
             base.Setup(manager, world, id);
         }
 
@@ -120,16 +221,85 @@ namespace PurrNet.Prediction
             if (!_isKinematic)
             {
                 state.linearVelocity += _space.ForceUpdater.Gravity * delta;
+
+                if (_linearDrag > FP.C0)
+                {
+                    FP dragFactor = FP.C1 - (delta * _linearDrag);
+                    state.linearVelocity *= FP.Max(FP.C0, dragFactor);
+                }
+
+                if (_angularDrag > FP.C0)
+                {
+                    FP angularDragFactor = FP.C1 - (delta * _angularDrag);
+                    state.angularVelocity *= FP.Max(FP.C0, angularDragFactor);
+                }
             }
+
+            _entity.LinearVelocity = state.linearVelocity;
+            _entity.AngularVelocity = state.angularVelocity;
+
+            EnforceConstraints();
 
             state.position = _entity.Position;
             state.orientation = _entity.Orientation;
             state.linearVelocity = _entity.LinearVelocity;
             state.angularVelocity = _entity.AngularVelocity;
-            
+        
             transform.SetPositionAndRotation(
                 state.position.ToVector3(),
                 state.orientation.ToQuaternion());
+        }
+        
+        private void EnforceConstraints()
+        {
+            if (_entity == null) return;
+
+            var currentPos = _entity.Position;
+            var currentRot = _entity.Orientation;
+
+            if (_freezePositionX) currentPos.x = _lockedPosition.x;
+            if (_freezePositionY) currentPos.y = _lockedPosition.y;
+            if (_freezePositionZ) currentPos.z = _lockedPosition.z;
+
+            if (_freezeRotationX || _freezeRotationY || _freezeRotationZ)
+            {
+                FPVector3 eulerAngles = currentRot.ToEuler();
+                FPVector3 lockedEulerAngles = _lockedRotation.ToEuler();
+
+                if (_freezeRotationX) eulerAngles.x = lockedEulerAngles.x;
+                if (_freezeRotationY) eulerAngles.y = lockedEulerAngles.y;
+                if (_freezeRotationZ) eulerAngles.z = lockedEulerAngles.z;
+
+                currentRot = FPQuaternion.CreateFromEuler(eulerAngles);
+            }
+
+            _entity.Position = currentPos;
+            _entity.Orientation = currentRot;
+
+            var linearVel = _entity.LinearVelocity;
+            var angularVel = _entity.AngularVelocity;
+
+            if (_freezePositionX) linearVel.x = FP.C0;
+            if (_freezePositionY) linearVel.y = FP.C0;
+            if (_freezePositionZ) linearVel.z = FP.C0;
+
+            if (_freezeRotationX) angularVel.x = FP.C0;
+            if (_freezeRotationY) angularVel.y = FP.C0;
+            if (_freezeRotationZ) angularVel.z = FP.C0;
+
+            _entity.LinearVelocity = linearVel;
+            _entity.AngularVelocity = angularVel;
+        }
+        
+        private void UpdateConstraints()
+        {
+            if (_entity == null)
+                return;
+
+            _lockedPosition = _entity.Position;
+            _lockedRotation = _entity.Orientation;
+
+            EnforceConstraints();
         }
 
         protected override void GetUnityState(ref BepuRigidbodyState state)

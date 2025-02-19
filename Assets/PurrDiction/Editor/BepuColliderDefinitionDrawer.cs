@@ -8,56 +8,56 @@ namespace PurrNet.Prediction.Editor
     {
         public override float GetPropertyHeight(SerializedProperty property, GUIContent label)
         {
+            if (!property.isExpanded)
+                return EditorGUIUtility.singleLineHeight;
+                
             var type = (BepuColliderType)property.FindPropertyRelative("type").enumValueIndex;
+            float height = EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
             
-            float height = EditorGUIUtility.singleLineHeight * 2 + EditorGUIUtility.standardVerticalSpacing;
+            height += EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
             
-            switch (type)
+            if (property.isExpanded)
             {
-                case BepuColliderType.Sphere:
-                    height += (EditorGUIUtility.singleLineHeight + 
-                             EditorGUIUtility.standardVerticalSpacing) * 2;
-                    break;
-                case BepuColliderType.Box:
-                    height += (EditorGUIUtility.singleLineHeight + 
-                             EditorGUIUtility.standardVerticalSpacing) * 4;
-                    break;
-                case BepuColliderType.Capsule:
-                    height += (EditorGUIUtility.singleLineHeight + 
-                             EditorGUIUtility.standardVerticalSpacing) * 3;
-                    break;
-                case BepuColliderType.Mesh:
-                    height += (EditorGUIUtility.singleLineHeight + 
-                             EditorGUIUtility.standardVerticalSpacing) * 3;
-                    break;
+                switch (type)
+                {
+                    case BepuColliderType.Sphere:
+                        height += (EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing) * 2;
+                        break;
+                    case BepuColliderType.Box:
+                        height += (EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing) * 4;
+                        break;
+                    case BepuColliderType.Capsule:
+                        height += (EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing) * 3;
+                        break;
+                    case BepuColliderType.Mesh:
+                        height += (EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing) * 3;
+                        break;
+                }
             }
             
             return height;
         }
 
-        public override void OnGUI(Rect position, SerializedProperty property, 
-            GUIContent label)
+        public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
             EditorGUI.BeginProperty(position, label, property);
 
-            position.height = EditorGUIUtility.singleLineHeight;
-            property.isExpanded = EditorGUI.Foldout(position, property.isExpanded, label);
+            Rect foldoutRect = position;
+            foldoutRect.height = EditorGUIUtility.singleLineHeight;
+            property.isExpanded = EditorGUI.Foldout(foldoutRect, property.isExpanded, label);
 
             if (property.isExpanded)
             {
                 EditorGUI.indentLevel++;
                 
-                Rect typeRect = new Rect(position.x, position.y + 
-                    EditorGUIUtility.singleLineHeight + 
-                    EditorGUIUtility.standardVerticalSpacing,
+                Rect typeRect = new Rect(position.x, position.y + EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing,
                     position.width, EditorGUIUtility.singleLineHeight);
 
                 var typeProp = property.FindPropertyRelative("type");
                 EditorGUI.PropertyField(typeRect, typeProp);
 
                 var type = (BepuColliderType)typeProp.enumValueIndex;
-                float yOffset = typeRect.y + EditorGUIUtility.singleLineHeight + 
-                    EditorGUIUtility.standardVerticalSpacing;
+                float yOffset = typeRect.y + EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
 
                 switch (type)
                 {
@@ -92,15 +92,11 @@ namespace PurrNet.Prediction.Editor
             EditorGUI.EndProperty();
         }
 
-        private void DrawProperty(ref float yOffset, Rect position, 
-            SerializedProperty property, string propertyName)
+        private void DrawProperty(ref float yOffset, Rect position, SerializedProperty property, string propertyName)
         {
-            Rect propertyRect = new Rect(position.x, yOffset, position.width, 
-                EditorGUIUtility.singleLineHeight);
-            EditorGUI.PropertyField(propertyRect, 
-                property.FindPropertyRelative(propertyName));
-            yOffset += EditorGUIUtility.singleLineHeight + 
-                EditorGUIUtility.standardVerticalSpacing;
+            Rect propertyRect = new Rect(position.x, yOffset, position.width, EditorGUIUtility.singleLineHeight);
+            EditorGUI.PropertyField(propertyRect, property.FindPropertyRelative(propertyName));
+            yOffset += EditorGUIUtility.singleLineHeight + EditorGUIUtility.standardVerticalSpacing;
         }
     }
 }
