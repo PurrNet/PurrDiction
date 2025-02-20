@@ -9,7 +9,7 @@ namespace PurrNet.Prediction.Prebuilt
 {
     [AddComponentMenu("PurrDiction/Prebuilt/BEPU/Top Down Movement")]
     [RequireComponent(typeof(BepuRigidbody))]
-    public class TopDownMovement_Bepu : PredictedIdentity<TopDownMovement_Bepu.Input, TopDownMovement_Bepu.State>
+    public class TopDownMovement_Bepu : PredictedIdentity<TopDownMovement_Bepu.Input, TopDownMovement_Bepu.State>, IBepuCollisionEnter, IBepuTriggerEnter
     {
         [FormerlySerializedAs("rigidbody")] 
         [SerializeField] private BepuRigidbody _rigidbody;
@@ -100,6 +100,16 @@ namespace PurrNet.Prediction.Prebuilt
         public struct Input : IPredictedData
         {
             public FPVector3 moveDirection;
+        }
+
+        public void OnBepuCollisionEnter(GameObject other)
+        {
+            Debug.Log($"Collided with {other.name}");
+        }
+
+        public void OnBepuTriggerEnter(GameObject other)
+        {
+            Debug.Log($"Triggered with {other.name}");
         }
     }
 }

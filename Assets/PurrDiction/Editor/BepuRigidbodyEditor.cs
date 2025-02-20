@@ -7,6 +7,7 @@ namespace PurrNet.Prediction.Editor
     public class BepuRigidbodyEditor : UnityEditor.Editor
     {
         private SerializedProperty _colliders;
+        private SerializedProperty _isTrigger;
         private SerializedProperty _isKinematic;
         private SerializedProperty _mass;
         private SerializedProperty _drag;
@@ -22,6 +23,7 @@ namespace PurrNet.Prediction.Editor
         private void OnEnable()
         {
             _colliders = serializedObject.FindProperty("_colliders");
+            _isTrigger = serializedObject.FindProperty("_isTrigger");
             _isKinematic = serializedObject.FindProperty("_isKinematic");
             _mass = serializedObject.FindProperty("_mass");
             _drag = serializedObject.FindProperty("_linearDrag");
@@ -41,6 +43,7 @@ namespace PurrNet.Prediction.Editor
 
             EditorGUILayout.LabelField("Bepu Rigidbody", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(_colliders);
+            EditorGUILayout.PropertyField(_isTrigger);
             EditorGUILayout.PropertyField(_isKinematic);
             EditorGUILayout.PropertyField(_mass);
             

@@ -1,21 +1,29 @@
+using System;
 using System.Collections.Generic;
 using BEPUphysics.BroadPhaseEntries;
+using BEPUphysics.CollisionRuleManagement;
 using ConversionHelper;
 using PurrNet.Logging;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace PurrNet.Prediction
 {
     [AddComponentMenu("PurrDiction/BEPU/Bepu Static Mesh Collider")]
     public class BepuStaticMesh : MonoBehaviour
     {
-        [FormerlySerializedAs("mesh")] [SerializeField] private Mesh _mesh;
-        [FormerlySerializedAs("drawGizmos")] [SerializeField] private bool _drawGizmos;
+        [SerializeField] private Mesh _mesh;
+        [SerializeField] private bool _isTrigger;
+        [SerializeField] private bool _drawGizmos;
+        
+        public event BepuCollisionHandler.TriggerEventHandler onTriggerEnter;
+        public event BepuCollisionHandler.TriggerEventHandler onTriggerExit;
+        public event BepuCollisionHandler.CollisionEventHandler onCollisionEnter;
+        public event BepuCollisionHandler.CollisionEventHandler onCollisionExit;
 
         private StaticMesh _staticMesh;
         private BEPUphysics.Space _space;
         private PredictionManager _predictionManager;
+        private BepuCollisionHandler _collisionHandler;
 
         private void Start()
         {
@@ -48,6 +56,8 @@ namespace PurrNet.Prediction
             }
             CreateEntity();
             _predictionManager.onPhysicsSet -= OnPhysicsSet;
+            InitializeCollisionHandler();
+            UpdateTriggerState();
             
 #if UNITY_EDITOR
             var debugger = FindFirstObjectByType<BepuDebugger>(FindObjectsInactive.Include);
@@ -57,11 +67,16 @@ namespace PurrNet.Prediction
 
         private void OnDestroy()
         {
+            if (_collisionHandler != null && _staticMesh != null)
+            {
+                _collisionHandler.UnsubscribeFromEvents(_staticMesh);
+            }
+            
             if (_space != null && _staticMesh != null)
             {
                 _space.Remove(_staticMesh);
             }
-            
+    
             if(_predictionManager)
                 _predictionManager.onPhysicsSet -= OnPhysicsSet;
         }
@@ -81,7 +96,28 @@ namespace PurrNet.Prediction
             }
 
             _staticMesh = new StaticMesh(MathConverter.Convert(worldVertices), indices.ToArray());
+            _staticMesh.Tag = gameObject;
             _space.Add(_staticMesh);
+        }
+        
+        private void InitializeCollisionHandler()
+        {
+            _collisionHandler = new BepuCollisionHandler(_predictionManager, _isTrigger, gameObject);
+            _collisionHandler.onTriggerEnter += (go) => onTriggerEnter?.Invoke(go);
+            _collisionHandler.onTriggerExit += (go) => onTriggerExit?.Invoke(go);
+            _collisionHandler.onCollisionEnter += (go) => onCollisionEnter?.Invoke(go);
+            _collisionHandler.onCollisionExit += (go) => onCollisionExit?.Invoke(go);
+        }
+
+        private void UpdateTriggerState()
+        {
+            if (_staticMesh == null) return;
+
+            _collisionHandler.SubscribeToEvents(_staticMesh);
+    
+            _staticMesh.CollisionRules.Personal = _isTrigger ? 
+                CollisionRule.NoSolver : 
+                CollisionRule.Normal;
         }
 
 #if UNITY_EDITOR
