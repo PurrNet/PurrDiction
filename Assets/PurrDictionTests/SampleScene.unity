@@ -239,7 +239,7 @@ MonoBehaviour:
   m_Antialiasing: 2
   m_AntialiasingQuality: 2
   m_StopNaN: 0
-  m_Dithering: 0
+  m_Dithering: 1
   m_ClearDepth: 1
   m_AllowXRRendering: 1
   m_AllowHDROutput: 1
@@ -627,6 +627,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ef978d1ab6f2cb8429879e1a2e303a2c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _freezePositionX: 0
+  _freezePositionY: 0
+  _freezePositionZ: 0
+  _freezeRotationX: 0
+  _freezeRotationY: 0
+  _freezeRotationZ: 0
   _colliders:
   - type: 1
     radius:
@@ -646,6 +652,7 @@ MonoBehaviour:
         RawValue: 0
       z:
         RawValue: 0
+  _isTrigger: 0
   _isKinematic: 0
   _mass:
     RawValue: 4294967296
@@ -653,12 +660,6 @@ MonoBehaviour:
     RawValue: 0
   _angularDrag:
     RawValue: 644245094
-  _freezePositionX: 0
-  _freezePositionY: 0
-  _freezePositionZ: 0
-  _freezeRotationX: 0
-  _freezeRotationY: 0
-  _freezeRotationZ: 0
 --- !u!4 &845066762
 Transform:
   m_ObjectHideFlags: 0
@@ -1075,6 +1076,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _mesh: {fileID: -470067213634067786, guid: 1ba35f4f41071d544a21361c5e953974, type: 3}
+  _isTrigger: 0
   _drawGizmos: 0
 --- !u!1 &1793795275
 GameObject:
@@ -1395,6 +1397,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ef978d1ab6f2cb8429879e1a2e303a2c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _freezePositionX: 0
+  _freezePositionY: 0
+  _freezePositionZ: 0
+  _freezeRotationX: 0
+  _freezeRotationY: 0
+  _freezeRotationZ: 0
   _colliders:
   - type: 1
     radius:
@@ -1414,6 +1422,7 @@ MonoBehaviour:
         RawValue: 0
       z:
         RawValue: 0
+  _isTrigger: 0
   _isKinematic: 1
   _mass:
     RawValue: 4294967296
@@ -1421,12 +1430,6 @@ MonoBehaviour:
     RawValue: 0
   _angularDrag:
     RawValue: 644245094
-  _freezePositionX: 0
-  _freezePositionY: 0
-  _freezePositionZ: 0
-  _freezeRotationX: 0
-  _freezeRotationY: 0
-  _freezeRotationZ: 0
 --- !u!114 &1969785455
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1596,6 +1599,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ef978d1ab6f2cb8429879e1a2e303a2c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _freezePositionX: 0
+  _freezePositionY: 0
+  _freezePositionZ: 0
+  _freezeRotationX: 0
+  _freezeRotationY: 0
+  _freezeRotationZ: 0
   _colliders:
   - type: 1
     radius:
@@ -1615,6 +1624,7 @@ MonoBehaviour:
         RawValue: 0
       z:
         RawValue: 0
+  _isTrigger: 0
   _isKinematic: 1
   _mass:
     RawValue: 4294967296
@@ -1622,12 +1632,6 @@ MonoBehaviour:
     RawValue: 0
   _angularDrag:
     RawValue: 644245094
-  _freezePositionX: 0
-  _freezePositionY: 0
-  _freezePositionZ: 0
-  _freezeRotationX: 0
-  _freezeRotationY: 0
-  _freezeRotationZ: 0
 --- !u!114 &1997087632
 MonoBehaviour:
   m_ObjectHideFlags: 0
