@@ -102,14 +102,14 @@ namespace PurrNet.Prediction.Prebuilt
             public FPVector3 moveDirection;
         }
 
-        public void OnBepuCollisionEnter(GameObject other)
+        public void OnBepuCollisionEnter(BepuCollisionData data)
         {
-            Debug.Log($"Collided with {other.name}");
+            Debug.Log($"Collided with {data.other.name}");
         }
 
-        public void OnBepuTriggerEnter(GameObject other)
+        public void OnBepuTriggerEnter(BepuCollisionData data)
         {
-            Debug.Log($"Triggered with {other.name}");
+            Debug.Log($"Triggered with {data.other.name}");
         }
     }
 }

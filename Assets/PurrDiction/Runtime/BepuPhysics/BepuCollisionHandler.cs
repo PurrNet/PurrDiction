@@ -11,8 +11,8 @@ namespace PurrNet.Prediction
 {
     public class BepuCollisionHandler
     {
-        public delegate void TriggerEventHandler(GameObject other);
-        public delegate void CollisionEventHandler(GameObject other);
+        public delegate void TriggerEventHandler(BepuCollisionData collisionData);
+        public delegate void CollisionEventHandler(BepuCollisionData collisionData);
         
         private readonly HashSet<Entity> _currentTriggerContacts = new HashSet<Entity>();
         private readonly HashSet<Entity> _currentCollisionContacts = new HashSet<Entity>();
@@ -74,25 +74,25 @@ namespace PurrNet.Prediction
 
         private void HandleInitialEntityCollision(EntityCollidable sender, Collidable other, CollidablePairHandler pair)
         {
-            HandleCollision(other);
+            HandleCollision(other, pair);
         }
 
         private void HandleEntityCollisionEnd(EntityCollidable sender, Collidable other, CollidablePairHandler pair)
         {
-            HandleCollisionEnd(other);
+            HandleCollisionEnd(other, pair);
         }
 
         private void HandleInitialStaticCollision(StaticMesh sender, Collidable other, CollidablePairHandler pair)
         {
-            HandleCollision(other);
+            HandleCollision(other, pair);
         }
 
         private void HandleStaticCollisionEnd(StaticMesh sender, Collidable other, CollidablePairHandler pair)
         {
-            HandleCollisionEnd(other);
+            HandleCollisionEnd(other, pair);
         }
 
-        private void HandleCollision(Collidable other)
+        private void HandleCollision(Collidable other, CollidablePairHandler pair)
         {
             if (!_predictionManager.isSimulating) return;
 
@@ -120,18 +120,18 @@ namespace PurrNet.Prediction
                     if (otherEntity != null)
                         _currentTriggerContacts.Add(otherEntity);
 
-                    onTriggerEnter?.Invoke(otherGo);
+                    onTriggerEnter?.Invoke(new BepuCollisionData(otherGo, pair.Contacts));
                     return;
                 }
 
                 if (otherEntity != null)
                     _currentCollisionContacts.Add(otherEntity);
 
-                onCollisionEnter?.Invoke(otherGo);
+                onCollisionEnter?.Invoke(new BepuCollisionData(otherGo, pair.Contacts));
             }
         }
 
-        private void HandleCollisionEnd(Collidable other)
+        private void HandleCollisionEnd(Collidable other, CollidablePairHandler pair)
         {
             if (!_predictionManager.isSimulating) return;
 
@@ -159,36 +159,36 @@ namespace PurrNet.Prediction
                     if (otherEntity != null)
                         _currentTriggerContacts.Remove(otherEntity);
 
-                    onTriggerExit?.Invoke(otherGo);
+                    onTriggerExit?.Invoke(new BepuCollisionData(otherGo, pair.Contacts));
                     return;
                 }
 
                 if (otherEntity != null)
                     _currentCollisionContacts.Remove(otherEntity);
 
-                onCollisionExit?.Invoke(otherGo);
+                onCollisionExit?.Invoke(new BepuCollisionData(otherGo, pair.Contacts));
             }
         }
         
-        private void HandleCollisionEnter(GameObject other)
+        private void HandleCollisionEnter(BepuCollisionData other)
         {
             for (int i = 0; i < _collisionEnterHandlers.Length; i++)
                 _collisionEnterHandlers[i].OnBepuCollisionEnter(other);
         }
 
-        private void HandleCollisionExit(GameObject other)
+        private void HandleCollisionExit(BepuCollisionData other)
         {
             for (int i = 0; i < _collisionExitHandlers.Length; i++)
                 _collisionExitHandlers[i].OnBepuCollisionExit(other);
         }
 
-        private void HandleTriggerEnter(GameObject other)
+        private void HandleTriggerEnter(BepuCollisionData other)
         {
             for (int i = 0; i < _triggerEnterHandlers.Length; i++)
                 _triggerEnterHandlers[i].OnBepuTriggerEnter(other);
         }
 
-        private void HandleTriggerExit(GameObject other)
+        private void HandleTriggerExit(BepuCollisionData other)
         {
             for (int i = 0; i < _triggerExitHandlers.Length; i++)
                 _triggerExitHandlers[i].OnBepuTriggerExit(other);
