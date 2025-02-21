@@ -1,4 +1,3 @@
-using System;
 using BEPUphysics.Constraints.SolverGroups;
 using BEPUphysics.Constraints.TwoEntity.JointLimits;
 using ConversionHelper;
@@ -14,13 +13,13 @@ namespace PurrNet.Prediction
         [SerializeField] private BepuRigidbody _connectedBody;
         [SerializeField] private Vector3 _axis = Vector3.up;
         [SerializeField] private FP _angleLimitation = 90;
-        
-        private RevoluteJoint _hingeJoint;
-        private RevoluteLimit _limitJoint;
+
         private BEPUphysics.Space _space;
-        
-        public RevoluteJoint hingeJoint => _hingeJoint;
-        public RevoluteLimit limitJoint => _limitJoint;
+
+        public new RevoluteJoint hingeJoint { get; private set; }
+
+        public RevoluteLimit limitJoint { get; private set; }
+
         public Vector3 axis => _axis;
         public FP angleLimitation => _angleLimitation;
         public BepuRigidbody connectedBody => _connectedBody ? _connectedBody : null;
@@ -56,37 +55,37 @@ namespace PurrNet.Prediction
                 PurrLogger.LogError($"Can't create a hinge joint between two kinematic bodies!", this);
                 return;
             }
-            
+
             _space = world.physics;
-            
+
             if (_space == null)
             {
                 PurrLogger.LogException($"To use BepuRigidbody you need to select <b>BEPUPhysics</b> as a provider in the PredictionManager.", this);
                 base.Setup(manager, world, id);
                 return;
             }
-            
+
             var a = _connectedBody ? _connectedBody.entity : null;
             var b = self.entity;
 
             Vector3 normalizedAxis = _axis.normalized;
-            
+
             FP min = (FP)((float)-(angleLimitation / 2) * Mathf.Deg2Rad);
             FP max = (FP)((float)angleLimitation / 2 * Mathf.Deg2Rad);
-            
-            _hingeJoint = new RevoluteJoint(a, b, b.Position, normalizedAxis.ToFPVector3());
-            _limitJoint = new RevoluteLimit(a, b, normalizedAxis.ToFPVector3(), GetTestAxis().ToFPVector3(), min, max);
-            
-            _space.Add(_hingeJoint);
-            _space.Add(_limitJoint);
-            
+
+            hingeJoint = new RevoluteJoint(a, b, b.Position, normalizedAxis.ToFPVector3());
+            limitJoint = new RevoluteLimit(a, b, normalizedAxis.ToFPVector3(), GetTestAxis().ToFPVector3(), min, max);
+
+            _space.Add(hingeJoint);
+            _space.Add(limitJoint);
+
             base.Setup(manager, world, id);
         }
 
         public Vector3 GetTestAxis()
         {
             Vector3 normalizedAxis = _axis.normalized;
-            return (Mathf.Abs(Vector3.Dot(normalizedAxis, Vector3.up)) > 0.9f ? 
+            return (Mathf.Abs(Vector3.Dot(normalizedAxis, Vector3.up)) > 0.9f ?
                 Vector3.right : Vector3.Cross(Vector3.up, normalizedAxis)).normalized;
         }
 
@@ -103,23 +102,23 @@ namespace PurrNet.Prediction
             base.Simulate(ref state, delta);
             if (!_connectedBody)
                 return;
-            
-            if(_hingeJoint != null) _hingeJoint.Update(delta);
-            if(_limitJoint != null) _limitJoint.Update(delta);
+
+            if(hingeJoint != null) hingeJoint.Update(delta);
+            if(limitJoint != null) limitJoint.Update(delta);
         }
 
         private void OnDisable()
         {
-            if (_hingeJoint != null && _space != null) 
-            { 
-                _space.Remove(_hingeJoint); 
-                _hingeJoint = null; 
+            if (hingeJoint != null && _space != null)
+            {
+                _space.Remove(hingeJoint);
+                hingeJoint = null;
             }
-            
-            if (_limitJoint != null && _space != null) 
-            { 
-                _space.Remove(_limitJoint); 
-                _limitJoint = null; 
+
+            if (limitJoint != null && _space != null)
+            {
+                _space.Remove(limitJoint);
+                limitJoint = null;
             }
         }
 
@@ -139,7 +138,7 @@ namespace PurrNet.Prediction
         public Vector3 initialTestAxis => _initialTestAxis;
         private bool _initialized;
         public bool initialized => _initialized;
-        
+
         private void OnDrawGizmosSelected()
         {
             Vector3 testAxis;
@@ -163,7 +162,7 @@ namespace PurrNet.Prediction
 
         public Vector3 GetGizmoTestAxis()
         {
-            return (Mathf.Abs(Vector3.Dot(_axis.normalized, Vector3.up)) > 0.9f ? 
+            return (Mathf.Abs(Vector3.Dot(_axis.normalized, Vector3.up)) > 0.9f ?
                 Vector3.right : Vector3.Cross(Vector3.up, _axis.normalized)).normalized;
         }
 #endif
