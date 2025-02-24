@@ -8,12 +8,12 @@ namespace PurrNet.Prediction
     public partial class BepuRigidbody
     {
         [Header("Constraints")]
-        [SerializeField] private bool _freezePositionX;
-        [SerializeField] private bool _freezePositionY;
-        [SerializeField] private bool _freezePositionZ;
-        [SerializeField] private bool _freezeRotationX;
-        [SerializeField] private bool _freezeRotationY;
-        [SerializeField] private bool _freezeRotationZ;
+        [SerializeField, HideInInspector] private bool _freezePositionX;
+        [SerializeField, HideInInspector] private bool _freezePositionY;
+        [SerializeField, HideInInspector] private bool _freezePositionZ;
+        [SerializeField, HideInInspector] private bool _freezeRotationX;
+        [SerializeField, HideInInspector] private bool _freezeRotationY;
+        [SerializeField, HideInInspector] private bool _freezeRotationZ;
 
         private FPVector3 _lockedPosition;
         private FPQuaternion _lockedRotation;

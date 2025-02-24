@@ -11,13 +11,13 @@ namespace PurrNet.Prediction
     [AddComponentMenu("PurrDiction/BEPU/Bepu Rigidbody")]
     public partial class BepuRigidbody : PredictedIdentity<BepuRigidbody.BepuRigidbodyState>
     {
-        [SerializeField] private BepuColliderDefinition[] _colliders;
-        [SerializeField] private bool _isTrigger;
-        [SerializeField] private bool _isKinematic;
-        [SerializeField] private FP _mass = FP.C1;
+        [SerializeField, HideInInspector] private BepuColliderDefinition[] _colliders;
+        [SerializeField, HideInInspector] private bool _isTrigger;
+        [SerializeField, HideInInspector] private bool _isKinematic;
+        [SerializeField, HideInInspector] private FP _mass = FP.C1;
 
-        [SerializeField] private FP _linearDrag = FP.C0;
-        [SerializeField] private FP _angularDrag = FP.C0p15;
+        [SerializeField, HideInInspector] private FP _linearDrag = FP.C0;
+        [SerializeField, HideInInspector] private FP _angularDrag = FP.C0p15;
 
         private Entity _entity;
         private Space _space;

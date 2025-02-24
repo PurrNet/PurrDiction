@@ -12,7 +12,7 @@ namespace PurrNet.Prediction.Editor
         private SerializedProperty _mass;
         private SerializedProperty _drag;
         private SerializedProperty _angularDrag;
-        
+
         private SerializedProperty _freezePositionX;
         private SerializedProperty _freezePositionY;
         private SerializedProperty _freezePositionZ;
@@ -28,7 +28,7 @@ namespace PurrNet.Prediction.Editor
             _mass = serializedObject.FindProperty("_mass");
             _drag = serializedObject.FindProperty("_linearDrag");
             _angularDrag = serializedObject.FindProperty("_angularDrag");
-            
+
             _freezePositionX = serializedObject.FindProperty("_freezePositionX");
             _freezePositionY = serializedObject.FindProperty("_freezePositionY");
             _freezePositionZ = serializedObject.FindProperty("_freezePositionZ");
@@ -39,24 +39,24 @@ namespace PurrNet.Prediction.Editor
 
         public override void OnInspectorGUI()
         {
+            base.OnInspectorGUI();
             serializedObject.Update();
 
-            EditorGUILayout.LabelField("Bepu Rigidbody", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(_colliders);
             EditorGUILayout.PropertyField(_isTrigger);
             EditorGUILayout.PropertyField(_isKinematic);
             EditorGUILayout.PropertyField(_mass);
-            
+
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("Drag", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(_drag);
             EditorGUILayout.PropertyField(_angularDrag);
-            
+
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("Constraints", EditorStyles.boldLabel);
-            
+
             float labelWidth = EditorGUIUtility.labelWidth;
-            
+
             Rect rect = EditorGUILayout.GetControlRect();
             EditorGUI.LabelField(new Rect(rect.x, rect.y, labelWidth, rect.height), "Freeze Position");
             rect.x += labelWidth;
@@ -66,7 +66,7 @@ namespace PurrNet.Prediction.Editor
             _freezePositionY.boolValue = EditorGUI.ToggleLeft(rect, "Y", _freezePositionY.boolValue);
             rect.x += 45;
             _freezePositionZ.boolValue = EditorGUI.ToggleLeft(rect, "Z", _freezePositionZ.boolValue);
-            
+
             rect = EditorGUILayout.GetControlRect();
             EditorGUI.LabelField(new Rect(rect.x, rect.y, labelWidth, rect.height), "Freeze Rotation");
             rect.x += labelWidth;
