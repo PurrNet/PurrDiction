@@ -100,12 +100,11 @@ namespace PurrNet.Prediction
 
         protected override void Simulate(ref BepuHingeJointState state, FP delta)
         {
-            base.Simulate(ref state, delta);
             if (!_connectedBody)
                 return;
 
-            if(hingeJoint != null) hingeJoint.Update(delta);
-            if(limitJoint != null) limitJoint.Update(delta);
+            hingeJoint?.Update(delta);
+            limitJoint?.Update(delta);
         }
 
         private void OnDisable()
@@ -168,6 +167,9 @@ namespace PurrNet.Prediction
         }
 #endif
 
-        public struct BepuHingeJointState : IPredictedData<BepuHingeJointState> { }
+        public struct BepuHingeJointState : IPredictedData<BepuHingeJointState>
+        {
+
+        }
     }
 }

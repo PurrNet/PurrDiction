@@ -47,11 +47,9 @@ namespace PurrNet.Prediction.Prebuilt
 
         protected override void Simulate(Input? input, ref State state, FP delta)
         {
-            if (!input.HasValue)
-                return;
-
+            var moveDir = input?.moveDirection ?? FPVector3.zero;
             var currVelocity = _rigidbody.linearVelocity;
-            var targetVelocity = input.Value.moveDirection * _maxSpeed;
+            var targetVelocity = moveDir * _maxSpeed;
             var interpolationAmount = FP.Clamp01(_acceleration * delta);
             var nextVelocity = FPVector3.Lerp(currVelocity, targetVelocity, interpolationAmount);
 
@@ -63,7 +61,8 @@ namespace PurrNet.Prediction.Prebuilt
 
         protected override void SanitizeInput(ref Input input)
         {
-            input.moveDirection.Normalize();
+            if (input.moveDirection != FPVector3.zero)
+                input.moveDirection.Normalize();
         }
 
         private FPVector3 GetCameraRelativeMovement(Vector2 inputDirection)
