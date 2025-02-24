@@ -50,29 +50,18 @@ namespace PurrNet.Prediction
         {
             if (_hasRigidbody2d)
             {
-                state.isFP = false;
-                _unity2dRigidbody.position = state.unityPosition;
-                _unity2dRigidbody.rotation = state.unityRotation.eulerAngles.z;
-                transform.SetPositionAndRotation(state.unityPosition, state.unityRotation);
+                var rot = Quaternion.Euler(0, 0, _unity2dRigidbody.rotation);
+                state.SetPositionAndRotation(_unity2dRigidbody.position, rot);
             }
             else if (_hasRigidbody)
             {
-                state.isFP = false;
-                _unityRigidbody.position = state.unityPosition;
-                _unityRigidbody.rotation = state.unityRotation;
-                transform.SetPositionAndRotation(state.unityPosition, state.unityRotation);
+                state.SetPositionAndRotation(_unityRigidbody.position, _unityRigidbody.rotation);
             }
             else if (_hasBepuRigidbody && _bepuRigidbody.hasEntity)
             {
-                state.isFP = true;
-                state.fpPosition = _bepuRigidbody.position;
-                state.fpRotation = _bepuRigidbody.rotation;
+                state.SetPositionAndRotation(_bepuRigidbody.position, _bepuRigidbody.rotation);
             }
-            else
-            {
-                state.isFP = false;
-                transform.GetPositionAndRotation(out state.unityPosition, out state.unityRotation);
-            }
+            else state.SetPositionAndRotation(transform);
         }
 
         protected override void SetUnityState(PredictedTransformState state)
@@ -133,9 +122,9 @@ namespace PurrNet.Prediction
 
             if (accumulateError)
             {
-                _accumulatedPositionError += lastPrediction.GetUnityPosition() - oldPrediction.GetUnityPosition();
-                _accumulatedRotationError = Quaternion.Inverse(oldPrediction.GetUnityRotation()) *
-                                            lastPrediction.GetUnityRotation() * _accumulatedRotationError;
+                _accumulatedPositionError += lastPrediction.unityPosition - oldPrediction.unityPosition;
+                _accumulatedRotationError = Quaternion.Inverse(oldPrediction.unityRotation) *
+                                            lastPrediction.unityRotation * _accumulatedRotationError;
             }
 
             var positionError = _accumulatedPositionError.magnitude;
@@ -152,12 +141,12 @@ namespace PurrNet.Prediction
 
             if (snapPos || skipPos)
             {
-                newView.unityPosition = lastPrediction.GetUnityPosition();
+                newView.unityPosition = lastPrediction.unityPosition;
                 _accumulatedPositionError = default;
             }
             else
             {
-                newView.unityPosition = lastPrediction.GetUnityPosition() - _accumulatedPositionError;
+                newView.unityPosition = lastPrediction.unityPosition - _accumulatedPositionError;
 
                 var posRate = positionInterpolation.correctionRateMinMax;
                 var posBlend = positionInterpolation.correctionBlendMinMax;
@@ -183,11 +172,11 @@ namespace PurrNet.Prediction
             if (snapRot || skipRot)
             {
                 _accumulatedRotationError = Quaternion.identity;
-                newView.unityRotation = lastPrediction.GetUnityRotation();
+                newView.unityRotation = lastPrediction.unityRotation;
             }
             else
             {
-                newView.unityRotation = Quaternion.Inverse(_accumulatedRotationError) * lastPrediction.GetUnityRotation();
+                newView.unityRotation = Quaternion.Inverse(_accumulatedRotationError) * lastPrediction.unityRotation;
 
                 var rotRate = rotationInterpolation.correctionRateMinMax;
                 var rotBlend = rotationInterpolation.correctionBlendMinMax;
@@ -218,7 +207,7 @@ namespace PurrNet.Prediction
             if (!_hasView)
                 return;
 
-            _graphics.SetPositionAndRotation(interpolatedState.GetUnityPosition(), interpolatedState.GetUnityRotation());
+            _graphics.SetPositionAndRotation(interpolatedState.unityPosition, interpolatedState.unityRotation);
         }
     }
 }

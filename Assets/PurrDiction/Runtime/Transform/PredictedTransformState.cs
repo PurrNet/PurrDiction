@@ -16,14 +16,30 @@ namespace PurrNet.Prediction
         public Vector3 unityPosition;
         public Quaternion unityRotation;
 
-        public Vector3 GetUnityPosition()
+        public void SetPositionAndRotation(FPVector3 position, FPQuaternion rotation)
         {
-            return isFP ? fpPosition.ToVector3() : unityPosition;
+            isFP = true;
+            fpPosition = position;
+            fpRotation = rotation;
+            unityPosition = position.ToVector3();
+            unityRotation = rotation.ToQuaternion();
         }
 
-        public Quaternion GetUnityRotation()
+        public void SetPositionAndRotation(Vector3 position, Quaternion rotation)
         {
-            return isFP ? fpRotation.ToQuaternion() : unityRotation;
+            isFP = false;
+            unityPosition = position;
+            unityRotation = rotation;
+            fpPosition = position.ToFPVector3();
+            fpRotation = rotation.ToFPQuaternion();
+        }
+
+        public void SetPositionAndRotation(Transform trs)
+        {
+            isFP = false;
+            trs.GetPositionAndRotation(out unityPosition, out unityRotation);
+            fpPosition = unityPosition.ToFPVector3();
+            fpRotation = unityRotation.ToFPQuaternion();
         }
     }
 
@@ -53,13 +69,19 @@ namespace PurrNet.Prediction
 
             if (state.isFP)
             {
-                Packer<FPVector3>.Read(packer, ref state.fpPosition);
-                Packer<FPQuaternion>.Read(packer, ref state.fpRotation);
+                FPVector3 pos = default;
+                FPQuaternion rot = default;
+                Packer<FPVector3>.Read(packer, ref pos);
+                Packer<FPQuaternion>.Read(packer, ref rot);
+                state.SetPositionAndRotation(pos, rot);
             }
             else
             {
-                Packer<Vector3>.Read(packer, ref state.unityPosition);
-                Packer<Quaternion>.Read(packer, ref state.unityRotation);
+                Vector3 pos = default;
+                Quaternion rot = default;
+                Packer<Vector3>.Read(packer, ref pos);
+                Packer<Quaternion>.Read(packer, ref rot);
+                state.SetPositionAndRotation(pos, rot);
             }
         }
     }
