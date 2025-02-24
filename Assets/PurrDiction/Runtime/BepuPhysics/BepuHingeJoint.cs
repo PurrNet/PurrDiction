@@ -4,6 +4,7 @@ using ConversionHelper;
 using FixMath.NET;
 using PurrNet.Logging;
 using UnityEngine;
+using Space = BEPUphysics.Space;
 
 namespace PurrNet.Prediction
 {
@@ -14,7 +15,7 @@ namespace PurrNet.Prediction
         [SerializeField] private Vector3 _axis = Vector3.up;
         [SerializeField] private FP _angleLimitation = 90;
 
-        private BEPUphysics.Space _space;
+        private Space _space;
 
         public new RevoluteJoint hingeJoint { get; private set; }
 

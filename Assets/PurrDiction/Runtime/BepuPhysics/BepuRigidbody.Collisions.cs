@@ -29,10 +29,10 @@ namespace PurrNet.Prediction
                 return;
             }
             _collisionHandler = new BepuCollisionHandler(world, _isTrigger, gameObject);
-            _collisionHandler.onTriggerEnter += (go) => onTriggerEnter?.Invoke(go);
-            _collisionHandler.onTriggerExit += (go) => onTriggerExit?.Invoke(go);
-            _collisionHandler.onCollisionEnter += (go) => onCollisionEnter?.Invoke(go);
-            _collisionHandler.onCollisionExit += (go) => onCollisionExit?.Invoke(go);
+            _collisionHandler.onTriggerEnter += go => onTriggerEnter?.Invoke(go);
+            _collisionHandler.onTriggerExit += go => onTriggerExit?.Invoke(go);
+            _collisionHandler.onCollisionEnter += go => onCollisionEnter?.Invoke(go);
+            _collisionHandler.onCollisionExit += go => onCollisionExit?.Invoke(go);
         }
 
         private void UpdateTriggerState()

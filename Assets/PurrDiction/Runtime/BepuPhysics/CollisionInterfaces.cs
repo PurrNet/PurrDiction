@@ -1,5 +1,3 @@
-using UnityEngine;
-
 namespace PurrNet.Prediction
 {
     public interface IBepuCollisionEnter

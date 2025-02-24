@@ -2,13 +2,12 @@ using System.Collections.Generic;
 using BEPUphysics.BroadPhaseEntries;
 using BEPUphysics.CollisionShapes;
 using BEPUphysics.CollisionShapes.ConvexShapes;
-using BEPUphysics.Constraints.SolverGroups;
 using BEPUphysics.Entities;
 using BEPUutilities;
 using ConversionHelper;
-using FixMath.NET;
 using PurrNet.Utils;
 using UnityEngine;
+using Space = BEPUphysics.Space;
 
 namespace PurrNet.Prediction
 {
@@ -24,7 +23,7 @@ namespace PurrNet.Prediction
         
         private List<StaticMesh> _staticMeshes = new List<StaticMesh>();
         private List<BepuHingeJoint> _hingeJoints = new List<BepuHingeJoint>();
-        private BEPUphysics.Space _space;
+        private Space _space;
         
         private void Start()
         {

@@ -1,10 +1,10 @@
-using System;
 using System.Collections.Generic;
 using BEPUphysics.BroadPhaseEntries;
 using BEPUphysics.CollisionRuleManagement;
 using ConversionHelper;
 using PurrNet.Logging;
 using UnityEngine;
+using Space = BEPUphysics.Space;
 
 namespace PurrNet.Prediction
 {
@@ -21,7 +21,7 @@ namespace PurrNet.Prediction
         public event BepuCollisionHandler.CollisionEventHandler onCollisionExit;
 
         private StaticMesh _staticMesh;
-        private BEPUphysics.Space _space;
+        private Space _space;
         private PredictionManager _predictionManager;
         private BepuCollisionHandler _collisionHandler;
 
@@ -103,10 +103,10 @@ namespace PurrNet.Prediction
         private void InitializeCollisionHandler()
         {
             _collisionHandler = new BepuCollisionHandler(_predictionManager, _isTrigger, gameObject);
-            _collisionHandler.onTriggerEnter += (go) => onTriggerEnter?.Invoke(go);
-            _collisionHandler.onTriggerExit += (go) => onTriggerExit?.Invoke(go);
-            _collisionHandler.onCollisionEnter += (go) => onCollisionEnter?.Invoke(go);
-            _collisionHandler.onCollisionExit += (go) => onCollisionExit?.Invoke(go);
+            _collisionHandler.onTriggerEnter += go => onTriggerEnter?.Invoke(go);
+            _collisionHandler.onTriggerExit += go => onTriggerExit?.Invoke(go);
+            _collisionHandler.onCollisionEnter += go => onCollisionEnter?.Invoke(go);
+            _collisionHandler.onCollisionExit += go => onCollisionExit?.Invoke(go);
         }
 
         private void UpdateTriggerState()

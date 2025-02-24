@@ -13,13 +13,13 @@ namespace PurrNet.Prediction
             get => _entity.Position;
             set => _entity.Position = value;
         }
-        
+
         public FPQuaternion rotation
         {
             get => _entity.Orientation;
             set => _entity.Orientation = value;
         }
-        
+
         public bool isKinematic
         {
             get => _isKinematic;
@@ -30,7 +30,7 @@ namespace PurrNet.Prediction
                     return;
                 if (_isKinematic)
                     _entity.BecomeKinematic();
-                else _entity.BecomeDynamic((FP)_mass);
+                else _entity.BecomeDynamic(_mass);
             }
         }
 
@@ -39,17 +39,17 @@ namespace PurrNet.Prediction
             get => currentState.linearVelocity;
             set => _entity.LinearVelocity = value;
         }
-        
+
         public FPVector3 angularVelocity => currentState.angularVelocity;
-        
+
         public FP mass => _mass;
-        
+
         public FP drag
         {
             get => _linearDrag;
             set => _linearDrag = FP.Max(FP.C0, value);
         }
-    
+
         public FP angularDrag
         {
             get => _angularDrag;
@@ -71,7 +71,7 @@ namespace PurrNet.Prediction
         {
             if (_space == null)
                 return;
-            
+
             if (!_isKinematic)
             {
                 state.linearVelocity += _space.ForceUpdater.Gravity * delta;
@@ -98,10 +98,6 @@ namespace PurrNet.Prediction
             state.orientation = _entity.Orientation;
             state.linearVelocity = _entity.LinearVelocity;
             state.angularVelocity = _entity.AngularVelocity;
-        
-            transform.SetPositionAndRotation(
-                state.position.ToVector3(),
-                state.orientation.ToQuaternion());
         }
 
         protected override void GetUnityState(ref BepuRigidbodyState state)
@@ -141,12 +137,12 @@ namespace PurrNet.Prediction
                     break;
             }
         }
-        
+
         public void AddTorque(FPVector3 torque, ForceMode mode = ForceMode.Force)
         {
             if (_entity == null)
                 return;
-            
+
             _entity.ActivityInformation.Activate();
 
             switch (mode)
@@ -159,7 +155,7 @@ namespace PurrNet.Prediction
                     _entity.ApplyAngularImpulse(ref torque);
                     break;
                 case ForceMode.Acceleration:
-                    torque *= (FP)Time.fixedDeltaTime * (FP)_mass;
+                    torque *= (FP)Time.fixedDeltaTime * _mass;
                     _entity.ApplyAngularImpulse(ref torque);
                     break;
                 case ForceMode.VelocityChange:
@@ -170,12 +166,12 @@ namespace PurrNet.Prediction
                     break;
             }
         }
-        
+
         public void AddForceAtPosition(FPVector3 force, FPVector3 pos, ForceMode mode = ForceMode.Force)
         {
             if (_entity == null)
                 return;
-            
+
             _entity.ActivityInformation.Activate();
 
             switch (mode)
@@ -188,7 +184,7 @@ namespace PurrNet.Prediction
                     _entity.ApplyImpulse(ref force, ref pos);
                     break;
                 case ForceMode.Acceleration:
-                    force *= (FP)Time.fixedDeltaTime * (FP)_mass;
+                    force *= (FP)Time.fixedDeltaTime * _mass;
                     _entity.ApplyImpulse(ref force, ref pos);
                     break;
                 case ForceMode.VelocityChange:
