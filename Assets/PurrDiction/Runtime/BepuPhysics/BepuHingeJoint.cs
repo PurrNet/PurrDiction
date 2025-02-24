@@ -1,5 +1,6 @@
 using BEPUphysics.Constraints.SolverGroups;
 using BEPUphysics.Constraints.TwoEntity.JointLimits;
+using BEPUutilities;
 using ConversionHelper;
 using FixMath.NET;
 using PurrNet.Logging;
@@ -169,7 +170,8 @@ namespace PurrNet.Prediction
 
         public struct BepuHingeJointState : IPredictedData<BepuHingeJointState>
         {
-
+            /* public FPVector2 limitJoint_error;
+            public FPVector2 limitJoint_accumulatedImpulse; */
         }
     }
 }
