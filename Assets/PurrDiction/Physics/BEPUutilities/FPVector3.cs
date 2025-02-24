@@ -22,12 +22,12 @@ namespace BEPUutilities
         /// Z component of the vector.
         /// </summary>
         public FP z;
-        
+
         /// <summary>
         /// Returns the magnitude of the vector.
         /// </summary>
         public FP magnitude => FP.Sqrt(x * x + y * y + z * z);
-        
+
         /// <summary>
         /// Returns the normalized version of the vector.
         /// </summary>
@@ -353,7 +353,7 @@ namespace BEPUutilities
             return x.GetHashCode() + y.GetHashCode() + z.GetHashCode();
         }
 
-        
+
         /// <summary>
         /// Computes the squared distance between two vectors.
         /// </summary>
@@ -700,8 +700,7 @@ namespace BEPUutilities
         /// <returns>Interpolated intermediate state.</returns>
         public static FPVector3 Lerp(FPVector3 start, FPVector3 end, FP interpolationAmount)
         {
-            FPVector3 toReturn;
-            Lerp(ref start, ref end, interpolationAmount, out toReturn);
+            Lerp(ref start, ref end, interpolationAmount, out var toReturn);
             return toReturn;
         }
         /// <summary>

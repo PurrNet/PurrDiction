@@ -100,11 +100,19 @@ namespace FixMath.NET
 		{
 			return a > b ? a : b;
 		}
-		
+
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
 		public static FP Clamp(FP value, FP min, FP max)
 		{
 			return Min(Max(value, min), max);
+		}
+
+		[MethodImpl(MethodImplOptions.AggressiveInlining)]
+		public static FP Clamp01(FP value)
+		{
+			if (value < 0) return Zero;
+			if (value > 1) return One;
+			return value;
 		}
 
 		/// <summary>
@@ -175,7 +183,7 @@ namespace FixMath.NET
 
 			/* The algorithm is based on the power series for exp(x):
              * http://en.wikipedia.org/wiki/Exponential_function#Formal_definition
-             * 
+             *
              * From term n, we get term n+1 by multiplying with x/n.
              * When the sum term drops to zero, we can stop summing.
              */
@@ -264,7 +272,7 @@ namespace FixMath.NET
         }
 
 		/// <summary>
-		/// Adds x and y. Performs saturating addition, i.e. in case of overflow, 
+		/// Adds x and y. Performs saturating addition, i.e. in case of overflow,
 		/// rounds to MinValue or MaxValue depending on sign of operands.
 		/// </summary>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -297,7 +305,7 @@ namespace FixMath.NET
 		}
 
 		/// <summary>
-		/// Subtracts y from x. Performs saturating substraction, i.e. in case of overflow, 
+		/// Subtracts y from x. Performs saturating substraction, i.e. in case of overflow,
 		/// rounds to MinValue or MaxValue depending on sign of operands.
 		/// </summary>
 		[MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -385,7 +393,7 @@ namespace FixMath.NET
             var topCarry = hihi >> FRACTIONAL_PLACES;
             if (topCarry != 0 && topCarry != -1 /*&& xl != -17 && yl != -17*/) {
 				throw new OverflowException();
-				return opSignsEqual ? MaxValue : MinValue; 
+				return opSignsEqual ? MaxValue : MinValue;
             }
 
             // If signs differ, both operands' magnitudes are greater than 1,
@@ -508,7 +516,7 @@ namespace FixMath.NET
 			return new FP(sum);
 		}
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)] 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static int CountLeadingZeroes(ulong x) {
             int result = 0;
             while ((x & 0xF000000000000000) == 0) { result += 4; x <<= 4; }
@@ -570,7 +578,7 @@ namespace FixMath.NET
 
         public static FP operator %(FP x, FP y) {
             return new FP(
-                x.RawValue == MIN_VALUE & y.RawValue == -1 ? 
+                x.RawValue == MIN_VALUE & y.RawValue == -1 ?
                 0 :
                 x.RawValue % y.RawValue);
         }
@@ -621,7 +629,7 @@ namespace FixMath.NET
         public static FP Sqrt(FP x) {
 	        if (x.RawValue < 0)
 		        return FP.Zero;
-	        
+
             var xl = x.RawValue;
             if (xl < 0) {
                 // We cannot represent infinities like Single and Double, and Sqrt is
@@ -696,14 +704,14 @@ namespace FixMath.NET
             // Find the two closest values in the LUT and perform linear interpolation
             // This is what kills the performance of this function on x86 - x64 is fine though
             var rawIndex = clamped * LutInterval;
-            var roundedIndex = Round(rawIndex); 
+            var roundedIndex = Round(rawIndex);
             var indexError = rawIndex - roundedIndex;
 
-            var nearestValue = new FP(SinLut[flipHorizontal ? 
-                SinLut.Length - 1 - (int)roundedIndex : 
+            var nearestValue = new FP(SinLut[flipHorizontal ?
+                SinLut.Length - 1 - (int)roundedIndex :
                 (int)roundedIndex]);
-            var secondNearestValue = new FP(SinLut[flipHorizontal ? 
-                SinLut.Length - 1 - (int)roundedIndex - SignI(indexError) : 
+            var secondNearestValue = new FP(SinLut[flipHorizontal ?
+                SinLut.Length - 1 - (int)roundedIndex - SignI(indexError) :
                 (int)roundedIndex + SignI(indexError)]);
 
             var delta = (indexError * Abs(nearestValue - secondNearestValue)).RawValue;
@@ -735,7 +743,7 @@ namespace FixMath.NET
 
 
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)] 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         static long ClampSinValue(long angle, out bool flipHorizontal, out bool flipVertical) {
             // Clamp value to 0 - 2*PI using modulo; this is very slow but there's no better way AFAIK
             var clamped2Pi = angle % PI_TIMES_2;
@@ -873,10 +881,10 @@ namespace FixMath.NET
 			{
 				bool invert = z > One;
 				if (invert) z = One / z;
-				
+
 				result = One;
 				FP term = One;
-				
+
 				FP zSq = z * z;
 				FP zSq2 = zSq * Two;
 				FP zSqPlusOne = zSq + One;
@@ -1042,7 +1050,7 @@ namespace FixMath.NET
     }
 }");
             }
-        }		
+        }
 
         /// <summary>
         /// This is the constructor from raw value; it can only be used interally.
@@ -1077,7 +1085,7 @@ namespace FixMath.NET
 		public static readonly FP C1em09 = 1e-9m;
 		public static readonly FP C1em9 = 1e-9m;
 		public static readonly FP Cm1em9 = -1e-9m;
-		public static readonly FP C1em14 = 1e-14m;		
+		public static readonly FP C1em14 = 1e-14m;
 		public static readonly FP C0p1 = 0.1m;
 		public static readonly FP OneThird = 1/(FP)3;
 		public static readonly FP C0p75 = 0.75m;

@@ -72,8 +72,6 @@ namespace PurrNet.Prediction
 
         public struct BepuRigidbodyState : IPredictedData<BepuRigidbodyState>
         {
-            public FPVector3 position;
-            public FPQuaternion orientation;
             public FPVector3 linearVelocity;
             public FPVector3 angularVelocity;
         }

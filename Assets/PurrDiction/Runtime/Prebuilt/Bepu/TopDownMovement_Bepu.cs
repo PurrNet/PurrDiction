@@ -1,6 +1,7 @@
 using BEPUutilities;
 using ConversionHelper;
 using FixMath.NET;
+using PurrNet.Logging;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Serialization;
@@ -11,22 +12,22 @@ namespace PurrNet.Prediction.Prebuilt
     [RequireComponent(typeof(BepuRigidbody))]
     public class TopDownMovement_Bepu : PredictedIdentity<TopDownMovement_Bepu.Input, TopDownMovement_Bepu.State>, IBepuCollisionEnter, IBepuTriggerEnter
     {
-        [FormerlySerializedAs("rigidbody")] 
+        [FormerlySerializedAs("rigidbody")]
         [SerializeField] private BepuRigidbody _rigidbody;
-        [FormerlySerializedAs("maxSpeed")] 
+        [FormerlySerializedAs("maxSpeed")]
         [SerializeField] private FP _maxSpeed = 5;
-        [FormerlySerializedAs("acceleration")] 
+        [FormerlySerializedAs("acceleration")]
         [SerializeField] private FP _acceleration = 30;
-        
+
         private Camera _camera;
-        
+
         private void Awake()
         {
             _camera = Camera.main;
             if (!_camera)
                 Debug.LogError($"Failed to get camera tagget as main camera!", this);
         }
-        
+
         private void Reset()
         {
             if(!TryGetComponent(out _rigidbody))
@@ -48,33 +49,38 @@ namespace PurrNet.Prediction.Prebuilt
         {
             if (!input.HasValue)
                 return;
-            
-            input.Value.moveDirection.Normalize();
-            
-            _rigidbody.AddForce(input.Value.moveDirection * _acceleration);
-            var flatVelocity = new FPVector2(_rigidbody.linearVelocity.x, _rigidbody.linearVelocity.z);
-            if (flatVelocity.magnitude > _maxSpeed)
-            {
-                flatVelocity = flatVelocity.normalized * _maxSpeed;
-                _rigidbody.linearVelocity = new FPVector3(flatVelocity.x, _rigidbody.linearVelocity.y, flatVelocity.y);
-            }
+
+            var currVelocity = _rigidbody.linearVelocity;
+            var targetVelocity = input.Value.moveDirection * _maxSpeed;
+            var interpolationAmount = FP.Clamp01(_acceleration * delta);
+            var nextVelocity = FPVector3.Lerp(currVelocity, targetVelocity, interpolationAmount);
+
+            // don't change the y velocity (jumping, falling, etc)
+            nextVelocity.y = currVelocity.y;
+
+            _rigidbody.linearVelocity = nextVelocity;
         }
-        
+
+        protected override void SanitizeInput(ref Input input)
+        {
+            input.moveDirection.Normalize();
+        }
+
         private FPVector3 GetCameraRelativeMovement(Vector2 inputDirection)
         {
             if (inputDirection.sqrMagnitude == 0) return FPVector3.zero;
-    
+
             Vector3 cameraForward = _camera.transform.forward;
             Vector3 cameraRight = _camera.transform.right;
-    
+
             cameraForward.y = 0;
             cameraRight.y = 0;
-    
+
             cameraForward.Normalize();
             cameraRight.Normalize();
-            
+
             FPVector3 moveDirection = MathConverter.Convert(cameraRight * inputDirection.x + cameraForward * inputDirection.y);
-    
+
             return moveDirection;
         }
 
@@ -91,12 +97,12 @@ namespace PurrNet.Prediction.Prebuilt
 
             return vector;
         }
-        
+
         public struct State : IPredictedData<State>
         {
             public FP rotation;
         }
-        
+
         public struct Input : IPredictedData
         {
             public FPVector3 moveDirection;
@@ -104,12 +110,12 @@ namespace PurrNet.Prediction.Prebuilt
 
         public void OnBepuCollisionEnter(BepuCollisionData data)
         {
-            Debug.Log($"Collided with {data.other.name}");
+            // Debug.Log($"Collided with {data.other.name}");
         }
 
         public void OnBepuTriggerEnter(BepuCollisionData data)
         {
-            Debug.Log($"Triggered with {data.other.name}");
+            // Debug.Log($"Triggered with {data.other.name}");
         }
     }
 }

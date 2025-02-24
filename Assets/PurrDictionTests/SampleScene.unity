@@ -150,7 +150,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 98dbb08343eac044895b9b52872bcb49, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _graphics: {fileID: 0}
+  _graphics: {fileID: 1265513318}
   _characterControllerPatch: 1
   _interpolationSettings: {fileID: 11400000, guid: 4a8aa8e44e23cfd4a8d4387ef3f36173, type: 2}
 --- !u!114 &274824642
@@ -803,8 +803,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 845066762}
-  - component: {fileID: 845066761}
   - component: {fileID: 845066763}
+  - component: {fileID: 845066761}
   m_Layer: 0
   m_Name: Test
   m_TagString: Untagged
@@ -885,7 +885,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 98dbb08343eac044895b9b52872bcb49, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _graphics: {fileID: 0}
+  _graphics: {fileID: 463302133}
   _characterControllerPatch: 1
   _interpolationSettings: {fileID: 11400000, guid: 4a8aa8e44e23cfd4a8d4387ef3f36173, type: 2}
 --- !u!1001 &970653693
@@ -1757,7 +1757,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 98dbb08343eac044895b9b52872bcb49, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _graphics: {fileID: 0}
+  _graphics: {fileID: 720044099}
   _characterControllerPatch: 1
   _interpolationSettings: {fileID: 11400000, guid: 4a8aa8e44e23cfd4a8d4387ef3f36173, type: 2}
 --- !u!1 &1997087625
@@ -2068,7 +2068,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 98dbb08343eac044895b9b52872bcb49, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _graphics: {fileID: 0}
+  _graphics: {fileID: 649838964}
   _characterControllerPatch: 1
   _interpolationSettings: {fileID: 11400000, guid: 4a8aa8e44e23cfd4a8d4387ef3f36173, type: 2}
 --- !u!114 &2086003669

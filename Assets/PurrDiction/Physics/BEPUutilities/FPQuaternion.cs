@@ -30,6 +30,8 @@ namespace BEPUutilities
         /// </summary>
         public FP w;
 
+        public static FPQuaternion identity => new FPQuaternion(FP.Zero, FP.Zero, FP.Zero, FP.One);
+
         /// <summary>
         /// Constructs a new Quaternion.
         /// </summary>
@@ -174,7 +176,7 @@ namespace BEPUutilities
 #endif
             if (trace >= F64.C0)
             {
-                var S = FP.Sqrt(trace + F64.C1) * F64.C2; // S=4*qw 
+                var S = FP.Sqrt(trace + F64.C1) * F64.C2; // S=4*qw
                 var inverseS = F64.C1 / S;
                 q.w = F64.C0p25 * S;
                 q.x = (r.M23 - r.M32) * inverseS;
@@ -183,7 +185,7 @@ namespace BEPUutilities
             }
             else if ((r.M11 > r.M22) & (r.M11 > r.M33))
             {
-                var S = FP.Sqrt(F64.C1 + r.M11 - r.M22 - r.M33) * F64.C2; // S=4*qx 
+                var S = FP.Sqrt(F64.C1 + r.M11 - r.M22 - r.M33) * F64.C2; // S=4*qx
                 var inverseS = F64.C1 / S;
                 q.w = (r.M23 - r.M32) * inverseS;
                 q.x = F64.C0p25 * S;
@@ -316,7 +318,7 @@ namespace BEPUutilities
 			FP cosHalfTheta = start.w * end.w + start.x * end.x + start.y * end.y + start.z * end.z;
             if (cosHalfTheta < F64.C0)
             {
-                //Negating a quaternion results in the same orientation, 
+                //Negating a quaternion results in the same orientation,
                 //but we need cosHalfTheta to be positive to get the shortest path.
                 end.x = -end.x;
                 end.y = -end.y;
@@ -453,8 +455,8 @@ namespace BEPUutilities
             b.y = -a.y;
             b.z = -a.z;
             b.w = -a.w;
-        }      
-        
+        }
+
         /// <summary>
         /// Negates the components of a quaternion.
         /// </summary>
@@ -859,7 +861,7 @@ namespace BEPUutilities
             Concatenate(ref startInverse, ref end, out relative);
         }
 
-        
+
         /// <summary>
         /// Transforms the rotation into the local space of the target basis such that rotation = Quaternion.Concatenate(localRotation, targetBasis)
         /// </summary>

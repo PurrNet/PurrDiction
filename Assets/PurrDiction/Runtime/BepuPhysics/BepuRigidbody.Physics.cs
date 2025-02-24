@@ -1,5 +1,4 @@
 using BEPUutilities;
-using ConversionHelper;
 using FixMath.NET;
 using PurrNet.Logging;
 using UnityEngine;
@@ -8,6 +7,8 @@ namespace PurrNet.Prediction
 {
     public partial class BepuRigidbody
     {
+        public bool hasEntity => _entity != null;
+
         public FPVector3 position
         {
             get => _entity.Position;
@@ -60,8 +61,6 @@ namespace PurrNet.Prediction
         {
             return new BepuRigidbodyState
             {
-                position = transform.position.ToFPVector3(),
-                orientation = transform.rotation.ToFPQuaternion(),
                 linearVelocity = default,
                 angularVelocity = default
             };
@@ -78,13 +77,13 @@ namespace PurrNet.Prediction
 
                 if (_linearDrag > FP.C0)
                 {
-                    FP dragFactor = FP.C1 - (delta * _linearDrag);
+                    var dragFactor = FP.C1 - (delta * _linearDrag);
                     state.linearVelocity *= FP.Max(FP.C0, dragFactor);
                 }
 
                 if (_angularDrag > FP.C0)
                 {
-                    FP angularDragFactor = FP.C1 - (delta * _angularDrag);
+                    var angularDragFactor = FP.C1 - (delta * _angularDrag);
                     state.angularVelocity *= FP.Max(FP.C0, angularDragFactor);
                 }
             }
@@ -94,24 +93,18 @@ namespace PurrNet.Prediction
 
             EnforceConstraints();
 
-            state.position = _entity.Position;
-            state.orientation = _entity.Orientation;
             state.linearVelocity = _entity.LinearVelocity;
             state.angularVelocity = _entity.AngularVelocity;
         }
 
         protected override void GetUnityState(ref BepuRigidbodyState state)
         {
-            state.position = _entity.Position;
-            state.orientation = _entity.Orientation;
             state.linearVelocity = _entity.LinearVelocity;
             state.angularVelocity = _entity.AngularVelocity;
         }
 
         protected override void SetUnityState(BepuRigidbodyState state)
         {
-            _entity.Position = state.position;
-            _entity.Orientation = state.orientation;
             _entity.LinearVelocity = state.linearVelocity;
             _entity.AngularVelocity = state.angularVelocity;
         }

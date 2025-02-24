@@ -14,7 +14,7 @@ namespace ConversionHelper
             toReturn.y = (float)bepuVector.y;
             return toReturn;
         }
-        
+
         public static Vector2 ToVector2(this FPVector2 bepuVector)
         {
             Vector2 toReturn;
@@ -32,6 +32,14 @@ namespace ConversionHelper
         public static FPVector2 Convert(Vector2 unityVector)
         {
             FPVector2 toReturn;
+            toReturn.x = (FP)unityVector.x;
+            toReturn.y = (FP)unityVector.y;
+            return toReturn;
+        }
+
+        public static FPVector3 ToFPVector3(this Vector2 unityVector)
+        {
+            FPVector3 toReturn = default;
             toReturn.x = (FP)unityVector.x;
             toReturn.y = (FP)unityVector.y;
             return toReturn;
@@ -60,7 +68,7 @@ namespace ConversionHelper
             toReturn.z = (float)bepuVector.z;
             return toReturn;
         }
-        
+
         public static Vector3 ToVector3(this FPVector3 bepuVector)
         {
             Vector3 toReturn;
@@ -85,7 +93,7 @@ namespace ConversionHelper
             toReturn.z = (FP)unityVector.z;
             return toReturn;
         }
-        
+
         public static FPVector3 ToFPVector3(this Vector3 unityVector)
         {
             FPVector3 toReturn;
@@ -143,17 +151,17 @@ namespace ConversionHelper
             unityMatrix.m01 = (float)matrix.M12;
             unityMatrix.m02 = (float)matrix.M13;
             unityMatrix.m03 = (float)matrix.M14;
-            
+
             unityMatrix.m10 = (float)matrix.M21;
             unityMatrix.m11 = (float)matrix.M22;
             unityMatrix.m12 = (float)matrix.M23;
             unityMatrix.m13 = (float)matrix.M24;
-            
+
             unityMatrix.m20 = (float)matrix.M31;
             unityMatrix.m21 = (float)matrix.M32;
             unityMatrix.m22 = (float)matrix.M33;
             unityMatrix.m23 = (float)matrix.M34;
-            
+
             unityMatrix.m30 = (float)matrix.M41;
             unityMatrix.m31 = (float)matrix.M42;
             unityMatrix.m32 = (float)matrix.M43;
@@ -167,17 +175,17 @@ namespace ConversionHelper
             bepuMatrix.M12 = (FP)matrix.m01;
             bepuMatrix.M13 = (FP)matrix.m02;
             bepuMatrix.M14 = (FP)matrix.m03;
-            
+
             bepuMatrix.M21 = (FP)matrix.m10;
             bepuMatrix.M22 = (FP)matrix.m11;
             bepuMatrix.M23 = (FP)matrix.m12;
             bepuMatrix.M24 = (FP)matrix.m13;
-            
+
             bepuMatrix.M31 = (FP)matrix.m20;
             bepuMatrix.M32 = (FP)matrix.m21;
             bepuMatrix.M33 = (FP)matrix.m22;
             bepuMatrix.M34 = (FP)matrix.m23;
-            
+
             bepuMatrix.M41 = (FP)matrix.m30;
             bepuMatrix.M42 = (FP)matrix.m31;
             bepuMatrix.M43 = (FP)matrix.m32;
@@ -196,17 +204,17 @@ namespace ConversionHelper
             unityMatrix.m01 = (float)matrix.M12;
             unityMatrix.m02 = (float)matrix.M13;
             unityMatrix.m03 = 0;
-            
+
             unityMatrix.m10 = (float)matrix.M21;
             unityMatrix.m11 = (float)matrix.M22;
             unityMatrix.m12 = (float)matrix.M23;
             unityMatrix.m13 = 0;
-            
+
             unityMatrix.m20 = (float)matrix.M31;
             unityMatrix.m21 = (float)matrix.M32;
             unityMatrix.m22 = (float)matrix.M33;
             unityMatrix.m23 = 0;
-            
+
             unityMatrix.m30 = 0;
             unityMatrix.m31 = 0;
             unityMatrix.m32 = 0;
@@ -218,11 +226,11 @@ namespace ConversionHelper
             bepuMatrix.M11 = (FP)matrix.m00;
             bepuMatrix.M12 = (FP)matrix.m01;
             bepuMatrix.M13 = (FP)matrix.m02;
-            
+
             bepuMatrix.M21 = (FP)matrix.m10;
             bepuMatrix.M22 = (FP)matrix.m11;
             bepuMatrix.M23 = (FP)matrix.m12;
-            
+
             bepuMatrix.M31 = (FP)matrix.m20;
             bepuMatrix.M32 = (FP)matrix.m21;
             bepuMatrix.M33 = (FP)matrix.m22;
@@ -302,13 +310,13 @@ namespace ConversionHelper
         public static FPRay Convert(Ray ray)
         {
             FPRay toReturn;
-            
+
             var position = ray.origin;
             var direction = ray.direction;
-            
+
             Convert(ref position, out toReturn.Position);
             Convert(ref direction, out toReturn.Direction);
-            
+
             return toReturn;
         }
 
@@ -316,7 +324,7 @@ namespace ConversionHelper
         {
             var position = ray.origin;
             var direction = ray.direction;
-            
+
             Convert(ref position, out bepuRay.Position);
             Convert(ref direction, out bepuRay.Direction);
         }
@@ -332,7 +340,7 @@ namespace ConversionHelper
         {
             Convert(ref ray.Position, out var pos);
             Convert(ref ray.Direction, out var dir);
-            
+
             unityRay = new Ray(pos, dir);
         }
 
@@ -360,7 +368,7 @@ namespace ConversionHelper
         {
             Convert(ref boundingBox.Min, out var min);
             Convert(ref boundingBox.Max, out var max);
-            
+
             unityBoundingBox = new Bounds();
             unityBoundingBox.SetMinMax(min, max);
         }
@@ -369,7 +377,7 @@ namespace ConversionHelper
         {
             var min = boundingBox.min;
             var max = boundingBox.max;
-            
+
             Convert(ref min, out bepuBoundingBox.Min);
             Convert(ref max, out bepuBoundingBox.Max);
         }
