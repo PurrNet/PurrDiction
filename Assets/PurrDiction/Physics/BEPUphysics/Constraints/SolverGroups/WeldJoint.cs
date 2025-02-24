@@ -28,9 +28,9 @@ namespace BEPUphysics.Constraints.SolverGroups
         {
             var anchor = new FPVector3();
             if (connectionA != null)
-                anchor += connectionA.position;
+                anchor += connectionA._position;
             if (connectionB != null)
-                anchor += connectionB.position;
+                anchor += connectionB._position;
             if (connectionA != null && connectionB != null)
                 anchor *= F64.C0p5;
             return anchor;

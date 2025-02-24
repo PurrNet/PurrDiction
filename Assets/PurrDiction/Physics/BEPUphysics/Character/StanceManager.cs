@@ -170,7 +170,7 @@ namespace BEPUphysics.Character
         {
             RigidTransform transform;
             transform.Position = position;
-            transform.Orientation = characterBody.Orientation;
+            transform.Orientation = characterBody.orientation;
             queryObject.UpdateBoundingBoxForTransform(ref transform, F64.C0);
         }
 
@@ -183,8 +183,8 @@ namespace BEPUphysics.Character
         /// <returns>True if the target stance is different than the current stance and the transition is valid, false otherwise.</returns>
         public bool CheckTransition(Stance targetStance, out FP newHeight, out FPVector3 newPosition)
         {
-            var currentPosition = characterBody.position;
-            var down = characterBody.orientationMatrix.Down;
+            var currentPosition = characterBody._position;
+            var down = characterBody._orientationMatrix.Down;
             newPosition = new FPVector3();
             newHeight = F64.C0;
 
@@ -426,7 +426,7 @@ namespace BEPUphysics.Character
                 CharacterContactPositionState supportState;
                 CharacterContact supportContact;
                 QueryManager.AnalyzeSupportState(ref tractionContacts, ref supportContacts, out supportState, out supportContact);
-                var down = characterBody.orientationMatrix.Down;
+                var down = characterBody._orientationMatrix.Down;
                 //Note that traction is not tested for; it isn't important for the stance manager.
                 if (supportState == CharacterContactPositionState.Accepted)
                 {

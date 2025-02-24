@@ -67,7 +67,7 @@ namespace BEPUphysics.Character
         {
             get
             {
-                return Body.OrientationMatrix.Down;
+                return Body.orientationMatrix.Down;
             }
             set
             {
@@ -75,11 +75,11 @@ namespace BEPUphysics.Character
                 FPQuaternion orientation;
                 FP lengthSquared = value.LengthSquared();
                 if (lengthSquared < Toolbox.Epsilon)
-                    value = Body.OrientationMatrix.Down; //Silently fail. Assuming here that a dynamic process is setting this property; don't need to make a stink about it.
+                    value = Body.orientationMatrix.Down; //Silently fail. Assuming here that a dynamic process is setting this property; don't need to make a stink about it.
                 else
                     FPVector3.Divide(ref value, FP.Sqrt(lengthSquared), out value);
                 FPQuaternion.GetQuaternionBetweenNormalizedVectors(ref Toolbox.DownVector, ref value, out orientation);
-                Body.Orientation = orientation;
+                Body.orientation = orientation;
             }
         }
 
@@ -712,8 +712,8 @@ namespace BEPUphysics.Character
         SupportData TeleportToPosition(FPVector3 newPosition, FP dt)
         {
 
-            Body.Position = newPosition;
-            var orientation = Body.Orientation;
+            Body.position = newPosition;
+            var orientation = Body.orientation;
             //The re-do of contacts won't do anything unless we update the collidable's world transform.
             Body.CollisionInformation.UpdateWorldTransform(ref newPosition, ref orientation);
             //Refresh all the narrow phase collisions.
@@ -743,8 +743,8 @@ namespace BEPUphysics.Character
             //Contacts in these persistent manifolds can live too long for the character to behave perfectly
             //when going over (usually tiny) steps.
 
-            FPVector3 downDirection = Body.OrientationMatrix.Down;
-            FPVector3 position = Body.Position;
+            FPVector3 downDirection = Body.orientationMatrix.Down;
+            FPVector3 position = Body.position;
             FP margin = Body.CollisionInformation.Shape.CollisionMargin;
             FP minimumHeight = Body.Height * F64.C0p5 - margin;
             FP coreRadius = Body.Radius - margin;
@@ -756,7 +756,7 @@ namespace BEPUphysics.Character
                     var contact = contactData.Contact;
                     FP dot;
                     //Check to see if the contact position is at the bottom of the character.
-                    FPVector3 offset = contact.Position - Body.Position;
+                    FPVector3 offset = contact.Position - Body.position;
                     FPVector3.Dot(ref offset, ref downDirection, out dot);
                     if (dot > minimumHeight)
                     {
@@ -822,7 +822,7 @@ namespace BEPUphysics.Character
 
             //Compute the relative velocity between the body and its support, if any.
             //The relative velocity will be updated as impulses are applied.
-            relativeVelocity = Body.LinearVelocity;
+            relativeVelocity = Body.linearVelocity;
             if (SupportFinder.HasSupport)
             {
                 //Only entities have velocity.
@@ -837,7 +837,7 @@ namespace BEPUphysics.Character
                         entityCollidable.Entity.Locker.Enter();
                     try
                     {
-                        entityVelocity = Toolbox.GetVelocityOfPoint(supportData.Position, entityCollidable.Entity.Position, entityCollidable.Entity.LinearVelocity, entityCollidable.Entity.AngularVelocity);
+                        entityVelocity = Toolbox.GetVelocityOfPoint(supportData.Position, entityCollidable.Entity.position, entityCollidable.Entity.linearVelocity, entityCollidable.Entity.angularVelocity);
                     }
                     finally
                     {
@@ -858,7 +858,7 @@ namespace BEPUphysics.Character
         /// <param name="relativeVelocity">Relative velocity to update.</param>
         void ApplyJumpVelocity(ref SupportData supportData, FPVector3 velocityChange, ref FPVector3 relativeVelocity)
         {
-            Body.LinearVelocity += velocityChange;
+            Body.linearVelocity += velocityChange;
             var entityCollidable = supportData.SupportObject as EntityCollidable;
             if (entityCollidable != null)
             {
@@ -916,8 +916,8 @@ namespace BEPUphysics.Character
             //This character controller requires the standard implementation of Space.
             newSpace.BoundingBoxUpdater.Finishing += ExpandBoundingBox;
 
-            Body.AngularVelocity = new FPVector3();
-            Body.LinearVelocity = new FPVector3();
+            Body.angularVelocity = new FPVector3();
+            Body.linearVelocity = new FPVector3();
         }
         public override void OnRemovalFromSpace(Space oldSpace)
         {
@@ -928,8 +928,8 @@ namespace BEPUphysics.Character
             //This character controller requires the standard implementation of Space.
             oldSpace.BoundingBoxUpdater.Finishing -= ExpandBoundingBox;
             SupportFinder.ClearSupportData();
-            Body.AngularVelocity = new FPVector3();
-            Body.LinearVelocity = new FPVector3();
+            Body.angularVelocity = new FPVector3();
+            Body.linearVelocity = new FPVector3();
         }
 
 

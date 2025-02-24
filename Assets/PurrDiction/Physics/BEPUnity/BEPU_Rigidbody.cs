@@ -35,26 +35,26 @@ namespace BEPUphysics.Unity
         
         public FPVector3 position
         {
-            get => _entity.Position;
-            set => _entity.Position = value;
+            get => _entity.position;
+            set => _entity.position = value;
         }
         
         public FPQuaternion rotation
         {
-            get => _entity.Orientation;
-            set => _entity.Orientation = value;
+            get => _entity.orientation;
+            set => _entity.orientation = value;
         }
 
         public FPVector3 velocity
         {
-            get => _entity.LinearVelocity;
-            set => _entity.LinearVelocity = value;
+            get => _entity.linearVelocity;
+            set => _entity.linearVelocity = value;
         }
         
         public FPVector3 angularVelocity
         {
-            get => _entity.AngularVelocity;
-            set => _entity.AngularVelocity = value;
+            get => _entity.angularVelocity;
+            set => _entity.angularVelocity = value;
         }
         
         public bool isKinematic
@@ -147,7 +147,7 @@ namespace BEPUphysics.Unity
             if (_entity != null)
             {
                 _entity.PositionUpdateMode = _positionUpdateMode;
-                _entity.Orientation = MathConverter.Convert(_trs.rotation);
+                _entity.orientation = MathConverter.Convert(_trs.rotation);
 
                 if (_kinematic)
                     _entity.BecomeKinematic();
@@ -168,14 +168,14 @@ namespace BEPUphysics.Unity
             if (!_kinematic)
             {
                 _trs.SetPositionAndRotation(
-                    MathConverter.Convert(_entity.Position), 
-                    MathConverter.Convert(_entity.Orientation)
+                    MathConverter.Convert(_entity.position), 
+                    MathConverter.Convert(_entity.orientation)
                 );
             }
             else
             {
-                _entity.Position = MathConverter.Convert(_trs.position);
-                _entity.Orientation = MathConverter.Convert(_trs.rotation);
+                _entity.position = MathConverter.Convert(_trs.position);
+                _entity.orientation = MathConverter.Convert(_trs.rotation);
             }
         }
 
@@ -235,7 +235,7 @@ namespace BEPUphysics.Unity
                     _entity.ApplyAngularImpulse(ref torque);
                     break;
                 case ForceMode.VelocityChange:
-                    _entity.AngularVelocity += torque;
+                    _entity.angularVelocity += torque;
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(mode), mode, null);
@@ -271,7 +271,7 @@ namespace BEPUphysics.Unity
 
                 case ForceMode.VelocityChange:
                     // Apply instant velocity change, ignoring mass
-                    _entity.LinearVelocity += force;
+                    _entity.linearVelocity += force;
                     break;
             }
         }
@@ -325,7 +325,7 @@ namespace BEPUphysics.Unity
                     _entity.ApplyImpulse(ref force, ref pos);
                     break;
                 case ForceMode.VelocityChange:
-                    _entity.LinearVelocity += force;
+                    _entity.linearVelocity += force;
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(mode), mode, null);

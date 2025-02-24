@@ -521,7 +521,7 @@ namespace BEPUphysics.Character
 
             //Compute the relative velocity between the body and its support, if any.
             //The relative velocity will be updated as impulses are applied.
-            relativeVelocity = Body.LinearVelocity;
+            relativeVelocity = Body.linearVelocity;
             if (SupportFinder.HasSupport)
             {
                 //Only entities have velocity.
@@ -536,7 +536,7 @@ namespace BEPUphysics.Character
                         entityCollidable.Entity.Locker.Enter();
                     try
                     {
-                        entityVelocity = Toolbox.GetVelocityOfPoint(supportData.Position, entityCollidable.Entity.Position, entityCollidable.Entity.LinearVelocity, entityCollidable.Entity.AngularVelocity);
+                        entityVelocity = Toolbox.GetVelocityOfPoint(supportData.Position, entityCollidable.Entity.position, entityCollidable.Entity.linearVelocity, entityCollidable.Entity.angularVelocity);
                     }
                     finally
                     {
@@ -557,7 +557,7 @@ namespace BEPUphysics.Character
         /// <param name="relativeVelocity">Relative velocity to update.</param>
         void ApplyJumpVelocity(ref SupportData supportData, FPVector3 velocityChange, ref FPVector3 relativeVelocity)
         {
-            Body.LinearVelocity += velocityChange;
+            Body.linearVelocity += velocityChange;
             var entityCollidable = supportData.SupportObject as EntityCollidable;
             if (entityCollidable != null)
             {
@@ -606,8 +606,8 @@ namespace BEPUphysics.Character
             //This character controller requires the standard implementation of Space.
             newSpace.BoundingBoxUpdater.Finishing += ExpandBoundingBox;
 
-            Body.AngularVelocity = new FPVector3();
-            Body.LinearVelocity = new FPVector3();
+            Body.angularVelocity = new FPVector3();
+            Body.linearVelocity = new FPVector3();
         }
         public override void OnRemovalFromSpace(Space oldSpace)
         {
@@ -618,8 +618,8 @@ namespace BEPUphysics.Character
             //This character controller requires the standard implementation of Space.
             oldSpace.BoundingBoxUpdater.Finishing -= ExpandBoundingBox;
             SupportFinder.ClearSupportData();
-            Body.AngularVelocity = new FPVector3();
-            Body.LinearVelocity = new FPVector3();
+            Body.angularVelocity = new FPVector3();
+            Body.linearVelocity = new FPVector3();
         }
 
 

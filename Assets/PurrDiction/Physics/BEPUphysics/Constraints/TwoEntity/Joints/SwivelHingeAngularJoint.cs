@@ -59,7 +59,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
             set
             {
                 localHingeAxis = FPVector3.Normalize(value);
-                Matrix3x3.Transform(ref localHingeAxis, ref connectionA.orientationMatrix, out worldHingeAxis);
+                Matrix3x3.Transform(ref localHingeAxis, ref connectionA._orientationMatrix, out worldHingeAxis);
             }
         }
 
@@ -72,7 +72,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
             set
             {
                 localTwistAxis = FPVector3.Normalize(value);
-                Matrix3x3.Transform(ref localTwistAxis, ref connectionB.orientationMatrix, out worldTwistAxis);
+                Matrix3x3.Transform(ref localTwistAxis, ref connectionB._orientationMatrix, out worldTwistAxis);
             }
         }
 
@@ -86,7 +86,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
             {
                 worldHingeAxis = FPVector3.Normalize(value);
                 FPQuaternion conjugate;
-                FPQuaternion.Conjugate(ref connectionA.orientation, out conjugate);
+                FPQuaternion.Conjugate(ref connectionA._orientation, out conjugate);
                 FPQuaternion.Transform(ref worldHingeAxis, ref conjugate, out localHingeAxis);
             }
         }
@@ -101,7 +101,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
             {
                 worldTwistAxis = FPVector3.Normalize(value);
                 FPQuaternion conjugate;
-                FPQuaternion.Conjugate(ref connectionB.orientation, out conjugate);
+                FPQuaternion.Conjugate(ref connectionB._orientation, out conjugate);
                 FPQuaternion.Transform(ref worldTwistAxis, ref conjugate, out localTwistAxis);
             }
         }
@@ -117,8 +117,8 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
             {
                 FP velocityA, velocityB;
                 //Find the velocity contribution from each connection
-                FPVector3.Dot(ref connectionA.angularVelocity, ref jacobianA, out velocityA);
-                FPVector3.Dot(ref connectionB.angularVelocity, ref jacobianB, out velocityB);
+                FPVector3.Dot(ref connectionA._angularVelocity, ref jacobianA, out velocityA);
+                FPVector3.Dot(ref connectionB._angularVelocity, ref jacobianB, out velocityB);
                 return velocityA + velocityB;
             }
         }
@@ -197,8 +197,8 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
         {
             FP velocityA, velocityB;
             //Find the velocity contribution from each connection
-            FPVector3.Dot(ref connectionA.angularVelocity, ref jacobianA, out velocityA);
-            FPVector3.Dot(ref connectionB.angularVelocity, ref jacobianB, out velocityB);
+            FPVector3.Dot(ref connectionA._angularVelocity, ref jacobianA, out velocityA);
+            FPVector3.Dot(ref connectionB._angularVelocity, ref jacobianB, out velocityB);
             //Add in the constraint space bias velocity
             FP lambda = -(velocityA + velocityB) - biasVelocity - softness * accumulatedImpulse;
 
@@ -210,12 +210,12 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
 
             //Apply the impulse
             FPVector3 impulse;
-            if (connectionA.isDynamic)
+            if (connectionA._isDynamic)
             {
                 FPVector3.Multiply(ref jacobianA, lambda, out impulse);
                 connectionA.ApplyAngularImpulse(ref impulse);
             }
-            if (connectionB.isDynamic)
+            if (connectionB._isDynamic)
             {
                 FPVector3.Multiply(ref jacobianB, lambda, out impulse);
                 connectionB.ApplyAngularImpulse(ref impulse);
@@ -231,8 +231,8 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
         public override void Update(FP dt)
         {
             //Transform the axes into world space.
-            Matrix3x3.Transform(ref localHingeAxis, ref connectionA.orientationMatrix, out worldHingeAxis);
-            Matrix3x3.Transform(ref localTwistAxis, ref connectionB.orientationMatrix, out worldTwistAxis);
+            Matrix3x3.Transform(ref localHingeAxis, ref connectionA._orientationMatrix, out worldHingeAxis);
+            Matrix3x3.Transform(ref localTwistAxis, ref connectionB._orientationMatrix, out worldTwistAxis);
 
             //****** VELOCITY BIAS ******//
             FPVector3.Dot(ref worldHingeAxis, ref worldTwistAxis, out error);
@@ -259,7 +259,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
             //Connection A's contribution to the mass matrix
             FP entryA;
             FPVector3 transformedAxis;
-            if (connectionA.isDynamic)
+            if (connectionA._isDynamic)
             {
                 Matrix3x3.Transform(ref jacobianA, ref connectionA.inertiaTensorInverse, out transformedAxis);
                 FPVector3.Dot(ref transformedAxis, ref jacobianA, out entryA);
@@ -269,7 +269,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
 
             //Connection B's contribution to the mass matrix
             FP entryB;
-            if (connectionB.isDynamic)
+            if (connectionB._isDynamic)
             {
                 Matrix3x3.Transform(ref jacobianB, ref connectionB.inertiaTensorInverse, out transformedAxis);
                 FPVector3.Dot(ref transformedAxis, ref jacobianB, out entryB);
@@ -293,12 +293,12 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
             //****** WARM STARTING ******//
             //Apply accumulated impulse
             FPVector3 impulse;
-            if (connectionA.isDynamic)
+            if (connectionA._isDynamic)
             {
                 FPVector3.Multiply(ref jacobianA, accumulatedImpulse, out impulse);
                 connectionA.ApplyAngularImpulse(ref impulse);
             }
-            if (connectionB.isDynamic)
+            if (connectionB._isDynamic)
             {
                 FPVector3.Multiply(ref jacobianB, accumulatedImpulse, out impulse);
                 connectionB.ApplyAngularImpulse(ref impulse);

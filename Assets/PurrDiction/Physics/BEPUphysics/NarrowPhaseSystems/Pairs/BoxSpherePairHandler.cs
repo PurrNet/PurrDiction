@@ -135,18 +135,18 @@ namespace BEPUphysics.NarrowPhaseSystems.Pairs
 
             if (EntityA != null)
             {
-                FPVector3.Subtract(ref info.Contact.Position, ref EntityA.position, out velocity);
-                FPVector3.Cross(ref EntityA.angularVelocity, ref velocity, out velocity);
-                FPVector3.Add(ref velocity, ref EntityA.linearVelocity, out info.RelativeVelocity);
+                FPVector3.Subtract(ref info.Contact.Position, ref EntityA._position, out velocity);
+                FPVector3.Cross(ref EntityA._angularVelocity, ref velocity, out velocity);
+                FPVector3.Add(ref velocity, ref EntityA._linearVelocity, out info.RelativeVelocity);
             }
             else
                 info.RelativeVelocity = new FPVector3();
 
             if (EntityB != null)
             {
-                FPVector3.Subtract(ref info.Contact.Position, ref EntityB.position, out velocity);
-                FPVector3.Cross(ref EntityB.angularVelocity, ref velocity, out velocity);
-                FPVector3.Add(ref velocity, ref EntityB.linearVelocity, out velocity);
+                FPVector3.Subtract(ref info.Contact.Position, ref EntityB._position, out velocity);
+                FPVector3.Cross(ref EntityB._angularVelocity, ref velocity, out velocity);
+                FPVector3.Add(ref velocity, ref EntityB._linearVelocity, out velocity);
                 FPVector3.Subtract(ref info.RelativeVelocity, ref velocity, out info.RelativeVelocity);
             }
 

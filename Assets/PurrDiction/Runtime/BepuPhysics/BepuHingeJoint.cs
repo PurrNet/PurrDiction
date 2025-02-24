@@ -74,7 +74,7 @@ namespace PurrNet.Prediction
             FP min = (FP)((float)-(angleLimitation / 2) * Mathf.Deg2Rad);
             FP max = (FP)((float)angleLimitation / 2 * Mathf.Deg2Rad);
 
-            hingeJoint = new RevoluteJoint(a, b, b.Position, normalizedAxis.ToFPVector3());
+            hingeJoint = new RevoluteJoint(a, b, b.position, normalizedAxis.ToFPVector3());
             limitJoint = new RevoluteLimit(a, b, normalizedAxis.ToFPVector3(), GetTestAxis().ToFPVector3(), min, max);
 
             _space.Add(hingeJoint);

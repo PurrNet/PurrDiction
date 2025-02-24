@@ -48,10 +48,10 @@ namespace BEPUphysics.EntityStateManagement
                 for (int i = 0; i < manager.entities.Count; i++)
                 {
                     Entity entity = manager.entities[i];
-                    backBuffer[i].Position = entity.position;
-                    backBuffer[i].Orientation = entity.orientation;
-                    backBuffer[i].LinearVelocity = entity.linearVelocity;
-                    backBuffer[i].AngularVelocity = entity.angularVelocity;
+                    backBuffer[i].Position = entity._position;
+                    backBuffer[i].Orientation = entity._orientation;
+                    backBuffer[i].LinearVelocity = entity._linearVelocity;
+                    backBuffer[i].AngularVelocity = entity._angularVelocity;
                 }
                 Array.Copy(backBuffer, frontBuffer, backBuffer.Length);
             }
@@ -107,10 +107,10 @@ namespace BEPUphysics.EntityStateManagement
         void MultithreadedStateUpdate(int i)
         {
             Entity entity = manager.entities[i];
-            backBuffer[i].Position = entity.position;
-            backBuffer[i].Orientation = entity.orientation;
-            backBuffer[i].LinearVelocity = entity.linearVelocity;
-            backBuffer[i].AngularVelocity = entity.angularVelocity;
+            backBuffer[i].Position = entity._position;
+            backBuffer[i].Orientation = entity._orientation;
+            backBuffer[i].LinearVelocity = entity._linearVelocity;
+            backBuffer[i].AngularVelocity = entity._angularVelocity;
         }
 
 
@@ -125,10 +125,10 @@ namespace BEPUphysics.EntityStateManagement
             for (int i = 0; i < manager.entities.Count; i++)
             {
                 Entity entity = manager.entities[i];
-                backBuffer[i].Position = entity.position;
-                backBuffer[i].Orientation = entity.orientation;
-                backBuffer[i].LinearVelocity = entity.linearVelocity;
-                backBuffer[i].AngularVelocity = entity.angularVelocity;
+                backBuffer[i].Position = entity._position;
+                backBuffer[i].Orientation = entity._orientation;
+                backBuffer[i].LinearVelocity = entity._linearVelocity;
+                backBuffer[i].AngularVelocity = entity._angularVelocity;
             }
             FlipBuffers();
         }
@@ -143,8 +143,8 @@ namespace BEPUphysics.EntityStateManagement
                 frontBuffer.CopyTo(newStates, 0);
                 frontBuffer = newStates;
             }
-            frontBuffer[e.BufferedStates.motionStateIndex].Position = e.position;
-            frontBuffer[e.BufferedStates.motionStateIndex].Orientation = e.orientation;
+            frontBuffer[e.BufferedStates.motionStateIndex].Position = e._position;
+            frontBuffer[e.BufferedStates.motionStateIndex].Orientation = e._orientation;
 
             if (backBuffer.Length <= e.BufferedStates.motionStateIndex)
             {
@@ -152,8 +152,8 @@ namespace BEPUphysics.EntityStateManagement
                 backBuffer.CopyTo(newStates, 0);
                 backBuffer = newStates;
             }
-            backBuffer[e.BufferedStates.motionStateIndex].Position = e.position;
-            backBuffer[e.BufferedStates.motionStateIndex].Orientation = e.orientation;
+            backBuffer[e.BufferedStates.motionStateIndex].Position = e._position;
+            backBuffer[e.BufferedStates.motionStateIndex].Orientation = e._orientation;
         }
 
         internal void Remove(int index, int endIndex)

@@ -161,15 +161,15 @@ namespace BEPUphysics.Character
         /// <param name="forward">Forward facing direction of the character.</param>
         public void UpdateMovementBasis(ref FPVector3 forward)
         {
-            FPVector3 down = characterBody.orientationMatrix.Down;
+            FPVector3 down = characterBody._orientationMatrix.Down;
             horizontalForwardDirection = forward - down * FPVector3.Dot(down, forward);
             FP forwardLengthSquared = horizontalForwardDirection.LengthSquared();
 
             if (forwardLengthSquared < Toolbox.Epsilon)
             {
                 //Use an arbitrary direction to complete the basis.
-                horizontalForwardDirection = characterBody.orientationMatrix.Forward;
-                strafeDirection = characterBody.orientationMatrix.Right;
+                horizontalForwardDirection = characterBody._orientationMatrix.Forward;
+                strafeDirection = characterBody._orientationMatrix.Right;
             }
             else
             {
@@ -295,7 +295,7 @@ namespace BEPUphysics.Character
 
 
             //Compute the jacobians.  This is basically a PointOnLineJoint with motorized degrees of freedom.
-            FPVector3 downDirection = characterBody.orientationMatrix.Down;
+            FPVector3 downDirection = characterBody._orientationMatrix.Down;
 
             if (MovementMode != MovementMode.Floating)
             {
@@ -371,7 +371,7 @@ namespace BEPUphysics.Character
                 if (supportEntity != null)
                 {
                     //Compute the angular jacobians.
-                    FPVector3 supportToContact = supportData.Position - supportEntity.Position;
+                    FPVector3 supportToContact = supportData.Position - supportEntity.position;
                     //Since we treat the character to have infinite inertia, we're only concerned with the support's angular jacobians.
                     //Note the order of the cross product- it is reversed to negate the result.
                     FPVector3.Cross(ref linearJacobianA1, ref supportToContact, out angularJacobianB1);
@@ -389,7 +389,7 @@ namespace BEPUphysics.Character
             {
                 //If the character is Fix64ing, then the jacobians are simply the 3d movement direction and the perpendicular direction on the character's horizontal plane.
                 linearJacobianA1 = movementDirection3d;
-                linearJacobianA2 = FPVector3.Cross(linearJacobianA1, characterBody.orientationMatrix.Down);
+                linearJacobianA2 = FPVector3.Cross(linearJacobianA1, characterBody._orientationMatrix.Down);
 
 
             }
@@ -463,24 +463,24 @@ namespace BEPUphysics.Character
                 if (timeSinceTransition >= timeUntilPositionAnchor)
                 {
                     FPVector3.Multiply(ref downDirection, distanceToBottomOfCharacter, out positionLocalOffset);
-                    positionLocalOffset = (positionLocalOffset + characterBody.Position) - supportEntity.Position;
-                    positionLocalOffset = Matrix3x3.TransformTranspose(positionLocalOffset, supportEntity.OrientationMatrix);
+                    positionLocalOffset = (positionLocalOffset + characterBody.position) - supportEntity.position;
+                    positionLocalOffset = Matrix3x3.TransformTranspose(positionLocalOffset, supportEntity.orientationMatrix);
                     timeSinceTransition = -1; //Negative 1 means that the offset has been computed.
                 }
                 if (timeSinceTransition < F64.C0)
                 {
                     FPVector3 targetPosition;
                     FPVector3.Multiply(ref downDirection, distanceToBottomOfCharacter, out targetPosition);
-                    targetPosition += characterBody.Position;
-                    FPVector3 worldSupportLocation = Matrix3x3.Transform(positionLocalOffset, supportEntity.OrientationMatrix) + supportEntity.Position;
+                    targetPosition += characterBody.position;
+                    FPVector3 worldSupportLocation = Matrix3x3.Transform(positionLocalOffset, supportEntity.orientationMatrix) + supportEntity.position;
                     FPVector3 error;
                     FPVector3.Subtract(ref targetPosition, ref worldSupportLocation, out error);
                     //If the error is too large, then recompute the offset.  We don't want the character rubber banding around.
                     if (error.LengthSquared() > PositionAnchorDistanceThreshold * PositionAnchorDistanceThreshold)
                     {
                         FPVector3.Multiply(ref downDirection, distanceToBottomOfCharacter, out positionLocalOffset);
-                        positionLocalOffset = (positionLocalOffset + characterBody.Position) - supportEntity.Position;
-                        positionLocalOffset = Matrix3x3.TransformTranspose(positionLocalOffset, supportEntity.OrientationMatrix);
+                        positionLocalOffset = (positionLocalOffset + characterBody.position) - supportEntity.position;
+                        positionLocalOffset = Matrix3x3.TransformTranspose(positionLocalOffset, supportEntity.orientationMatrix);
                         positionCorrectionBias = new FPVector2();
                     }
                     else
@@ -646,18 +646,18 @@ namespace BEPUphysics.Character
                 Vector2 relativeVelocity;
 #endif
 
-                FPVector3.Dot(ref linearJacobianA1, ref characterBody.linearVelocity, out relativeVelocity.x);
-                FPVector3.Dot(ref linearJacobianA2, ref characterBody.linearVelocity, out relativeVelocity.y);
+                FPVector3.Dot(ref linearJacobianA1, ref characterBody._linearVelocity, out relativeVelocity.x);
+                FPVector3.Dot(ref linearJacobianA2, ref characterBody._linearVelocity, out relativeVelocity.y);
 
                 FP x, y;
                 if (supportEntity != null)
                 {
-                    FPVector3.Dot(ref linearJacobianB1, ref supportEntity.linearVelocity, out x);
-                    FPVector3.Dot(ref linearJacobianB2, ref supportEntity.linearVelocity, out y);
+                    FPVector3.Dot(ref linearJacobianB1, ref supportEntity._linearVelocity, out x);
+                    FPVector3.Dot(ref linearJacobianB2, ref supportEntity._linearVelocity, out y);
                     relativeVelocity.x += x;
                     relativeVelocity.y += y;
-                    FPVector3.Dot(ref angularJacobianB1, ref supportEntity.angularVelocity, out x);
-                    FPVector3.Dot(ref angularJacobianB2, ref supportEntity.angularVelocity, out y);
+                    FPVector3.Dot(ref angularJacobianB1, ref supportEntity._angularVelocity, out x);
+                    FPVector3.Dot(ref angularJacobianB2, ref supportEntity._angularVelocity, out y);
                     relativeVelocity.x += x;
                     relativeVelocity.y += y;
 
@@ -673,9 +673,9 @@ namespace BEPUphysics.Character
         {
             get
             {
-                FPVector3 bodyVelocity = characterBody.LinearVelocity;
+                FPVector3 bodyVelocity = characterBody.linearVelocity;
                 if (supportEntity != null)
-                    return bodyVelocity - Toolbox.GetVelocityOfPoint(supportData.Position, supportEntity.Position, supportEntity.LinearVelocity, supportEntity.AngularVelocity);
+                    return bodyVelocity - Toolbox.GetVelocityOfPoint(supportData.Position, supportEntity.position, supportEntity.linearVelocity, supportEntity.angularVelocity);
                 return bodyVelocity;
             }
         }
@@ -687,7 +687,7 @@ namespace BEPUphysics.Character
         {
             get
             {
-                return supportEntity == null ? new FPVector3() : Toolbox.GetVelocityOfPoint(supportData.Position, supportEntity.Position, supportEntity.LinearVelocity, supportEntity.AngularVelocity);
+                return supportEntity == null ? new FPVector3() : Toolbox.GetVelocityOfPoint(supportData.Position, supportEntity.position, supportEntity.linearVelocity, supportEntity.angularVelocity);
             }
         }
 

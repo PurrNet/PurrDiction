@@ -23,11 +23,11 @@ namespace BEPUphysics.Paths.PathFollowing
         public EntityMover(Entity e)
         {
             IsUpdatedSequentially = false;
-            LinearMotor = new SingleEntityLinearMotor(e, e.Position);
+            LinearMotor = new SingleEntityLinearMotor(e, e.position);
             Entity = e;
 
             LinearMotor.Settings.Mode = MotorMode.Servomechanism;
-            TargetPosition = e.Position;
+            TargetPosition = e.position;
         }
 
         /// <summary>
@@ -43,7 +43,7 @@ namespace BEPUphysics.Paths.PathFollowing
 
             linearMotor.Entity = Entity;
             linearMotor.Settings.Mode = MotorMode.Servomechanism;
-            TargetPosition = e.Position;
+            TargetPosition = e.position;
         }
 
 
@@ -141,9 +141,9 @@ namespace BEPUphysics.Paths.PathFollowing
             else
             {
                 LinearMotor.IsActive = false;
-                FPVector3 worldMovedPoint = Matrix3x3.Transform(LocalOffset, entity.orientationMatrix);
-                FPVector3.Add(ref worldMovedPoint, ref entity.position, out worldMovedPoint);
-                Entity.LinearVelocity = GetLinearVelocity(worldMovedPoint, TargetPosition, dt);
+                FPVector3 worldMovedPoint = Matrix3x3.Transform(LocalOffset, entity._orientationMatrix);
+                FPVector3.Add(ref worldMovedPoint, ref entity._position, out worldMovedPoint);
+                Entity.linearVelocity = GetLinearVelocity(worldMovedPoint, TargetPosition, dt);
             }
         }
     }

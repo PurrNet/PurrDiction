@@ -26,13 +26,13 @@ namespace BEPUphysics.Entities.Prefabs
         private MinkowskiSum(OrientedConvexShapeEntry a, OrientedConvexShapeEntry b, FP m)
             :base(new ConvexCollidable<MinkowskiSumShape>(new MinkowskiSumShape(a, b)), m)
         {
-            Position = -CollisionInformation.Shape.LocalOffset;
+            position = -CollisionInformation.Shape.LocalOffset;
         }
 
         private MinkowskiSum(OrientedConvexShapeEntry a, OrientedConvexShapeEntry b)
             : base(new ConvexCollidable<MinkowskiSumShape>(new MinkowskiSumShape(a, b)))
         {
-            Position = -CollisionInformation.Shape.LocalOffset;
+            position = -CollisionInformation.Shape.LocalOffset;
         }
 
         /// <summary>
@@ -45,7 +45,7 @@ namespace BEPUphysics.Entities.Prefabs
         public MinkowskiSum(FPVector3 position, OrientedConvexShapeEntry a, OrientedConvexShapeEntry b, FP mass)
             : this(a, b, mass)
         {
-            Position = position;
+            ((Entity)this).position = position;
         }
 
         /// <summary>
@@ -57,7 +57,7 @@ namespace BEPUphysics.Entities.Prefabs
         public MinkowskiSum(FPVector3 position, OrientedConvexShapeEntry a, OrientedConvexShapeEntry b)
             : this(a, b)
         {
-            Position = position;
+            ((Entity)this).position = position;
         }
 
         /// <summary>

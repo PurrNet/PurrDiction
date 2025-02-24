@@ -102,7 +102,7 @@ namespace BEPUphysics.Entities
 
             CollisionInformation.Entity = null;
 
-            if (isDynamic)
+            if (_isDynamic)
                 Initialize(newCollisionInformation, mass);
             else
                 Initialize(newCollisionInformation);

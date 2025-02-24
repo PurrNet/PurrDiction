@@ -48,7 +48,7 @@ namespace BEPUphysics.Entities.Prefabs
         public Sphere(FPVector3 position, FP radius, FP mass)
             : this(radius, mass)
         {
-            Position = position;
+            ((Entity)this).position = position;
         }
 
         /// <summary>
@@ -59,7 +59,7 @@ namespace BEPUphysics.Entities.Prefabs
         public Sphere(FPVector3 position, FP radius)
             : this(radius)
         {
-            Position = position;
+            ((Entity)this).position = position;
         }
 
         /// <summary>

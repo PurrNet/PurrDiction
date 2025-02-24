@@ -71,8 +71,8 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
             get { return worldLineAnchor; }
             set
             {
-                localAxisAnchor = value - connectionA.position;
-                Matrix3x3.TransformTranspose(ref localAxisAnchor, ref connectionA.orientationMatrix, out localAxisAnchor);
+                localAxisAnchor = value - connectionA._position;
+                Matrix3x3.TransformTranspose(ref localAxisAnchor, ref connectionA._orientationMatrix, out localAxisAnchor);
                 worldLineAnchor = value;
             }
         }
@@ -86,7 +86,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
             set
             {
                 worldLineDirection = FPVector3.Normalize(value);
-                Matrix3x3.TransformTranspose(ref worldLineDirection, ref connectionA.orientationMatrix, out localLineDirection);
+                Matrix3x3.TransformTranspose(ref worldLineDirection, ref connectionA._orientationMatrix, out localLineDirection);
                 UpdateRestrictedAxes();
             }
         }
@@ -101,8 +101,8 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
             set
             {
                 localAxisAnchor = value;
-                Matrix3x3.Transform(ref localAxisAnchor, ref connectionA.orientationMatrix, out worldLineAnchor);
-                FPVector3.Add(ref worldLineAnchor, ref connectionA.position, out worldLineAnchor);
+                Matrix3x3.Transform(ref localAxisAnchor, ref connectionA._orientationMatrix, out worldLineAnchor);
+                FPVector3.Add(ref worldLineAnchor, ref connectionA._position, out worldLineAnchor);
             }
         }
 
@@ -115,7 +115,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
             set
             {
                 localLineDirection = FPVector3.Normalize(value);
-                Matrix3x3.Transform(ref localLineDirection, ref connectionA.orientationMatrix, out worldLineDirection);
+                Matrix3x3.Transform(ref localLineDirection, ref connectionA._orientationMatrix, out worldLineDirection);
                 UpdateRestrictedAxes();
             }
         }
@@ -130,8 +130,8 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
             set
             {
                 localPoint = value;
-                Matrix3x3.Transform(ref localPoint, ref connectionB.orientationMatrix, out worldPoint);
-                FPVector3.Add(ref worldPoint, ref connectionB.position, out worldPoint);
+                Matrix3x3.Transform(ref localPoint, ref connectionB._orientationMatrix, out worldPoint);
+                FPVector3.Add(ref worldPoint, ref connectionB._position, out worldPoint);
             }
         }
 
@@ -161,8 +161,8 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
             set
             {
                 worldPoint = value;
-                localPoint = worldPoint - connectionB.position;
-                Matrix3x3.TransformTranspose(ref localPoint, ref connectionB.orientationMatrix, out localPoint);
+                localPoint = worldPoint - connectionB._position;
+                Matrix3x3.TransformTranspose(ref localPoint, ref connectionB._orientationMatrix, out localPoint);
             }
         }
 
@@ -182,10 +182,10 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
 #endif
                 FPVector3 dv;
                 FPVector3 aVel, bVel;
-                FPVector3.Cross(ref connectionA.angularVelocity, ref rA, out aVel);
-                FPVector3.Add(ref aVel, ref connectionA.linearVelocity, out aVel);
-                FPVector3.Cross(ref connectionB.angularVelocity, ref rB, out bVel);
-                FPVector3.Add(ref bVel, ref connectionB.linearVelocity, out bVel);
+                FPVector3.Cross(ref connectionA._angularVelocity, ref rA, out aVel);
+                FPVector3.Add(ref aVel, ref connectionA._linearVelocity, out aVel);
+                FPVector3.Cross(ref connectionB._angularVelocity, ref rB, out bVel);
+                FPVector3.Add(ref bVel, ref connectionB._linearVelocity, out bVel);
                 FPVector3.Subtract(ref aVel, ref bVel, out dv);
                 FPVector3.Dot(ref dv, ref worldRestrictedAxis1, out lambda.x);
                 FPVector3.Dot(ref dv, ref worldRestrictedAxis2, out lambda.y);
@@ -333,10 +333,10 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
             //lambda.Y = va2 + wa2 - vb2 - wb2 + biasVelocity.Y + mySoftness * accumulatedImpulse.Y;
             FPVector3 dv;
             FPVector3 aVel, bVel;
-            FPVector3.Cross(ref connectionA.angularVelocity, ref rA, out aVel);
-            FPVector3.Add(ref aVel, ref connectionA.linearVelocity, out aVel);
-            FPVector3.Cross(ref connectionB.angularVelocity, ref rB, out bVel);
-            FPVector3.Add(ref bVel, ref connectionB.linearVelocity, out bVel);
+            FPVector3.Cross(ref connectionA._angularVelocity, ref rA, out aVel);
+            FPVector3.Add(ref aVel, ref connectionA._linearVelocity, out aVel);
+            FPVector3.Cross(ref connectionB._angularVelocity, ref rB, out bVel);
+            FPVector3.Add(ref bVel, ref connectionB._linearVelocity, out bVel);
             FPVector3.Subtract(ref aVel, ref bVel, out dv);
             FPVector3.Dot(ref dv, ref worldRestrictedAxis1, out lambda.x);
             FPVector3.Dot(ref dv, ref worldRestrictedAxis2, out lambda.y);
@@ -363,7 +363,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
             impulse.x = worldRestrictedAxis1.x * x + worldRestrictedAxis2.x * y;
             impulse.y = worldRestrictedAxis1.y * x + worldRestrictedAxis2.y * y;
             impulse.z = worldRestrictedAxis1.z * x + worldRestrictedAxis2.z * y;
-            if (connectionA.isDynamic)
+            if (connectionA._isDynamic)
             {
                 torque.x = x * angularA1.x + y * angularA2.x;
                 torque.y = x * angularA1.y + y * angularA2.y;
@@ -372,7 +372,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
                 connectionA.ApplyLinearImpulse(ref impulse);
                 connectionA.ApplyAngularImpulse(ref torque);
             }
-            if (connectionB.isDynamic)
+            if (connectionB._isDynamic)
             {
                 impulse.x = -impulse.x;
                 impulse.y = -impulse.y;
@@ -395,15 +395,15 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
         public override void Update(FP dt)
         {
             //Transform local axes into world space
-            Matrix3x3.Transform(ref localRestrictedAxis1, ref connectionA.orientationMatrix, out worldRestrictedAxis1);
-            Matrix3x3.Transform(ref localRestrictedAxis2, ref connectionA.orientationMatrix, out worldRestrictedAxis2);
-            Matrix3x3.Transform(ref localAxisAnchor, ref connectionA.orientationMatrix, out worldLineAnchor);
-            FPVector3.Add(ref worldLineAnchor, ref connectionA.position, out worldLineAnchor);
-            Matrix3x3.Transform(ref localLineDirection, ref connectionA.orientationMatrix, out worldLineDirection);
+            Matrix3x3.Transform(ref localRestrictedAxis1, ref connectionA._orientationMatrix, out worldRestrictedAxis1);
+            Matrix3x3.Transform(ref localRestrictedAxis2, ref connectionA._orientationMatrix, out worldRestrictedAxis2);
+            Matrix3x3.Transform(ref localAxisAnchor, ref connectionA._orientationMatrix, out worldLineAnchor);
+            FPVector3.Add(ref worldLineAnchor, ref connectionA._position, out worldLineAnchor);
+            Matrix3x3.Transform(ref localLineDirection, ref connectionA._orientationMatrix, out worldLineDirection);
 
             //Transform local 
-            Matrix3x3.Transform(ref localPoint, ref connectionB.orientationMatrix, out rB);
-            FPVector3.Add(ref rB, ref connectionB.position, out worldPoint);
+            Matrix3x3.Transform(ref localPoint, ref connectionB._orientationMatrix, out rB);
+            FPVector3.Add(ref rB, ref connectionB._position, out worldPoint);
 
             //Find the point on the line closest to the world point.
             FPVector3 offset;
@@ -414,7 +414,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
             FPVector3 worldNearPoint;
             FPVector3.Multiply(ref worldLineDirection, distanceAlongAxis, out offset);
             FPVector3.Add(ref worldLineAnchor, ref offset, out worldNearPoint);
-            FPVector3.Subtract(ref worldNearPoint, ref connectionA.position, out rA);
+            FPVector3.Subtract(ref worldNearPoint, ref connectionA._position, out rA);
 
             //Error
             FPVector3 error3D;
@@ -450,7 +450,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
             FP inverseMass;
             FPVector3 intermediate;
             //Compute the effective mass matrix.
-            if (connectionA.isDynamic)
+            if (connectionA._isDynamic)
             {
                 inverseMass = connectionA.inverseMass;
                 Matrix3x3.Transform(ref angularA1, ref connectionA.inertiaTensorInverse, out intermediate);
@@ -464,7 +464,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
 
             #region Mass Matrix B
 
-            if (connectionB.isDynamic)
+            if (connectionB._isDynamic)
             {
                 FP extra;
                 inverseMass = connectionB.inverseMass;
@@ -510,7 +510,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
             impulse.x = worldRestrictedAxis1.x * x + worldRestrictedAxis2.x * y;
             impulse.y = worldRestrictedAxis1.y * x + worldRestrictedAxis2.y * y;
             impulse.z = worldRestrictedAxis1.z * x + worldRestrictedAxis2.z * y;
-            if (connectionA.isDynamic)
+            if (connectionA._isDynamic)
             {
                 torque.x = x * angularA1.x + y * angularA2.x;
                 torque.y = x * angularA1.y + y * angularA2.y;
@@ -519,7 +519,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
                 connectionA.ApplyLinearImpulse(ref impulse);
                 connectionA.ApplyAngularImpulse(ref torque);
             }
-            if (connectionB.isDynamic)
+            if (connectionB._isDynamic)
             {
                 impulse.x = -impulse.x;
                 impulse.y = -impulse.y;

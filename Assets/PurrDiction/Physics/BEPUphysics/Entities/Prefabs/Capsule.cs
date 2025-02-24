@@ -87,11 +87,11 @@ namespace BEPUphysics.Entities.Prefabs
             FP length;
             FPQuaternion orientation;
             GetCapsuleInformation(ref start, ref end, out orientation, out length);
-            this.Orientation = orientation;
+            this.orientation = orientation;
             FPVector3 position;
             FPVector3.Add(ref start, ref end, out position);
             FPVector3.Multiply(ref position, F64.C0p5, out position);
-            this.Position = position;
+            this.position = position;
         }
 
 
@@ -108,11 +108,11 @@ namespace BEPUphysics.Entities.Prefabs
             FP length;
             FPQuaternion orientation;
             GetCapsuleInformation(ref start, ref end, out orientation, out length);
-            this.Orientation = orientation;
+            this.orientation = orientation;
             FPVector3 position;
             FPVector3.Add(ref start, ref end, out position);
             FPVector3.Multiply(ref position, F64.C0p5, out position);
-            this.Position = position;
+            this.position = position;
         }
 
         /// <summary>
@@ -125,7 +125,7 @@ namespace BEPUphysics.Entities.Prefabs
         public Capsule(FPVector3 position, FP length, FP radius, FP mass)
             : this(length, radius, mass)
         {
-            Position = position;
+            ((Entity)this).position = position;
         }
 
         /// <summary>
@@ -137,7 +137,7 @@ namespace BEPUphysics.Entities.Prefabs
         public Capsule(FPVector3 position, FP length, FP radius)
             : this(length, radius)
         {
-            Position = position;
+            ((Entity)this).position = position;
         }
 
         /// <summary>

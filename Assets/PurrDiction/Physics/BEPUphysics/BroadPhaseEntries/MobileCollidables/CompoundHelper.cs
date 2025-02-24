@@ -96,20 +96,20 @@ namespace BEPUphysics.BroadPhaseEntries.MobileCollidables
             FPVector3.Subtract(ref distributionInfoA.Center, ref newLocalCenter, out localOffsetA);
             FPVector3.Subtract(ref distributionInfoB.Center, ref newLocalCenter, out localOffsetB);
 
-            FPVector3 originalPosition = a.position;
+            FPVector3 originalPosition = a._position;
 
-            b.Orientation = a.Orientation;
-            FPVector3 offsetA = FPQuaternion.Transform(localOffsetA, a.Orientation);
-            FPVector3 offsetB = FPQuaternion.Transform(localOffsetB, a.Orientation);
-            a.Position = originalPosition + offsetA;
-            b.Position = originalPosition + offsetB;
+            b.orientation = a.orientation;
+            FPVector3 offsetA = FPQuaternion.Transform(localOffsetA, a.orientation);
+            FPVector3 offsetB = FPQuaternion.Transform(localOffsetB, a.orientation);
+            a.position = originalPosition + offsetA;
+            b.position = originalPosition + offsetB;
 
-            FPVector3 originalLinearVelocity = a.linearVelocity;
-            FPVector3 originalAngularVelocity = a.angularVelocity;
-            a.AngularVelocity = originalAngularVelocity;
-            b.AngularVelocity = originalAngularVelocity;
-            a.LinearVelocity = originalLinearVelocity + FPVector3.Cross(originalAngularVelocity, offsetA);
-            b.LinearVelocity = originalLinearVelocity + FPVector3.Cross(originalAngularVelocity, offsetB);
+            FPVector3 originalLinearVelocity = a._linearVelocity;
+            FPVector3 originalAngularVelocity = a._angularVelocity;
+            a.angularVelocity = originalAngularVelocity;
+            b.angularVelocity = originalAngularVelocity;
+            a.linearVelocity = originalLinearVelocity + FPVector3.Cross(originalAngularVelocity, offsetA);
+            b.linearVelocity = originalLinearVelocity + FPVector3.Cross(originalAngularVelocity, offsetB);
         }
 
 
@@ -311,15 +311,15 @@ namespace BEPUphysics.BroadPhaseEntries.MobileCollidables
             FPVector3 localOffset;
             FPVector3.Subtract(ref distributionInfo.Center, ref newLocalCenter, out localOffset);
 
-            FPVector3 originalPosition = compound.position;
+            FPVector3 originalPosition = compound._position;
 
-            FPVector3 offset = FPQuaternion.Transform(localOffset, compound.orientation);
-            compound.Position = originalPosition + offset;
+            FPVector3 offset = FPQuaternion.Transform(localOffset, compound._orientation);
+            compound.position = originalPosition + offset;
 
-            FPVector3 originalLinearVelocity = compound.linearVelocity;
-            FPVector3 originalAngularVelocity = compound.angularVelocity;
-            compound.AngularVelocity = originalAngularVelocity;
-            compound.LinearVelocity = originalLinearVelocity + FPVector3.Cross(originalAngularVelocity, offset);
+            FPVector3 originalLinearVelocity = compound._linearVelocity;
+            FPVector3 originalAngularVelocity = compound._angularVelocity;
+            compound.angularVelocity = originalAngularVelocity;
+            compound.linearVelocity = originalLinearVelocity + FPVector3.Cross(originalAngularVelocity, offset);
         }
 
         /// <summary>

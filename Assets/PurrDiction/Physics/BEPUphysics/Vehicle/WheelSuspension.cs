@@ -184,7 +184,7 @@ namespace BEPUphysics.Vehicle
                 if (wheel != null)
                     wheel.shape.Initialize();
                 if (wheel != null && wheel.vehicle != null)
-                    Matrix3x3.Transform(ref localDirection, ref wheel.vehicle.Body.orientationMatrix, out worldDirection);
+                    Matrix3x3.Transform(ref localDirection, ref wheel.vehicle.Body._orientationMatrix, out worldDirection);
                 else
                     worldDirection = localDirection;
             }
@@ -202,7 +202,7 @@ namespace BEPUphysics.Vehicle
                 if (wheel != null)
                     wheel.shape.Initialize();
                 if (wheel != null && wheel.vehicle != null)
-                    Matrix3x3.TransformTranspose(ref worldDirection, ref wheel.Vehicle.Body.orientationMatrix, out localDirection);
+                    Matrix3x3.TransformTranspose(ref worldDirection, ref wheel.Vehicle.Body._orientationMatrix, out localDirection);
                 else
                     localDirection = worldDirection;
             }
@@ -240,11 +240,11 @@ namespace BEPUphysics.Vehicle
         {
             get
             {
-                FP velocity = vehicleEntity.linearVelocity.x * linearAX + vehicleEntity.linearVelocity.y * linearAY + vehicleEntity.linearVelocity.z * linearAZ +
-                                 vehicleEntity.angularVelocity.x * angularAX + vehicleEntity.angularVelocity.y * angularAY + vehicleEntity.angularVelocity.z * angularAZ;
+                FP velocity = vehicleEntity._linearVelocity.x * linearAX + vehicleEntity._linearVelocity.y * linearAY + vehicleEntity._linearVelocity.z * linearAZ +
+                                 vehicleEntity._angularVelocity.x * angularAX + vehicleEntity._angularVelocity.y * angularAY + vehicleEntity._angularVelocity.z * angularAZ;
                 if (supportEntity != null)
-                    velocity += -supportEntity.linearVelocity.x * linearAX - supportEntity.linearVelocity.y * linearAY - supportEntity.linearVelocity.z * linearAZ +
-                                supportEntity.angularVelocity.x * angularBX + supportEntity.angularVelocity.y * angularBY + supportEntity.angularVelocity.z * angularBZ;
+                    velocity += -supportEntity._linearVelocity.x * linearAX - supportEntity._linearVelocity.y * linearAY - supportEntity._linearVelocity.z * linearAZ +
+                                supportEntity._angularVelocity.x * angularBX + supportEntity._angularVelocity.y * angularBY + supportEntity._angularVelocity.z * angularBZ;
                 return velocity;
             }
         }
@@ -273,7 +273,7 @@ namespace BEPUphysics.Vehicle
             linear.x = lambda * linearAX;
             linear.y = lambda * linearAY;
             linear.z = lambda * linearAZ;
-            if (vehicleEntity.isDynamic)
+            if (vehicleEntity._isDynamic)
             {
                 angular.x = lambda * angularAX;
                 angular.y = lambda * angularAY;
@@ -300,7 +300,7 @@ namespace BEPUphysics.Vehicle
         {
             //Transform local space vectors to world space.
             RigidTransform.Transform(ref localAttachmentPoint, ref wheel.vehicle.Body.CollisionInformation.worldTransform, out worldAttachmentPoint);
-            Matrix3x3.Transform(ref localDirection, ref wheel.vehicle.Body.orientationMatrix, out worldDirection);
+            Matrix3x3.Transform(ref localDirection, ref wheel.vehicle.Body._orientationMatrix, out worldDirection);
         }
 
         internal void OnAdditionToVehicle()
@@ -316,7 +316,7 @@ namespace BEPUphysics.Vehicle
         {
             vehicleEntity = wheel.vehicle.Body;
             supportEntity = wheel.supportingEntity;
-            supportIsDynamic = supportEntity != null && supportEntity.isDynamic;
+            supportIsDynamic = supportEntity != null && supportEntity._isDynamic;
 
             //The next line is commented out because the world direction is computed by the wheelshape.  Weird, but necessary.
             //Vector3.TransformNormal(ref myLocalDirection, ref parentA.myInternalOrientationMatrix, out myWorldDirection);
@@ -344,7 +344,7 @@ namespace BEPUphysics.Vehicle
 
             //these are the transformed coordinates
             FP tX, tY, tZ;
-            if (vehicleEntity.isDynamic)
+            if (vehicleEntity._isDynamic)
             {
                 tX = angularAX * vehicleEntity.inertiaTensorInverse.M11 + angularAY * vehicleEntity.inertiaTensorInverse.M21 + angularAZ * vehicleEntity.inertiaTensorInverse.M31;
                 tY = angularAX * vehicleEntity.inertiaTensorInverse.M12 + angularAY * vehicleEntity.inertiaTensorInverse.M22 + angularAZ * vehicleEntity.inertiaTensorInverse.M32;
@@ -388,7 +388,7 @@ namespace BEPUphysics.Vehicle
             linear.x = accumulatedImpulse * linearAX;
             linear.y = accumulatedImpulse * linearAY;
             linear.z = accumulatedImpulse * linearAZ;
-            if (vehicleEntity.isDynamic)
+            if (vehicleEntity._isDynamic)
             {
                 angular.x = accumulatedImpulse * angularAX;
                 angular.y = accumulatedImpulse * angularAY;

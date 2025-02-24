@@ -65,17 +65,17 @@ namespace BEPUphysics.NarrowPhaseSystems.Pairs
                 if (modeA == PositionUpdateMode.Discrete)
                 {
                     //CollidableA is static for the purposes of this continuous test.
-                    velocity = collidableB.entity.linearVelocity;
+                    velocity = collidableB.entity._linearVelocity;
                 }
                 else if (modeB == PositionUpdateMode.Discrete)
                 {
                     //CollidableB is static for the purposes of this continuous test.
-                    FPVector3.Negate(ref collidableA.entity.linearVelocity, out velocity);
+                    FPVector3.Negate(ref collidableA.entity._linearVelocity, out velocity);
                 }
                 else
                 {
                     //Both objects are moving.
-                    FPVector3.Subtract(ref collidableB.entity.linearVelocity, ref collidableA.entity.linearVelocity, out velocity);
+                    FPVector3.Subtract(ref collidableB.entity._linearVelocity, ref collidableA.entity._linearVelocity, out velocity);
                 }
                 FPVector3.Multiply(ref velocity, dt, out velocity);
                 FP velocitySquared = velocity.LengthSquared();

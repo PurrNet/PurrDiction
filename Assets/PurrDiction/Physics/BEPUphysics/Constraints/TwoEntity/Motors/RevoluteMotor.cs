@@ -71,7 +71,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Motors
             set
             {
                 localTestAxis = FPVector3.Normalize(value);
-                Matrix3x3.Transform(ref localTestAxis, ref connectionB.orientationMatrix, out worldTestAxis);
+                Matrix3x3.Transform(ref localTestAxis, ref connectionB._orientationMatrix, out worldTestAxis);
             }
         }
 
@@ -93,7 +93,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Motors
             set
             {
                 worldTestAxis = FPVector3.Normalize(value);
-                Matrix3x3.TransformTranspose(ref worldTestAxis, ref connectionB.orientationMatrix, out localTestAxis);
+                Matrix3x3.TransformTranspose(ref worldTestAxis, ref connectionB._orientationMatrix, out localTestAxis);
             }
         }
 
@@ -107,8 +107,8 @@ namespace BEPUphysics.Constraints.TwoEntity.Motors
             get
             {
                 FP velocityA, velocityB;
-                FPVector3.Dot(ref connectionA.angularVelocity, ref jacobianA, out velocityA);
-                FPVector3.Dot(ref connectionB.angularVelocity, ref jacobianB, out velocityB);
+                FPVector3.Dot(ref connectionA._angularVelocity, ref jacobianA, out velocityA);
+                FPVector3.Dot(ref connectionB._angularVelocity, ref jacobianB, out velocityB);
                 return velocityA + velocityB;
             }
         }
@@ -197,7 +197,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Motors
             }
 
             //Put the axes into the joint transform of A.
-            basis.rotationMatrix = connectionA.orientationMatrix;
+            basis.rotationMatrix = connectionA._orientationMatrix;
             basis.SetWorldAxes(motorizedAxis, xAxis);
 
 
@@ -212,9 +212,9 @@ namespace BEPUphysics.Constraints.TwoEntity.Motors
         public override void Update(FP dt)
         {
             //Transform the axes into world space.
-            basis.rotationMatrix = connectionA.orientationMatrix;
+            basis.rotationMatrix = connectionA._orientationMatrix;
             basis.ComputeWorldSpaceAxes();
-            Matrix3x3.Transform(ref localTestAxis, ref connectionB.orientationMatrix, out worldTestAxis);
+            Matrix3x3.Transform(ref localTestAxis, ref connectionB._orientationMatrix, out worldTestAxis);
 
             FP updateRate = F64.C1 / dt;
             if (settings.mode == MotorMode.Servomechanism)
@@ -257,7 +257,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Motors
             //Connection A's contribution to the mass matrix
             FP entryA;
             FPVector3 transformedAxis;
-            if (connectionA.isDynamic)
+            if (connectionA._isDynamic)
             {
                 Matrix3x3.Transform(ref jacobianA, ref connectionA.inertiaTensorInverse, out transformedAxis);
                 FPVector3.Dot(ref transformedAxis, ref jacobianA, out entryA);
@@ -267,7 +267,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Motors
 
             //Connection B's contribution to the mass matrix
             FP entryB;
-            if (connectionB.isDynamic)
+            if (connectionB._isDynamic)
             {
                 Matrix3x3.Transform(ref jacobianB, ref connectionB.inertiaTensorInverse, out transformedAxis);
                 FPVector3.Dot(ref transformedAxis, ref jacobianB, out entryB);
@@ -296,12 +296,12 @@ namespace BEPUphysics.Constraints.TwoEntity.Motors
             //****** WARM STARTING ******//
             //Apply accumulated impulse
             FPVector3 impulse;
-            if (connectionA.isDynamic)
+            if (connectionA._isDynamic)
             {
                 FPVector3.Multiply(ref jacobianA, accumulatedImpulse, out impulse);
                 connectionA.ApplyAngularImpulse(ref impulse);
             }
-            if (connectionB.isDynamic)
+            if (connectionB._isDynamic)
             {
                 FPVector3.Multiply(ref jacobianB, accumulatedImpulse, out impulse);
                 connectionB.ApplyAngularImpulse(ref impulse);
@@ -316,8 +316,8 @@ namespace BEPUphysics.Constraints.TwoEntity.Motors
         {
             FP velocityA, velocityB;
             //Find the velocity contribution from each connection
-            FPVector3.Dot(ref connectionA.angularVelocity, ref jacobianA, out velocityA);
-            FPVector3.Dot(ref connectionB.angularVelocity, ref jacobianB, out velocityB);
+            FPVector3.Dot(ref connectionA._angularVelocity, ref jacobianA, out velocityA);
+            FPVector3.Dot(ref connectionB._angularVelocity, ref jacobianB, out velocityB);
             //Add in the constraint space bias velocity
             FP lambda = -(velocityA + velocityB) - biasVelocity - usedSoftness * accumulatedImpulse;
 
@@ -331,12 +331,12 @@ namespace BEPUphysics.Constraints.TwoEntity.Motors
 
             //Apply the impulse
             FPVector3 impulse;
-            if (connectionA.isDynamic)
+            if (connectionA._isDynamic)
             {
                 FPVector3.Multiply(ref jacobianA, lambda, out impulse);
                 connectionA.ApplyAngularImpulse(ref impulse);
             }
-            if (connectionB.isDynamic)
+            if (connectionB._isDynamic)
             {
                 FPVector3.Multiply(ref jacobianB, lambda, out impulse);
                 connectionB.ApplyAngularImpulse(ref impulse);

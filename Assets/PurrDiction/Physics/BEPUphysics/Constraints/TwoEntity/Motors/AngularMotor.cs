@@ -47,8 +47,8 @@ namespace BEPUphysics.Constraints.TwoEntity.Motors
 
             //Compute the rotation from A to B in A's local space.
             FPQuaternion orientationAConjugate;
-            FPQuaternion.Conjugate(ref connectionA.orientation, out orientationAConjugate);
-            FPQuaternion.Concatenate(ref connectionB.orientation, ref orientationAConjugate, out settings.servo.goal);
+            FPQuaternion.Conjugate(ref connectionA._orientation, out orientationAConjugate);
+            FPQuaternion.Concatenate(ref connectionB._orientation, ref orientationAConjugate, out settings.servo.goal);
 
         }
 
@@ -76,7 +76,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Motors
         /// </summary>
         public FPVector3 RelativeVelocity
         {
-            get { return connectionA.angularVelocity - connectionB.angularVelocity; }
+            get { return connectionA._angularVelocity - connectionB._angularVelocity; }
         }
 
         /// <summary>
@@ -173,8 +173,8 @@ namespace BEPUphysics.Constraints.TwoEntity.Motors
 #else
             Vector3 lambda;
 #endif
-            FPVector3 aVel = connectionA.angularVelocity;
-            FPVector3 bVel = connectionB.angularVelocity;
+            FPVector3 aVel = connectionA._angularVelocity;
+            FPVector3 bVel = connectionB._angularVelocity;
             lambda.x = bVel.x - aVel.x - biasVelocity.x - usedSoftness * accumulatedImpulse.x;
             lambda.y = bVel.y - aVel.y - biasVelocity.y - usedSoftness * accumulatedImpulse.y;
             lambda.z = bVel.z - aVel.z - biasVelocity.z - usedSoftness * accumulatedImpulse.z;
@@ -202,11 +202,11 @@ namespace BEPUphysics.Constraints.TwoEntity.Motors
             }
 
 
-            if (connectionA.isDynamic)
+            if (connectionA._isDynamic)
             {
                 connectionA.ApplyAngularImpulse(ref lambda);
             }
-            if (connectionB.isDynamic)
+            if (connectionB._isDynamic)
             {
                 FPVector3 torqueB;
                 FPVector3.Negate(ref lambda, out torqueB);
@@ -222,7 +222,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Motors
         /// <param name="dt">Time between frames.</param>
         public override void Update(FP dt)
         {
-            basis.rotationMatrix = connectionA.orientationMatrix;
+            basis.rotationMatrix = connectionA._orientationMatrix;
             basis.ComputeWorldSpaceAxes();
 
             FP inverseDt = F64.C1 / dt;
@@ -246,7 +246,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Motors
                 FPQuaternion.Conjugate(ref bTarget, out bTargetConjugate);
 
                 FPQuaternion error;
-                FPQuaternion.Concatenate(ref bTargetConjugate, ref connectionB.orientation, out error);
+                FPQuaternion.Concatenate(ref bTargetConjugate, ref connectionB._orientation, out error);
 
 
                 FP errorReduction;
@@ -312,11 +312,11 @@ namespace BEPUphysics.Constraints.TwoEntity.Motors
         public override void ExclusiveUpdate()
         {
             //Apply accumulated impulse
-            if (connectionA.isDynamic)
+            if (connectionA._isDynamic)
             {
                 connectionA.ApplyAngularImpulse(ref accumulatedImpulse);
             }
-            if (connectionB.isDynamic)
+            if (connectionB._isDynamic)
             {
                 FPVector3 torqueB;
                 FPVector3.Negate(ref accumulatedImpulse, out torqueB);

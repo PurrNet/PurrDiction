@@ -64,11 +64,11 @@ namespace BEPUphysics.Entities.Prefabs
         {
             get
             {
-                return Matrix3x3.Transform(CollisionInformation.Shape.VertexA, orientationMatrix) + position;
+                return Matrix3x3.Transform(CollisionInformation.Shape.VertexA, _orientationMatrix) + _position;
             }
             set
             {
-                CollisionInformation.Shape.VertexA = Matrix3x3.TransformTranspose(value - position, orientationMatrix);
+                CollisionInformation.Shape.VertexA = Matrix3x3.TransformTranspose(value - _position, _orientationMatrix);
             }
         }
         ///<summary>
@@ -78,11 +78,11 @@ namespace BEPUphysics.Entities.Prefabs
         {
             get
             {
-                return Matrix3x3.Transform(CollisionInformation.Shape.VertexB, orientationMatrix) + position;
+                return Matrix3x3.Transform(CollisionInformation.Shape.VertexB, _orientationMatrix) + _position;
             }
             set
             {
-                CollisionInformation.Shape.VertexB = Matrix3x3.TransformTranspose(value - position, orientationMatrix);
+                CollisionInformation.Shape.VertexB = Matrix3x3.TransformTranspose(value - _position, _orientationMatrix);
             }
         }
         ///<summary>
@@ -92,11 +92,11 @@ namespace BEPUphysics.Entities.Prefabs
         {
             get
             {
-                return Matrix3x3.Transform(CollisionInformation.Shape.VertexC, orientationMatrix) + position;
+                return Matrix3x3.Transform(CollisionInformation.Shape.VertexC, _orientationMatrix) + _position;
             }
             set
             {
-                CollisionInformation.Shape.VertexC = Matrix3x3.TransformTranspose(value - position, orientationMatrix);
+                CollisionInformation.Shape.VertexC = Matrix3x3.TransformTranspose(value - _position, _orientationMatrix);
             }
         }
 
@@ -126,7 +126,7 @@ namespace BEPUphysics.Entities.Prefabs
             FPVector3 center;
             var shape = new TriangleShape(v1, v2, v3, out center);
             Initialize(new ConvexCollidable<TriangleShape>(shape), mass);
-            Position = center;
+            position = center;
         }
 
         /// <summary>
@@ -140,7 +140,7 @@ namespace BEPUphysics.Entities.Prefabs
             FPVector3 center;
             var shape = new TriangleShape(v1, v2, v3, out center);
             Initialize(new ConvexCollidable<TriangleShape>(shape));
-            Position = center;
+            position = center;
         }
 
         /// <summary>
@@ -154,7 +154,7 @@ namespace BEPUphysics.Entities.Prefabs
         public Triangle(FPVector3 pos, FPVector3 v1, FPVector3 v2, FPVector3 v3, FP mass)
             : this(v1, v2, v3, mass)
         {
-            Position = pos;
+            position = pos;
         }
 
         /// <summary>
@@ -167,7 +167,7 @@ namespace BEPUphysics.Entities.Prefabs
         public Triangle(FPVector3 pos, FPVector3 v1, FPVector3 v2, FPVector3 v3)
             : this(v1, v2, v3)
         {
-            Position = pos;
+            position = pos;
         }
 
         /// <summary>

@@ -52,9 +52,9 @@ namespace BEPUphysics.Constraints.Collision
             {
                 FP lambda = F64.C0;
                 if (entityA != null)
-                    lambda = entityA.angularVelocity.x * angularX + entityA.angularVelocity.y * angularY + entityA.angularVelocity.z * angularZ;
+                    lambda = entityA._angularVelocity.x * angularX + entityA._angularVelocity.y * angularY + entityA._angularVelocity.z * angularZ;
                 if (entityB != null)
-                    lambda -= entityB.angularVelocity.x * angularX + entityB.angularVelocity.y * angularY + entityB.angularVelocity.z * angularZ;
+                    lambda -= entityB._angularVelocity.x * angularX + entityB._angularVelocity.y * angularY + entityB._angularVelocity.z * angularZ;
                 return lambda;
             }
         }
@@ -115,8 +115,8 @@ namespace BEPUphysics.Constraints.Collision
         public override void Update(FP dt)
         {
 
-            entityADynamic = entityA != null && entityA.isDynamic;
-            entityBDynamic = entityB != null && entityB.isDynamic;
+            entityADynamic = entityA != null && entityA._isDynamic;
+            entityBDynamic = entityB != null && entityB._isDynamic;
 
             //Compute the jacobian......  Real hard!
             FPVector3 normal = contactManifoldConstraint.penetrationConstraints.Elements[0].contact.Normal;

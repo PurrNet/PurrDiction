@@ -34,7 +34,7 @@ namespace BEPUphysics.Entities.Prefabs
             FPVector3 center;
             var shape = new ConvexHullShape(points, out center);
             Initialize(new ConvexCollidable<ConvexHullShape>(shape));
-            Position = center;
+            position = center;
         }
 
 
@@ -48,7 +48,7 @@ namespace BEPUphysics.Entities.Prefabs
             FPVector3 center;
             var shape = new ConvexHullShape(points, out center);
             Initialize(new ConvexCollidable<ConvexHullShape>(shape), mass);
-            Position = center;
+            position = center;
         }
 
         /// <summary>
@@ -60,7 +60,7 @@ namespace BEPUphysics.Entities.Prefabs
         public ConvexHull(FPVector3 position, IList<FPVector3> points, FP mass)
             : this(points, mass)
         {
-            Position = position;
+            ((Entity)this).position = position;
         }
 
 
@@ -72,7 +72,7 @@ namespace BEPUphysics.Entities.Prefabs
         public ConvexHull(FPVector3 position, IList<FPVector3> points)
             : this(points)
         {
-            Position = position;
+            ((Entity)this).position = position;
         }
 
         /// <summary>

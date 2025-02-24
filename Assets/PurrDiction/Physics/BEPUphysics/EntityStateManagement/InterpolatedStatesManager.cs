@@ -51,8 +51,8 @@ namespace BEPUphysics.EntityStateManagement
                 for (int i = 0; i < manager.entities.Count; i++)
                 {
                     Entity entity = manager.entities[i];
-                    backBuffer[i].Position = entity.position;
-                    backBuffer[i].Orientation = entity.orientation;
+                    backBuffer[i].Position = entity._position;
+                    backBuffer[i].Orientation = entity._orientation;
                 }
                 Array.Copy(backBuffer, states, backBuffer.Length);
             }
@@ -134,8 +134,8 @@ namespace BEPUphysics.EntityStateManagement
             //Interpolated updates occur after proper updates complete.
             //That means that the internal positions and the front buffer positions are equivalent.
             //However, the backbuffer is uncontested and contains the previous frame's data.
-            FPVector3.Lerp(ref manager.ReadBuffers.backBuffer[i].Position, ref entity.position, blendAmount, out backBuffer[i].Position);
-            FPQuaternion.Slerp(ref manager.ReadBuffers.backBuffer[i].Orientation, ref entity.orientation, blendAmount, out backBuffer[i].Orientation);
+            FPVector3.Lerp(ref manager.ReadBuffers.backBuffer[i].Position, ref entity._position, blendAmount, out backBuffer[i].Position);
+            FPQuaternion.Slerp(ref manager.ReadBuffers.backBuffer[i].Orientation, ref entity._orientation, blendAmount, out backBuffer[i].Orientation);
         }
 
 
@@ -205,8 +205,8 @@ namespace BEPUphysics.EntityStateManagement
                 states.CopyTo(newStates, 0);
                 states = newStates;
             }
-            states[e.BufferedStates.motionStateIndex].Position = e.position;
-            states[e.BufferedStates.motionStateIndex].Orientation = e.orientation;
+            states[e.BufferedStates.motionStateIndex].Position = e._position;
+            states[e.BufferedStates.motionStateIndex].Orientation = e._orientation;
 
             if (backBuffer.Length <= e.BufferedStates.motionStateIndex)
             {
@@ -214,8 +214,8 @@ namespace BEPUphysics.EntityStateManagement
                 backBuffer.CopyTo(newStates, 0);
                 backBuffer = newStates;
             }
-            backBuffer[e.BufferedStates.motionStateIndex].Position = e.position;
-            backBuffer[e.BufferedStates.motionStateIndex].Orientation = e.orientation;
+            backBuffer[e.BufferedStates.motionStateIndex].Position = e._position;
+            backBuffer[e.BufferedStates.motionStateIndex].Orientation = e._orientation;
         }
 
         internal void Remove(int index, int endIndex)

@@ -36,7 +36,7 @@ namespace BEPUphysics.EntityStateManagement
             {
                 if (IsBufferAccessible())
                     return bufferedStates.BufferedStatesManager.InterpolatedStates.GetState(bufferedStates.motionStateIndex).Position;
-                return bufferedStates.Entity.Position;
+                return bufferedStates.Entity.position;
             }
         }
 
@@ -49,7 +49,7 @@ namespace BEPUphysics.EntityStateManagement
             {
                 if (IsBufferAccessible())
                     return bufferedStates.BufferedStatesManager.InterpolatedStates.GetState(bufferedStates.motionStateIndex).Orientation;
-                return bufferedStates.Entity.Orientation;
+                return bufferedStates.Entity.orientation;
             }
         }
 
@@ -67,7 +67,7 @@ namespace BEPUphysics.EntityStateManagement
                     Matrix3x3.CreateFromQuaternion(ref o, out toReturn);
                 }
                 else
-                    Matrix3x3.CreateFromQuaternion(ref bufferedStates.Entity.orientation, out toReturn);
+                    Matrix3x3.CreateFromQuaternion(ref bufferedStates.Entity._orientation, out toReturn);
                 return toReturn;
             }
         }
@@ -81,7 +81,7 @@ namespace BEPUphysics.EntityStateManagement
             {
                 if (IsBufferAccessible())
                     return bufferedStates.BufferedStatesManager.InterpolatedStates.GetState(bufferedStates.motionStateIndex).Matrix;
-                return bufferedStates.Entity.WorldTransform;
+                return bufferedStates.Entity.localToWorld;
             }
         }
 
@@ -96,8 +96,8 @@ namespace BEPUphysics.EntityStateManagement
                     return bufferedStates.BufferedStatesManager.InterpolatedStates.GetState(bufferedStates.motionStateIndex);
                 var toReturn = new RigidTransform
                                    {
-                                       Position = bufferedStates.Entity.position,
-                                       Orientation = bufferedStates.Entity.orientation
+                                       Position = bufferedStates.Entity._position,
+                                       Orientation = bufferedStates.Entity._orientation
                                    };
                 return toReturn;
             }

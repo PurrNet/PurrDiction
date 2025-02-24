@@ -121,7 +121,7 @@ namespace BEPUphysics.Character
             //Take into account the radius of the character (don't forget the collision margin!)
             FPVector3 normal = SupportFinder.SupportRayData.Value.HitData.Normal;
 
-            FPVector3 down = characterBody.orientationMatrix.Down;
+            FPVector3 down = characterBody._orientationMatrix.Down;
 
             RigidTransform transform = characterBody.CollisionInformation.WorldTransform;
 
@@ -160,7 +160,7 @@ namespace BEPUphysics.Character
                 if (Toolbox.GetRayPlaneIntersection(ref ray, ref plane, out hitT, out intersection))
                 {
                     currentOffset = hitT + CollisionDetectionSettings.AllowedPenetration * F64.C0p5;
-                    candidatePosition = characterBody.Position + down * currentOffset;
+                    candidatePosition = characterBody.position + down * currentOffset;
                     switch (TryDownStepPosition(ref candidatePosition, ref down,
                                                 ref tractionContacts, ref supportContacts, ref sideContacts, ref headContacts,
                                                 out hintOffset))
@@ -170,7 +170,7 @@ namespace BEPUphysics.Character
                             //Only use the new position location if the movement distance was the right size.
                             if (currentOffset > minimumDownStepHeight && currentOffset < maximumStepHeight)
                             {
-                                newPosition = characterBody.Position + currentOffset * down;
+                                newPosition = characterBody.position + currentOffset * down;
                                 return true;
                             }
                             else
@@ -208,7 +208,7 @@ namespace BEPUphysics.Character
                 //The bound size check prevents the system from continuing to search a meaninglessly tiny interval.
                 while (attempts++ < 5 && lowestBound - highestBound > Toolbox.BigEpsilon)
                 {
-                    candidatePosition = characterBody.Position + currentOffset * down;
+                    candidatePosition = characterBody.position + currentOffset * down;
                     switch (TryDownStepPosition(ref candidatePosition, ref down, ref tractionContacts, ref supportContacts, ref sideContacts, ref headContacts, out hintOffset))
                     {
                         case CharacterContactPositionState.Accepted:
@@ -216,7 +216,7 @@ namespace BEPUphysics.Character
                             //Only use the new position location if the movement distance was the right size.
                             if (currentOffset > minimumDownStepHeight && currentOffset < maximumStepHeight)
                             {
-                                newPosition = characterBody.Position + currentOffset * down;
+                                newPosition = characterBody.position + currentOffset * down;
                                 return true;
                             }
                             else
@@ -307,7 +307,7 @@ namespace BEPUphysics.Character
         public bool TryToStepUp(out FPVector3 newPosition)
         {
             //Can't step up if we don't have traction to begin with.
-            var down = characterBody.orientationMatrix.Down;
+            var down = characterBody._orientationMatrix.Down;
             if (SupportFinder.HasTraction)
             {
                 //Further, we must test to see if the character has a side contact which is suitable for climbing.
@@ -341,7 +341,7 @@ namespace BEPUphysics.Character
                 if (dot > F64.C0)
                 {
                     //It is! But is it low enough?
-                    dot = FPVector3.Dot(down, c.Contact.Position - characterBody.Position);
+                    dot = FPVector3.Dot(down, c.Contact.Position - characterBody.position);
                     //It must be between the bottom of the character and the maximum step height.
                     if (dot < characterBody.Height * F64.C0p5 && dot > characterBody.Height * F64.C0p5 - maximumStepHeight - upStepMargin)
                     {
@@ -367,7 +367,7 @@ namespace BEPUphysics.Character
 
         bool TryToStepUsingContact(ref ContactData contact, ref FPVector3 down, out FPVector3 newPosition)
         {
-            FPVector3 position = characterBody.Position;
+            FPVector3 position = characterBody.position;
             //The normal of the contact may not be facing perfectly out to the side.
             //The detection process allows a bit of slop.
             //Correct it by removing any component of the normal along the local up vector.
@@ -514,7 +514,7 @@ namespace BEPUphysics.Character
                     currentOffset = hitT;
                     if (currentOffset > lowestBound)
                         lowestBound = currentOffset;
-                    candidatePosition = characterBody.Position + down * currentOffset + horizontalOffset;
+                    candidatePosition = characterBody.position + down * currentOffset + horizontalOffset;
                     switch (TryUpStepPosition(ref normal, ref candidatePosition, ref down,
                                               ref tractionContacts, ref supportContacts, ref sideContacts, ref headContacts,
                                               out hintOffset))
@@ -526,7 +526,7 @@ namespace BEPUphysics.Character
                             {
                                 //It's possible that we let a just-barely-too-high step occur, limited by the allowed penetration.
                                 //Just clamp the overall motion and let it penetrate a bit.
-                                newPosition = characterBody.Position + MathHelper.Max(-maximumStepHeight, currentOffset) * down + horizontalOffset;
+                                newPosition = characterBody.position + MathHelper.Max(-maximumStepHeight, currentOffset) * down + horizontalOffset;
                                 return true;
                             }
                             else
@@ -572,7 +572,7 @@ namespace BEPUphysics.Character
                 //The bound size check prevents the system from continuing to search a meaninglessly tiny interval.
                 while (attempts++ < 5 && lowestBound - highestBound > Toolbox.BigEpsilon)
                 {
-                    candidatePosition = characterBody.Position + currentOffset * down + horizontalOffset;
+                    candidatePosition = characterBody.position + currentOffset * down + horizontalOffset;
                     switch (TryUpStepPosition(ref normal, ref candidatePosition, ref down,
                                               ref tractionContacts, ref supportContacts, ref sideContacts, ref headContacts,
                                               out hintOffset))
@@ -584,7 +584,7 @@ namespace BEPUphysics.Character
                             {
                                 //It's possible that we let a just-barely-too-high step occur, limited by the allowed penetration.
                                 //Just clamp the overall motion and let it penetrate a bit.
-                                newPosition = characterBody.Position + MathHelper.Max(-maximumStepHeight, currentOffset) * down + horizontalOffset;
+                                newPosition = characterBody.position + MathHelper.Max(-maximumStepHeight, currentOffset) * down + horizontalOffset;
                                 return true;
                             }
                             else
@@ -633,7 +633,7 @@ namespace BEPUphysics.Character
         {
             RigidTransform transform;
             transform.Position = position;
-            transform.Orientation = characterBody.Orientation;
+            transform.Orientation = characterBody.orientation;
             currentQueryObject.UpdateBoundingBoxForTransform(ref transform, F64.C0);
         }
 

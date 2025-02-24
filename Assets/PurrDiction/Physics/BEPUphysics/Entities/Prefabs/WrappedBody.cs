@@ -32,7 +32,7 @@ namespace BEPUphysics.Entities.Prefabs
             FPVector3 center;
             var shape = new WrappedShape(subShapes, out center);
             Initialize(new ConvexCollidable<WrappedShape>(shape), mass);
-            Position = center;
+            position = center;
         }
 
         /// <exception cref="ArgumentException">Thrown when the subbodies list contains zero entities.</exception>
@@ -41,7 +41,7 @@ namespace BEPUphysics.Entities.Prefabs
             FPVector3 center;
             var shape = new WrappedShape(subShapes, out center);
             Initialize(new ConvexCollidable<WrappedShape>(shape));
-            Position = center;
+            position = center;
         }
 
         /// <summary>
@@ -53,7 +53,7 @@ namespace BEPUphysics.Entities.Prefabs
         public WrappedBody(FPVector3 position, IList<ConvexShapeEntry> subBodies, FP mass)
             : this(subBodies, mass)
         {
-            Position = position;
+            ((Entity)this).position = position;
         }
 
         /// <summary>
@@ -64,7 +64,7 @@ namespace BEPUphysics.Entities.Prefabs
         public WrappedBody(FPVector3 position, IList<ConvexShapeEntry> subBodies)
             : this(subBodies)
         {
-            Position = position;
+            ((Entity)this).position = position;
         }
 
         /// <summary>

@@ -184,11 +184,11 @@ namespace BEPUphysics.Vehicle
             {
                 FP velocity = F64.C0;
                 if (vehicleEntity != null)
-                    velocity += vehicleEntity.linearVelocity.x * linearAX + vehicleEntity.linearVelocity.y * linearAY + vehicleEntity.linearVelocity.z * linearAZ +
-                                  vehicleEntity.angularVelocity.x * angularAX + vehicleEntity.angularVelocity.y * angularAY + vehicleEntity.angularVelocity.z * angularAZ;
+                    velocity += vehicleEntity._linearVelocity.x * linearAX + vehicleEntity._linearVelocity.y * linearAY + vehicleEntity._linearVelocity.z * linearAZ +
+                                  vehicleEntity._angularVelocity.x * angularAX + vehicleEntity._angularVelocity.y * angularAY + vehicleEntity._angularVelocity.z * angularAZ;
                 if (supportEntity != null)
-                    velocity += -supportEntity.linearVelocity.x * linearAX - supportEntity.linearVelocity.y * linearAY - supportEntity.linearVelocity.z * linearAZ +
-                                supportEntity.angularVelocity.x * angularBX + supportEntity.angularVelocity.y * angularBY + supportEntity.angularVelocity.z * angularBZ;
+                    velocity += -supportEntity._linearVelocity.x * linearAX - supportEntity._linearVelocity.y * linearAY - supportEntity._linearVelocity.z * linearAZ +
+                                supportEntity._angularVelocity.x * angularBX + supportEntity._angularVelocity.y * angularBY + supportEntity._angularVelocity.z * angularBZ;
                 return velocity;
             }
         }
@@ -227,7 +227,7 @@ namespace BEPUphysics.Vehicle
             linear.x = lambda * linearAX;
             linear.y = lambda * linearAY;
             linear.z = lambda * linearAZ;
-            if (vehicleEntity.isDynamic)
+            if (vehicleEntity._isDynamic)
             {
                 angular.x = lambda * angularAX;
                 angular.y = lambda * angularAY;
@@ -254,7 +254,7 @@ namespace BEPUphysics.Vehicle
         {
             vehicleEntity = wheel.Vehicle.Body;
             supportEntity = wheel.SupportingEntity;
-            supportIsDynamic = supportEntity != null && supportEntity.isDynamic;
+            supportIsDynamic = supportEntity != null && supportEntity._isDynamic;
 
             FPVector3.Cross(ref wheel.normal, ref wheel.slidingFriction.slidingFrictionAxis, out forceAxis);
             forceAxis.Normalize();
@@ -279,7 +279,7 @@ namespace BEPUphysics.Vehicle
 
             //these are the transformed coordinates
             FP tX, tY, tZ;
-            if (vehicleEntity.isDynamic)
+            if (vehicleEntity._isDynamic)
             {
                 tX = angularAX * vehicleEntity.inertiaTensorInverse.M11 + angularAY * vehicleEntity.inertiaTensorInverse.M21 + angularAZ * vehicleEntity.inertiaTensorInverse.M31;
                 tY = angularAX * vehicleEntity.inertiaTensorInverse.M12 + angularAY * vehicleEntity.inertiaTensorInverse.M22 + angularAZ * vehicleEntity.inertiaTensorInverse.M32;
@@ -326,7 +326,7 @@ namespace BEPUphysics.Vehicle
             linear.x = accumulatedImpulse * linearAX;
             linear.y = accumulatedImpulse * linearAY;
             linear.z = accumulatedImpulse * linearAZ;
-            if (vehicleEntity.isDynamic)
+            if (vehicleEntity._isDynamic)
             {
                 angular.x = accumulatedImpulse * angularAX;
                 angular.y = accumulatedImpulse * angularAY;

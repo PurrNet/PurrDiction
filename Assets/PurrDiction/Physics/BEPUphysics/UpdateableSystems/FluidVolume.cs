@@ -305,7 +305,7 @@ namespace BEPUphysics.UpdateableSystems
         void AnalyzeEntry(int i)
         {
             var entityCollidable = broadPhaseEntries[i] as EntityCollidable;
-            if (entityCollidable != null && entityCollidable.IsActive && entityCollidable.entity.isDynamic && CollisionRules.collisionRuleCalculator(this, entityCollidable) <= CollisionRule.Normal)
+            if (entityCollidable != null && entityCollidable.IsActive && entityCollidable.entity._isDynamic && CollisionRules.collisionRuleCalculator(this, entityCollidable) <= CollisionRule.Normal)
             {
                 bool keepGoing = false;
                 foreach (var tri in surfaceTriangles)
@@ -344,7 +344,7 @@ namespace BEPUphysics.UpdateableSystems
                     //Flow
                     if (FlowForce != F64.C0)
                     {
-                        FP dot = MathHelper.Max(FPVector3.Dot(entityCollidable.entity.linearVelocity, flowDirection), F64.C0);
+                        FP dot = MathHelper.Max(FPVector3.Dot(entityCollidable.entity._linearVelocity, flowDirection), F64.C0);
                         if (dot < MaxFlowSpeed)
                         {
                             force = MathHelper.Min(FlowForce, (MaxFlowSpeed - dot) * entityCollidable.entity.mass) * dt * fractionSubmerged * FlowDirection;

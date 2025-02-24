@@ -125,7 +125,7 @@ namespace BEPUphysics.NarrowPhaseSystems.Pairs
 
                 //Only perform the test if the minimum radii are small enough relative to the size of the velocity.
                 FPVector3 velocity;
-                FPVector3.Multiply(ref convex.entity.linearVelocity, dt, out velocity);
+                FPVector3.Multiply(ref convex.entity._linearVelocity, dt, out velocity);
                 FP velocitySquared = velocity.LengthSquared();
 
                 var minimumRadius = convex.Shape.MinimumRadius * MotionSettings.CoreShapeScaling;
@@ -201,9 +201,9 @@ namespace BEPUphysics.NarrowPhaseSystems.Pairs
             if (convex.entity != null)
             {
                 FPVector3 velocity;
-                FPVector3.Subtract(ref info.Contact.Position, ref convex.entity.position, out velocity);
-                FPVector3.Cross(ref convex.entity.angularVelocity, ref velocity, out velocity);
-                FPVector3.Add(ref velocity, ref convex.entity.linearVelocity, out info.RelativeVelocity);
+                FPVector3.Subtract(ref info.Contact.Position, ref convex.entity._position, out velocity);
+                FPVector3.Cross(ref convex.entity._angularVelocity, ref velocity, out velocity);
+                FPVector3.Add(ref velocity, ref convex.entity._linearVelocity, out info.RelativeVelocity);
             }
             else
                 info.RelativeVelocity = new FPVector3();

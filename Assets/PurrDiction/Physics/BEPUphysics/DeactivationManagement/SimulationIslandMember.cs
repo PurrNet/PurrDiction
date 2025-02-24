@@ -54,7 +54,7 @@ namespace BEPUphysics.DeactivationManagement
         public void UpdateDeactivationCandidacy(FP dt)
         {
             //Get total velocity, and see if the entity is losing energy.
-            FP velocity = owner.linearVelocity.LengthSquared() + owner.angularVelocity.LengthSquared();
+            FP velocity = owner._linearVelocity.LengthSquared() + owner._angularVelocity.LengthSquared();
 
             bool isActive = IsActive;
             if (isActive)
@@ -391,7 +391,7 @@ namespace BEPUphysics.DeactivationManagement
         {
             get
             {
-                return owner.isDynamic;
+                return owner._isDynamic;
             }
         }
 

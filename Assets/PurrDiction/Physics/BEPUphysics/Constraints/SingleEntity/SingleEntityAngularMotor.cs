@@ -36,7 +36,7 @@ namespace BEPUphysics.Constraints.SingleEntity
         {
             Entity = entity;
 
-            settings = new MotorSettingsOrientation(this) {servo = {goal = base.entity.orientation}};
+            settings = new MotorSettingsOrientation(this) {servo = {goal = base.entity._orientation}};
             //Since no target relative orientation was specified, just use the current relative orientation.  Prevents any nasty start-of-sim 'snapping.'
 
             //mySettings.myServo.springSettings.stiffnessConstant *= .5f;
@@ -78,7 +78,7 @@ namespace BEPUphysics.Constraints.SingleEntity
         /// </summary>
         public FPVector3 RelativeVelocity
         {
-            get { return -Entity.AngularVelocity; }
+            get { return -Entity.angularVelocity; }
         }
 
         /// <summary>
@@ -110,7 +110,7 @@ namespace BEPUphysics.Constraints.SingleEntity
 #else
             Vector3 lambda;
 #endif
-            FPVector3 aVel = entity.angularVelocity;
+            FPVector3 aVel = entity._angularVelocity;
             lambda.x = -aVel.x + biasVelocity.x - usedSoftness * accumulatedImpulse.x;
             lambda.y = -aVel.y + biasVelocity.y - usedSoftness * accumulatedImpulse.y;
             lambda.z = -aVel.z + biasVelocity.z - usedSoftness * accumulatedImpulse.z;
@@ -150,7 +150,7 @@ namespace BEPUphysics.Constraints.SingleEntity
         /// <param name="dt">Time between frames.</param>
         public override void Update(FP dt)
         {
-            basis.rotationMatrix = entity.orientationMatrix;
+            basis.rotationMatrix = entity._orientationMatrix;
             basis.ComputeWorldSpaceAxes();
 
             FP updateRate = F64.C1 / dt;

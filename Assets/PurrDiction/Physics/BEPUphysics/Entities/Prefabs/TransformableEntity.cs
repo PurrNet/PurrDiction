@@ -64,7 +64,7 @@ namespace BEPUphysics.Entities.Prefabs
         public TransformableEntity(FPVector3 position, ConvexShape shape, Matrix3x3 transform, FP mass)
             : this(shape, transform, mass)
         {
-            Position = position;
+            ((Entity)this).position = position;
         }
 
 
@@ -77,7 +77,7 @@ namespace BEPUphysics.Entities.Prefabs
         public TransformableEntity(FPVector3 position, ConvexShape shape, Matrix3x3 transform)
             : this(shape, transform)
         {
-            Position = position;
+            ((Entity)this).position = position;
         }
 
 

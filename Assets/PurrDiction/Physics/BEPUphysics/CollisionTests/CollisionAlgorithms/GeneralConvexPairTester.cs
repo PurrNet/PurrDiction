@@ -199,7 +199,7 @@ namespace BEPUphysics.CollisionTests.CollisionAlgorithms
 
                 //The above takes into account angular velocity, but linear velocity alone is a lot more stable and does the job just fine.
                 if (collidableA.entity != null && collidableB.entity != null)
-                    FPVector3.Subtract(ref collidableA.entity.linearVelocity, ref collidableB.entity.linearVelocity, out localDirection);
+                    FPVector3.Subtract(ref collidableA.entity._linearVelocity, ref collidableB.entity._linearVelocity, out localDirection);
                 else
                     localDirection = localSeparatingAxis;
 

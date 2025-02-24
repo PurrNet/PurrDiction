@@ -144,7 +144,7 @@ namespace BEPUphysics.BroadPhaseEntries.MobileCollidables
             //The entity update method manages the world transforms.
             //However, the redundancy allows a user to change the position in between frames.
             //If the order of the space update changes to position-update-first, this is completely unnecessary.
-            UpdateWorldTransform(ref entity.position, ref entity.orientation);
+            UpdateWorldTransform(ref entity._position, ref entity._orientation);
             UpdateBoundingBoxInternal(dt);
         }
 
@@ -200,20 +200,20 @@ namespace BEPUphysics.BroadPhaseEntries.MobileCollidables
             {
                 bool useExtraExpansion = MotionSettings.UseExtraExpansionForContinuousBoundingBoxes && entity.PositionUpdateMode == PositionUpdateMode.Continuous;
                 FP velocityScaling = useExtraExpansion ? 2 : 1;
-                if (entity.linearVelocity.x > F64.C0)
-                    boundingBox.Max.x += entity.linearVelocity.x * dt * velocityScaling;
+                if (entity._linearVelocity.x > F64.C0)
+                    boundingBox.Max.x += entity._linearVelocity.x * dt * velocityScaling;
                 else
-                    boundingBox.Min.x += entity.linearVelocity.x * dt * velocityScaling;
+                    boundingBox.Min.x += entity._linearVelocity.x * dt * velocityScaling;
 
-                if (entity.linearVelocity.y > F64.C0)
-                    boundingBox.Max.y += entity.linearVelocity.y * dt * velocityScaling;
+                if (entity._linearVelocity.y > F64.C0)
+                    boundingBox.Max.y += entity._linearVelocity.y * dt * velocityScaling;
                 else
-                    boundingBox.Min.y += entity.linearVelocity.y * dt * velocityScaling;
+                    boundingBox.Min.y += entity._linearVelocity.y * dt * velocityScaling;
 
-                if (entity.linearVelocity.z > F64.C0)
-                    boundingBox.Max.z += entity.linearVelocity.z * dt * velocityScaling;
+                if (entity._linearVelocity.z > F64.C0)
+                    boundingBox.Max.z += entity._linearVelocity.z * dt * velocityScaling;
                 else
-                    boundingBox.Min.z += entity.linearVelocity.z * dt * velocityScaling;
+                    boundingBox.Min.z += entity._linearVelocity.z * dt * velocityScaling;
 
 
 
@@ -229,7 +229,7 @@ namespace BEPUphysics.BroadPhaseEntries.MobileCollidables
                     foreach (var e in OverlappedEntities)
                     {
 
-                        FP velocity = e.linearVelocity.LengthSquared();
+                        FP velocity = e._linearVelocity.LengthSquared();
                         if (velocity > expansion)
                             expansion = velocity;
                     }

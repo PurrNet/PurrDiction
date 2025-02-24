@@ -65,8 +65,8 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
             set
             {
                 localPlaneAnchor = value;
-                Matrix3x3.Transform(ref localPlaneAnchor, ref connectionA.orientationMatrix, out worldPlaneAnchor);
-                FPVector3.Add(ref connectionA.position, ref worldPlaneAnchor, out worldPlaneAnchor);
+                Matrix3x3.Transform(ref localPlaneAnchor, ref connectionA._orientationMatrix, out worldPlaneAnchor);
+                FPVector3.Add(ref connectionA._position, ref worldPlaneAnchor, out worldPlaneAnchor);
             }
         }
 
@@ -79,7 +79,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
             set
             {
                 localPlaneNormal = FPVector3.Normalize(value);
-                Matrix3x3.Transform(ref localPlaneNormal, ref connectionA.orientationMatrix, out worldPlaneNormal);
+                Matrix3x3.Transform(ref localPlaneNormal, ref connectionA._orientationMatrix, out worldPlaneNormal);
             }
         }
 
@@ -92,8 +92,8 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
             set
             {
                 localPointAnchor = value;
-                Matrix3x3.Transform(ref localPointAnchor, ref connectionB.orientationMatrix, out worldPointAnchor);
-                FPVector3.Add(ref worldPointAnchor, ref connectionB.position, out worldPointAnchor);
+                Matrix3x3.Transform(ref localPointAnchor, ref connectionB._orientationMatrix, out worldPointAnchor);
+                FPVector3.Add(ref worldPointAnchor, ref connectionB._position, out worldPointAnchor);
             }
         }
 
@@ -122,8 +122,8 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
             set
             {
                 worldPlaneAnchor = value;
-                localPlaneAnchor = value - connectionA.position;
-                Matrix3x3.TransformTranspose(ref localPlaneAnchor, ref connectionA.orientationMatrix, out localPlaneAnchor);
+                localPlaneAnchor = value - connectionA._position;
+                Matrix3x3.TransformTranspose(ref localPlaneAnchor, ref connectionA._orientationMatrix, out localPlaneAnchor);
 
             }
         }
@@ -137,7 +137,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
             set
             {
                 worldPlaneNormal = FPVector3.Normalize(value);
-                Matrix3x3.TransformTranspose(ref worldPlaneNormal, ref connectionA.orientationMatrix, out localPlaneNormal);
+                Matrix3x3.TransformTranspose(ref worldPlaneNormal, ref connectionA._orientationMatrix, out localPlaneNormal);
             }
         }
 
@@ -150,8 +150,8 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
             set
             {
                 worldPointAnchor = value;
-                localPointAnchor = value - connectionB.position;
-                Matrix3x3.TransformTranspose(ref localPointAnchor, ref connectionB.orientationMatrix, out localPointAnchor);
+                localPointAnchor = value - connectionB._position;
+                Matrix3x3.TransformTranspose(ref localPointAnchor, ref connectionB._orientationMatrix, out localPointAnchor);
 
             }
         }
@@ -167,10 +167,10 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
             {
                 FPVector3 dv;
                 FPVector3 aVel, bVel;
-                FPVector3.Cross(ref connectionA.angularVelocity, ref rA, out aVel);
-                FPVector3.Add(ref aVel, ref connectionA.linearVelocity, out aVel);
-                FPVector3.Cross(ref connectionB.angularVelocity, ref rB, out bVel);
-                FPVector3.Add(ref bVel, ref connectionB.linearVelocity, out bVel);
+                FPVector3.Cross(ref connectionA._angularVelocity, ref rA, out aVel);
+                FPVector3.Add(ref aVel, ref connectionA._linearVelocity, out aVel);
+                FPVector3.Cross(ref connectionB._angularVelocity, ref rB, out bVel);
+                FPVector3.Add(ref bVel, ref connectionB._linearVelocity, out bVel);
                 FPVector3.Subtract(ref aVel, ref bVel, out dv);
                 FP velocityDifference;
                 FPVector3.Dot(ref dv, ref worldPlaneNormal, out velocityDifference);
@@ -259,10 +259,10 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
             //dot dot dot dot and then scalar adds
             FPVector3 dv;
             FPVector3 aVel, bVel;
-            FPVector3.Cross(ref connectionA.angularVelocity, ref rA, out aVel);
-            FPVector3.Add(ref aVel, ref connectionA.linearVelocity, out aVel);
-            FPVector3.Cross(ref connectionB.angularVelocity, ref rB, out bVel);
-            FPVector3.Add(ref bVel, ref connectionB.linearVelocity, out bVel);
+            FPVector3.Cross(ref connectionA._angularVelocity, ref rA, out aVel);
+            FPVector3.Add(ref aVel, ref connectionA._linearVelocity, out aVel);
+            FPVector3.Cross(ref connectionB._angularVelocity, ref rB, out bVel);
+            FPVector3.Add(ref bVel, ref connectionB._linearVelocity, out bVel);
             FPVector3.Subtract(ref aVel, ref bVel, out dv);
             FP velocityDifference;
             FPVector3.Dot(ref dv, ref worldPlaneNormal, out velocityDifference);
@@ -275,13 +275,13 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
             FPVector3 impulse;
             FPVector3 torque;
             FPVector3.Multiply(ref worldPlaneNormal, lambda, out impulse);
-            if (connectionA.isDynamic)
+            if (connectionA._isDynamic)
             {
                 FPVector3.Multiply(ref rAcrossN, lambda, out torque);
                 connectionA.ApplyLinearImpulse(ref impulse);
                 connectionA.ApplyAngularImpulse(ref torque);
             }
-            if (connectionB.isDynamic)
+            if (connectionB._isDynamic)
             {
                 FPVector3.Negate(ref impulse, out impulse);
                 FPVector3.Multiply(ref rBcrossN, lambda, out torque);
@@ -298,12 +298,12 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
         ///<param name="dt">Timestep duration.</param>
         public override void Update(FP dt)
         {
-            Matrix3x3.Transform(ref localPlaneNormal, ref connectionA.orientationMatrix, out worldPlaneNormal);
-            Matrix3x3.Transform(ref localPlaneAnchor, ref connectionA.orientationMatrix, out worldPlaneAnchor);
-            FPVector3.Add(ref worldPlaneAnchor, ref connectionA.position, out worldPlaneAnchor);
+            Matrix3x3.Transform(ref localPlaneNormal, ref connectionA._orientationMatrix, out worldPlaneNormal);
+            Matrix3x3.Transform(ref localPlaneAnchor, ref connectionA._orientationMatrix, out worldPlaneAnchor);
+            FPVector3.Add(ref worldPlaneAnchor, ref connectionA._position, out worldPlaneAnchor);
 
-            Matrix3x3.Transform(ref localPointAnchor, ref connectionB.orientationMatrix, out rB);
-            FPVector3.Add(ref rB, ref connectionB.position, out worldPointAnchor);
+            Matrix3x3.Transform(ref localPointAnchor, ref connectionB._orientationMatrix, out rB);
+            FPVector3.Add(ref rB, ref connectionB._position, out worldPointAnchor);
 
             //Find rA and rB.
             //So find the closest point on the plane to worldPointAnchor.
@@ -315,7 +315,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
             FPVector3.Multiply(ref worldPlaneNormal, distanceChange, out closestPointOnPlane);
             FPVector3.Add(ref closestPointOnPlane, ref worldPointAnchor, out closestPointOnPlane);
 
-            FPVector3.Subtract(ref closestPointOnPlane, ref connectionA.position, out rA);
+            FPVector3.Subtract(ref closestPointOnPlane, ref connectionA._position, out rA);
 
             FPVector3.Cross(ref rA, ref worldPlaneNormal, out rAcrossN);
             FPVector3.Cross(ref rB, ref worldPlaneNormal, out rBcrossN);
@@ -374,13 +374,13 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
             FPVector3 impulse;
             FPVector3 torque;
             FPVector3.Multiply(ref worldPlaneNormal, accumulatedImpulse, out impulse);
-            if (connectionA.isDynamic)
+            if (connectionA._isDynamic)
             {
                 FPVector3.Multiply(ref rAcrossN, accumulatedImpulse, out torque);
                 connectionA.ApplyLinearImpulse(ref impulse);
                 connectionA.ApplyAngularImpulse(ref torque);
             }
-            if (connectionB.isDynamic)
+            if (connectionB._isDynamic)
             {
                 FPVector3.Negate(ref impulse, out impulse);
                 FPVector3.Multiply(ref rBcrossN, accumulatedImpulse, out torque);

@@ -44,8 +44,8 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
             ConnectionA = connectionA;
             ConnectionB = connectionB;
 
-            OffsetA = anchorLocation - ConnectionA.position;
-            OffsetB = anchorLocation - ConnectionB.position;
+            OffsetA = anchorLocation - ConnectionA._position;
+            OffsetB = anchorLocation - ConnectionB._position;
         }
 
         /// <summary>
@@ -57,7 +57,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
             set
             {
                 localAnchorA = value;
-                Matrix3x3.Transform(ref localAnchorA, ref connectionA.orientationMatrix, out worldOffsetA); 
+                Matrix3x3.Transform(ref localAnchorA, ref connectionA._orientationMatrix, out worldOffsetA); 
             }
         }
 
@@ -70,7 +70,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
             set
             {
                 localAnchorB = value;
-                Matrix3x3.Transform(ref localAnchorB, ref connectionB.orientationMatrix, out worldOffsetB); 
+                Matrix3x3.Transform(ref localAnchorB, ref connectionB._orientationMatrix, out worldOffsetB); 
             }
         }
 
@@ -83,7 +83,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
             set
             {
                 worldOffsetA = value;
-                Matrix3x3.TransformTranspose(ref worldOffsetA, ref connectionA.orientationMatrix, out localAnchorA);
+                Matrix3x3.TransformTranspose(ref worldOffsetA, ref connectionA._orientationMatrix, out localAnchorA);
             }
         }
 
@@ -96,7 +96,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
             set
             {
                 worldOffsetB = value;
-                Matrix3x3.TransformTranspose(ref worldOffsetB, ref connectionB.orientationMatrix, out localAnchorB);
+                Matrix3x3.TransformTranspose(ref worldOffsetB, ref connectionB._orientationMatrix, out localAnchorB);
             }
         }
 
@@ -111,10 +111,10 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
             {
                 FPVector3 cross;
                 FPVector3 aVel, bVel;
-                FPVector3.Cross(ref connectionA.angularVelocity, ref worldOffsetA, out cross);
-                FPVector3.Add(ref connectionA.linearVelocity, ref cross, out aVel);
-                FPVector3.Cross(ref connectionB.angularVelocity, ref worldOffsetB, out cross);
-                FPVector3.Add(ref connectionB.linearVelocity, ref cross, out bVel);
+                FPVector3.Cross(ref connectionA._angularVelocity, ref worldOffsetA, out cross);
+                FPVector3.Add(ref connectionA._linearVelocity, ref cross, out aVel);
+                FPVector3.Cross(ref connectionB._angularVelocity, ref worldOffsetB, out cross);
+                FPVector3.Add(ref connectionB._linearVelocity, ref cross, out bVel);
                 return aVel - bVel;
             }
         }
@@ -210,8 +210,8 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
         /// <param name="dt">Time in seconds since the last update.</param>
         public override void Update(FP dt)
         {
-            Matrix3x3.Transform(ref localAnchorA, ref connectionA.orientationMatrix, out worldOffsetA);
-            Matrix3x3.Transform(ref localAnchorB, ref connectionB.orientationMatrix, out worldOffsetB);
+            Matrix3x3.Transform(ref localAnchorA, ref connectionA._orientationMatrix, out worldOffsetA);
+            Matrix3x3.Transform(ref localAnchorB, ref connectionB._orientationMatrix, out worldOffsetB);
 
 
             FP errorReductionParameter;
@@ -222,7 +222,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
             Matrix3x3 linearComponent;
             Matrix3x3.CreateCrossProduct(ref worldOffsetA, out rACrossProduct);
             Matrix3x3.CreateCrossProduct(ref worldOffsetB, out rBCrossProduct);
-            if (connectionA.isDynamic && connectionB.isDynamic)
+            if (connectionA._isDynamic && connectionB._isDynamic)
             {
                 Matrix3x3.CreateScale(connectionA.inverseMass + connectionB.inverseMass, out linearComponent);
                 Matrix3x3 angularComponentA, angularComponentB;
@@ -233,7 +233,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
                 Matrix3x3.Subtract(ref linearComponent, ref angularComponentA, out k);
                 Matrix3x3.Subtract(ref k, ref angularComponentB, out k);
             }
-            else if (connectionA.isDynamic && !connectionB.isDynamic)
+            else if (connectionA._isDynamic && !connectionB._isDynamic)
             {
                 Matrix3x3.CreateScale(connectionA.inverseMass, out linearComponent);
                 Matrix3x3 angularComponentA;
@@ -241,7 +241,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
                 Matrix3x3.Multiply(ref angularComponentA, ref rACrossProduct, out angularComponentA);
                 Matrix3x3.Subtract(ref linearComponent, ref angularComponentA, out k);
             }
-            else if (!connectionA.isDynamic && connectionB.isDynamic)
+            else if (!connectionA._isDynamic && connectionB._isDynamic)
             {
                 Matrix3x3.CreateScale(connectionB.inverseMass, out linearComponent);
                 Matrix3x3 angularComponentB;
@@ -258,8 +258,8 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
             k.M33 += softness;
             Matrix3x3.Invert(ref k, out massMatrix);
 
-            FPVector3.Add(ref connectionB.position, ref worldOffsetB, out error);
-            FPVector3.Subtract(ref error, ref connectionA.position, out error);
+            FPVector3.Add(ref connectionB._position, ref worldOffsetB, out error);
+            FPVector3.Subtract(ref error, ref connectionA._position, out error);
             FPVector3.Subtract(ref error, ref worldOffsetA, out error);
 
 
@@ -292,7 +292,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
 #else
             Vector3 linear;
 #endif
-            if (connectionA.isDynamic)
+            if (connectionA._isDynamic)
             {
                 linear.x = -accumulatedImpulse.x;
                 linear.y = -accumulatedImpulse.y;
@@ -302,7 +302,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
                 FPVector3.Cross(ref worldOffsetA, ref linear, out taImpulse);
                 connectionA.ApplyAngularImpulse(ref taImpulse);
             }
-            if (connectionB.isDynamic)
+            if (connectionB._isDynamic)
             {
                 connectionB.ApplyLinearImpulse(ref accumulatedImpulse);
                 FPVector3 tbImpulse;
@@ -327,10 +327,10 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
             //Velocity along the length.
             FPVector3 cross;
             FPVector3 aVel, bVel;
-            FPVector3.Cross(ref connectionA.angularVelocity, ref worldOffsetA, out cross);
-            FPVector3.Add(ref connectionA.linearVelocity, ref cross, out aVel);
-            FPVector3.Cross(ref connectionB.angularVelocity, ref worldOffsetB, out cross);
-            FPVector3.Add(ref connectionB.linearVelocity, ref cross, out bVel);
+            FPVector3.Cross(ref connectionA._angularVelocity, ref worldOffsetA, out cross);
+            FPVector3.Add(ref connectionA._linearVelocity, ref cross, out aVel);
+            FPVector3.Cross(ref connectionB._angularVelocity, ref worldOffsetB, out cross);
+            FPVector3.Add(ref connectionB._linearVelocity, ref cross, out bVel);
 
             lambda.x = aVel.x - bVel.x + biasVelocity.x - softness * accumulatedImpulse.x;
             lambda.y = aVel.y - bVel.y + biasVelocity.y - softness * accumulatedImpulse.y;
@@ -349,7 +349,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
 #else
             Vector3 linear;
 #endif
-            if (connectionA.isDynamic)
+            if (connectionA._isDynamic)
             {
                 linear.x = -lambda.x;
                 linear.y = -lambda.y;
@@ -359,7 +359,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
                 FPVector3.Cross(ref worldOffsetA, ref linear, out taImpulse);
                 connectionA.ApplyAngularImpulse(ref taImpulse);
             }
-            if (connectionB.isDynamic)
+            if (connectionB._isDynamic)
             {
                 connectionB.ApplyLinearImpulse(ref lambda);
                 FPVector3 tbImpulse;

@@ -147,17 +147,17 @@ namespace BEPUphysics.NarrowPhaseSystems.Pairs
                 if (convexMode == PositionUpdateMode.Discrete)
                 {                    
                     //Convex is static for the purposes of CCD.
-                    FPVector3.Negate(ref mobileMesh.entity.linearVelocity, out velocity);
+                    FPVector3.Negate(ref mobileMesh.entity._linearVelocity, out velocity);
                 }
                 else if (meshMode == PositionUpdateMode.Discrete)
                 {
                     //Mesh is static for the purposes of CCD.
-                    velocity = convex.entity.linearVelocity;
+                    velocity = convex.entity._linearVelocity;
                 }
                 else
                 {
                     //Both objects can move.
-                    FPVector3.Subtract(ref convex.entity.linearVelocity, ref mobileMesh.entity.linearVelocity, out velocity);
+                    FPVector3.Subtract(ref convex.entity._linearVelocity, ref mobileMesh.entity._linearVelocity, out velocity);
 
                 }
                 FPVector3.Multiply(ref velocity, dt, out velocity);
@@ -247,18 +247,18 @@ namespace BEPUphysics.NarrowPhaseSystems.Pairs
             FPVector3 velocity;
             if (convex.entity != null)
             {
-                FPVector3.Subtract(ref info.Contact.Position, ref convex.entity.position, out velocity);
-                FPVector3.Cross(ref convex.entity.angularVelocity, ref velocity, out velocity);
-                FPVector3.Add(ref velocity, ref convex.entity.linearVelocity, out info.RelativeVelocity);
+                FPVector3.Subtract(ref info.Contact.Position, ref convex.entity._position, out velocity);
+                FPVector3.Cross(ref convex.entity._angularVelocity, ref velocity, out velocity);
+                FPVector3.Add(ref velocity, ref convex.entity._linearVelocity, out info.RelativeVelocity);
             }
             else
                 info.RelativeVelocity = new FPVector3();
 
             if (mobileMesh.entity != null)
             {
-                FPVector3.Subtract(ref info.Contact.Position, ref mobileMesh.entity.position, out velocity);
-                FPVector3.Cross(ref mobileMesh.entity.angularVelocity, ref velocity, out velocity);
-                FPVector3.Add(ref velocity, ref mobileMesh.entity.linearVelocity, out velocity);
+                FPVector3.Subtract(ref info.Contact.Position, ref mobileMesh.entity._position, out velocity);
+                FPVector3.Cross(ref mobileMesh.entity._angularVelocity, ref velocity, out velocity);
+                FPVector3.Add(ref velocity, ref mobileMesh.entity._linearVelocity, out velocity);
                 FPVector3.Subtract(ref info.RelativeVelocity, ref velocity, out info.RelativeVelocity);
             }
 

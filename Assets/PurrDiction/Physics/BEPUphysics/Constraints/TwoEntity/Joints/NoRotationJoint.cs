@@ -38,8 +38,8 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
             ConnectionA = connectionA;
             ConnectionB = connectionB;
 
-            initialQuaternionConjugateA = FPQuaternion.Conjugate(ConnectionA.orientation);
-            initialQuaternionConjugateB = FPQuaternion.Conjugate(ConnectionB.orientation);
+            initialQuaternionConjugateA = FPQuaternion.Conjugate(ConnectionA._orientation);
+            initialQuaternionConjugateB = FPQuaternion.Conjugate(ConnectionB._orientation);
         }
 
         /// <summary>
@@ -72,7 +72,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
             get
             {
                 FPVector3 velocityDifference;
-                FPVector3.Subtract(ref connectionB.angularVelocity, ref connectionA.angularVelocity, out velocityDifference);
+                FPVector3.Subtract(ref connectionB._angularVelocity, ref connectionA._angularVelocity, out velocityDifference);
                 return velocityDifference;
             }
         }
@@ -166,7 +166,7 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
         public override FP SolveIteration()
         {
             FPVector3 velocityDifference;
-            FPVector3.Subtract(ref connectionB.angularVelocity, ref connectionA.angularVelocity, out velocityDifference);
+            FPVector3.Subtract(ref connectionB._angularVelocity, ref connectionA._angularVelocity, out velocityDifference);
             FPVector3 softnessVector;
             FPVector3.Multiply(ref accumulatedImpulse, softness, out softnessVector);
 
@@ -176,11 +176,11 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
             Matrix3x3.Transform(ref lambda, ref effectiveMassMatrix, out lambda);
 
             FPVector3.Add(ref lambda, ref accumulatedImpulse, out accumulatedImpulse);
-            if (connectionA.isDynamic)
+            if (connectionA._isDynamic)
             {
                 connectionA.ApplyAngularImpulse(ref lambda);
             }
-            if (connectionB.isDynamic)
+            if (connectionB._isDynamic)
             {
                 FPVector3 torqueB;
                 FPVector3.Negate(ref lambda, out torqueB);
@@ -197,9 +197,9 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
         public override void Update(FP dt)
         {
             FPQuaternion quaternionA;
-            FPQuaternion.Multiply(ref connectionA.orientation, ref initialQuaternionConjugateA, out quaternionA);
+            FPQuaternion.Multiply(ref connectionA._orientation, ref initialQuaternionConjugateA, out quaternionA);
             FPQuaternion quaternionB;
-            FPQuaternion.Multiply(ref connectionB.orientation, ref initialQuaternionConjugateB, out quaternionB);
+            FPQuaternion.Multiply(ref connectionB._orientation, ref initialQuaternionConjugateB, out quaternionB);
             FPQuaternion.Conjugate(ref quaternionB, out quaternionB);
             FPQuaternion intermediate;
             FPQuaternion.Multiply(ref quaternionA, ref quaternionB, out intermediate);
@@ -248,11 +248,11 @@ namespace BEPUphysics.Constraints.TwoEntity.Joints
         public override void ExclusiveUpdate()
         {
             //apply accumulated impulse
-            if (connectionA.isDynamic)
+            if (connectionA._isDynamic)
             {
                 connectionA.ApplyAngularImpulse(ref accumulatedImpulse);
             }
-            if (connectionB.isDynamic)
+            if (connectionB._isDynamic)
             {
                 FPVector3 torqueB;
                 FPVector3.Negate(ref accumulatedImpulse, out torqueB);

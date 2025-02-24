@@ -14,7 +14,7 @@ namespace PurrNet.Prediction
         [SerializeField] private bool _freezeRotationX;
         [SerializeField] private bool _freezeRotationY;
         [SerializeField] private bool _freezeRotationZ;
-        
+
         private FPVector3 _lockedPosition;
         private FPQuaternion _lockedRotation;
 
@@ -24,7 +24,7 @@ namespace PurrNet.Prediction
             set
             {
                 _freezePositionX = value;
-                if (value) _lockedPosition.x = _entity?.Position.x ?? FP.C0;
+                if (value) _lockedPosition.x = _entity?.position.x ?? FP.C0;
                 UpdateConstraints();
             }
         }
@@ -35,7 +35,7 @@ namespace PurrNet.Prediction
             set
             {
                 _freezePositionY = value;
-                if (value) _lockedPosition.y = _entity?.Position.y ?? FP.C0;
+                if (value) _lockedPosition.y = _entity?.position.y ?? FP.C0;
                 UpdateConstraints();
             }
         }
@@ -46,7 +46,7 @@ namespace PurrNet.Prediction
             set
             {
                 _freezePositionZ = value;
-                if (value) _lockedPosition.z = _entity?.Position.z ?? FP.C0;
+                if (value) _lockedPosition.z = _entity?.position.z ?? FP.C0;
                 UpdateConstraints();
             }
         }
@@ -57,7 +57,7 @@ namespace PurrNet.Prediction
             set
             {
                 _freezeRotationX = value;
-                if (value) _lockedRotation = _entity?.Orientation ?? FPQuaternion.Identity;
+                if (value) _lockedRotation = _entity?.orientation ?? FPQuaternion.Identity;
                 UpdateConstraints();
             }
         }
@@ -68,7 +68,7 @@ namespace PurrNet.Prediction
             set
             {
                 _freezeRotationY = value;
-                if (value) _lockedRotation = _entity?.Orientation ?? FPQuaternion.Identity;
+                if (value) _lockedRotation = _entity?.orientation ?? FPQuaternion.Identity;
                 UpdateConstraints();
             }
         }
@@ -79,15 +79,15 @@ namespace PurrNet.Prediction
             set
             {
                 _freezeRotationZ = value;
-                if (value) _lockedRotation = _entity?.Orientation ?? FPQuaternion.Identity;
+                if (value) _lockedRotation = _entity?.orientation ?? FPQuaternion.Identity;
                 UpdateConstraints();
             }
         }
 
         private void SetupConstraints()
         {
-            _lockedPosition = _entity.Position;
-            _lockedRotation = _entity.Orientation;
+            _lockedPosition = _entity.position;
+            _lockedRotation = _entity.orientation;
             UpdateConstraints();
         }
 
@@ -96,8 +96,8 @@ namespace PurrNet.Prediction
             if (_entity == null)
                 return;
 
-            _lockedPosition = _entity.Position;
-            _lockedRotation = _entity.Orientation;
+            _lockedPosition = _entity.position;
+            _lockedRotation = _entity.orientation;
 
             EnforceConstraints();
         }
@@ -106,8 +106,8 @@ namespace PurrNet.Prediction
         {
             if (_entity == null) return;
 
-            var currentPos = _entity.Position;
-            var currentRot = _entity.Orientation;
+            var currentPos = _entity.position;
+            var currentRot = _entity.orientation;
 
             if (_freezePositionX) currentPos.x = _lockedPosition.x;
             if (_freezePositionY) currentPos.y = _lockedPosition.y;
@@ -115,8 +115,8 @@ namespace PurrNet.Prediction
 
             if (_freezeRotationX || _freezeRotationY || _freezeRotationZ)
             {
-                FPVector3 eulerAngles = currentRot.ToEuler();
-                FPVector3 lockedEulerAngles = _lockedRotation.ToEuler();
+                var eulerAngles = currentRot.ToEuler();
+                var lockedEulerAngles = _lockedRotation.ToEuler();
 
                 if (_freezeRotationX) eulerAngles.x = lockedEulerAngles.x;
                 if (_freezeRotationY) eulerAngles.y = lockedEulerAngles.y;
@@ -125,11 +125,11 @@ namespace PurrNet.Prediction
                 currentRot = FPQuaternion.CreateFromEuler(eulerAngles);
             }
 
-            _entity.Position = currentPos;
-            _entity.Orientation = currentRot;
+            _entity.position = currentPos;
+            _entity.orientation = currentRot;
 
-            var linearVel = _entity.LinearVelocity;
-            var angularVel = _entity.AngularVelocity;
+            var linearVel = _entity.linearVelocity;
+            var angularVel = _entity.angularVelocity;
 
             if (_freezePositionX) linearVel.x = FP.C0;
             if (_freezePositionY) linearVel.y = FP.C0;
@@ -139,8 +139,8 @@ namespace PurrNet.Prediction
             if (_freezeRotationY) angularVel.y = FP.C0;
             if (_freezeRotationZ) angularVel.z = FP.C0;
 
-            _entity.LinearVelocity = linearVel;
-            _entity.AngularVelocity = angularVel;
+            _entity.linearVelocity = linearVel;
+            _entity.angularVelocity = angularVel;
         }
     }
 }

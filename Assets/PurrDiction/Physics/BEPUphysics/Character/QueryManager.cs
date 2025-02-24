@@ -146,7 +146,7 @@ namespace BEPUphysics.Character
             ref QuickList<CharacterContact> tractionContacts, ref QuickList<CharacterContact> supportContacts, ref QuickList<CharacterContact> sideContacts, ref QuickList<CharacterContact> headContacts,
             bool forceStandardPairsToBeQueries = false)
         {
-            var downDirection = characterBody.orientationMatrix.Down;
+            var downDirection = characterBody._orientationMatrix.Down;
 
             tractionContacts.Clear();
             supportContacts.Clear();

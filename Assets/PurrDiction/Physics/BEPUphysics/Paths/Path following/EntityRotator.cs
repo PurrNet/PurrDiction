@@ -26,7 +26,7 @@ namespace BEPUphysics.Paths.PathFollowing
             Entity = e;
 
             AngularMotor.Settings.Mode = MotorMode.Servomechanism;
-            TargetOrientation = e.Orientation;
+            TargetOrientation = e.orientation;
         }
 
         /// <summary>
@@ -42,7 +42,7 @@ namespace BEPUphysics.Paths.PathFollowing
 
             angularMotor.Entity = Entity;
             angularMotor.Settings.Mode = MotorMode.Servomechanism;
-            TargetOrientation = e.Orientation;
+            TargetOrientation = e.orientation;
         }
 
 
@@ -129,7 +129,7 @@ namespace BEPUphysics.Paths.PathFollowing
             else
             {
                 AngularMotor.IsActive = false;
-                Entity.AngularVelocity = GetAngularVelocity(Entity.Orientation, TargetOrientation, dt);
+                Entity.angularVelocity = GetAngularVelocity(Entity.orientation, TargetOrientation, dt);
             }
         }
     }

@@ -29,7 +29,7 @@ namespace BEPUphysics.Entities.Prefabs
             FPVector3 center;
             var shape = new MobileMeshShape(vertices, indices, localTransform, solidity, out center);
             Initialize(new MobileMeshCollidable(shape));
-            Position = center;
+            position = center;
         }
 
 
@@ -47,7 +47,7 @@ namespace BEPUphysics.Entities.Prefabs
             FPVector3 center;
             var shape = new MobileMeshShape(vertices, indices, localTransform, solidity, out center);
             Initialize(new MobileMeshCollidable(shape), mass);
-            Position = center;
+            position = center;
         }
 
 

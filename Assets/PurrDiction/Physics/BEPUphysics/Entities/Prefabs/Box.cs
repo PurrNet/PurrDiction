@@ -34,7 +34,7 @@ namespace BEPUphysics.Entities.Prefabs
         public Box(FPVector3 pos, FP width, FP height, FP length, FP mass)
             : this(width, height, length, mass)
         {
-            Position = pos;
+            position = pos;
         }
 
         /// <summary>
@@ -47,7 +47,7 @@ namespace BEPUphysics.Entities.Prefabs
         public Box(FPVector3 pos, FP width, FP height, FP length)
             : this(width, height, length)
         {
-            Position = pos;
+            position = pos;
         }
 
         /// <summary>

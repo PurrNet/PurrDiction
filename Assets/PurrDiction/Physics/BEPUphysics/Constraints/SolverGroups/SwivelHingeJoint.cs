@@ -62,9 +62,9 @@ namespace BEPUphysics.Constraints.SolverGroups
             TwistMotor.IsActive = false;
 
             //Ensure that the base and test direction is perpendicular to the free axis.
-            FPVector3 baseAxis = anchor - connectionA.position;
+            FPVector3 baseAxis = anchor - connectionA._position;
             if (baseAxis.LengthSquared() < Toolbox.BigEpsilon) //anchor and connection a in same spot, so try the other way.
-                baseAxis = connectionB.position - anchor;
+                baseAxis = connectionB._position - anchor;
             baseAxis -= FPVector3.Dot(baseAxis, hingeAxis) * hingeAxis;
             if (baseAxis.LengthSquared() < Toolbox.BigEpsilon)
             {
@@ -75,10 +75,10 @@ namespace BEPUphysics.Constraints.SolverGroups
                     baseAxis = FPVector3.Cross(hingeAxis, FPVector3.right);
                 }
             }
-            HingeLimit.Basis.SetWorldAxes(hingeAxis, baseAxis, connectionA.orientationMatrix);
-            HingeMotor.Basis.SetWorldAxes(hingeAxis, baseAxis, connectionA.orientationMatrix);
+            HingeLimit.Basis.SetWorldAxes(hingeAxis, baseAxis, connectionA._orientationMatrix);
+            HingeMotor.Basis.SetWorldAxes(hingeAxis, baseAxis, connectionA._orientationMatrix);
 
-            baseAxis = connectionB.position - anchor;
+            baseAxis = connectionB._position - anchor;
             baseAxis -= FPVector3.Dot(baseAxis, hingeAxis) * hingeAxis;
             if (baseAxis.LengthSquared() < Toolbox.BigEpsilon)
             {

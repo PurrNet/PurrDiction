@@ -115,11 +115,11 @@ namespace BEPUphysics.Constraints.Collision
             {
                 FP velocity = F64.C0;
                 if (entityA != null)
-                    velocity += entityA.linearVelocity.x * linearAX + entityA.linearVelocity.y * linearAY + entityA.linearVelocity.z * linearAZ +
-                                entityA.angularVelocity.x * angularAX + entityA.angularVelocity.y * angularAY + entityA.angularVelocity.z * angularAZ;
+                    velocity += entityA._linearVelocity.x * linearAX + entityA._linearVelocity.y * linearAY + entityA._linearVelocity.z * linearAZ +
+                                entityA._angularVelocity.x * angularAX + entityA._angularVelocity.y * angularAY + entityA._angularVelocity.z * angularAZ;
                 if (entityB != null)
-                    velocity += -entityB.linearVelocity.x * linearAX - entityB.linearVelocity.y * linearAY - entityB.linearVelocity.z * linearAZ +
-                                entityB.angularVelocity.x * angularBX + entityB.angularVelocity.y * angularBY + entityB.angularVelocity.z * angularBZ;
+                    velocity += -entityB._linearVelocity.x * linearAX - entityB._linearVelocity.y * linearAY - entityB._linearVelocity.z * linearAZ +
+                                entityB._angularVelocity.x * angularBX + entityB._angularVelocity.y * angularBY + entityB._angularVelocity.z * angularBZ;
                 return velocity;
             }
         }
@@ -182,8 +182,8 @@ namespace BEPUphysics.Constraints.Collision
         {
 
 
-            entityAIsDynamic = entityA != null && entityA.isDynamic;
-            entityBIsDynamic = entityB != null && entityB.isDynamic;
+            entityAIsDynamic = entityA != null && entityA._isDynamic;
+            entityBIsDynamic = entityB != null && entityB._isDynamic;
 
             //Compute the three dimensional relative velocity at the point.
 
@@ -191,13 +191,13 @@ namespace BEPUphysics.Constraints.Collision
             FPVector3 ra = penetrationConstraint.ra, rb = penetrationConstraint.rb;
             if (entityA != null)
             {
-                FPVector3.Cross(ref entityA.angularVelocity, ref ra, out velocityA);
-                FPVector3.Add(ref velocityA, ref entityA.linearVelocity, out velocityA);
+                FPVector3.Cross(ref entityA._angularVelocity, ref ra, out velocityA);
+                FPVector3.Add(ref velocityA, ref entityA._linearVelocity, out velocityA);
             }
             if (entityB != null)
             {
-                FPVector3.Cross(ref entityB.angularVelocity, ref rb, out velocityB);
-                FPVector3.Add(ref velocityB, ref entityB.linearVelocity, out velocityB);
+                FPVector3.Cross(ref entityB._angularVelocity, ref rb, out velocityB);
+                FPVector3.Add(ref velocityB, ref entityB._linearVelocity, out velocityB);
             }
             FPVector3 relativeVelocity;
             FPVector3.Subtract(ref velocityA, ref velocityB, out relativeVelocity);

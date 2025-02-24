@@ -20,16 +20,16 @@ namespace PurrNet.Prediction
         [SerializeField] private bool drawJoints = true;
 
         [PurrReadOnly, SerializeField] private int totalEntities;
-        
+
         private List<StaticMesh> _staticMeshes = new List<StaticMesh>();
         private List<BepuHingeJoint> _hingeJoints = new List<BepuHingeJoint>();
         private Space _space;
-        
+
         private void Start()
         {
             _space = FindFirstObjectByType<PredictionManager>().physics;
         }
-        
+
         public void RegisterStaticMesh(StaticMesh mesh)
         {
             if (mesh != null && !_staticMeshes.Contains(mesh))
@@ -37,7 +37,7 @@ namespace PurrNet.Prediction
                 _staticMeshes.Add(mesh);
             }
         }
-        
+
         public void RegisterHingeJoint(BepuHingeJoint hingeJoint)
         {
             if (hingeJoint != null && !_hingeJoints.Contains(hingeJoint))
@@ -45,7 +45,7 @@ namespace PurrNet.Prediction
                 _hingeJoints.Add(hingeJoint);
             }
         }
-        
+
         private void OnDrawGizmos()
         {
             if (_space == null) return;
@@ -71,12 +71,12 @@ namespace PurrNet.Prediction
             foreach (var entity in _space.Entities)
             {
                 var colliderDefinitions = ConvertEntityToColliderDefinitions(entity);
-        
+
                 if (colliderDefinitions != null)
                 {
                     BepuColliderFactory.DrawGizmos(
-                        entity.Position.ToVector3(), 
-                        entity.Orientation.ToQuaternion(), 
+                        entity.position.ToVector3(),
+                        entity.orientation.ToQuaternion(),
                         colliderDefinitions
                     );
                 }
@@ -109,29 +109,29 @@ namespace PurrNet.Prediction
             {
                 BepuColliderDefinition definition = shapeEntry.Shape switch
                 {
-                    BoxShape boxShape => new BepuColliderDefinition 
-                    { 
-                        type = BepuColliderType.Box, 
-                        width = boxShape.Width, 
-                        height = boxShape.Height, 
-                        depth = boxShape.Length 
+                    BoxShape boxShape => new BepuColliderDefinition
+                    {
+                        type = BepuColliderType.Box,
+                        width = boxShape.Width,
+                        height = boxShape.Height,
+                        depth = boxShape.Length
                     },
-                    SphereShape sphereShape => new BepuColliderDefinition 
-                    { 
-                        type = BepuColliderType.Sphere, 
-                        radius = sphereShape.Radius 
+                    SphereShape sphereShape => new BepuColliderDefinition
+                    {
+                        type = BepuColliderType.Sphere,
+                        radius = sphereShape.Radius
                     },
-                    CapsuleShape capsuleShape => new BepuColliderDefinition 
-                    { 
-                        type = BepuColliderType.Capsule, 
-                        radius = capsuleShape.Radius, 
-                        height = capsuleShape.Length 
+                    CapsuleShape capsuleShape => new BepuColliderDefinition
+                    {
+                        type = BepuColliderType.Capsule,
+                        radius = capsuleShape.Radius,
+                        height = capsuleShape.Length
                     },
-                    ConvexHullShape convexHull => new BepuColliderDefinition 
-                    { 
-                        type = BepuColliderType.Mesh, 
+                    ConvexHullShape convexHull => new BepuColliderDefinition
+                    {
+                        type = BepuColliderType.Mesh,
                         mesh = BepuColliderFactory.ConvertVerticesToMesh(convexHull.Vertices),
-                        convex = true 
+                        convex = true
                     },
                     _ => default
                 };
@@ -150,9 +150,9 @@ namespace PurrNet.Prediction
             Gizmos.color = Color.red;
             foreach (var entity in _space.Entities)
             {
-                if (entity.LinearVelocity != FPVector3.zero)
+                if (entity.linearVelocity != FPVector3.zero)
                 {
-                    Gizmos.DrawRay(entity.Position.ToVector3(), entity.LinearVelocity.ToVector3() / 2);
+                    Gizmos.DrawRay(entity.position.ToVector3(), entity.linearVelocity.ToVector3() / 2);
                 }
             }
         }
@@ -187,39 +187,39 @@ namespace PurrNet.Prediction
                 DrawHingeJoint(joint.transform.position, joint.axis, joint.initialTestAxis, (float)joint.angleLimitation, joint.connectedBody?.transform);
             }
         }
-        
+
         public static void DrawHingeJoint(
-            Vector3 position, 
-            Vector3 axis, 
-            Vector3 testAxis, 
+            Vector3 position,
+            Vector3 axis,
+            Vector3 testAxis,
             float angleLimitation,
             Transform connectedBody = null)
         {
             Vector3 normalizedAxis = axis.normalized;
-        
+
             if (!Application.isPlaying && connectedBody != null)
             {
                 Vector3 toConnected = (connectedBody.position - position).normalized;
                 testAxis = Vector3.Cross(normalizedAxis, toConnected).normalized;
                 testAxis = Quaternion.AngleAxis(-90, normalizedAxis) * testAxis;
             }
-        
+
             Gizmos.color = Color.blue;
             Gizmos.DrawRay(position, normalizedAxis);
-        
+
             Gizmos.color = Color.yellow;
             var minAngle = -(angleLimitation / 2);
             var maxAngle = angleLimitation / 2;
             Quaternion minRot = Quaternion.AngleAxis(minAngle, normalizedAxis);
             Quaternion maxRot = Quaternion.AngleAxis(maxAngle, normalizedAxis);
-        
+
             Gizmos.DrawRay(position, minRot * testAxis);
             Gizmos.DrawRay(position, maxRot * testAxis);
-        
+
             int segments = 20;
             float angleStep = (maxAngle - minAngle) / segments;
             Vector3 prev = position + minRot * testAxis;
-        
+
             for(int i = 1; i <= segments; i++)
             {
                 float angle = minAngle + (angleStep * i);

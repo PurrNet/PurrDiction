@@ -50,11 +50,11 @@ namespace BEPUphysics.CollisionTests.Manifolds
             //so whatever motion there is between the two objects needs to be included in the convex's bounding box.
 
             if (convex.entity != null)
-                transformedVelocity = convex.entity.linearVelocity;
+                transformedVelocity = convex.entity._linearVelocity;
             else
                 transformedVelocity = new FPVector3();
             if (mesh.entity != null)
-                FPVector3.Subtract(ref transformedVelocity, ref mesh.entity.linearVelocity, out transformedVelocity);
+                FPVector3.Subtract(ref transformedVelocity, ref mesh.entity._linearVelocity, out transformedVelocity);
 
             //The linear transform is known to be orientation only, so using the transpose is allowed.
             Matrix3x3.TransformTranspose(ref transformedVelocity, ref transform.LinearTransform, out transformedVelocity);

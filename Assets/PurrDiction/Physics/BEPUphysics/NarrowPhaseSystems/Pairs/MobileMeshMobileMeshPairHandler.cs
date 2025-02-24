@@ -108,7 +108,7 @@ namespace BEPUphysics.NarrowPhaseSystems.Pairs
             AffineTransform.CreateFromRigidTransform(ref mesh.worldTransform, out meshTransform);
 
             FPVector3 sweep;
-            FPVector3.Subtract(ref mobileMesh.entity.linearVelocity, ref mesh.entity.linearVelocity, out sweep);
+            FPVector3.Subtract(ref mobileMesh.entity._linearVelocity, ref mesh.entity._linearVelocity, out sweep);
             FPVector3.Multiply(ref sweep, dt, out sweep);
             mobileMesh.Shape.GetSweptLocalBoundingBox(ref mobileMesh.worldTransform, ref meshTransform, ref sweep, out localBoundingBox);
             mesh.Shape.TriangleMesh.Tree.GetOverlaps(localBoundingBox, overlappedElements);

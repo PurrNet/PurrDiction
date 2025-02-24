@@ -127,17 +127,17 @@ namespace BEPUphysics.NarrowPhaseSystems.Pairs
                 if (convexMode == PositionUpdateMode.Discrete)
                 {
                     //Triangle is static for the purposes of this continuous test.
-                    velocity = triangle.entity.linearVelocity;
+                    velocity = triangle.entity._linearVelocity;
                 }
                 else if (triangleMode == PositionUpdateMode.Discrete)
                 {
                     //Convex is static for the purposes of this continuous test.
-                    FPVector3.Negate(ref convex.entity.linearVelocity, out velocity);
+                    FPVector3.Negate(ref convex.entity._linearVelocity, out velocity);
                 }
                 else
                 {
                     //Both objects are moving.
-                    FPVector3.Subtract(ref triangle.entity.linearVelocity, ref convex.entity.linearVelocity, out velocity);
+                    FPVector3.Subtract(ref triangle.entity._linearVelocity, ref convex.entity._linearVelocity, out velocity);
                 }
                 FPVector3.Multiply(ref velocity, dt, out velocity);
                 FP velocitySquared = velocity.LengthSquared();

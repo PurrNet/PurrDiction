@@ -103,16 +103,16 @@ namespace BEPUphysics.EntityStateManagement
                 switch (item.targetField)
                 {
                     case TargetField.Position:
-                        target.Position = item.vector;
+                        target.position = item.vector;
                         break;
                     case TargetField.Orientation:
-                        target.Orientation = item.orientationQuaternion;
+                        target.orientation = item.orientationQuaternion;
                         break;
                     case TargetField.LinearVelocity:
-                        target.LinearVelocity = item.vector;
+                        target.linearVelocity = item.vector;
                         break;
                     case TargetField.AngularVelocity:
-                        target.AngularVelocity = item.vector;
+                        target.angularVelocity = item.vector;
                         break;
                 }
             }

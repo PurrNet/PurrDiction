@@ -57,9 +57,9 @@ namespace BEPUphysics.Constraints.SolverGroups
             Motor.IsActive = false;
 
             //Ensure that the base and test direction is perpendicular to the free axis.
-            FPVector3 baseAxis = anchor - connectionA.position;
+            FPVector3 baseAxis = anchor - connectionA._position;
             if (baseAxis.LengthSquared() < Toolbox.BigEpsilon) //anchor and connection a in same spot, so try the other way.
-                baseAxis = connectionB.position - anchor;
+                baseAxis = connectionB._position - anchor;
             baseAxis -= FPVector3.Dot(baseAxis, freeAxis) * freeAxis;
             if (baseAxis.LengthSquared() < Toolbox.BigEpsilon)
             {
@@ -70,10 +70,10 @@ namespace BEPUphysics.Constraints.SolverGroups
                     baseAxis = FPVector3.Cross(freeAxis, FPVector3.right);
                 }
             }
-            Limit.Basis.SetWorldAxes(freeAxis, baseAxis, connectionA.orientationMatrix);
-            Motor.Basis.SetWorldAxes(freeAxis, baseAxis, connectionA.orientationMatrix);
+            Limit.Basis.SetWorldAxes(freeAxis, baseAxis, connectionA._orientationMatrix);
+            Motor.Basis.SetWorldAxes(freeAxis, baseAxis, connectionA._orientationMatrix);
 
-            baseAxis = connectionB.position - anchor;
+            baseAxis = connectionB._position - anchor;
             baseAxis -= FPVector3.Dot(baseAxis, freeAxis) * freeAxis;
             if (baseAxis.LengthSquared() < Toolbox.BigEpsilon)
             {

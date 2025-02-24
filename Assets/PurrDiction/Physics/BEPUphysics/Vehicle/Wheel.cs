@@ -140,7 +140,7 @@ namespace BEPUphysics.Vehicle
             {
                 localForwardDirection = FPVector3.Normalize(value);
                 if (vehicle != null)
-                    Matrix3x3.Transform(ref localForwardDirection, ref Vehicle.Body.orientationMatrix, out worldForwardDirection);
+                    Matrix3x3.Transform(ref localForwardDirection, ref Vehicle.Body._orientationMatrix, out worldForwardDirection);
                 else
                     worldForwardDirection = localForwardDirection;
             }
@@ -290,7 +290,7 @@ namespace BEPUphysics.Vehicle
                 if (vehicle != null)
                 {
                     FPQuaternion conjugate;
-                    FPQuaternion.Conjugate(ref Vehicle.Body.orientation, out conjugate);
+                    FPQuaternion.Conjugate(ref Vehicle.Body._orientation, out conjugate);
                     FPQuaternion.Transform(ref worldForwardDirection, ref conjugate, out localForwardDirection);
                 }
                 else
@@ -303,12 +303,12 @@ namespace BEPUphysics.Vehicle
         {
             Matrix.CreateFromAxisAngle(ref suspension.localDirection, shape.steeringAngle, out shape.steeringTransform);
             Matrix.TransformNormal(ref localForwardDirection, ref shape.steeringTransform, out worldForwardDirection);
-            Matrix3x3.Transform(ref worldForwardDirection, ref Vehicle.Body.orientationMatrix, out worldForwardDirection);
+            Matrix3x3.Transform(ref worldForwardDirection, ref Vehicle.Body._orientationMatrix, out worldForwardDirection);
             if (HasSupport)
             {
-                FPVector3.Subtract(ref supportLocation, ref Vehicle.Body.position, out ra);
+                FPVector3.Subtract(ref supportLocation, ref Vehicle.Body._position, out ra);
                 if (supportingEntity != null)
-                    FPVector3.Subtract(ref supportLocation, ref SupportingEntity.position, out rb);
+                    FPVector3.Subtract(ref supportLocation, ref SupportingEntity._position, out rb);
 
 
                 //Mind the order of updating!  sliding friction must come before driving force or rolling friction

@@ -295,8 +295,8 @@ namespace BEPUphysics.Character
             HasTraction = false;
             HasSupport = false;
 
-            FPVector3 downDirection = characterBody.orientationMatrix.Down;
-            FPVector3 bodyPosition = characterBody.position;
+            FPVector3 downDirection = characterBody._orientationMatrix.Down;
+            FPVector3 bodyPosition = characterBody._position;
 
             //Compute the character's radius, minus a little margin. We want the rays to originate safely within the character's body.
             //Assume vertical rotational invariance. Spheres, cylinders, and capsules don't have varying horizontal radii.
@@ -363,12 +363,12 @@ namespace BEPUphysics.Character
                 if (!HasTraction && tryingToMove)
                 {
                     FPRay ray = new FPRay(
-                        characterBody.Position +
+                        characterBody.position +
                         movementDirection * rayCastInnerRadius, downDirection);
 
                     //Have to test to make sure the ray doesn't get obstructed.  This could happen if the character is deeply embedded in a wall; we wouldn't want it detecting things inside the wall as a support!
                     FPRay obstructionRay;
-                    obstructionRay.Position = characterBody.Position;
+                    obstructionRay.Position = characterBody.position;
                     obstructionRay.Direction = ray.Position - obstructionRay.Position;
                     if (!QueryManager.RayCastHitAnything(obstructionRay, F64.C1))
                     {

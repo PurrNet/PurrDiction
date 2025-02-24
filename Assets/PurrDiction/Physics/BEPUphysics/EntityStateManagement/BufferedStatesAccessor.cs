@@ -45,14 +45,14 @@ namespace BEPUphysics.EntityStateManagement
             {
                 if (IsReadBufferAccessible())
                     return bufferedStates.BufferedStatesManager.ReadBuffers.GetState(bufferedStates.motionStateIndex).Position;
-                return bufferedStates.Entity.Position;
+                return bufferedStates.Entity.position;
             }
             set
             {
                 if (IsWriteBufferAccessible())
                     WriteBuffer.EnqueuePosition(bufferedStates.Entity, ref value);
                 else
-                    bufferedStates.Entity.Position = value;
+                    bufferedStates.Entity.position = value;
             }
         }
 
@@ -65,14 +65,14 @@ namespace BEPUphysics.EntityStateManagement
             {
                 if (IsReadBufferAccessible())
                     return bufferedStates.BufferedStatesManager.ReadBuffers.GetState(bufferedStates.motionStateIndex).Orientation;
-                return bufferedStates.Entity.Orientation;
+                return bufferedStates.Entity.orientation;
             }
             set
             {
                 if (IsWriteBufferAccessible())
                     WriteBuffer.EnqueueOrientation(bufferedStates.Entity, ref value);
                 else
-                    bufferedStates.Entity.Orientation = value;
+                    bufferedStates.Entity.orientation = value;
             }
         }
 
@@ -90,7 +90,7 @@ namespace BEPUphysics.EntityStateManagement
                     Matrix3x3.CreateFromQuaternion(ref o, out toReturn);
                 }
                 else
-                    Matrix3x3.CreateFromQuaternion(ref bufferedStates.Entity.orientation, out toReturn);
+                    Matrix3x3.CreateFromQuaternion(ref bufferedStates.Entity._orientation, out toReturn);
                 return toReturn;
             }
             set
@@ -102,7 +102,7 @@ namespace BEPUphysics.EntityStateManagement
                 }
                 else
                 {
-                    bufferedStates.Entity.OrientationMatrix = value;
+                    bufferedStates.Entity.orientationMatrix = value;
                 }
             }
         }
@@ -116,14 +116,14 @@ namespace BEPUphysics.EntityStateManagement
             {
                 if (IsReadBufferAccessible())
                     return bufferedStates.BufferedStatesManager.ReadBuffers.GetState(bufferedStates.motionStateIndex).LinearVelocity;
-                return bufferedStates.Entity.LinearVelocity;
+                return bufferedStates.Entity.linearVelocity;
             }
             set
             {
                 if (IsWriteBufferAccessible())
                     WriteBuffer.EnqueueLinearVelocity(bufferedStates.Entity, ref value);
                 else
-                    bufferedStates.Entity.LinearVelocity = value;
+                    bufferedStates.Entity.linearVelocity = value;
             }
         }
 
@@ -137,14 +137,14 @@ namespace BEPUphysics.EntityStateManagement
             {
                 if (IsReadBufferAccessible())
                     return bufferedStates.BufferedStatesManager.ReadBuffers.GetState(bufferedStates.motionStateIndex).AngularVelocity;
-                return bufferedStates.Entity.AngularVelocity;
+                return bufferedStates.Entity.angularVelocity;
             }
             set
             {
                 if (IsWriteBufferAccessible())
                     WriteBuffer.EnqueueAngularVelocity(bufferedStates.Entity, ref value);
                 else
-                    bufferedStates.Entity.AngularVelocity = value;
+                    bufferedStates.Entity.angularVelocity = value;
             }
         }
 
@@ -157,7 +157,7 @@ namespace BEPUphysics.EntityStateManagement
             {
                 if (IsReadBufferAccessible())
                     return bufferedStates.BufferedStatesManager.ReadBuffers.GetState(bufferedStates.motionStateIndex).WorldTransform;
-                return bufferedStates.Entity.WorldTransform;
+                return bufferedStates.Entity.localToWorld;
             }
             set
             {
@@ -172,7 +172,7 @@ namespace BEPUphysics.EntityStateManagement
                 }
                 else
                 {
-                    bufferedStates.Entity.WorldTransform = value;
+                    bufferedStates.Entity.localToWorld = value;
                 }
             }
         }

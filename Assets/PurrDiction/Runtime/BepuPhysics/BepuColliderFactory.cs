@@ -31,25 +31,25 @@ namespace PurrNet.Prediction
                 };
 
                 entities[i] = new CompoundShapeEntry(
-                    shape, 
-                    new RigidTransform(collider.offset, FPQuaternion.Identity), 
+                    shape,
+                    new RigidTransform(collider.offset, FPQuaternion.Identity),
                     mass
                 );
             }
 
             return new CompoundBody(entities, mass)
             {
-                Position = transform.position.ToFPVector3(),
-                Orientation = transform.rotation.ToFPQuaternion()
+                position = transform.position.ToFPVector3(),
+                orientation = transform.rotation.ToFPQuaternion()
             };
         }
 
-        
+
         private static EntityShape CreateMeshShape(Mesh mesh, Matrix4x4 worldMatrix, bool convex)
         {
             if (convex)
                 return CreateConvexHullShape(mesh, worldMatrix);
-    
+
             var vertices = MathConverter.Convert(mesh.vertices);
             var indices = new List<int>();
             for (int i = 0; i < mesh.subMeshCount; i++)
@@ -64,7 +64,7 @@ namespace PurrNet.Prediction
                 MathConverter.Convert(position)
             );
 
-            return new MobileMeshShape(vertices, indices.ToArray(), bepuTransform, 
+            return new MobileMeshShape(vertices, indices.ToArray(), bepuTransform,
                 MobileMeshSolidity.DoubleSided);
         }
 
@@ -73,7 +73,7 @@ namespace PurrNet.Prediction
             var reducedVertices = GetConvexHullVertices(mesh, worldMatrix);
             return new ConvexHullShape(MathConverter.Convert(reducedVertices));
         }
-        
+
         private static readonly Vector3[] SampleDirections = {
             Vector3.up, Vector3.down,
             Vector3.left, Vector3.right,
@@ -111,7 +111,7 @@ namespace PurrNet.Prediction
                 }
 
                 var localVertex = worldMatrix.MultiplyPoint3x4(extremeVertex);
-        
+
                 if (!reducedVertices.Any(v => Vector3.Distance(v, localVertex) < tolerance))
                 {
                     reducedVertices.Add(localVertex);
@@ -120,12 +120,12 @@ namespace PurrNet.Prediction
 
             return reducedVertices.ToArray();
         }
-        
+
         public static Mesh ConvertVerticesToMesh(IList<FPVector3> vertices)
         {
             Mesh mesh = new Mesh();
             mesh.vertices = vertices.Select(v => v.ToVector3()).ToArray();
-    
+
             List<int> triangles = new List<int>();
             for (int i = 0; i < vertices.Count - 2; i++)
             {
@@ -133,7 +133,7 @@ namespace PurrNet.Prediction
                 triangles.Add(i + 1);
                 triangles.Add(i + 2);
             }
-    
+
             mesh.triangles = triangles.ToArray();
             return mesh;
         }
@@ -157,7 +157,7 @@ namespace PurrNet.Prediction
                         Gizmos.DrawWireSphere(Vector3.zero, (float)collider.radius);
                         Gizmos.matrix = Matrix4x4.identity;
                         break;
-                    
+
                     case BepuColliderType.Box:
                         Vector3 boxSize = new Vector3((float)collider.width, (float)collider.height, (float)collider.depth);
                         Matrix4x4 boxMatrix = Matrix4x4.TRS(position + rotation * collider.offset.ToVector3(), rotation, Vector3.one);
@@ -165,16 +165,16 @@ namespace PurrNet.Prediction
                         Gizmos.DrawWireCube(Vector3.zero, boxSize);
                         Gizmos.matrix = Matrix4x4.identity;
                         break;
-                    
+
                     case BepuColliderType.Capsule:
                         float radius = (float)collider.radius;
                         float height = (float)collider.height;
                         Vector3 pointOffset = Vector3.up * (height * 0.5f - radius);
                         Vector3 colliderPosition = position + rotation * collider.offset.ToVector3();
-    
+
                         Gizmos.DrawWireSphere(colliderPosition + rotation * pointOffset, radius);
                         Gizmos.DrawWireSphere(colliderPosition + rotation * -pointOffset, radius);
-    
+
                         Vector3[] directions = { Vector3.right, Vector3.left, Vector3.forward, Vector3.back };
                         foreach (var dir in directions)
                         {
@@ -186,16 +186,16 @@ namespace PurrNet.Prediction
 
                     case BepuColliderType.Mesh:
                         Gizmos.color = Color.cyan;
-                        
+
                         if(!collider.mesh)
                             continue;
-            
+
                         if (collider.convex)
                         {
                             var vertices = GetConvexHullVertices(collider.mesh, Matrix4x4.identity);
                             Matrix4x4 meshMatrix = Matrix4x4.TRS(position + rotation * collider.offset.ToVector3(), rotation, Vector3.one);
                             Gizmos.matrix = meshMatrix;
-                            
+
                             for (int i = 0; i < vertices.Length; i++)
                             {
                                 for (int j = i + 1; j < vertices.Length; j++)
@@ -203,27 +203,27 @@ namespace PurrNet.Prediction
                                     Gizmos.DrawLine(vertices[i], vertices[j]);
                                 }
                             }
-                            
+
                             Gizmos.matrix = Matrix4x4.identity;
                         }
-                        else 
+                        else
                         {
                             var vertices = collider.mesh.vertices;
                             var triangles = collider.mesh.triangles;
                             Vector3 meshPosition = position + rotation * collider.offset.ToVector3();
-        
+
                             for (int i = 0; i < triangles.Length; i += 3)
                             {
                                 Vector3 v1 = meshPosition + rotation * vertices[triangles[i]];
                                 Vector3 v2 = meshPosition + rotation * vertices[triangles[i + 1]];
                                 Vector3 v3 = meshPosition + rotation * vertices[triangles[i + 2]];
-            
+
                                 Gizmos.DrawLine(v1, v2);
                                 Gizmos.DrawLine(v2, v3);
                                 Gizmos.DrawLine(v3, v1);
                             }
                         }
-                        
+
                         Gizmos.color = Color.yellow;
                         break;
                 }

@@ -192,14 +192,14 @@ namespace BEPUphysics.Vehicle
             newPosition.y = wheel.suspension.worldAttachmentPoint.y + wheel.suspension.worldDirection.y * wheel.suspension.restLength * F64.C0p5;
             newPosition.z = wheel.suspension.worldAttachmentPoint.z + wheel.suspension.worldDirection.z * wheel.suspension.restLength * F64.C0p5;
 
-            detector.Position = newPosition;
-            detector.OrientationMatrix = wheel.Vehicle.Body.orientationMatrix;
+            detector.position = newPosition;
+            detector.orientationMatrix = wheel.Vehicle.Body._orientationMatrix;
             FPVector3 linearVelocity;
-            FPVector3.Subtract(ref newPosition, ref wheel.vehicle.Body.position, out linearVelocity);
-            FPVector3.Cross(ref linearVelocity, ref wheel.vehicle.Body.angularVelocity, out linearVelocity);
-            FPVector3.Add(ref linearVelocity, ref wheel.vehicle.Body.linearVelocity, out linearVelocity);
-            detector.LinearVelocity = linearVelocity;
-            detector.AngularVelocity = wheel.vehicle.Body.angularVelocity;
+            FPVector3.Subtract(ref newPosition, ref wheel.vehicle.Body._position, out linearVelocity);
+            FPVector3.Cross(ref linearVelocity, ref wheel.vehicle.Body._angularVelocity, out linearVelocity);
+            FPVector3.Add(ref linearVelocity, ref wheel.vehicle.Body._linearVelocity, out linearVelocity);
+            detector.linearVelocity = linearVelocity;
+            detector.angularVelocity = wheel.vehicle.Body._angularVelocity;
         }
     }
 }

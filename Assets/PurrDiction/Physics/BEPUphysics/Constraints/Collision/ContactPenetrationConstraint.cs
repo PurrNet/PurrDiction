@@ -93,13 +93,13 @@ namespace BEPUphysics.Constraints.Collision
                 FP lambda = F64.C0;
                 if (entityA != null)
                 {
-                    lambda = entityA.linearVelocity.x * linearAX + entityA.linearVelocity.y * linearAY + entityA.linearVelocity.z * linearAZ +
-                             entityA.angularVelocity.x * angularAX + entityA.angularVelocity.y * angularAY + entityA.angularVelocity.z * angularAZ;
+                    lambda = entityA._linearVelocity.x * linearAX + entityA._linearVelocity.y * linearAY + entityA._linearVelocity.z * linearAZ +
+                             entityA._angularVelocity.x * angularAX + entityA._angularVelocity.y * angularAY + entityA._angularVelocity.z * angularAZ;
                 }
                 if (entityB != null)
                 {
-                    lambda += -entityB.linearVelocity.x * linearAX - entityB.linearVelocity.y * linearAY - entityB.linearVelocity.z * linearAZ +
-                              entityB.angularVelocity.x * angularBX + entityB.angularVelocity.y * angularBY + entityB.angularVelocity.z * angularBZ;
+                    lambda += -entityB._linearVelocity.x * linearAX - entityB._linearVelocity.y * linearAY - entityB._linearVelocity.z * linearAZ +
+                              entityB._angularVelocity.x * angularBX + entityB._angularVelocity.y * angularBY + entityB._angularVelocity.z * angularBZ;
                 }
                 return lambda;
             }
@@ -115,8 +115,8 @@ namespace BEPUphysics.Constraints.Collision
         public override void Update(FP dt)
         {
 
-            entityADynamic = entityA != null && entityA.isDynamic;
-            entityBDynamic = entityB != null && entityB.isDynamic;
+            entityADynamic = entityA != null && entityA._isDynamic;
+            entityBDynamic = entityB != null && entityB._isDynamic;
 
             //Set up the jacobians.
             linearAX = -contact.Normal.x;
@@ -131,7 +131,7 @@ namespace BEPUphysics.Constraints.Collision
             //angular A = Ra x N
             if (entityA != null)
             {
-                FPVector3.Subtract(ref contact.Position, ref entityA.position, out ra);
+                FPVector3.Subtract(ref contact.Position, ref entityA._position, out ra);
                 angularAX = (ra.y * linearAZ) - (ra.z * linearAY);
                 angularAY = (ra.z * linearAX) - (ra.x * linearAZ);
                 angularAZ = (ra.x * linearAY) - (ra.y * linearAX);
@@ -141,7 +141,7 @@ namespace BEPUphysics.Constraints.Collision
             //Angular B = N x Rb
             if (entityB != null)
             {
-                FPVector3.Subtract(ref contact.Position, ref entityB.position, out rb);
+                FPVector3.Subtract(ref contact.Position, ref entityB._position, out rb);
                 angularBX = (linearAY * rb.z) - (linearAZ * rb.y);
                 angularBY = (linearAZ * rb.x) - (linearAX * rb.z);
                 angularBZ = (linearAX * rb.y) - (linearAY * rb.x);

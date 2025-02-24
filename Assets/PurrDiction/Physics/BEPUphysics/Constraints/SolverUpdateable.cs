@@ -117,7 +117,7 @@ namespace BEPUphysics.Constraints
         {
             for (int i = 0; i < involvedEntities.Count; i++)
             {
-                if (involvedEntities[i].isDynamic)
+                if (involvedEntities[i]._isDynamic)
                 {
                     //Only need to wake up one dynamic entity.  That will wake up the rest.
                     //Wouldn't want to pointlessly force-wake a kinematic object.
@@ -153,7 +153,7 @@ namespace BEPUphysics.Constraints
         {
             for (int i = 0; i < numberOfInvolvedEntities; i++)
             {
-                if (involvedEntities.Elements[i].isDynamic) //Only need to lock dynamic entities.
+                if (involvedEntities.Elements[i]._isDynamic) //Only need to lock dynamic entities.
                 {
                     involvedEntities.Elements[i].locker.Enter();
                 }
@@ -168,7 +168,7 @@ namespace BEPUphysics.Constraints
         {
             for (int i = numberOfInvolvedEntities - 1; i >= 0; i--)
             {
-                if (involvedEntities.Elements[i].isDynamic) //Only need to lock dynamic entities.
+                if (involvedEntities.Elements[i]._isDynamic) //Only need to lock dynamic entities.
                     involvedEntities.Elements[i].locker.Exit();
             }
         }
@@ -182,13 +182,13 @@ namespace BEPUphysics.Constraints
         {
             for (int i = 0; i < numberOfInvolvedEntities; i++)
             {
-                if (involvedEntities.Elements[i].isDynamic) //Only need to lock dynamic entities.
+                if (involvedEntities.Elements[i]._isDynamic) //Only need to lock dynamic entities.
                     if (!involvedEntities.Elements[i].locker.TryEnter())
                     {
                         //Turns out we can't take all the resources! Immediately drop everything.
                         for (i = i - 1 /*failed on the ith element, so start at the previous*/; i >= 0; i--)
                         {
-                            if (involvedEntities[i].isDynamic)
+                            if (involvedEntities[i]._isDynamic)
                                 involvedEntities.Elements[i].locker.Exit();
                         }
                         return false;
@@ -273,7 +273,7 @@ namespace BEPUphysics.Constraints
                 for (int i = 0; i < involvedEntities.Count; i++)
                 {
                     Entity e = involvedEntities.Elements[i];
-                    if (e.isDynamic)
+                    if (e._isDynamic)
                     {
                         e.activityInformation.Activate();
                         break;//Don't bother activating other entities; they are all a part of the same simulation island.
@@ -292,7 +292,7 @@ namespace BEPUphysics.Constraints
                 for (int i = 0; i < involvedEntities.Count; i++)
                 {
                     Entity e = involvedEntities.Elements[i];
-                    if (e.isDynamic)
+                    if (e._isDynamic)
                     {
                         e.activityInformation.Activate();
                         break; //Don't bother activating other entities; they are all a part of the same simulation island.

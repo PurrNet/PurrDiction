@@ -187,7 +187,7 @@ namespace BEPUphysics.Character
             FP inverseEffectiveMass = characterBody.InverseMass;
             if (supportEntity != null)
             {
-                FPVector3 offsetB = supportData.Position - supportEntity.Position;
+                FPVector3 offsetB = supportData.Position - supportEntity.position;
                 FPVector3.Cross(ref offsetB, ref linearJacobianB, out angularJacobianB);
                 if (supportEntity.IsDynamic)
                 {
@@ -290,14 +290,14 @@ namespace BEPUphysics.Character
             {
                 FP relativeVelocity;
 
-                FPVector3.Dot(ref linearJacobianA, ref characterBody.linearVelocity, out relativeVelocity);
+                FPVector3.Dot(ref linearJacobianA, ref characterBody._linearVelocity, out relativeVelocity);
 
                 if (supportEntity != null)
                 {
                     FP supportVelocity;
-                    FPVector3.Dot(ref linearJacobianB, ref supportEntity.linearVelocity, out supportVelocity);
+                    FPVector3.Dot(ref linearJacobianB, ref supportEntity._linearVelocity, out supportVelocity);
                     relativeVelocity += supportVelocity;
-                    FPVector3.Dot(ref angularJacobianB, ref supportEntity.angularVelocity, out supportVelocity);
+                    FPVector3.Dot(ref angularJacobianB, ref supportEntity._angularVelocity, out supportVelocity);
                     relativeVelocity += supportVelocity;
 
                 }

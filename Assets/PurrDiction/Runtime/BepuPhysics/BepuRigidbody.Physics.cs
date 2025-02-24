@@ -11,14 +11,14 @@ namespace PurrNet.Prediction
 
         public FPVector3 position
         {
-            get => _entity.Position;
-            set => _entity.Position = value;
+            get => _entity.position;
+            set => _entity.position = value;
         }
 
         public FPQuaternion rotation
         {
-            get => _entity.Orientation;
-            set => _entity.Orientation = value;
+            get => _entity.orientation;
+            set => _entity.orientation = value;
         }
 
         public bool isKinematic
@@ -37,11 +37,18 @@ namespace PurrNet.Prediction
 
         public FPVector3 linearVelocity
         {
-            get => currentState.linearVelocity;
-            set => _entity.LinearVelocity = value;
+            get => _entity.linearVelocity;
+            set
+            {
+                _entity.linearVelocity = value;
+            }
         }
 
-        public FPVector3 angularVelocity => currentState.angularVelocity;
+        public FPVector3 angularVelocity
+        {
+            get => _entity.angularVelocity;
+            set => _entity.angularVelocity = value;
+        }
 
         public FP mass => _mass;
 
@@ -73,40 +80,32 @@ namespace PurrNet.Prediction
 
             if (!_isKinematic)
             {
-                state.linearVelocity += _space.ForceUpdater.Gravity * delta;
-
                 if (_linearDrag > FP.C0)
                 {
-                    var dragFactor = FP.C1 - (delta * _linearDrag);
-                    state.linearVelocity *= FP.Max(FP.C0, dragFactor);
+                    var dragFactor = FP.C1 - delta * _linearDrag;
+                    _entity.linearVelocity *= FP.Max(FP.C0, dragFactor);
                 }
 
                 if (_angularDrag > FP.C0)
                 {
-                    var angularDragFactor = FP.C1 - (delta * _angularDrag);
-                    state.angularVelocity *= FP.Max(FP.C0, angularDragFactor);
+                    var angularDragFactor = FP.C1 - delta * _angularDrag;
+                    _entity.angularVelocity *= FP.Max(FP.C0, angularDragFactor);
                 }
             }
 
-            _entity.LinearVelocity = state.linearVelocity;
-            _entity.AngularVelocity = state.angularVelocity;
-
             EnforceConstraints();
-
-            state.linearVelocity = _entity.LinearVelocity;
-            state.angularVelocity = _entity.AngularVelocity;
         }
 
         protected override void GetUnityState(ref BepuRigidbodyState state)
         {
-            state.linearVelocity = _entity.LinearVelocity;
-            state.angularVelocity = _entity.AngularVelocity;
+            state.linearVelocity = _entity.linearVelocity;
+            state.angularVelocity = _entity.angularVelocity;
         }
 
         protected override void SetUnityState(BepuRigidbodyState state)
         {
-            _entity.LinearVelocity = state.linearVelocity;
-            _entity.AngularVelocity = state.angularVelocity;
+            _entity.linearVelocity = state.linearVelocity;
+            _entity.angularVelocity = state.angularVelocity;
         }
 
         public void AddForce(FPVector3 force, ForceMode mode = ForceMode.Force)
@@ -123,7 +122,7 @@ namespace PurrNet.Prediction
                     _entity.ApplyLinearImpulse(force * mass * predictionManager.tickDelta);
                     break;
                 case ForceMode.VelocityChange:
-                    _entity.LinearVelocity += force;
+                    _entity.linearVelocity += force;
                     break;
                 default:
                     PurrLogger.LogException($"Force mode <b>{mode}</b> not implemented!", this);
@@ -152,7 +151,7 @@ namespace PurrNet.Prediction
                     _entity.ApplyAngularImpulse(ref torque);
                     break;
                 case ForceMode.VelocityChange:
-                    _entity.AngularVelocity += torque;
+                    _entity.angularVelocity += torque;
                     break;
                 default:
                     PurrLogger.LogException($"Force mode <b>{mode}</b> not implemented!", this);
@@ -181,7 +180,7 @@ namespace PurrNet.Prediction
                     _entity.ApplyImpulse(ref force, ref pos);
                     break;
                 case ForceMode.VelocityChange:
-                    _entity.LinearVelocity += force;
+                    _entity.linearVelocity += force;
                     break;
                 default:
                     PurrLogger.LogException($"Force mode <b>{mode}</b> not implemented!", this);

@@ -63,7 +63,7 @@ namespace BEPUphysics.Entities.Prefabs
         public Cylinder(FPVector3 position, FP height, FP radius, FP mass)
             : this(height, radius, mass)
         {
-            Position = position;
+            ((Entity)this).position = position;
         }
 
         /// <summary>
@@ -75,7 +75,7 @@ namespace BEPUphysics.Entities.Prefabs
         public Cylinder(FPVector3 position, FP height, FP radius)
             : this(height, radius)
         {
-            Position = position;
+            ((Entity)this).position = position;
         }
 
         /// <summary>

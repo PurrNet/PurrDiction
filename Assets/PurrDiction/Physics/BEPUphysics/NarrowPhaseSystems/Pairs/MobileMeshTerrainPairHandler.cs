@@ -120,7 +120,7 @@ namespace BEPUphysics.NarrowPhaseSystems.Pairs
             FPBoundingBox localBoundingBox;
 
             FPVector3 sweep;
-            FPVector3.Multiply(ref mobileMesh.entity.linearVelocity, dt, out sweep);
+            FPVector3.Multiply(ref mobileMesh.entity._linearVelocity, dt, out sweep);
             mobileMesh.Shape.GetSweptLocalBoundingBox(ref mobileMesh.worldTransform, ref mesh.worldTransform, ref sweep, out localBoundingBox);
             mesh.Shape.GetOverlaps(localBoundingBox, ref overlappedElements);
             for (int i = 0; i < overlappedElements.Count; i++)

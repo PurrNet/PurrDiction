@@ -35,7 +35,7 @@ namespace BEPUphysics.Entities.Prefabs
             FPVector3 center;
             var shape = new CompoundShape(bodies, out center);
             Initialize(new CompoundCollidable(shape));
-            Position = center;
+            position = center;
         }
 
 
@@ -50,7 +50,7 @@ namespace BEPUphysics.Entities.Prefabs
             FPVector3 center;
             var shape = new CompoundShape(bodies, out center);
             Initialize(new CompoundCollidable(shape), mass);
-            Position = center;
+            position = center;
         }
 
 
@@ -64,7 +64,7 @@ namespace BEPUphysics.Entities.Prefabs
             FPVector3 center;
             var collidable = new CompoundCollidable(children, out center);
             Initialize(collidable);
-            Position = center;
+            position = center;
         }
 
         ///<summary>
@@ -77,7 +77,7 @@ namespace BEPUphysics.Entities.Prefabs
             FPVector3 center;
             var collidable = new CompoundCollidable(children, out center);
             Initialize(collidable, mass);
-            Position = center;
+            position = center;
         }
     }
 

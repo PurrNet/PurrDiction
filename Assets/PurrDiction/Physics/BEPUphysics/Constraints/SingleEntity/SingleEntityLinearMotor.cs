@@ -93,8 +93,8 @@ namespace BEPUphysics.Constraints.SingleEntity
             set
             {
                 localPoint = value;
-                Matrix3x3.Transform(ref localPoint, ref entity.orientationMatrix, out worldPoint);
-                FPVector3.Add(ref worldPoint, ref entity.position, out worldPoint);
+                Matrix3x3.Transform(ref localPoint, ref entity._orientationMatrix, out worldPoint);
+                FPVector3.Add(ref worldPoint, ref entity._position, out worldPoint);
             }
         }
 
@@ -107,8 +107,8 @@ namespace BEPUphysics.Constraints.SingleEntity
             set
             {
                 worldPoint = value;
-                FPVector3.Subtract(ref worldPoint, ref entity.position, out localPoint);
-                Matrix3x3.TransformTranspose(ref localPoint, ref entity.orientationMatrix, out localPoint);
+                FPVector3.Subtract(ref worldPoint, ref entity._position, out localPoint);
+                Matrix3x3.TransformTranspose(ref localPoint, ref entity._orientationMatrix, out localPoint);
             }
         }
 
@@ -130,8 +130,8 @@ namespace BEPUphysics.Constraints.SingleEntity
             get
             {
                 FPVector3 lambda;
-                FPVector3.Cross(ref r, ref entity.angularVelocity, out lambda);
-                FPVector3.Subtract(ref lambda, ref entity.linearVelocity, out lambda);
+                FPVector3.Cross(ref r, ref entity._angularVelocity, out lambda);
+                FPVector3.Subtract(ref lambda, ref entity._linearVelocity, out lambda);
                 return lambda;
             }
         }
@@ -163,8 +163,8 @@ namespace BEPUphysics.Constraints.SingleEntity
         {
             //Compute relative velocity
             FPVector3 lambda;
-            FPVector3.Cross(ref r, ref entity.angularVelocity, out lambda);
-            FPVector3.Subtract(ref lambda, ref entity.linearVelocity, out lambda);
+            FPVector3.Cross(ref r, ref entity._angularVelocity, out lambda);
+            FPVector3.Subtract(ref lambda, ref entity._linearVelocity, out lambda);
 
             //Add in bias velocity
             FPVector3.Add(ref biasVelocity, ref lambda, out lambda);
@@ -208,8 +208,8 @@ namespace BEPUphysics.Constraints.SingleEntity
         public override void Update(FP dt)
         {
             //Transform point into world space.
-            Matrix3x3.Transform(ref localPoint, ref entity.orientationMatrix, out r);
-            FPVector3.Add(ref r, ref entity.position, out worldPoint);
+            Matrix3x3.Transform(ref localPoint, ref entity._orientationMatrix, out r);
+            FPVector3.Add(ref r, ref entity._position, out worldPoint);
 
             FP updateRate = F64.C1 / dt;
             if (settings.mode == MotorMode.Servomechanism)

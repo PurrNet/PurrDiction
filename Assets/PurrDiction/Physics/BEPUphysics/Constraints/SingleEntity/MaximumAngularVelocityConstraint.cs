@@ -93,7 +93,7 @@ namespace BEPUphysics.Constraints.SingleEntity
         /// </summary>
         FPVector3 I3DImpulseConstraint.RelativeVelocity
         {
-            get { return entity.angularVelocity; }
+            get { return entity._angularVelocity; }
         }
 
         /// <summary>
@@ -112,14 +112,14 @@ namespace BEPUphysics.Constraints.SingleEntity
         /// </summary>
         public override FP SolveIteration()
         {
-            FP angularSpeed = entity.angularVelocity.LengthSquared();
+            FP angularSpeed = entity._angularVelocity.LengthSquared();
             if (angularSpeed > maximumSpeedSquared)
             {
                 angularSpeed = FP.Sqrt(angularSpeed);
                 FPVector3 impulse;
                 //divide by angularSpeed to normalize the velocity.
                 //Multiply by angularSpeed - maximumSpeed to get the 'velocity change vector.'
-                FPVector3.Multiply(ref entity.angularVelocity, -(angularSpeed - maximumSpeed) / angularSpeed, out impulse);
+                FPVector3.Multiply(ref entity._angularVelocity, -(angularSpeed - maximumSpeed) / angularSpeed, out impulse);
 
                 //incorporate softness
                 FPVector3 softnessImpulse;

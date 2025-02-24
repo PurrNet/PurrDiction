@@ -149,7 +149,7 @@ namespace BEPUphysics.Vehicle
             var startingTransform = new RigidTransform
             {
                 Position = wheel.suspension.worldAttachmentPoint,
-                Orientation = FPQuaternion.Concatenate(FPQuaternion.Concatenate(LocalWheelOrientation, IncludeSteeringTransformInCast ? localSteeringTransform : FPQuaternion.Identity), wheel.vehicle.Body.orientation)
+                Orientation = FPQuaternion.Concatenate(FPQuaternion.Concatenate(LocalWheelOrientation, IncludeSteeringTransformInCast ? localSteeringTransform : FPQuaternion.Identity), wheel.vehicle.Body._orientation)
             };
             FPVector3 sweep;
             FPVector3.Multiply(ref wheel.suspension.worldDirection, wheel.suspension.restLength, out sweep);
@@ -252,24 +252,24 @@ namespace BEPUphysics.Vehicle
             newPosition.y = wheel.suspension.worldAttachmentPoint.y + wheel.suspension.worldDirection.y * wheel.suspension.restLength * F64.C0p5;
             newPosition.z = wheel.suspension.worldAttachmentPoint.z + wheel.suspension.worldDirection.z * wheel.suspension.restLength * F64.C0p5;
 
-            detector.Position = newPosition;
+            detector.position = newPosition;
             if (IncludeSteeringTransformInCast)
             {
                 FPQuaternion localSteeringTransform;
                 FPQuaternion.CreateFromAxisAngle(ref wheel.suspension.localDirection, steeringAngle, out localSteeringTransform);
 
-                detector.Orientation = FPQuaternion.Concatenate(localSteeringTransform, wheel.Vehicle.Body.orientation);
+                detector.orientation = FPQuaternion.Concatenate(localSteeringTransform, wheel.Vehicle.Body._orientation);
             }
             else
             {
-                detector.Orientation = wheel.Vehicle.Body.orientation;
+                detector.orientation = wheel.Vehicle.Body._orientation;
             }
             FPVector3 linearVelocity;
-            FPVector3.Subtract(ref newPosition, ref wheel.vehicle.Body.position, out linearVelocity);
-            FPVector3.Cross(ref linearVelocity, ref wheel.vehicle.Body.angularVelocity, out linearVelocity);
-            FPVector3.Add(ref linearVelocity, ref wheel.vehicle.Body.linearVelocity, out linearVelocity);
-            detector.LinearVelocity = linearVelocity;
-            detector.AngularVelocity = wheel.vehicle.Body.angularVelocity;
+            FPVector3.Subtract(ref newPosition, ref wheel.vehicle.Body._position, out linearVelocity);
+            FPVector3.Cross(ref linearVelocity, ref wheel.vehicle.Body._angularVelocity, out linearVelocity);
+            FPVector3.Add(ref linearVelocity, ref wheel.vehicle.Body._linearVelocity, out linearVelocity);
+            detector.linearVelocity = linearVelocity;
+            detector.angularVelocity = wheel.vehicle.Body._angularVelocity;
         }
     }
 }

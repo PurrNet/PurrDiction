@@ -38,7 +38,7 @@ namespace BEPUphysics.CollisionTests.Manifolds
                 FPVector3 transformedVelocity;
                 Matrix3x3 inverse;
                 Matrix3x3.Invert(ref mesh.worldTransform.LinearTransform, out inverse);
-                Matrix3x3.Transform(ref convex.entity.linearVelocity, ref inverse, out transformedVelocity);
+                Matrix3x3.Transform(ref convex.entity._linearVelocity, ref inverse, out transformedVelocity);
                 FPVector3.Multiply(ref transformedVelocity, dt, out transformedVelocity);
 
                 if (transformedVelocity.x > F64.C0)

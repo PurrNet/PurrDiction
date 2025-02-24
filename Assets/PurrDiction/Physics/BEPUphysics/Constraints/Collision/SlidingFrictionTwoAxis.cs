@@ -96,15 +96,15 @@ namespace BEPUphysics.Constraints.Collision
                 FP dvx = F64.C0, dvy = F64.C0, dvz = F64.C0;
                 if (entityA != null)
                 {
-                    dvx = entityA.linearVelocity.x + (entityA.angularVelocity.y * ra.z) - (entityA.angularVelocity.z * ra.y);
-                    dvy = entityA.linearVelocity.y + (entityA.angularVelocity.z * ra.x) - (entityA.angularVelocity.x * ra.z);
-                    dvz = entityA.linearVelocity.z + (entityA.angularVelocity.x * ra.y) - (entityA.angularVelocity.y * ra.x);
+                    dvx = entityA._linearVelocity.x + (entityA._angularVelocity.y * ra.z) - (entityA._angularVelocity.z * ra.y);
+                    dvy = entityA._linearVelocity.y + (entityA._angularVelocity.z * ra.x) - (entityA._angularVelocity.x * ra.z);
+                    dvz = entityA._linearVelocity.z + (entityA._angularVelocity.x * ra.y) - (entityA._angularVelocity.y * ra.x);
                 }
                 if (entityB != null)
                 {
-                    dvx += -entityB.linearVelocity.x - (entityB.angularVelocity.y * rb.z) + (entityB.angularVelocity.z * rb.y);
-                    dvy += -entityB.linearVelocity.y - (entityB.angularVelocity.z * rb.x) + (entityB.angularVelocity.x * rb.z);
-                    dvz += -entityB.linearVelocity.z - (entityB.angularVelocity.x * rb.y) + (entityB.angularVelocity.y * rb.x);
+                    dvx += -entityB._linearVelocity.x - (entityB._angularVelocity.y * rb.z) + (entityB._angularVelocity.z * rb.y);
+                    dvy += -entityB._linearVelocity.y - (entityB._angularVelocity.z * rb.x) + (entityB._angularVelocity.x * rb.z);
+                    dvz += -entityB._linearVelocity.z - (entityB._angularVelocity.x * rb.y) + (entityB._angularVelocity.y * rb.x);
                 }
 
                 //Fix64 dvx = entityA.linearVelocity.X + (entityA.angularVelocity.Y * ra.Z) - (entityA.angularVelocity.Z * ra.Y)
@@ -243,8 +243,8 @@ namespace BEPUphysics.Constraints.Collision
         public override void Update(FP dt)
         {
 
-            entityADynamic = entityA != null && entityA.isDynamic;
-            entityBDynamic = entityB != null && entityB.isDynamic;
+            entityADynamic = entityA != null && entityA._isDynamic;
+            entityBDynamic = entityB != null && entityB._isDynamic;
 
             contactCount = contactManifoldConstraint.penetrationConstraints.Count;
             switch (contactCount)
@@ -297,17 +297,17 @@ namespace BEPUphysics.Constraints.Collision
             FPVector3 velocityA, velocityB;
             if (entityA != null)
             {
-                FPVector3.Subtract(ref manifoldCenter, ref entityA.position, out ra);
-                FPVector3.Cross(ref entityA.angularVelocity, ref ra, out velocityA);
-                FPVector3.Add(ref velocityA, ref entityA.linearVelocity, out velocityA);
+                FPVector3.Subtract(ref manifoldCenter, ref entityA._position, out ra);
+                FPVector3.Cross(ref entityA._angularVelocity, ref ra, out velocityA);
+                FPVector3.Add(ref velocityA, ref entityA._linearVelocity, out velocityA);
             }
             else
                 velocityA = new FPVector3();
             if (entityB != null)
             {
-                FPVector3.Subtract(ref manifoldCenter, ref entityB.position, out rb);
-                FPVector3.Cross(ref entityB.angularVelocity, ref rb, out velocityB);
-                FPVector3.Add(ref velocityB, ref entityB.linearVelocity, out velocityB);
+                FPVector3.Subtract(ref manifoldCenter, ref entityB._position, out rb);
+                FPVector3.Cross(ref entityB._angularVelocity, ref rb, out velocityB);
+                FPVector3.Add(ref velocityB, ref entityB._linearVelocity, out velocityB);
             }
             else
                 velocityB = new FPVector3();
