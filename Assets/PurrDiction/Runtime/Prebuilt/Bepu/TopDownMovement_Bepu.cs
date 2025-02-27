@@ -88,10 +88,6 @@ namespace PurrNet.Prediction.Prebuilt
             // don't change the y velocity (jumping, falling, etc)
             nextVelocity.y = currVelocity.y;
 
-            if (predictionManager.isVerified)
-            {
-                PurrLogger.Log($"Verified input: {(input.HasValue ? input.Value.jump : "NULL")}, is Owner: {IsOwner()}");
-            }
             if (input?.jump == true)
             {
                 _jumpEvent.Invoke();
