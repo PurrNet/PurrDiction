@@ -20,12 +20,36 @@ namespace PurrNet.Prediction.Prebuilt
         [SerializeField] private FP _acceleration = 30;
 
         private Camera _camera;
+        private bool _wantJump;
+        private PredictedEvent _jumpEvent;
 
         private void Awake()
         {
             _camera = Camera.main;
             if (!_camera)
                 Debug.LogError($"Failed to get camera tagget as main camera!", this);
+        }
+
+        protected override void OnSpawned()
+        {
+            _jumpEvent = new PredictedEvent(predictionManager, this);
+            _jumpEvent.AddListener(OnJumpedVFX);
+        }
+
+        protected override void OnDespawned()
+        {
+            _jumpEvent.RemoveListener(OnJumpedVFX);
+        }
+
+        private void OnJumpedVFX()
+        {
+            PurrLogger.Log("Jumped!");
+        }
+
+        private void Update()
+        {
+            if (!_wantJump)
+                _wantJump = Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame;
         }
 
         private void Reset()
@@ -42,7 +66,15 @@ namespace PurrNet.Prediction.Prebuilt
                 moveDirection = GetCameraRelativeMovement(GetMovementInput())
             };
 
+            input.jump = _wantJump;
+            _wantJump = false;
+
             return input;
+        }
+
+        protected override void ModifyExtrapolatedInput(ref Input input)
+        {
+            input.jump = false;
         }
 
         protected override void Simulate(Input? input, ref State state, FP delta)
@@ -55,6 +87,12 @@ namespace PurrNet.Prediction.Prebuilt
 
             // don't change the y velocity (jumping, falling, etc)
             nextVelocity.y = currVelocity.y;
+
+            if (input?.jump == true)
+            {
+                _jumpEvent.Invoke();
+                nextVelocity.y = 10;
+            }
 
             _rigidbody.linearVelocity = nextVelocity;
         }
@@ -105,6 +143,12 @@ namespace PurrNet.Prediction.Prebuilt
         public struct Input : IPredictedData
         {
             public FPVector3 moveDirection;
+            public bool jump;
+
+            public override string ToString()
+            {
+                return $"Move: {moveDirection}, Jump: {jump}";
+            }
         }
 
         public void OnBepuCollisionEnter(BepuCollisionData data)

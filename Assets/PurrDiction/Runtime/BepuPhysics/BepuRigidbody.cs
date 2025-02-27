@@ -25,7 +25,7 @@ namespace PurrNet.Prediction
 
         public Entity entity => _entity;
 
-        public override void Setup(NetworkManager manager, PredictionManager world, uint id)
+        internal override void Setup(NetworkManager manager, PredictionManager world, uint id)
         {
             if (!isFreshSpawn)
                 return;

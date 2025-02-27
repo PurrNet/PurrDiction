@@ -17,38 +17,28 @@ namespace PurrNet.Prediction
         private History<INPUT> _inputHistory;
 
         protected abstract INPUT GetInput();
-        
+
         private INPUT _lastInput;
-        
+
         public PredictedHierarchy hierarchy { get; private set; }
 
-        public override void Setup(NetworkManager manager, PredictionManager world, uint id)
+        internal override void Setup(NetworkManager manager, PredictionManager world, uint id)
         {
             if (!isFreshSpawn)
                 return;
-            
+
             base.Setup(manager, world, id);
 
             hierarchy = world.hierarchy;
             _inputHistory = new History<INPUT>(world.tickRate * 5);
         }
-        
-        internal override void EvaluateAndRegisterLocalInput(ulong localTick)
-        {
-            _lastInput = GetInput();
-            SanitizeInput(ref _lastInput);
-            _inputHistory.Write(localTick, _lastInput);
-        }
-        
+
         internal override void SimulateTick(ulong tick, FP delta)
         {
             if (IsOwner())
             {
                 if (!_inputHistory.TryGet(tick, out var input))
-                {
-                    Simulate(GetInput(), ref fullPredictedState.state, delta);
-                    PurrLogger.LogError("No local input found for tick" + tick + " using current input but this is likely a bug");
-                }
+                     Simulate(default, ref fullPredictedState.state, delta);
                 else Simulate(input, ref fullPredictedState.state, delta);
             }
             else
@@ -56,7 +46,8 @@ namespace PurrNet.Prediction
                 switch (_extrapolateInput)
                 {
                     case true when _inputHistory.TryGetClosest(tick, out var extrainput, out var distanceInTicks):
-                        ModifyExtrapolatedInput(ref extrainput);
+                        if (distanceInTicks > 0)
+                            ModifyExtrapolatedInput(ref extrainput);
                         uint maxInputs = (uint)Mathf.CeilToInt(_repeatInputFactor * 10 / ((float)delta * 60));
                         if (distanceInTicks <= maxInputs)
                              Simulate(extrainput, ref fullPredictedState.state, delta);
@@ -71,35 +62,43 @@ namespace PurrNet.Prediction
                 }
             }
         }
-        
+
         /// <summary>
         /// Modify the extrapolated input before it is used to simulate the state.
         /// </summary>
         protected virtual void ModifyExtrapolatedInput(ref INPUT input) { }
 
-        internal override void SimulateLocal(FP delta)
+        internal override void PrepareInput(bool isServer, bool isLocal, ulong tick)
         {
-            Simulate(_lastInput, ref fullPredictedState.state, delta);
+            if (isLocal)
+            {
+                var input = GetInput();
+                SanitizeInput(ref input);
+                _lastInput = input;
+                _inputHistory.Write(tick, input);
+            }
+            else if (isServer)
+            {
+                if (_queuedInputs.Count == 0)
+                    return;
+
+                var input = _queuedInputs.Dequeue();
+
+                SanitizeInput(ref input);
+                _lastInput = input;
+                _inputHistory.Write(tick, input);
+            }
         }
-        
+
         internal override void SimulateRemote(ulong tick, FP delta)
         {
-            if (_queuedInputs.Count == 0)
-            {
-                if (_inputHistory.TryGetClosest(tick, out var input))
-                     Simulate(input, ref fullPredictedState.state, delta);
-                else Simulate(_lastInput, ref fullPredictedState.state, delta);
-                
-                return;
-            }
-
-            var dequeuedInput = _queuedInputs.Dequeue();
-            _inputHistory.Write(tick, dequeuedInput);
-            Simulate(dequeuedInput, ref fullPredictedState.state, delta);
+            if (_inputHistory.TryGet(tick, out var input))
+                Simulate(input, ref fullPredictedState.state, delta);
+            else Simulate(null, ref fullPredictedState.state, delta);
         }
 
         protected abstract void Simulate(INPUT? input, ref STATE state, FP delta);
-        
+
         protected override void Simulate(ref STATE state, FP delta)
         {
             Simulate(_lastInput, ref state, delta);
@@ -107,20 +106,23 @@ namespace PurrNet.Prediction
 
         public override void WriteInput(ulong localTick, BitPacker input)
         {
-            if (_inputHistory.TryGetClosest(localTick, out var savedInput))
-                 Packer<INPUT>.Write(input, savedInput);
-            else Packer<INPUT>.Write(input, _lastInput);
+            if (_inputHistory.TryGet(localTick, out var savedInput))
+                 Packer<INPUT?>.Write(input, savedInput);
+            else Packer<INPUT?>.Write(input, null);
         }
-        
+
         public override void ReadInput(ulong tick, BitPacker packer)
         {
-            INPUT input = default;
-            Packer<INPUT>.Read(packer, ref input);
-            _inputHistory.Write(tick, input);
+            INPUT? input = default;
+            Packer<INPUT?>.Read(packer, ref input);
+
+            if (input.HasValue)
+                 _inputHistory.Write(tick, input.Value);
+            else _inputHistory.Remove(tick);
         }
-        
+
         readonly Queue<INPUT> _queuedInputs = new();
-        
+
         /// <summary>
         /// Sanitize the input before using it.
         /// Use this to clamp values or prevent invalid input.
@@ -130,10 +132,15 @@ namespace PurrNet.Prediction
 
         public override void QueueInput(BitPacker packer)
         {
-            INPUT input = default;
-            Packer<INPUT>.Read(packer, ref input);
-            SanitizeInput(ref input);
-            _queuedInputs.Enqueue(input);
+            INPUT? input = default;
+            Packer<INPUT?>.Read(packer, ref input);
+
+            if (input.HasValue)
+            {
+                var sanitizedInput = input.Value;
+                SanitizeInput(ref sanitizedInput);
+                _queuedInputs.Enqueue(sanitizedInput);
+            }
         }
 
         public override void ClearInput()

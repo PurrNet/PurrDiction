@@ -26,7 +26,7 @@ namespace PurrNet.Prediction
         public FP angleLimitation => _angleLimitation;
         public BepuRigidbody connectedBody => _connectedBody ? _connectedBody : null;
 
-        public override void Setup(NetworkManager manager, PredictionManager world, uint id)
+        internal override void Setup(NetworkManager manager, PredictionManager world, uint id)
         {
             if (!isFreshSpawn)
                 return;

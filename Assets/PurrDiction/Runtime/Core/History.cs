@@ -16,7 +16,7 @@ namespace PurrNet.Prediction
         readonly int m_maxCount;
 
         readonly int m_limitToCut;
-        
+
         /// <summary>
         /// Access values directly by index
         /// </summary>
@@ -127,10 +127,10 @@ namespace PurrNet.Prediction
 
             // Lets trim to the desired max values
             int toRemove = m_data.Count - m_maxCount;
-            
+
             for (int i = 0; i < toRemove; i++)
                 m_data[i].Data.Dispose();
-            
+
             m_data.RemoveRange(0, toRemove);
         }
 
@@ -145,7 +145,7 @@ namespace PurrNet.Prediction
             {
                 index += 1;
             }
-            
+
             for (int i = 0; i < index; i++)
                 m_data[i].Data.Dispose();
 
@@ -163,7 +163,7 @@ namespace PurrNet.Prediction
             {
                 index += 1;
             }
-            
+
             for (int i = index; i < m_data.Count; i++)
                 m_data[i].Data.Dispose();
 
@@ -189,7 +189,7 @@ namespace PurrNet.Prediction
 
             return found;
         }
-        
+
         public T ReadOrDefault(ulong tick)
         {
             T result = default;
@@ -201,12 +201,12 @@ namespace PurrNet.Prediction
 
             return result;
         }
-        
+
         public bool TryGet(ulong tick, out T result)
         {
             return Read(tick, out result);
         }
-        
+
         public bool TryGetClosest(ulong tick, out T result)
         {
             result = default;
@@ -244,7 +244,7 @@ namespace PurrNet.Prediction
             result = this[index];
             return true;
         }
-        
+
         public bool TryGetClosest(ulong tick, out T result, out ulong tickDifference)
         {
             result = default;
@@ -309,7 +309,7 @@ namespace PurrNet.Prediction
         /// <param name="tick">The tick you are looking for.</param>
         /// <param name="result">The index that is either your result or the closest index, this can change when Writing new data.</param>
         /// <returns>Returns if a match was found or not.</returns>
-        public bool Find(ulong tick, out int result)  
+        public bool Find(ulong tick, out int result)
         {
             int min = 0;
             int max = m_data.Count - 1;
@@ -328,7 +328,7 @@ namespace PurrNet.Prediction
                 {
                     max = mid - 1;
                 }
-                else  
+                else
                 {
                     min = mid + 1;
                 }
@@ -336,14 +336,23 @@ namespace PurrNet.Prediction
 
             result = min;
             return false;
-        }  
-    
+        }
+
         /// <summary>
         /// Throw any cached data at the garbage collector
         /// </summary>
         public void TrimExcessMemory()
         {
             m_data.TrimExcess();
+        }
+
+        public void Remove(ulong tick)
+        {
+            if (Find(tick, out var index))
+            {
+                m_data[index].Data.Dispose();
+                m_data.RemoveAt(index);
+            }
         }
     }
 }

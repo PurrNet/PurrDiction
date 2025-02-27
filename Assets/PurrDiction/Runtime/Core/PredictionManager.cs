@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using FixMath.NET;
 using JetBrains.Annotations;
-using PurrNet.Logging;
 using PurrNet.Modules;
 using PurrNet.Packing;
 using PurrNet.Pooling;
@@ -20,6 +19,7 @@ namespace PurrNet.Prediction
 
     public enum UpdateViewMode : byte
     {
+        [UsedImplicitly]
         None,
         Update,
         LateUpdate
@@ -73,6 +73,9 @@ namespace PurrNet.Prediction
                     };
                     onPhysicsSet?.Invoke();
                     break;
+                case PredictionPhysicsProvider.None:
+                default:
+                    break;
             }
         }
 
@@ -117,6 +120,10 @@ namespace PurrNet.Prediction
                 case PredictionPhysicsProvider.UnityPhysics2D:
                     Time.fixedDeltaTime = (float)tickDelta;
                     break;
+                case PredictionPhysicsProvider.None:
+                case PredictionPhysicsProvider.BEPUPhysics:
+                default:
+                    break;
             }
         }
 
@@ -146,13 +153,13 @@ namespace PurrNet.Prediction
 
         protected override void OnSpawned()
         {
-            networkManager.tickModule.onPreTick += OnTick;
+            networkManager.tickModule.onPreTick += OnPreTick;
             networkManager.tickModule.onPostTick += OnPostTick;
         }
 
         protected override void OnDespawned()
         {
-            networkManager.tickModule.onPreTick -= OnTick;
+            networkManager.tickModule.onPreTick -= OnPreTick;
             networkManager.tickModule.onPostTick -= OnPostTick;
 
             _lastServerFrame?.Dispose();
@@ -266,11 +273,11 @@ namespace PurrNet.Prediction
 
                 Packer<PackedInt>.Write(_lastServerFrame, count);
 
-                for (var systemIdx = 0; systemIdx < count; systemIdx++)
-                    _systems[systemIdx].WriteLatestState(_lastServerFrame);
+                for (var i = 0; i < count; i++)
+                    _systems[i].WriteCurrentState(_lastServerFrame);
 
-                for (var systemIdx = 0; systemIdx < count; systemIdx++)
-                    _systems[systemIdx].WriteInput(localTick, _lastServerFrame);
+                for (var i = 0; i < count; i++)
+                    _systems[i].WriteInput(localTick, _lastServerFrame);
             }
         }
 
@@ -284,32 +291,24 @@ namespace PurrNet.Prediction
             Packer<PackedInt>.Read(data, ref _count);
             int count = _count;
 
-            for (var systemIdx = 0; systemIdx < count; systemIdx++)
+            for (var i = 0; i < count; i++)
             {
-                var system = _systems[systemIdx];
+                var system = _systems[i];
                 system.ReadState(localTick, data);
                 system.Rollback(localTick);
                 system.ResetInterpolation();
             }
 
-            for (var systemIdx = 0; systemIdx < count; systemIdx++)
-                _systems[systemIdx].ReadInput(localTick, data);
+            for (var i = 0; i < count; i++)
+                _systems[i].ReadInput(localTick, data);
 
-            switch (_physicsProvider)
-            {
-                case PredictionPhysicsProvider.UnityPhysics3D:
-                    Physics.SyncTransforms();
-                    break;
-                case PredictionPhysicsProvider.UnityPhysics2D:
-                    Physics2D.SyncTransforms();
-                    break;
-            }
+            SyncTransforms();
 
             _lastFrame?.Dispose();
             _lastFrame = data;
         }
 
-        void OnTick()
+        void OnPreTick()
         {
             var myPlayer = localPlayer ?? default;
             var cachedIsServer = isServer;
@@ -317,33 +316,25 @@ namespace PurrNet.Prediction
 
             isSimulating = true;
 
-            for (var systemIdx = 0; systemIdx < _systems.Count; systemIdx++)
+            var scount = _systems.Count;
+            for (var i = 0; i < scount; i++)
             {
-                var system = _systems[systemIdx];
+                var system = _systems[i];
                 bool controller = system.IsOwner(myPlayer, cachedIsServer);
-
-                // prepare and simulate the system
-                if (controller)
-                {
-                    system.EvaluateAndRegisterLocalInput(localTick);
-                    system.SimulateLocal(tickDelta);
-                }
-                else
-                {
-                     system.SimulateRemote(localTick, tickDelta);
-                }
+                system.PrepareInput(cachedIsServer, controller, localTick);
             }
+
+            if (cachedIsServer && _clientTicks.Count > 0)
+                SendFrameToOthers();
+
+            for (var i = 0; i < _systems.Count; i++)
+                _systems[i].SimulateRemote(localTick, tickDelta);
 
             DoPhysicsPass();
 
             if (cachedIsServer)
             {
-                MakeSureWeHaveLastFrame();
-
-                var frame = BitPackerPool.Get();
-
                 var count = _systems.Count;
-                Packer<PackedInt>.Write(frame, count);
 
                 for (var systemIdx = 0; systemIdx < count; systemIdx++)
                 {
@@ -351,37 +342,13 @@ namespace PurrNet.Prediction
 
                     system.GetLatestUnityState();
                     system.SaveStateInHistory(localTick);
-                    system.WriteLatestState(frame);
                 }
 
                 if (cachedIsClient)
                 {
                     for (var systemIdx = 0; systemIdx < count; systemIdx++)
-                    {
                         _systems[systemIdx].UpdateRollbackInterpolationState(tickDelta, false);
-                    }
                 }
-
-                for (var systemIdx = 0; systemIdx < count; systemIdx++)
-                {
-                    var system = _systems[systemIdx];
-                    system.WriteInput(localTick, frame);
-                }
-
-                using var delta = BitPackerPool.Get();
-                BitPackerDeltaUtils.CreateDelta(_lastServerFrame, frame, delta);
-
-                var deltaLen = delta.ToByteData().length;
-                foreach (var (player, queue) in _clientTicks)
-                {
-                    if (player == localPlayer)
-                        continue;
-
-                    SendFrameToRemote(player, queue.Count > 0 ? queue.Dequeue() : 0, delta, deltaLen);
-                }
-
-                _lastServerFrame?.Dispose();
-                _lastServerFrame = frame;
             }
             else
             {
@@ -406,14 +373,48 @@ namespace PurrNet.Prediction
             localTickInContext = localTick;
         }
 
+        private void SendFrameToOthers()
+        {
+            MakeSureWeHaveLastFrame();
+
+            var frame = BitPackerPool.Get();
+            var count = _systems.Count;
+
+            Packer<PackedInt>.Write(frame, count);
+
+            for (var i = 0; i < count; i++)
+                _systems[i].WriteCurrentState(frame);
+
+            for (var i = 0; i < count; i++)
+                _systems[i].WriteInput(localTick, frame);
+
+            using var delta = BitPackerPool.Get();
+            BitPackerDeltaUtils.CreateDelta(_lastServerFrame, frame, delta);
+
+            var deltaLen = delta.ToByteData().length;
+            foreach (var (player, queue) in _clientTicks)
+            {
+                if (player == localPlayer)
+                    continue;
+
+                SendFrameToRemote(player, queue.Count > 0 ? queue.Dequeue() : 0, new BitPackerWithLength(deltaLen, delta));
+            }
+
+            _lastServerFrame.Dispose();
+            _lastServerFrame = frame;
+        }
+
         /// <summary>
         /// Is the prediction manager currently replaying a frame?
         /// </summary>
         [UsedImplicitly]
-        public bool isReplaying
-        {
-            get; private set;
-        }
+        public bool isReplaying { get; private set; }
+
+        /// <summary>
+        /// Is the prediction manager currently replaying a verified frame?
+        /// </summary>
+        [UsedImplicitly]
+        public bool isVerified { get; private set; }
 
         /// <summary>
         /// Is the prediction manager currently simulating a frame?
@@ -465,48 +466,55 @@ namespace PurrNet.Prediction
             isInPhysicsPass = false;
         }
 
-        BitPacker _lastFrame;
-
-        [TargetRpc]
-        private void SendFrameToRemote([UsedImplicitly] PlayerID player, ulong clientLocalTick, BitPacker delta, int deltaLen)
+        struct FrameDelta : IDisposable
         {
-            using (delta)
+            public BitPacker delta;
+            public ulong clientTick;
+
+            public void Dispose()
             {
-                var result = BitPackerPool.Get();
-                delta.SkipBytes(deltaLen);
-
-                BitPackerDeltaUtils.ApplyDelta(_lastFrame, delta, result);
-
-                _lastFrame?.Dispose();
-                _lastFrame = result;
-
-                if (clientLocalTick == 0)
-                    return;
-
-                _lastVerifiedTick = clientLocalTick;
-                _tickToRollbackFrom = clientLocalTick;
+                delta?.Dispose();
             }
         }
 
-        private void CatchupFromTick(ulong clientTick)
+        BitPacker _lastFrame;
+
+        readonly Queue<FrameDelta> _deltas = new ();
+
+        [TargetRpc]
+        private void SendFrameToRemote([UsedImplicitly] PlayerID player, ulong clientLocalTick, BitPackerWithLength delta)
         {
-            isReplaying = true;
-            _lastFrame.ResetPositionAndMode(true);
+            delta.packer.SkipBytes(delta.originalLength);
+            _deltas.Enqueue(new FrameDelta
+            {
+                delta = delta.packer,
+                clientTick = clientLocalTick
+            });
+        }
+
+        private void RollbackToFrame(BitPacker frame, ulong clientTick)
+        {
+            frame.ResetPositionAndMode(true);
 
             PackedInt _count = default;
-            Packer<PackedInt>.Read(_lastFrame, ref _count);
+            Packer<PackedInt>.Read(frame, ref _count);
             int count = _count;
 
             for (var i = 0; i < count; ++i)
             {
                 var system = _systems[i];
-                system.ReadState(clientTick, _lastFrame);
+                system.ReadState(clientTick, frame);
                 system.Rollback(clientTick);
             }
 
             for (var i = 0; i < count; ++i)
-                _systems[i].ReadInput(clientTick, _lastFrame);
+                _systems[i].ReadInput(clientTick, frame);
 
+            SyncTransforms();
+        }
+
+        private void SyncTransforms()
+        {
             switch (_physicsProvider)
             {
                 case PredictionPhysicsProvider.UnityPhysics3D:
@@ -515,10 +523,57 @@ namespace PurrNet.Prediction
                 case PredictionPhysicsProvider.UnityPhysics2D:
                     Physics2D.SyncTransforms();
                     break;
+                case PredictionPhysicsProvider.None:
+                case PredictionPhysicsProvider.BEPUPhysics:
+                default:
+                    break;
+            }
+        }
+
+        private void OnPostTick()
+        {
+            if (_deltas.Count == 0)
+                return;
+
+            isReplaying = true;
+            isVerified = true;
+
+            ulong verifiedTick = 0;
+            while (_deltas.Count > 0)
+            {
+                var result = BitPackerPool.Get();
+                using var frameDelta = _deltas.Dequeue();
+
+                BitPackerDeltaUtils.ApplyDelta(_lastFrame, frameDelta.delta, result);
+
+                _lastFrame?.Dispose();
+                _lastFrame = result;
+
+                verifiedTick = frameDelta.clientTick;
+                localTickInContext = verifiedTick;
+
+                RollbackToFrame(result, verifiedTick);
+                SimulateFrame(verifiedTick);
             }
 
-            isSimulating = true;
-            for (ulong simTick = clientTick + 1; simTick < localTick; simTick++)
+            isVerified = false;
+
+            ReplayToLatestTick(verifiedTick + 1);
+            UpdateInterpolation(true);
+
+            isReplaying = false;
+        }
+
+        private void UpdateInterpolation(bool accumulateError)
+        {
+            var scount = _systems.Count;
+            for (var j = 0; j < scount; j++)
+                _systems[j].UpdateRollbackInterpolationState(tickDelta, accumulateError);
+        }
+
+        private void ReplayToLatestTick(ulong verifiedTick)
+        {
+            for (ulong simTick = verifiedTick; simTick < localTick; simTick++)
             {
                 localTickInContext = simTick;
 
@@ -530,28 +585,22 @@ namespace PurrNet.Prediction
                 for (var j = 0; j < _systems.Count; j++)
                     _systems[j].GetLatestUnityState();
             }
-            isSimulating = false;
 
             localTickInContext = localTick;
-            isReplaying = false;
-
-            var scount = _systems.Count;
-            for (var j = 0; j < scount; j++)
-            {
-                _systems[j].UpdateRollbackInterpolationState(tickDelta, true);
-            }
         }
 
-        private ulong? _tickToRollbackFrom;
-        private ulong _lastVerifiedTick;
-
-        private void OnPostTick()
+        private void SimulateFrame(ulong verifiedTick)
         {
-            if (_tickToRollbackFrom.HasValue)
-            {
-                CatchupFromTick(_tickToRollbackFrom.Value);
-                _tickToRollbackFrom = null;
-            }
+            isSimulating = true;
+            for (var j = 0; j < _systems.Count; j++)
+                _systems[j].SimulateTick(verifiedTick, tickDelta);
+
+            DoPhysicsPass();
+
+            var count = _systems.Count;
+            for (var j = 0; j < count; j++)
+                _systems[j].GetLatestUnityState();
+            isSimulating = false;
         }
 
         readonly Dictionary<PlayerID, Queue<ulong>> _clientTicks = new ();
