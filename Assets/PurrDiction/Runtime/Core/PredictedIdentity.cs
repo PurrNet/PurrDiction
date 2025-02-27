@@ -75,7 +75,10 @@ namespace PurrNet.Prediction
             return predictionManager.isSimulating;
         }
 
-        public virtual void Setup(NetworkManager manager, PredictionManager world, uint id)
+        protected virtual void OnSpawned() {}
+        protected virtual void OnDespawned() {}
+
+        internal virtual void Setup(NetworkManager manager, PredictionManager world, uint id)
         {
             if (!isFreshSpawn)
                 return;
@@ -85,10 +88,14 @@ namespace PurrNet.Prediction
             owner = null;
             this.id = new PredictedID(id);
             predictionManager = world;
+
+            OnSpawned();
         }
 
         protected virtual void OnDestroy()
         {
+            OnDespawned();
+
             if (predictionManager)
                 predictionManager.UnregisterInstance(this);
         }
@@ -122,7 +129,7 @@ namespace PurrNet.Prediction
 
         internal abstract void PrepareInput(bool isServer, bool isLocal, ulong tick);
 
-        internal abstract void SimulateRemote(ulong tick, FP delta, bool isServer);
+        internal abstract void SimulateRemote(ulong tick, FP delta);
 
         internal abstract void SaveStateInHistory(ulong tick);
 
@@ -230,7 +237,7 @@ namespace PurrNet.Prediction
             set => fullPredictedState.state = value;
         }
 
-        public override void Setup(NetworkManager manager, PredictionManager world, uint id)
+        internal override void Setup(NetworkManager manager, PredictionManager world, uint id)
         {
             if (!isFreshSpawn)
                 return;
@@ -279,7 +286,7 @@ namespace PurrNet.Prediction
 
         internal override void SimulateTick(ulong tick, FP delta) => Simulate(ref fullPredictedState.state, delta);
 
-        internal override void SimulateRemote(ulong tick, FP delta, bool isServer) => Simulate(ref fullPredictedState.state, delta);
+        internal override void SimulateRemote(ulong tick, FP delta) => Simulate(ref fullPredictedState.state, delta);
 
         internal override void SaveStateInHistory(ulong tick)
         {

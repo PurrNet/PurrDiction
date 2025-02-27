@@ -1,6 +1,7 @@
 using BEPUutilities;
 using ConversionHelper;
 using FixMath.NET;
+using PurrNet.Logging;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Serialization;
@@ -20,6 +21,7 @@ namespace PurrNet.Prediction.Prebuilt
 
         private Camera _camera;
         private bool _wantJump;
+        private PredictedEvent _jumpEvent;
 
         private void Awake()
         {
@@ -28,9 +30,26 @@ namespace PurrNet.Prediction.Prebuilt
                 Debug.LogError($"Failed to get camera tagget as main camera!", this);
         }
 
+        protected override void OnSpawned()
+        {
+            _jumpEvent = new PredictedEvent(predictionManager, this);
+            _jumpEvent.AddListener(OnJumpedVFX);
+        }
+
+        protected override void OnDespawned()
+        {
+            _jumpEvent.RemoveListener(OnJumpedVFX);
+        }
+
+        private void OnJumpedVFX()
+        {
+            PurrLogger.Log("Jumped!");
+        }
+
         private void Update()
         {
-            _wantJump = Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame;
+            if (!_wantJump)
+                _wantJump = Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame;
         }
 
         private void Reset()
@@ -69,10 +88,13 @@ namespace PurrNet.Prediction.Prebuilt
             // don't change the y velocity (jumping, falling, etc)
             nextVelocity.y = currVelocity.y;
 
+            if (predictionManager.isVerified)
+            {
+                PurrLogger.Log($"Verified input: {(input.HasValue ? input.Value.jump : "NULL")}, is Owner: {IsOwner()}");
+            }
             if (input?.jump == true)
             {
-                if (predictionManager.isVerified || !predictionManager.isReplaying)
-                    Debug.Log("Jumping");
+                _jumpEvent.Invoke();
                 nextVelocity.y = 10;
             }
 

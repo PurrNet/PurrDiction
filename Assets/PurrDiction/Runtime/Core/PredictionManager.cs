@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using FixMath.NET;
 using JetBrains.Annotations;
+using PurrNet.Logging;
 using PurrNet.Modules;
 using PurrNet.Packing;
 using PurrNet.Pooling;
@@ -327,7 +328,7 @@ namespace PurrNet.Prediction
                 SendFrameToOthers();
 
             for (var i = 0; i < _systems.Count; i++)
-                _systems[i].SimulateRemote(localTick, tickDelta, cachedIsServer);
+                _systems[i].SimulateRemote(localTick, tickDelta);
 
             DoPhysicsPass();
 
