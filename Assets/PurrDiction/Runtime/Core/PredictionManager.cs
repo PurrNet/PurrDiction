@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using FixMath.NET;
 using JetBrains.Annotations;
+using PurrNet.Logging;
 using PurrNet.Modules;
 using PurrNet.Packing;
 using PurrNet.Pooling;
@@ -564,7 +565,9 @@ namespace PurrNet.Prediction
                 _clientTicks[info.sender] = ticks;
             }
 
-            if (ticks.Count > 4)
+            var ticksQueued = ticks.Count;
+            var timeQueued = ticksQueued * tickDelta;
+            if (timeQueued > FP.C0p3)
             {
                 ClearAllInputs();
                 ticks.Clear();

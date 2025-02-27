@@ -1412,7 +1412,7 @@ MonoBehaviour:
   _serverPort: 5000
   _maxConnections: 100
   _address: 127.0.0.1
-  _timeoutInSeconds: 5
+  _retryLatencyFactor: 1.8
 --- !u!114 &1793795278
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1430,12 +1430,13 @@ MonoBehaviour:
   _startClientFlags: 7
   _cookieScope: 1
   _dontDestroyOnLoad: 0
-  _transport: {fileID: 1793795282}
+  _transport: {fileID: 1793795277}
   _networkPrefabs: {fileID: 11400000, guid: 2190589f99f9abe479a1c7890b05f51f, type: 2}
   _networkRules: {fileID: 11400000, guid: d8799083b96579a42b8b2d03e4ceae98, type: 2}
   _visibilityRules: {fileID: 11400000, guid: 8f014a5bd8dc68646a2a3c0b18c5bbd8, type: 2}
   _authenticator: {fileID: 0}
-  _tickRate: 60
+  _tickRate: 20
+  _patchLingeringProcessBug: 0
 --- !u!114 &1793795280
 MonoBehaviour:
   m_ObjectHideFlags: 0
