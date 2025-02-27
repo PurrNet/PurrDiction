@@ -122,7 +122,7 @@ namespace PurrNet.Prediction
 
         internal abstract void PrepareInput(bool isServer, bool isLocal, ulong tick);
 
-        internal abstract void SimulateRemote(ulong tick, FP delta);
+        internal abstract void SimulateRemote(ulong tick, FP delta, bool isServer);
 
         internal abstract void SaveStateInHistory(ulong tick);
 
@@ -279,7 +279,7 @@ namespace PurrNet.Prediction
 
         internal override void SimulateTick(ulong tick, FP delta) => Simulate(ref fullPredictedState.state, delta);
 
-        internal override void SimulateRemote(ulong tick, FP delta) => Simulate(ref fullPredictedState.state, delta);
+        internal override void SimulateRemote(ulong tick, FP delta, bool isServer) => Simulate(ref fullPredictedState.state, delta);
 
         internal override void SaveStateInHistory(ulong tick)
         {

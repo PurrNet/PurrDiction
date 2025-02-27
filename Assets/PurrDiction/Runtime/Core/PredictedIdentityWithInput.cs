@@ -96,11 +96,20 @@ namespace PurrNet.Prediction
             }
         }
 
-        internal override void SimulateRemote(ulong tick, FP delta)
+        internal override void SimulateRemote(ulong tick, FP delta, bool isServer)
         {
-            if (_inputHistory.TryGet(tick, out var input))
-                Simulate(input, ref fullPredictedState.state, delta);
-            else PurrLogger.LogError("No remote input found for tick" + tick);
+            if (isServer)
+            {
+                if (_inputHistory.TryGet(tick, out var input))
+                    Simulate(input, ref fullPredictedState.state, delta);
+                else Simulate(null, ref fullPredictedState.state, delta);
+            }
+            else
+            {
+                if (_inputHistory.TryGetClosest(tick, out var input))
+                    Simulate(input, ref fullPredictedState.state, delta);
+                else Simulate(null, ref fullPredictedState.state, delta);
+            }
         }
 
         protected abstract void Simulate(INPUT? input, ref STATE state, FP delta);

@@ -327,7 +327,7 @@ namespace PurrNet.Prediction
                 SendFrameToOthers();
 
             for (var i = 0; i < _systems.Count; i++)
-                _systems[i].SimulateRemote(localTick, tickDelta);
+                _systems[i].SimulateRemote(localTick, tickDelta, cachedIsServer);
 
             DoPhysicsPass();
 

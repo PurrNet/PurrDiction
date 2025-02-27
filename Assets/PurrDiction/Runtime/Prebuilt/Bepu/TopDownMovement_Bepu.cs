@@ -1,7 +1,6 @@
 using BEPUutilities;
 using ConversionHelper;
 using FixMath.NET;
-using PurrNet.Logging;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Serialization;
@@ -20,12 +19,18 @@ namespace PurrNet.Prediction.Prebuilt
         [SerializeField] private FP _acceleration = 30;
 
         private Camera _camera;
+        private bool _wantJump;
 
         private void Awake()
         {
             _camera = Camera.main;
             if (!_camera)
                 Debug.LogError($"Failed to get camera tagget as main camera!", this);
+        }
+
+        private void Update()
+        {
+            _wantJump = Keyboard.current != null && Keyboard.current.spaceKey.wasPressedThisFrame;
         }
 
         private void Reset()
@@ -42,7 +47,15 @@ namespace PurrNet.Prediction.Prebuilt
                 moveDirection = GetCameraRelativeMovement(GetMovementInput())
             };
 
+            input.jump = _wantJump;
+            _wantJump = false;
+
             return input;
+        }
+
+        protected override void ModifyExtrapolatedInput(ref Input input)
+        {
+            input.jump = false;
         }
 
         protected override void Simulate(Input? input, ref State state, FP delta)
@@ -55,6 +68,13 @@ namespace PurrNet.Prediction.Prebuilt
 
             // don't change the y velocity (jumping, falling, etc)
             nextVelocity.y = currVelocity.y;
+
+            if (input?.jump == true)
+            {
+                if (predictionManager.isVerified || !predictionManager.isReplaying)
+                    Debug.Log("Jumping");
+                nextVelocity.y = 10;
+            }
 
             _rigidbody.linearVelocity = nextVelocity;
         }
@@ -105,6 +125,7 @@ namespace PurrNet.Prediction.Prebuilt
         public struct Input : IPredictedData
         {
             public FPVector3 moveDirection;
+            public bool jump;
         }
 
         public void OnBepuCollisionEnter(BepuCollisionData data)
