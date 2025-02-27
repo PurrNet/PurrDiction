@@ -1425,7 +1425,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: baacc2bfe126d544691d4f39fa3785f9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _stopPlayingOnDisconnect: 0
+  _stopPlayingOnDisconnect: 1
   _startServerFlags: 9
   _startClientFlags: 7
   _cookieScope: 1
@@ -1435,7 +1435,7 @@ MonoBehaviour:
   _networkRules: {fileID: 11400000, guid: d8799083b96579a42b8b2d03e4ceae98, type: 2}
   _visibilityRules: {fileID: 11400000, guid: 8f014a5bd8dc68646a2a3c0b18c5bbd8, type: 2}
   _authenticator: {fileID: 0}
-  _tickRate: 60
+  _tickRate: 20
   _patchLingeringProcessBug: 0
 --- !u!114 &1793795280
 MonoBehaviour:

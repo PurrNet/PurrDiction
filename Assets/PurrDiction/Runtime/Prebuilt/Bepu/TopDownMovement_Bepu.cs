@@ -148,6 +148,11 @@ namespace PurrNet.Prediction.Prebuilt
         {
             public FPVector3 moveDirection;
             public bool jump;
+
+            public override string ToString()
+            {
+                return $"Move: {moveDirection}, Jump: {jump}";
+            }
         }
 
         public void OnBepuCollisionEnter(BepuCollisionData data)

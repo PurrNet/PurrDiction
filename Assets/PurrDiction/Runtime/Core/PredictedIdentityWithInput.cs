@@ -46,7 +46,8 @@ namespace PurrNet.Prediction
                 switch (_extrapolateInput)
                 {
                     case true when _inputHistory.TryGetClosest(tick, out var extrainput, out var distanceInTicks):
-                        ModifyExtrapolatedInput(ref extrainput);
+                        if (distanceInTicks > 0)
+                            ModifyExtrapolatedInput(ref extrainput);
                         uint maxInputs = (uint)Mathf.CeilToInt(_repeatInputFactor * 10 / ((float)delta * 60));
                         if (distanceInTicks <= maxInputs)
                              Simulate(extrainput, ref fullPredictedState.state, delta);
@@ -78,14 +79,10 @@ namespace PurrNet.Prediction
             }
             else if (isServer)
             {
-                INPUT input;
-
                 if (_queuedInputs.Count == 0)
-                {
-                    if (!_inputHistory.TryGetClosest(tick, out input))
-                        input = _lastInput;
-                }
-                else input = _queuedInputs.Dequeue();
+                    return;
+
+                var input = _queuedInputs.Dequeue();
 
                 SanitizeInput(ref input);
                 _lastInput = input;
