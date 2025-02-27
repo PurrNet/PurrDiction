@@ -6,8 +6,8 @@ namespace PurrNet.Prediction
     {
         private readonly PredictionManager _world;
         private readonly PredictedIdentity _identity;
+        private readonly bool _isServer;
 
-        private bool _isServer;
         private event Action onInvoke;
 
         public PredictedEvent(PredictionManager world, PredictedIdentity identity)
