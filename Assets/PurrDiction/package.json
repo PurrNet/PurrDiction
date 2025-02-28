@@ -1,6 +1,6 @@
 {
     "name": "purrdiction",
-    "version": "1.0.0-beta.18",
+    "version": "1.0.0-beta.19",
     "description": "An addon to PurrNet for CSP (client side prediction)",
     "displayName": "Purrdiction",
     "documentationUrl": "https://purrnet.gitbook.io/docs/systems-and-modules/client-side-prediction",
