@@ -153,14 +153,14 @@ namespace PurrNet.Prediction
 
         protected override void OnSpawned()
         {
-            networkManager.tickModule.onPreTick += OnPreTick;
-            networkManager.tickModule.onPostTick += OnPostTick;
+            networkManager.tickModule.onReliablePreTick += OnPreTick;
+            networkManager.tickModule.onReliablePostTick += OnPostTick;
         }
 
         protected override void OnDespawned()
         {
-            networkManager.tickModule.onPreTick -= OnPreTick;
-            networkManager.tickModule.onPostTick -= OnPostTick;
+            networkManager.tickModule.onReliablePreTick -= OnPreTick;
+            networkManager.tickModule.onReliablePostTick -= OnPostTick;
 
             _lastServerFrame?.Dispose();
             _lastServerFrame = null;
@@ -249,6 +249,7 @@ namespace PurrNet.Prediction
 
         protected override void OnObserverRemoved(PlayerID player)
         {
+            _lastClientTick.Remove(player);
             _clientTicks.Remove(player);
         }
 
@@ -260,6 +261,7 @@ namespace PurrNet.Prediction
                 return;
 
             _clientTicks[player] = new Queue<ulong>();
+            _lastClientTick[player] = 0;
             MakeSureWeHaveLastFrame();
             SyncFullState(player, tickRate, tickDelta.RawValue, _lastServerFrame);
         }
@@ -397,7 +399,20 @@ namespace PurrNet.Prediction
                 if (player == localPlayer)
                     continue;
 
-                SendFrameToRemote(player, queue.Count > 0 ? queue.Dequeue() : 0, new BitPackerWithLength(deltaLen, delta));
+                var oldTick = _lastClientTick[player];
+                ulong tick;
+
+                if (queue.Count > 0)
+                {
+                    tick = queue.Dequeue();
+                }
+                else
+                {
+                    tick = oldTick + 1;
+                }
+
+                SendFrameToRemote(player, tick, new BitPackerWithLength(deltaLen, delta));
+                _lastClientTick[player] = tick;
             }
 
             _lastServerFrame.Dispose();
@@ -604,6 +619,7 @@ namespace PurrNet.Prediction
         }
 
         readonly Dictionary<PlayerID, Queue<ulong>> _clientTicks = new ();
+        readonly Dictionary<PlayerID, ulong> _lastClientTick = new ();
 
         [ServerRpc(requireOwnership: false)]
         private void SendInputToServer(ulong clientTick, BitPacker inputPacket, RPCInfo info = default)
@@ -612,7 +628,10 @@ namespace PurrNet.Prediction
             {
                 ticks = new Queue<ulong>();
                 _clientTicks[info.sender] = ticks;
+                _lastClientTick[info.sender] = clientTick;
             }
+            else if (_lastClientTick.TryGetValue(info.sender, out var lastClientTick) && lastClientTick > clientTick)
+                return;
 
             var ticksQueued = ticks.Count;
             var timeQueued = ticksQueued * tickDelta;
@@ -620,6 +639,8 @@ namespace PurrNet.Prediction
             {
                 ClearAllInputs();
                 ticks.Clear();
+
+                _lastClientTick[info.sender] = clientTick;
             }
 
             ticks.Enqueue(clientTick);
