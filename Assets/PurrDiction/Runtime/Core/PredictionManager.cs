@@ -577,6 +577,7 @@ namespace PurrNet.Prediction
 
         private void ReplayToLatestTick(ulong verifiedTick)
         {
+            isSimulating = true;
             for (ulong simTick = verifiedTick; simTick < localTick; simTick++)
             {
                 localTickInContext = simTick;
@@ -589,7 +590,7 @@ namespace PurrNet.Prediction
                 for (var j = 0; j < _systems.Count; j++)
                     _systems[j].GetLatestUnityState();
             }
-
+            isSimulating = false;
             localTickInContext = localTick;
         }
 
