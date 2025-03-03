@@ -1,3 +1,4 @@
+using PurrNet.Pooling;
 using UnityEngine;
 
 namespace PurrNet.Prediction
@@ -7,15 +8,16 @@ namespace PurrNet.Prediction
     [AddComponentMenu("PurrDiction/Unity Rigidbody/Predicted Rigidbody 2D")]
     public class PredictedRigidbody2D : PredictedIdentity<UnityRigidbody2DState>
     {
-        public delegate void OnCollisionDelegate(Collision2D other);
-        public delegate void OnTriggerDelegate(Collider2D other);
-        
+        public delegate void OnCollisionDelegate(PredictedRigidbody2D other, DisposableList<Physics2DContactPoint> evContacts);
+        public delegate void OnTriggerDelegate(PredictedRigidbody2D other);
+
         [SerializeField] private Rigidbody2D _rigidbody;
-        
+        [SerializeField] private PhysicsEventMask _eventMask = (PhysicsEventMask)0x3F;
+
         public event OnCollisionDelegate onCollisionEnter;
         public event OnCollisionDelegate onCollisionExit;
         public event OnCollisionDelegate onCollisionStay;
-        
+
         public event OnTriggerDelegate onTriggerEnter;
         public event OnTriggerDelegate onTriggerExit;
         public event OnTriggerDelegate onTriggerStay;
@@ -48,53 +50,92 @@ namespace PurrNet.Prediction
             _rigidbody.angularVelocity = state.angularVelocity;
             _rigidbody.linearDamping = state.linearDamping;
         }
-        
+
         private void OnCollisionEnter2D(Collision2D other)
         {
-            if (!predictionManager.isSimulating)
+            if (!_eventMask.HasFlag(PhysicsEventMask.CollisionEnter))
                 return;
 
-            onCollisionEnter?.Invoke(other);
+            if (!predictionManager.isSimulating || predictionManager.isReplaying)
+                return;
+
+            predictionManager.physics2d.RegisterEvent(PhysicsEventType.Enter, this, other);
         }
-        
+
         private void OnCollisionExit2D(Collision2D other)
         {
-            if (!predictionManager.isSimulating)
+            if (!_eventMask.HasFlag(PhysicsEventMask.CollisionExit))
                 return;
 
-            onCollisionExit?.Invoke(other);
+            if (!predictionManager.isSimulating || predictionManager.isReplaying)
+                return;
+
+            predictionManager.physics2d.RegisterEvent(PhysicsEventType.Exit, this, other);
         }
-        
+
         private void OnCollisionStay2D(Collision2D other)
         {
-            if (!predictionManager.isSimulating)
+            if (!_eventMask.HasFlag(PhysicsEventMask.CollisionStay))
                 return;
 
-            onCollisionStay?.Invoke(other);
+            if (!predictionManager.isSimulating || predictionManager.isReplaying)
+                return;
+
+            predictionManager.physics2d.RegisterEvent(PhysicsEventType.Stay, this, other);
         }
-        
+
         private void OnTriggerEnter2D(Collider2D other)
         {
-            if (!predictionManager.isSimulating)
+            if (!_eventMask.HasFlag(PhysicsEventMask.TriggerEnter))
                 return;
 
-            onTriggerEnter?.Invoke(other);
+            if (!predictionManager.isSimulating || predictionManager.isReplaying)
+                return;
+
+            predictionManager.physics2d.RegisterEvent(PhysicsEventType.Enter, this, other);
         }
-        
+
         private void OnTriggerExit2D(Collider2D other)
         {
-            if (!predictionManager.isSimulating)
+            if (!_eventMask.HasFlag(PhysicsEventMask.TriggerExit))
                 return;
 
-            onTriggerExit?.Invoke(other);
+            if (!predictionManager.isSimulating || predictionManager.isReplaying)
+                return;
+
+            predictionManager.physics2d.RegisterEvent(PhysicsEventType.Exit, this, other);
         }
-        
+
         private void OnTriggerStay2D(Collider2D other)
         {
-            if (!predictionManager.isSimulating)
+            if (!_eventMask.HasFlag(PhysicsEventMask.TriggerStay))
                 return;
 
-            onTriggerStay?.Invoke(other);
+            if (!predictionManager.isSimulating || predictionManager.isReplaying)
+                return;
+
+            predictionManager.physics2d.RegisterEvent(PhysicsEventType.Stay, this, other);
+        }
+
+        public void RaiseTriggerEnter(PredictedRigidbody2D other) => onTriggerEnter?.Invoke(other);
+
+        public void RaiseTriggerExit(PredictedRigidbody2D other) => onTriggerExit?.Invoke(other);
+
+        public void RaiseTriggerStay(PredictedRigidbody2D other) => onTriggerStay?.Invoke(other);
+
+        public void RaiseCollisionEnter(PredictedRigidbody2D other, DisposableList<Physics2DContactPoint> evContacts)
+        {
+            onCollisionEnter?.Invoke(other, evContacts);
+        }
+
+        public void RaiseCollisionExit(PredictedRigidbody2D other, DisposableList<Physics2DContactPoint> evContacts)
+        {
+            onCollisionExit?.Invoke(other, evContacts);
+        }
+
+        public void RaiseCollisionStay(PredictedRigidbody2D other, DisposableList<Physics2DContactPoint> evContacts)
+        {
+            onCollisionStay?.Invoke(other, evContacts);
         }
     }
 }

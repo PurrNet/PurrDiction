@@ -73,7 +73,9 @@ namespace PurrNet.Prediction
 
         public PredictedHierarchy hierarchy { get; private set; }
 
-        public PredictedPhysics physics { get; private set; }
+        internal Predicted3DPhysics physics3d { get; private set; }
+
+        internal Predicted2DPhysics physics2d { get; private set; }
 
         protected override void OnEarlySpawn()
         {
@@ -81,8 +83,10 @@ namespace PurrNet.Prediction
 
             tickRate = networkManager.tickModule.tickRate;
             tickDelta = 1f / tickRate;
+
             hierarchy = RegisterSystem<PredictedHierarchy>();
-            physics = RegisterSystem<PredictedPhysics>();
+            physics3d = RegisterSystem<Predicted3DPhysics>();
+            physics2d = RegisterSystem<Predicted2DPhysics>();
 
             var roots = HashSetPool<GameObject>.Instantiate();
             var pid = -1;

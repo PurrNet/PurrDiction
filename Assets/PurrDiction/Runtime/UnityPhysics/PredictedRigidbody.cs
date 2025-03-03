@@ -70,7 +70,7 @@ namespace PurrNet.Prediction
             if (!predictionManager.isSimulating || predictionManager.isReplaying)
                 return;
 
-            predictionManager.physics.RegisterEvent(PhysicsEventType.Enter, this, other);
+            predictionManager.physics3d.RegisterEvent(PhysicsEventType.Enter, this, other);
         }
 
         private void OnCollisionExit(Collision other)
@@ -81,7 +81,7 @@ namespace PurrNet.Prediction
             if (!predictionManager.isSimulating || predictionManager.isReplaying)
                 return;
 
-            predictionManager.physics.RegisterEvent(PhysicsEventType.Exit, this, other);
+            predictionManager.physics3d.RegisterEvent(PhysicsEventType.Exit, this, other);
         }
 
         private void OnCollisionStay(Collision other)
@@ -92,7 +92,7 @@ namespace PurrNet.Prediction
             if (!predictionManager.isSimulating || predictionManager.isReplaying)
                 return;
 
-            predictionManager.physics.RegisterEvent(PhysicsEventType.Stay, this, other);
+            predictionManager.physics3d.RegisterEvent(PhysicsEventType.Stay, this, other);
         }
 
         private void OnTriggerEnter(Collider other)
@@ -103,7 +103,7 @@ namespace PurrNet.Prediction
             if (!predictionManager.isSimulating || predictionManager.isReplaying)
                 return;
 
-            predictionManager.physics.RegisterEvent(PhysicsEventType.Enter, this, other);
+            predictionManager.physics3d.RegisterEvent(PhysicsEventType.Enter, this, other);
         }
 
         private void OnTriggerExit(Collider other)
@@ -114,7 +114,7 @@ namespace PurrNet.Prediction
             if (!predictionManager.isSimulating || predictionManager.isReplaying)
                 return;
 
-            predictionManager.physics.RegisterEvent(PhysicsEventType.Exit, this, other);
+            predictionManager.physics3d.RegisterEvent(PhysicsEventType.Exit, this, other);
         }
 
         private void OnTriggerStay(Collider other)
@@ -125,7 +125,7 @@ namespace PurrNet.Prediction
             if (!predictionManager.isSimulating || predictionManager.isReplaying)
                 return;
 
-            predictionManager.physics.RegisterEvent(PhysicsEventType.Stay, this, other);
+            predictionManager.physics3d.RegisterEvent(PhysicsEventType.Stay, this, other);
         }
 
         public void RaiseTriggerEnter(PredictedRigidbody other)

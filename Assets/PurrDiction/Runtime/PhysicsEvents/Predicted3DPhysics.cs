@@ -51,7 +51,7 @@ namespace PurrNet.Prediction
         Stay
     }
 
-    public class PredictedPhysics : PredictedIdentity<PredictedPhysicsData>
+    public class Predicted3DPhysics : PredictedIdentity<PredictedPhysicsData>
     {
         protected override PredictedPhysicsData GetInitialState()
         {
