@@ -555,6 +555,7 @@ namespace PurrNet.Prediction
                 return;
 
             ReplayToLatestTick(verifiedTick + 1);
+            SyncTransforms();
             UpdateInterpolation(true);
 
             isReplaying = false;
@@ -593,7 +594,6 @@ namespace PurrNet.Prediction
         private void SimulateFrame(ulong verifiedTick)
         {
             isSimulating = true;
-
             for (var j = 0; j < _systems.Count; j++)
                 _systems[j].SimulateTick(verifiedTick, tickDelta);
 

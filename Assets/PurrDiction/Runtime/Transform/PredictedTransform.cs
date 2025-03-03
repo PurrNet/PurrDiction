@@ -1,4 +1,3 @@
-using PurrNet.Logging;
 using PurrNet.Utils;
 using UnityEngine;
 
@@ -105,7 +104,8 @@ namespace PurrNet.Prediction
 
             if (accumulateError)
             {
-                _accumulatedPositionError += lastPrediction.unityPosition - oldPrediction.unityPosition;
+                var newError = lastPrediction.unityPosition - oldPrediction.unityPosition;
+                _accumulatedPositionError += newError;
                 _accumulatedRotationError = Quaternion.Inverse(oldPrediction.unityRotation) *
                                             lastPrediction.unityRotation * _accumulatedRotationError;
             }
@@ -150,9 +150,6 @@ namespace PurrNet.Prediction
                     correction = _accumulatedPositionError;
 
                 _accumulatedPositionError -= correction;
-
-                if (_accumulatedPositionError.sqrMagnitude > 0.01f)
-                    PurrLogger.Log(_accumulatedPositionError.ToString());
             }
 
             if (snapRot || skipRot)
