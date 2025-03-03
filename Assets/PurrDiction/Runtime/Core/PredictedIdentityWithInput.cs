@@ -22,9 +22,6 @@ namespace PurrNet.Prediction
 
         internal override void Setup(NetworkManager manager, PredictionManager world, uint id)
         {
-            if (!isFreshSpawn)
-                return;
-
             base.Setup(manager, world, id);
 
             hierarchy = world.hierarchy;

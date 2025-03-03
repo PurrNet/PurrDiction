@@ -46,6 +46,8 @@ namespace PurrNet.Prediction
 
     public class Predicted2DPhysics : PredictedIdentity<PredictedPhysics2DData>
     {
+        internal override bool isEventHandler => true;
+
         protected override PredictedPhysics2DData GetInitialState()
         {
             return new PredictedPhysics2DData
@@ -141,7 +143,7 @@ namespace PurrNet.Prediction
                         ev.contacts.Add(new Physics2DContactPoint(other.GetContact(i)));
                     state.events.Add(ev);
 
-                    if (!predictionManager.isReplaying)
+                    if (!predictionManager.isVerified)
                         TriggerEvent(hierarchy, ev);
                 });
             }
@@ -165,7 +167,7 @@ namespace PurrNet.Prediction
 
                     state.events.Add(ev);
 
-                    if (!predictionManager.isReplaying)
+                    if (!predictionManager.isVerified)
                         TriggerEvent(hierarchy, ev);
                 });
             }

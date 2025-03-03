@@ -1,3 +1,4 @@
+using PurrNet.Logging;
 using PurrNet.Pooling;
 using UnityEngine;
 
@@ -10,6 +11,11 @@ namespace PurrNet.Prediction.Tests
         public struct State : IPredictedData<State>
         {
             public int collisionCount;
+
+            public override string ToString()
+            {
+                return $"Collision count: {collisionCount}";
+            }
         }
 
         protected override void OnSpawned()
@@ -24,12 +30,11 @@ namespace PurrNet.Prediction.Tests
 
         protected override void Simulate(ref State data, float delta)
         {
-            if (data.collisionCount < 3)
+            if (data.collisionCount < 5)
                 return;
 
             predictionManager.hierarchy.Delete(this);
         }
-
 
         private void OnUnityCollisionEnter(PredictedRigidbody other, DisposableList<PhysicsContactPoint> evContacts)
         {

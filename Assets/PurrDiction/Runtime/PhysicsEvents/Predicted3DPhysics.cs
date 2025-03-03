@@ -53,6 +53,8 @@ namespace PurrNet.Prediction
 
     public class Predicted3DPhysics : PredictedIdentity<PredictedPhysicsData>
     {
+        internal override bool isEventHandler => true;
+
         protected override PredictedPhysicsData GetInitialState()
         {
             return new PredictedPhysicsData
@@ -148,7 +150,7 @@ namespace PurrNet.Prediction
                         ev.contacts.Add(new PhysicsContactPoint(other.GetContact(i)));
                     state.events.Add(ev);
 
-                    if (!predictionManager.isReplaying)
+                    if (!predictionManager.isVerified)
                         TriggerEvent(hierarchy, ev);
                 });
             }
@@ -172,7 +174,7 @@ namespace PurrNet.Prediction
 
                     state.events.Add(ev);
 
-                    if (!predictionManager.isReplaying)
+                    if (!predictionManager.isVerified)
                         TriggerEvent(hierarchy, ev);
                 });
             }

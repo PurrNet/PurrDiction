@@ -68,6 +68,8 @@ namespace PurrNet.Prediction
 
         internal bool isFreshSpawn = true;
 
+        internal virtual bool isEventHandler => false;
+
         [UsedByIL]
         public bool IsSimulating()
         {
@@ -241,7 +243,11 @@ namespace PurrNet.Prediction
         internal override void Setup(NetworkManager manager, PredictionManager world, uint id)
         {
             if (!isFreshSpawn)
+            {
+                fullPredictedState.state = GetInitialState();
+                GetLatestUnityState();
                 return;
+            }
 
             base.Setup(manager, world, id);
 
@@ -250,8 +256,7 @@ namespace PurrNet.Prediction
             if (tickModule == null)
                 return;
 
-            var initialState = GetInitialState();
-            fullPredictedState.state = initialState;
+            fullPredictedState.state = GetInitialState();
             GetLatestUnityState();
 
             var copy = fullPredictedState.DeepCopy();
