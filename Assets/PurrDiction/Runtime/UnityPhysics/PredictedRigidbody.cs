@@ -28,6 +28,8 @@ namespace PurrNet.Prediction
         [SerializeField] private PhysicsEventMask _eventMask = (PhysicsEventMask)0x3F;
         public new Rigidbody rigidbody => _rigidbody;
 
+        public Rigidbody rb => _rigidbody;
+
         public event OnCollisionDelegate onCollisionEnter;
         public event OnCollisionDelegate onCollisionExit;
         public event OnCollisionDelegate onCollisionStay;
@@ -35,6 +37,35 @@ namespace PurrNet.Prediction
         public event OnTriggerDelegate onTriggerEnter;
         public event OnTriggerDelegate onTriggerExit;
         public event OnTriggerDelegate onTriggerStay;
+
+        public Vector3 linearVelocity
+        {
+            get => _rigidbody.linearVelocity;
+            set => _rigidbody.linearVelocity = value;
+        }
+
+        public Vector3 angularVelocity
+        {
+            get => _rigidbody.angularVelocity;
+            set => _rigidbody.angularVelocity = value;
+        }
+
+        /// <summary>
+        ///   <para>Adds a force to the Rigidbody.</para>
+        /// </summary>
+        /// <param name="force">Force vector in world coordinates.</param>
+        /// <param name="mode">Type of force to apply.</param>
+        public void AddForce(Vector3 force, ForceMode mode = ForceMode.Force)
+        {
+            _rigidbody.linearVelocity += mode switch
+            {
+                ForceMode.Force => force / _rigidbody.mass * Time.deltaTime,
+                ForceMode.Acceleration => force * Time.deltaTime,
+                ForceMode.Impulse => force / _rigidbody.mass,
+                ForceMode.VelocityChange => force,
+                _ => throw new ArgumentOutOfRangeException(nameof(mode), mode, null)
+            };
+        }
 
         private void Reset()
         {
