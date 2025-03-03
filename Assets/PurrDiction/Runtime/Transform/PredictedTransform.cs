@@ -1,3 +1,4 @@
+using PurrNet.Logging;
 using PurrNet.Utils;
 using UnityEngine;
 
@@ -7,8 +8,8 @@ namespace PurrNet.Prediction
     public class PredictedTransform : PredictedIdentity<PredictedTransformState>
     {
         [SerializeField, PurrLock] private Transform _graphics;
-        [SerializeField] private bool _characterControllerPatch = true;
         [SerializeField] private TransformInterpolationSettings _interpolationSettings;
+        [SerializeField] private bool _characterControllerPatch = true;
 
         private Rigidbody _unityRigidbody;
         private Rigidbody2D _unity2dRigidbody;
@@ -149,6 +150,9 @@ namespace PurrNet.Prediction
                     correction = _accumulatedPositionError;
 
                 _accumulatedPositionError -= correction;
+
+                if (_accumulatedPositionError.sqrMagnitude > 0.01f)
+                    PurrLogger.Log(_accumulatedPositionError.ToString());
             }
 
             if (snapRot || skipRot)

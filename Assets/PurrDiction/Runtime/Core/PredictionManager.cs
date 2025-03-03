@@ -526,6 +526,7 @@ namespace PurrNet.Prediction
             isReplaying = true;
             isVerified = true;
 
+            bool hasRollback = false;
             ulong verifiedTick = 0;
             while (_deltas.Count > 0)
             {
@@ -540,14 +541,18 @@ namespace PurrNet.Prediction
                 if (frameDelta.clientTick == 0)
                     continue;
 
+                hasRollback = true;
                 verifiedTick = frameDelta.clientTick;
                 localTickInContext = verifiedTick;
 
-                RollbackToFrame(result, verifiedTick);
+                RollbackToFrame(_lastFrame, verifiedTick);
                 SimulateFrame(verifiedTick);
             }
 
             isVerified = false;
+
+            if (!hasRollback)
+                return;
 
             ReplayToLatestTick(verifiedTick + 1);
             UpdateInterpolation(true);
@@ -577,7 +582,8 @@ namespace PurrNet.Prediction
 
                 DoPhysicsPass();
 
-                for (var j = 0; j < _systems.Count; j++)
+                var count = _systems.Count;
+                for (var j = 0; j < count; j++)
                     _systems[j].GetLatestUnityState();
             }
             isSimulating = false;

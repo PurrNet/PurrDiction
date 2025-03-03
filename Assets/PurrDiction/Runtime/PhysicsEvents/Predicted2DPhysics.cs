@@ -170,5 +170,13 @@ namespace PurrNet.Prediction
                 });
             }
         }
+
+        public override void UpdateRollbackInterpolationState(float delta, bool accumulateError) { }
+
+        protected override PredictedPhysics2DData Interpolate(PredictedPhysics2DData from, PredictedPhysics2DData to,
+            float t)
+        {
+            return from;
+        }
     }
 }

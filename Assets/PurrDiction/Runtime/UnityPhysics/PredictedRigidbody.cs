@@ -67,7 +67,7 @@ namespace PurrNet.Prediction
             if (!_eventMask.HasFlag(PhysicsEventMask.CollisionEnter))
                 return;
 
-            if (!predictionManager.isSimulating || predictionManager.isReplaying)
+            if (!predictionManager.isSimulating || predictionManager.isVerified)
                 return;
 
             predictionManager.physics3d.RegisterEvent(PhysicsEventType.Enter, this, other);
@@ -78,7 +78,7 @@ namespace PurrNet.Prediction
             if (!_eventMask.HasFlag(PhysicsEventMask.CollisionExit))
                 return;
 
-            if (!predictionManager.isSimulating || predictionManager.isReplaying)
+            if (!predictionManager.isSimulating || predictionManager.isVerified)
                 return;
 
             predictionManager.physics3d.RegisterEvent(PhysicsEventType.Exit, this, other);
@@ -89,7 +89,7 @@ namespace PurrNet.Prediction
             if (!_eventMask.HasFlag(PhysicsEventMask.CollisionStay))
                 return;
 
-            if (!predictionManager.isSimulating || predictionManager.isReplaying)
+            if (!predictionManager.isSimulating || predictionManager.isVerified)
                 return;
 
             predictionManager.physics3d.RegisterEvent(PhysicsEventType.Stay, this, other);
@@ -100,7 +100,7 @@ namespace PurrNet.Prediction
             if (!_eventMask.HasFlag(PhysicsEventMask.TriggerEnter))
                 return;
 
-            if (!predictionManager.isSimulating || predictionManager.isReplaying)
+            if (!predictionManager.isSimulating || predictionManager.isVerified)
                 return;
 
             predictionManager.physics3d.RegisterEvent(PhysicsEventType.Enter, this, other);
@@ -111,7 +111,7 @@ namespace PurrNet.Prediction
             if (!_eventMask.HasFlag(PhysicsEventMask.TriggerExit))
                 return;
 
-            if (!predictionManager.isSimulating || predictionManager.isReplaying)
+            if (!predictionManager.isSimulating || predictionManager.isVerified)
                 return;
 
             predictionManager.physics3d.RegisterEvent(PhysicsEventType.Exit, this, other);
@@ -122,7 +122,7 @@ namespace PurrNet.Prediction
             if (!_eventMask.HasFlag(PhysicsEventMask.TriggerStay))
                 return;
 
-            if (!predictionManager.isSimulating || predictionManager.isReplaying)
+            if (!predictionManager.isSimulating || predictionManager.isVerified)
                 return;
 
             predictionManager.physics3d.RegisterEvent(PhysicsEventType.Stay, this, other);
