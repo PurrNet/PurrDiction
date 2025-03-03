@@ -1,4 +1,3 @@
-using FixMath.NET;
 using PurrNet.Prediction.StateMachine;
 using UnityEngine;
 
@@ -24,11 +23,11 @@ namespace PurrNet.Prediction
             {
                 isKeyPressed = Input.GetKey(KeyCode.X)
             };
-            
+
             return input;
         }
 
-        public override void StateSimulate(FP delta)
+        public override void StateSimulate(float delta)
         {
             base.StateSimulate(delta);
 
@@ -36,11 +35,11 @@ namespace PurrNet.Prediction
             currentState = state;
         }
 
-        protected override void Simulate(TestNodeInput? input, ref TestNodeData state, FP delta)
+        protected override void Simulate(TestNodeInput? input, ref TestNodeData state, float delta)
         {
             if (!input.HasValue)
                 return;
-            
+
             if(state.wasKeyPressed != input.Value.isKeyPressed)
             {
                 state.wasKeyPressed = input.Value.isKeyPressed;
@@ -48,7 +47,7 @@ namespace PurrNet.Prediction
                     machine.Next();
             }
         }
-    
+
         public struct TestNodeData : IPredictedData<TestNodeData>
         {
             public bool wasKeyPressed;

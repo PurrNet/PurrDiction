@@ -1,5 +1,4 @@
 using System;
-using FixMath.NET;
 using JetBrains.Annotations;
 using PurrNet.Logging;
 using PurrNet.Modules;
@@ -125,17 +124,19 @@ namespace PurrNet.Prediction
             return asServer;
         }
 
-        internal abstract void SimulateTick(ulong tick, FP delta);
+        internal abstract void SimulateTick(ulong tick, float delta);
+
+        public virtual void PostSimulate(ulong tick, float delta) {}
 
         internal abstract void PrepareInput(bool isServer, bool isLocal, ulong tick);
 
-        internal abstract void SimulateRemote(ulong tick, FP delta);
+        internal abstract void SimulateRemote(ulong tick, float delta);
 
         internal abstract void SaveStateInHistory(ulong tick);
 
         internal abstract void Rollback(ulong tick);
 
-        public abstract void UpdateRollbackInterpolationState(FP delta, bool accumulateError);
+        public abstract void UpdateRollbackInterpolationState(float delta, bool accumulateError);
 
         internal abstract void ResetInterpolation();
 
@@ -256,7 +257,7 @@ namespace PurrNet.Prediction
             var copy = fullPredictedState.DeepCopy();
 
             // if TickRate is 30, then this should be 2
-            var interpolationBuffer = (int)FP.Max(world.tickRate / (FP)10, 2);
+            var interpolationBuffer = (int)Mathf.Max(world.tickRate / (float)10, 2);
 
             _interpolatedState = new Interpolated<FULL_STATE>(FULLInterpolate, 1f / world.tickRate, copy, interpolationBuffer);
             _stateHistory = new History<FULL_STATE>(world.tickRate * 5);
@@ -284,9 +285,9 @@ namespace PurrNet.Prediction
             GetUnityState(ref fullPredictedState.state);
         }
 
-        internal override void SimulateTick(ulong tick, FP delta) => Simulate(ref fullPredictedState.state, delta);
+        internal override void SimulateTick(ulong tick, float delta) => Simulate(ref fullPredictedState.state, delta);
 
-        internal override void SimulateRemote(ulong tick, FP delta) => Simulate(ref fullPredictedState.state, delta);
+        internal override void SimulateRemote(ulong tick, float delta) => Simulate(ref fullPredictedState.state, delta);
 
         internal override void SaveStateInHistory(ulong tick)
         {
@@ -295,7 +296,7 @@ namespace PurrNet.Prediction
 
         FULL_STATE? _viewState;
 
-        public override void UpdateRollbackInterpolationState(FP delta, bool accumulateError)
+        public override void UpdateRollbackInterpolationState(float delta, bool accumulateError)
         {
             var copy = fullPredictedState.DeepCopy().DeepCopy();
             ModifyRollbackViewState(ref copy.state, delta, accumulateError);
@@ -304,11 +305,11 @@ namespace PurrNet.Prediction
             _viewState = copy;
         }
 
-        protected virtual void ModifyRollbackViewState(ref STATE state, FP delta, bool accumulateError) { }
+        protected virtual void ModifyRollbackViewState(ref STATE state, float delta, bool accumulateError) { }
 
         protected virtual STATE GetInitialState() => default;
 
-        protected virtual void Simulate(ref STATE state, FP delta) {}
+        protected virtual void Simulate(ref STATE state, float delta) {}
 
         internal override void Rollback(ulong tick)
         {

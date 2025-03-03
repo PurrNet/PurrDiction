@@ -1559,6 +1559,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _rigidbody: {fileID: 1936988197}
+  _eventMask: 63
 --- !u!114 &1936988196
 MonoBehaviour:
   m_ObjectHideFlags: 0

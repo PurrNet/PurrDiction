@@ -1,5 +1,3 @@
-using ConversionHelper;
-using FixMath.NET;
 using PurrNet.Utils;
 using UnityEngine;
 
@@ -14,12 +12,10 @@ namespace PurrNet.Prediction
 
         private Rigidbody _unityRigidbody;
         private Rigidbody2D _unity2dRigidbody;
-        private BepuRigidbody _bepuRigidbody;
         private CharacterController _unityCtrler;
         private bool _hasController;
         private bool _hasRigidbody2d;
         private bool _hasRigidbody;
-        private bool _hasBepuRigidbody;
         private bool _hasView;
 
         private void Awake()
@@ -27,11 +23,9 @@ namespace PurrNet.Prediction
             _unityCtrler = GetComponent<CharacterController>();
             _unityRigidbody = GetComponent<Rigidbody>();
             _unity2dRigidbody = GetComponent<Rigidbody2D>();
-            _bepuRigidbody = GetComponent<BepuRigidbody>();
             _hasController = _unityCtrler != null;
             _hasRigidbody = _unityRigidbody != null;
             _hasRigidbody2d = _unity2dRigidbody != null;
-            _hasBepuRigidbody = _bepuRigidbody != null;
             _hasView = _graphics;
         }
 
@@ -40,9 +34,7 @@ namespace PurrNet.Prediction
             return new PredictedTransformState
             {
                 unityPosition = transform.position,
-                unityRotation = transform.rotation,
-                fpPosition = transform.position.ToFPVector3(),
-                fpRotation = transform.rotation.ToFPQuaternion()
+                unityRotation = transform.rotation
             };
         }
 
@@ -56,10 +48,6 @@ namespace PurrNet.Prediction
             else if (_hasRigidbody)
             {
                 state.SetPositionAndRotation(_unityRigidbody.position, _unityRigidbody.rotation);
-            }
-            else if (_hasBepuRigidbody && _bepuRigidbody.hasEntity)
-            {
-                state.SetPositionAndRotation(_bepuRigidbody.position, _bepuRigidbody.rotation);
             }
             else state.SetPositionAndRotation(transform);
         }
@@ -78,12 +66,6 @@ namespace PurrNet.Prediction
                 _unityRigidbody.rotation = state.unityRotation;
                 transform.SetPositionAndRotation(state.unityPosition, state.unityRotation);
             }
-            else if (_hasBepuRigidbody && _bepuRigidbody.hasEntity)
-            {
-                _bepuRigidbody.position = state.fpPosition;
-                _bepuRigidbody.rotation = state.fpRotation;
-                transform.SetPositionAndRotation(state.fpPosition.ToVector3(), state.fpRotation.ToQuaternion());
-            }
             else if (_hasController && _characterControllerPatch)
             {
                 _unityCtrler.enabled = false;
@@ -98,7 +80,7 @@ namespace PurrNet.Prediction
         private Vector3 _accumulatedPositionError;
         private Quaternion _accumulatedRotationError = Quaternion.identity;
 
-        protected override void ModifyRollbackViewState(ref PredictedTransformState state, FP delta, bool accumulateError)
+        protected override void ModifyRollbackViewState(ref PredictedTransformState state, float delta, bool accumulateError)
         {
             bool _smoothCorrections = _interpolationSettings && _interpolationSettings.useInterpolation;
 
@@ -153,7 +135,7 @@ namespace PurrNet.Prediction
 
                 // Partially correct
                 float posLerp = Mathf.Clamp01(Mathf.InverseLerp(posBlend.x, posBlend.y, positionError));
-                float rate = Mathf.Lerp(posRate.x, posRate.y, posLerp) * (float)delta;
+                float rate = Mathf.Lerp(posRate.x, posRate.y, posLerp) * delta;
                 var correction = _accumulatedPositionError * rate;
 
                 float minThreshold = posThreshold.x * posThreshold.x;
@@ -181,7 +163,7 @@ namespace PurrNet.Prediction
                 var rotRate = rotationInterpolation.correctionRateMinMax;
                 var rotBlend = rotationInterpolation.correctionBlendMinMax;
                 var rotLerp = Mathf.Clamp01(Mathf.InverseLerp(rotBlend.x, rotBlend.y, rotationError));
-                float rate = Mathf.Lerp(rotRate.x, rotRate.y, rotLerp) * (float)delta;
+                float rate = Mathf.Lerp(rotRate.x, rotRate.y, rotLerp) * delta;
 
                 _accumulatedRotationError = Quaternion.Slerp(_accumulatedRotationError, Quaternion.identity, rate);
             }
@@ -195,8 +177,6 @@ namespace PurrNet.Prediction
         {
             return new PredictedTransformState
             {
-                fpPosition = Vector3.Lerp(from.fpPosition.ToVector3(), to.fpPosition.ToVector3(), t).ToFPVector3(),
-                fpRotation = Quaternion.Slerp(from.fpRotation.ToQuaternion(), to.fpRotation.ToQuaternion(), t).ToFPQuaternion(),
                 unityPosition = Vector3.Lerp(from.unityPosition, to.unityPosition, t),
                 unityRotation = Quaternion.Slerp(from.unityRotation, to.unityRotation, t)
             };

@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using FixMath.NET;
 using JetBrains.Annotations;
 using PurrNet.Modules;
 using PurrNet.Packing;
@@ -13,8 +12,7 @@ namespace PurrNet.Prediction
     {
         None,
         UnityPhysics3D,
-        UnityPhysics2D,
-        BEPUPhysics
+        UnityPhysics2D
     }
 
     public enum UpdateViewMode : byte
@@ -40,7 +38,6 @@ namespace PurrNet.Prediction
         readonly List<PredictedIdentity> _queue = new ();
         readonly List<PredictedIdentity> _systems = new ();
 
-        public BEPUphysics.Space physics { get; private set; }
         internal Action onPhysicsSet;
 
         public static bool TryGetInstance(int sceneHandle, out PredictionManager world)
@@ -59,27 +56,13 @@ namespace PurrNet.Prediction
                 case PredictionPhysicsProvider.UnityPhysics2D:
                     Physics2D.simulationMode = SimulationMode2D.Script;
                     break;
-                case PredictionPhysicsProvider.BEPUPhysics:
-                    physics = new BEPUphysics.Space
-                    {
-                        ForceUpdater =
-                        {
-                            Gravity = new BEPUutilities.FPVector3(0, -9.81M, 0)
-                        },
-                        BufferedStates =
-                        {
-                            Enabled = false
-                        }
-                    };
-                    onPhysicsSet?.Invoke();
-                    break;
                 case PredictionPhysicsProvider.None:
                 default:
                     break;
             }
         }
 
-        public FP tickDelta { get; private set; }
+        public float tickDelta { get; private set; }
 
         public int tickRate { get; private set; }
 
@@ -90,13 +73,16 @@ namespace PurrNet.Prediction
 
         public PredictedHierarchy hierarchy { get; private set; }
 
+        public PredictedPhysics physics { get; private set; }
+
         protected override void OnEarlySpawn()
         {
             RegisterScene();
 
             tickRate = networkManager.tickModule.tickRate;
-            tickDelta = 1 / (FP)tickRate;
+            tickDelta = 1f / tickRate;
             hierarchy = RegisterSystem<PredictedHierarchy>();
+            physics = RegisterSystem<PredictedPhysics>();
 
             var roots = HashSetPool<GameObject>.Instantiate();
             var pid = -1;
@@ -118,10 +104,9 @@ namespace PurrNet.Prediction
             {
                 case PredictionPhysicsProvider.UnityPhysics3D:
                 case PredictionPhysicsProvider.UnityPhysics2D:
-                    Time.fixedDeltaTime = (float)tickDelta;
+                    Time.fixedDeltaTime = tickDelta;
                     break;
                 case PredictionPhysicsProvider.None:
-                case PredictionPhysicsProvider.BEPUPhysics:
                 default:
                     break;
             }
@@ -261,7 +246,7 @@ namespace PurrNet.Prediction
 
             _clientTicks[player] = new Queue<ulong>();
             MakeSureWeHaveLastFrame();
-            SyncFullState(player, tickRate, tickDelta.RawValue, _lastServerFrame);
+            SyncFullState(player, tickRate, tickDelta, _lastServerFrame);
         }
 
         private void MakeSureWeHaveLastFrame()
@@ -282,9 +267,9 @@ namespace PurrNet.Prediction
         }
 
         [TargetRpc]
-        private void SyncFullState([UsedImplicitly] PlayerID target, int tickRate, long delta, BitPacker data)
+        private void SyncFullState([UsedImplicitly] PlayerID target, int tickRate, float delta, BitPacker data)
         {
-            tickDelta = FP.FromRaw(delta);
+            tickDelta = delta;
             this.tickRate = tickRate;
 
             PackedInt _count = default;
@@ -329,6 +314,8 @@ namespace PurrNet.Prediction
 
             for (var i = 0; i < _systems.Count; i++)
                 _systems[i].SimulateRemote(localTick, tickDelta);
+            for (var i = 0; i < _systems.Count; i++)
+                _systems[i].PostSimulate(localTick, tickDelta);
 
             DoPhysicsPass();
 
@@ -444,21 +431,18 @@ namespace PurrNet.Prediction
             {
                 case PredictionPhysicsProvider.None:
                     break;
-                case PredictionPhysicsProvider.BEPUPhysics:
-                    physics.Update(tickDelta);
-                    break;
                 case PredictionPhysicsProvider.UnityPhysics3D:
                 {
                     var physicsScene = gameObject.scene.GetPhysicsScene();
                     if (physicsScene.IsValid())
-                        physicsScene.Simulate((float)tickDelta);
+                        physicsScene.Simulate(tickDelta);
                     break;
                 }
                 case PredictionPhysicsProvider.UnityPhysics2D:
                 {
                     var physicsScene = gameObject.scene.GetPhysicsScene2D();
                     if (physicsScene.IsValid())
-                        physicsScene.Simulate((float)tickDelta);
+                        physicsScene.Simulate(tickDelta);
                     break;
                 }
                 default:
@@ -525,7 +509,6 @@ namespace PurrNet.Prediction
                     Physics2D.SyncTransforms();
                     break;
                 case PredictionPhysicsProvider.None:
-                case PredictionPhysicsProvider.BEPUPhysics:
                 default:
                     break;
             }
@@ -585,6 +568,9 @@ namespace PurrNet.Prediction
                 for (var j = 0; j < _systems.Count; j++)
                     _systems[j].SimulateTick(simTick, tickDelta);
 
+                for (var i = 0; i < _systems.Count; i++)
+                    _systems[i].PostSimulate(simTick, tickDelta);
+
                 DoPhysicsPass();
 
                 for (var j = 0; j < _systems.Count; j++)
@@ -597,8 +583,12 @@ namespace PurrNet.Prediction
         private void SimulateFrame(ulong verifiedTick)
         {
             isSimulating = true;
+
             for (var j = 0; j < _systems.Count; j++)
                 _systems[j].SimulateTick(verifiedTick, tickDelta);
+
+            for (var i = 0; i < _systems.Count; i++)
+                _systems[i].PostSimulate(verifiedTick, tickDelta);
 
             DoPhysicsPass();
 
@@ -621,7 +611,7 @@ namespace PurrNet.Prediction
 
             var ticksQueued = ticks.Count;
             var timeQueued = ticksQueued * tickDelta;
-            if (timeQueued > FP.C0p3)
+            if (timeQueued > 0.3f)
             {
                 ClearAllInputs();
                 ticks.Clear();

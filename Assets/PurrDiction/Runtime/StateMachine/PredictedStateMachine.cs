@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Linq;
-using FixMath.NET;
 using UnityEngine;
 
 namespace PurrNet.Prediction.StateMachine
@@ -8,7 +7,7 @@ namespace PurrNet.Prediction.StateMachine
     [AddComponentMenu("PurrDiction/Predicted State machine")]
     public class PredictedStateMachine : PredictedIdentity<PredictedStateMachine.SMState>
     {
-        [SerializeField] private List<SerializableInterface<IPredictedStateNodeBase>> _wrappedStates = 
+        [SerializeField] private List<SerializableInterface<IPredictedStateNodeBase>> _wrappedStates =
             new List<SerializableInterface<IPredictedStateNodeBase>>();
         private List<IPredictedStateNodeBase> _states;
         public IReadOnlyList<IPredictedStateNodeBase> states => _states;
@@ -19,27 +18,27 @@ namespace PurrNet.Prediction.StateMachine
             {
                 if(currentState.stateIndex < 0 || currentState.stateIndex >= _states.Count)
                     return null;
-                
+
                 return _states[currentState.stateIndex];
             }
         }
-        
+
 #if UNITY_EDITOR
         public IPredictedStateNodeBase _previousStateNode;
         public IPredictedStateNodeBase _nextStateNode;
         public IPredictedStateNodeBase _currentStateNode;
 #endif
-        
+
         private int _previousViewStateIndex = -1;
         private int _previousVerifiedViewStateIndex = -1;
-    
+
         private void Awake()
         {
             _states = _wrappedStates.Select(wrapped => wrapped.Value).ToList();
 #if UNITY_EDITOR
             _currentStateNode = _states.FirstOrDefault();
 #endif
-    
+
             for (var i = 0; i < _states.Count; i++)
             {
                 if (_states[i] == null)
@@ -62,7 +61,7 @@ namespace PurrNet.Prediction.StateMachine
                         _states[_previousVerifiedViewStateIndex].ViewEnter(true);
                 }
             }
-            
+
             if(interpolatedState.stateIndex != _previousViewStateIndex)
             {
                 if(_previousViewStateIndex > -1 && _states[_previousViewStateIndex] != null)
@@ -73,16 +72,16 @@ namespace PurrNet.Prediction.StateMachine
             }
         }
 
-        protected override void Simulate(ref SMState state, FP delta)
+        protected override void Simulate(ref SMState state, float delta)
         {
             base.Simulate(ref state, delta);
-            
+
             if (_states.Count <= 0 || state.wantedState <= -1)
                 return;
-            
+
             if(state.stateIndex > -1 && _states[state.stateIndex] != null)
                 _states[state.stateIndex].StateSimulate(delta);
-            
+
             if(state.wantedState != state.stateIndex)
             {
 #if UNITY_EDITOR
@@ -104,7 +103,7 @@ namespace PurrNet.Prediction.StateMachine
                 wantedState = 0,
                 stateIndex = -1
             };
-            
+
             return state;
         }
 
@@ -136,24 +135,24 @@ namespace PurrNet.Prediction.StateMachine
             var index = _states.IndexOf(state);
             if (index == -1)
                 return;
-            
+
             SetState(index);
         }
-        
+
         private void SetWantedStateIndex(int index)
         {
             var copy = currentState;
             copy.wantedState = index;
             currentState = copy;
         }
-    
+
         public struct SMState : IPredictedData<SMState>
         {
             public int wantedState;
             public int stateIndex;
         }
     }
-    
+
     [System.Serializable]
     public class SerializableInterface<T> where T : class
     {
@@ -161,7 +160,7 @@ namespace PurrNet.Prediction.StateMachine
 
         public T Value
         {
-            get 
+            get
             {
                 if (_object is GameObject go)
                 {

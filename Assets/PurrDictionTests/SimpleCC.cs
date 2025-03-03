@@ -1,4 +1,3 @@
-using FixMath.NET;
 using UnityEngine;
 
 namespace PurrNet.Prediction.Tests
@@ -8,26 +7,26 @@ namespace PurrNet.Prediction.Tests
         [SerializeField] private GameObject _projectile;
         [SerializeField] private Rigidbody _controller;
         [SerializeField] private float _speed = 5;
-        
-        protected override void Simulate(SimpleWASDInput? input, ref SimpleCCState state, FP delta)
+
+        protected override void Simulate(SimpleWASDInput? input, ref SimpleCCState state, float delta)
         {
             var move = new Vector3(input?.horizontal ?? 0, 0, input?.vertical ?? 0);
-            
+
             if (move.magnitude > 0.01f)
                 move.Normalize();
-            
+
             var moveVector = move * _speed;
 
             if (move != Vector3.zero)
                 state.rotation = Mathf.Atan2(move.x, move.z) * Mathf.Rad2Deg;
-            
+
             _controller.rotation = Quaternion.Euler(0, state.rotation, 0);
 
             var vel = _controller.linearVelocity;
             vel.x = moveVector.x;
             vel.z = moveVector.z;
             _controller.linearVelocity = vel;
-            
+
             if (input.HasValue && state.wasShooting != input.Value.jump)
             {
                 state.wasShooting = input.Value.jump;
@@ -39,7 +38,7 @@ namespace PurrNet.Prediction.Tests
         private void Shoot()
         {
             var pos = transform.position + transform.forward;
-            
+
             var projectileId = hierarchy.Create(_projectile, pos, transform.rotation);
             var projectileRb = hierarchy.GetComponent<Rigidbody>(projectileId);
             projectileRb.linearVelocity = transform.forward * 10;

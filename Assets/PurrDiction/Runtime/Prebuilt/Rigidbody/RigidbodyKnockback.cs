@@ -1,4 +1,3 @@
-using FixMath.NET;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -8,13 +7,13 @@ namespace PurrNet.Prediction.Prebuilt
     [AddComponentMenu("PurrDiction/Prebuilt/Rigidbody/Knockback")]
     public class RigidbodyKnockback : PredictedIdentity<RigidbodyKnockback.KnockbackData>
     {
-        [FormerlySerializedAs("rigidbody")] 
+        [FormerlySerializedAs("rigidbody")]
         [SerializeField] private Rigidbody _rigidbody;
-        
+
         [FormerlySerializedAs("offensiveForce")]
         [Tooltip("How much force to apply to others")]
         [SerializeField] private float _offensiveForce = 1;
-        
+
         [FormerlySerializedAs("receiveMultiplier")]
         [Tooltip("A multiplier to decipher how much of the opposing objects force to apply to self")]
         [SerializeField] private float _receiveMultiplier = 1;
@@ -22,7 +21,7 @@ namespace PurrNet.Prediction.Prebuilt
         [FormerlySerializedAs("offsetType")]
         [Tooltip("Whether the offset is in world space or local (followed rotation)")]
         [SerializeField] private OffsetType _offsetType;
-        
+
         [FormerlySerializedAs("receiveKnockbackOffset")]
         [Tooltip("Offset from object used to calculate where the force is applied from and to - Used for directional calculation")]
         [SerializeField] private Vector3 _receiveKnockbackOffset;
@@ -33,7 +32,7 @@ namespace PurrNet.Prediction.Prebuilt
 
 #if UNITY_EDITOR
         [FormerlySerializedAs("drawGizmos")]
-        [Header("Debug")] 
+        [Header("Debug")]
         [SerializeField] private bool _drawGizmos = true;
 #endif
 
@@ -62,13 +61,13 @@ namespace PurrNet.Prediction.Prebuilt
             currentState = state;
         }
 
-        protected override void Simulate(ref KnockbackData state, FP delta)
+        protected override void Simulate(ref KnockbackData state, float delta)
         {
             base.Simulate(ref state, delta);
-            
+
             if(state.force <= 0)
                 return;
-            
+
             _rigidbody.AddForce(state.direction * state.force, ForceMode.Impulse);
             state.direction = default;
             state.force = 0;
@@ -95,7 +94,7 @@ namespace PurrNet.Prediction.Prebuilt
         {
             if (!_drawGizmos)
                 return;
-            
+
             switch (_offsetType)
             {
                 case OffsetType.Local:
@@ -113,7 +112,7 @@ namespace PurrNet.Prediction.Prebuilt
             }
         }
 #endif
-        
+
 
         public struct KnockbackData : IPredictedData<KnockbackData>
         {

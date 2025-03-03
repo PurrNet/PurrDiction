@@ -1,5 +1,3 @@
-using System;
-using FixMath.NET;
 using PurrNet.Logging;
 using UnityEngine;
 
@@ -15,39 +13,39 @@ namespace PurrNet.Prediction.Prebuilt
         [SerializeField] private float projectileInitialVelocity = 10;
 
 #if UNITY_EDITOR
-        [Header("Debug")] 
+        [Header("Debug")]
         [SerializeField] private bool drawGizmos = true;
 #endif
-        
+
         protected override ShootData GetInitialState()
         {
             var state = new ShootData()
             {
-                timeSinceShot = (FP)shootCooldown
+                timeSinceShot = shootCooldown
             };
             return state;
         }
 
-        protected override void Simulate(ShootInput? input, ref ShootData state, FP delta)
+        protected override void Simulate(ShootInput? input, ref ShootData state, float delta)
         {
             if (!input.HasValue)
                 return;
-            
+
             state.timeSinceShot += delta;
-            if (input.Value.shoot && state.timeSinceShot >= (FP)shootCooldown)
+            if (input.Value.shoot && state.timeSinceShot >= shootCooldown)
             {
                 Shoot();
                 state.timeSinceShot = 0;
             }
         }
-        
+
         private void Shoot()
         {
             if (!projectile)
                 return;
-            
+
             var pos = transform.TransformPoint(spawnOffset);
-            
+
             var projectileId = hierarchy.Create(projectile.gameObject, pos, transform.rotation);
             var projectileRb = hierarchy.GetComponent<Rigidbody>(projectileId);
             if(projectileRb)
@@ -70,14 +68,14 @@ namespace PurrNet.Prediction.Prebuilt
         {
             var input = new ShootInput()
             {
-                shoot = UnityEngine.Input.GetKey(shootKey)
+                shoot = Input.GetKey(shootKey)
             };
             return input;
         }
 
         public struct ShootData : IPredictedData<ShootData>
         {
-            public FP timeSinceShot;
+            public float timeSinceShot;
         }
 
         public struct ShootInput : IPredictedData

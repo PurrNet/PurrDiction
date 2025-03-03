@@ -1,6 +1,3 @@
-using BEPUutilities;
-using ConversionHelper;
-using FixMath.NET;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Serialization;
@@ -30,7 +27,7 @@ namespace PurrNet.Prediction.Prebuilt
                 _rigidbody = gameObject.AddComponent<Rigidbody>();
 
             _rigidbody.linearDamping = 3;
-            
+
             // ReSharper disable once BitwiseOperatorOnEnumWithoutFlags
             _rigidbody.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
         }
@@ -45,16 +42,16 @@ namespace PurrNet.Prediction.Prebuilt
             return input;
         }
 
-        protected override void Simulate(Input? input, ref State state, FP delta)
+        protected override void Simulate(Input? input, ref State state, float delta)
         {
             if (!input.HasValue)
                 return;
             var movement = input.Value.moveDirection;
             movement.Normalize();
-            var floatMovement = MathConverter.Convert(movement);
-            
+            var floatMovement = movement;
+
             _rigidbody.AddForce(floatMovement * acceleration);
-            
+
             var flatMovement = new Vector3(_rigidbody.linearVelocity.x, 0, _rigidbody.linearVelocity.z);
             if (flatMovement.magnitude > maxSpeed)
             {
@@ -66,27 +63,27 @@ namespace PurrNet.Prediction.Prebuilt
             if (floatMovement != Vector3.zero)
             {
                 var rotation = Mathf.Atan2(floatMovement.x, floatMovement.z) * Mathf.Rad2Deg;
-                state.rotation = (FP)rotation;
+                state.rotation = rotation;
             }
-            
-            _rigidbody.rotation = Quaternion.Euler(0, (float)state.rotation, 0);
+
+            _rigidbody.rotation = Quaternion.Euler(0, state.rotation, 0);
         }
-        
-        private FPVector3 GetCameraRelativeMovement(Vector2 inputDirection)
+
+        private Vector3 GetCameraRelativeMovement(Vector2 inputDirection)
         {
-            if (inputDirection.sqrMagnitude == 0) return FPVector3.zero;
-    
-            Vector3 cameraForward = _camera.transform.forward;
-            Vector3 cameraRight = _camera.transform.right;
-    
+            if (inputDirection.sqrMagnitude == 0) return Vector3.zero;
+
+            var cameraForward = _camera.transform.forward;
+            var cameraRight = _camera.transform.right;
+
             cameraForward.y = 0;
             cameraRight.y = 0;
-    
+
             cameraForward.Normalize();
             cameraRight.Normalize();
-            
-            FPVector3 moveDirection = MathConverter.Convert(cameraRight * inputDirection.x + cameraForward * inputDirection.y);
-    
+
+            var moveDirection = cameraRight * inputDirection.x + cameraForward * inputDirection.y;
+
             return moveDirection;
         }
 
@@ -103,15 +100,15 @@ namespace PurrNet.Prediction.Prebuilt
 
             return vector;
         }
-        
+
         public struct State : IPredictedData<State>
         {
-            public FP rotation;
+            public float rotation;
         }
-        
+
         public struct Input : IPredictedData
         {
-            public FPVector3 moveDirection;
+            public Vector3 moveDirection;
         }
     }
 }

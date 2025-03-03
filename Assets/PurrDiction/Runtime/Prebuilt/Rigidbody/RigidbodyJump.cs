@@ -1,4 +1,3 @@
-using FixMath.NET;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -9,13 +8,13 @@ namespace PurrNet.Prediction.Prebuilt
     public class RigidbodyJump : PredictedIdentity<RigidbodyJump.JumpInput, RigidbodyJump.JumpData>
     {
         [SerializeField] private KeyCode jumpKey = KeyCode.Space;
-        [FormerlySerializedAs("rigidbody")] 
+        [FormerlySerializedAs("rigidbody")]
         [SerializeField] private Rigidbody _rigidbody;
         [SerializeField] private float jumpCooldown = 0.5f;
         [SerializeField] private float jumpForce = 10;
         [SerializeField] private UpDirection upOrientation;
 
-        [Header("Ground check")] 
+        [Header("Ground check")]
         [SerializeField] private float groundCheckRadius = 0.25f;
         [SerializeField] private Vector3 groundCheckOffset;
         [SerializeField] private LayerMask groundLayer;
@@ -26,17 +25,17 @@ namespace PurrNet.Prediction.Prebuilt
         [SerializeField] private float maxFallSpeed = 10;
 
 #if UNITY_EDITOR
-        [Header("Debug")] 
+        [Header("Debug")]
         [SerializeField] private bool drawGizmos = true;
 #endif
-        
+
         private void Reset()
         {
             if(!TryGetComponent(out _rigidbody))
                 _rigidbody = gameObject.AddComponent<Rigidbody>();
         }
 
-        protected override void Simulate(JumpInput? input, ref JumpData state, FP delta)
+        protected override void Simulate(JumpInput? input, ref JumpData state, float delta)
         {
             if (!input.HasValue)
                 return;
@@ -47,16 +46,16 @@ namespace PurrNet.Prediction.Prebuilt
             {
                 state.timeInAir += delta;
                 if(_rigidbody.linearVelocity.magnitude < maxFallSpeed)
-                    _rigidbody.AddForce(Vector3.down * ((float)state.timeInAir * gravityAirTimeMultiplier), ForceMode.Acceleration);
+                    _rigidbody.AddForce(Vector3.down * (state.timeInAir * gravityAirTimeMultiplier), ForceMode.Acceleration);
             }
             else
             {
                 state.timeInAir = 0;
             }
-            
+
             state.timeSinceJump += delta;
 
-            if (input.Value.jump && state.timeSinceJump >= (FP)jumpCooldown && isGrounded)
+            if (input.Value.jump && state.timeSinceJump >= jumpCooldown && isGrounded)
             {
                 state.timeSinceJump = 0;
                 switch (upOrientation)
@@ -70,8 +69,8 @@ namespace PurrNet.Prediction.Prebuilt
                 }
             }
         }
-        
-        private static readonly Collider[] GroundCheckResults = new Collider[5];        
+
+        private static readonly Collider[] GroundCheckResults = new Collider[5];
         private bool IsGrounded()
         {
             var hits = Physics.OverlapSphereNonAlloc(transform.TransformPoint(groundCheckOffset), groundCheckRadius, GroundCheckResults, groundLayer);
@@ -88,12 +87,12 @@ namespace PurrNet.Prediction.Prebuilt
         {
             if (!drawGizmos)
                 return;
-            
+
             Gizmos.color = Color.green;
             Gizmos.DrawWireSphere(transform.TransformPoint(groundCheckOffset), groundCheckRadius);
         }
 #endif
-        
+
 
         protected override JumpInput GetInput()
         {
@@ -103,11 +102,11 @@ namespace PurrNet.Prediction.Prebuilt
             };
             return input;
         }
-        
+
         public struct JumpData : IPredictedData<JumpData>
         {
-            public FP timeInAir;
-            public FP timeSinceJump;
+            public float timeInAir;
+            public float timeSinceJump;
         }
 
         public struct JumpInput : IPredictedData

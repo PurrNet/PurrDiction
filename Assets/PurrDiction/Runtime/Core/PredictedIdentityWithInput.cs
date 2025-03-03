@@ -1,6 +1,4 @@
 using System.Collections.Generic;
-using FixMath.NET;
-using PurrNet.Logging;
 using PurrNet.Packing;
 using UnityEngine;
 
@@ -33,7 +31,7 @@ namespace PurrNet.Prediction
             _inputHistory = new History<INPUT>(world.tickRate * 5);
         }
 
-        internal override void SimulateTick(ulong tick, FP delta)
+        internal override void SimulateTick(ulong tick, float delta)
         {
             if (IsOwner())
             {
@@ -48,7 +46,7 @@ namespace PurrNet.Prediction
                     case true when _inputHistory.TryGetClosest(tick, out var extrainput, out var distanceInTicks):
                         if (distanceInTicks > 0)
                             ModifyExtrapolatedInput(ref extrainput);
-                        uint maxInputs = (uint)Mathf.CeilToInt(_repeatInputFactor * 10 / ((float)delta * 60));
+                        uint maxInputs = (uint)Mathf.CeilToInt(_repeatInputFactor * 10 / (delta * 60));
                         if (distanceInTicks <= maxInputs)
                              Simulate(extrainput, ref fullPredictedState.state, delta);
                         else Simulate(null, ref fullPredictedState.state, delta);
@@ -90,16 +88,16 @@ namespace PurrNet.Prediction
             }
         }
 
-        internal override void SimulateRemote(ulong tick, FP delta)
+        internal override void SimulateRemote(ulong tick, float delta)
         {
             if (_inputHistory.TryGet(tick, out var input))
                 Simulate(input, ref fullPredictedState.state, delta);
             else Simulate(null, ref fullPredictedState.state, delta);
         }
 
-        protected abstract void Simulate(INPUT? input, ref STATE state, FP delta);
+        protected abstract void Simulate(INPUT? input, ref STATE state, float delta);
 
-        protected override void Simulate(ref STATE state, FP delta)
+        protected override void Simulate(ref STATE state, float delta)
         {
             Simulate(_lastInput, ref state, delta);
         }

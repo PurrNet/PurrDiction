@@ -1,4 +1,3 @@
-using FixMath.NET;
 using PurrNet.Prediction.StateMachine;
 using UnityEngine;
 
@@ -12,7 +11,7 @@ namespace PurrNet.Prediction
             Debug.Log($"Entered state {gameObject.name}", machine);
         }
 
-        public override void StateSimulate(FP delta)
+        public override void StateSimulate(float delta)
         {
             //Happens within simulation
         }
@@ -25,7 +24,7 @@ namespace PurrNet.Prediction
 
         public struct TestNodeData : IPredictedData<TestNodeData>
         {
-            
+
         }
     }
 }
