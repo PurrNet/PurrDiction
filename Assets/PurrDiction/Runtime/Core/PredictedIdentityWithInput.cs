@@ -102,17 +102,27 @@ namespace PurrNet.Prediction
         public override void WriteInput(ulong localTick, BitPacker input)
         {
             if (_inputHistory.TryGet(localTick, out var savedInput))
-                 Packer<INPUT?>.Write(input, savedInput);
-            else Packer<INPUT?>.Write(input, null);
+            {
+                Packer<bool>.Write(input, true);
+                Packer<INPUT>.Write(input, savedInput);
+            }
+            else
+            {
+                Packer<bool>.Write(input, false);
+            }
         }
 
         public override void ReadInput(ulong tick, BitPacker packer)
         {
-            INPUT? input = default;
-            Packer<INPUT?>.Read(packer, ref input);
+            bool hasInput = default;
+            Packer<bool>.Read(packer, ref hasInput);
 
-            if (input.HasValue)
-                 _inputHistory.Write(tick, input.Value);
+            if (hasInput)
+            {
+                INPUT input = default;
+                Packer<INPUT>.Read(packer, ref input);
+                _inputHistory.Write(tick, input);
+            }
             else _inputHistory.Remove(tick);
         }
 
@@ -127,12 +137,14 @@ namespace PurrNet.Prediction
 
         public override void QueueInput(BitPacker packer)
         {
-            INPUT? input = default;
-            Packer<INPUT?>.Read(packer, ref input);
+            bool hasInput = default;
+            Packer<bool>.Read(packer, ref hasInput);
 
-            if (input.HasValue)
+            if (hasInput)
             {
-                var sanitizedInput = input.Value;
+                INPUT input = default;
+                Packer<INPUT>.Read(packer, ref input);
+                var sanitizedInput = input;
                 SanitizeInput(ref sanitizedInput);
                 _queuedInputs.Enqueue(sanitizedInput);
             }

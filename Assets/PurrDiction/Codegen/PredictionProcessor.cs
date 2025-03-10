@@ -4,6 +4,7 @@ using System.IO;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using PurrNet.Codegen;
+using PurrNet.Pooling;
 using PurrNet.Prediction;
 using Unity.CompilationPipeline.Common.Diagnostics;
 using Unity.CompilationPipeline.Common.ILPostProcessing;
@@ -12,19 +13,30 @@ namespace Purrdiction.Codegen
 {
     public class PredictionProcessor : ILPostProcessor
     {
+        static DisposableList<TypeDefinition> GetAllTypes(ModuleDefinition module)
+        {
+            var types = new DisposableList<TypeDefinition>(32);
+
+            types.AddRange(module.Types);
+            foreach (var type in module.Types)
+                types.AddRange(type.NestedTypes);
+
+            return types;
+        }
+
         public override ILPostProcessResult Process(ICompiledAssembly compiledAssembly)
         {
             try
             {
                 if (!WillProcess(compiledAssembly))
                     return null!;
-                
+
                 var messages = new List<DiagnosticMessage>();
 
                 using var peStream = new MemoryStream(compiledAssembly.InMemoryAssembly.PeData);
                 using var pdbStream = new MemoryStream(compiledAssembly.InMemoryAssembly.PdbData);
                 var resolver = new AssemblyResolver(compiledAssembly);
-                
+
                 var assemblyDefinition = AssemblyDefinition.ReadAssembly(peStream, new ReaderParameters
                 {
                     ReadSymbols = true,
@@ -32,13 +44,13 @@ namespace Purrdiction.Codegen
                     SymbolReaderProvider = new PortablePdbReaderProvider(),
                     AssemblyResolver = resolver
                 });
-                
+
                 resolver.SetSelf(assemblyDefinition);
 
                 for (var m = 0; m < assemblyDefinition.Modules.Count; m++)
                 {
                     var module = assemblyDefinition.Modules[m];
-                    var types = PostProcessor.GetAllTypes(module);
+                    var types = GetAllTypes(module);
 
                     for (var t = 0; t < types.Count; t++)
                     {
@@ -46,9 +58,9 @@ namespace Purrdiction.Codegen
 
                         if (!PostProcessor.InheritsFrom(type, typeof(PredictedIdentity).FullName))
                             continue;
-                        
+
                         var methods = type.Methods;
-                        
+
                         for (var i = 0; i < methods.Count; i++)
                         {
                             var method = methods[i];
@@ -60,9 +72,9 @@ namespace Purrdiction.Codegen
 
                                 if (attribute.AttributeType.FullName != typeof(SimulationOnlyAttribute).FullName)
                                     continue;
-                                
+
                                 var returnType = method.ReturnType;
-                                
+
                                 if (returnType.FullName != module.TypeSystem.Void.FullName)
                                 {
                                     messages.Add(new DiagnosticMessage
@@ -78,7 +90,7 @@ namespace Purrdiction.Codegen
                         }
                     }
                 }
-                
+
                 var pe = new MemoryStream();
                 var pdb = new MemoryStream();
 
@@ -88,7 +100,7 @@ namespace Purrdiction.Codegen
                     SymbolStream = pdb,
                     SymbolWriterProvider = new PortablePdbWriterProvider()
                 };
-                
+
                 try
                 {
                     assemblyDefinition.Write(pe, writerParameters);
@@ -101,7 +113,7 @@ namespace Purrdiction.Codegen
                         MessageData = $"Failed to write assembly ({compiledAssembly.Name}): {e.Message}\n{e.StackTrace}",
                     });
                 }
-                
+
                 return new ILPostProcessResult(new InMemoryAssembly(pe.ToArray(), pdb.ToArray()), messages);
             }
             catch (Exception e)
@@ -113,7 +125,7 @@ namespace Purrdiction.Codegen
                         MessageData = $"Unhandled exception {e.Message}\n{e.StackTrace}",
                     }
                 };
-                
+
                 return new ILPostProcessResult(compiledAssembly.InMemoryAssembly, messages);
             }
         }
@@ -126,7 +138,7 @@ namespace Purrdiction.Codegen
             var instructions = method.Body.Instructions;
             var processor = method.Body.GetILProcessor();
             var first = instructions[0];
-            
+
             processor.InsertBefore(first, processor.Create(OpCodes.Ldarg_0));
             processor.InsertBefore(first, processor.Create(OpCodes.Call, isSimulating));
             processor.InsertBefore(first, processor.Create(OpCodes.Brtrue, first));
@@ -134,14 +146,14 @@ namespace Purrdiction.Codegen
         }
 
         public override ILPostProcessor GetInstance() => this;
-        
+
         public override bool WillProcess(ICompiledAssembly compiledAssembly)
         {
             var name = compiledAssembly.Name;
-            
+
             if (name.StartsWith("Unity."))
                 return false;
-            
+
             if (name.StartsWith("UnityEngine."))
                 return false;
 
