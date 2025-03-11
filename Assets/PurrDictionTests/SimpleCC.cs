@@ -1,4 +1,3 @@
-using PurrNet.Logging;
 using UnityEngine;
 
 namespace PurrNet.Prediction.Tests
@@ -9,13 +8,24 @@ namespace PurrNet.Prediction.Tests
         [SerializeField] private Rigidbody _controller;
         [SerializeField] private float _speed = 5;
 
-        protected override void Simulate(SimpleWASDInput? input, ref SimpleCCState state, float delta)
+        protected override void SanitizeInput(ref SimpleWASDInput input)
         {
-            var move = new Vector3(input?.horizontal ?? 0, 0, input?.vertical ?? 0);
+            var move = new Vector2(input.horizontal, input.vertical);
+            move = Vector2.ClampMagnitude(move, 1);
 
-            if (move.magnitude > 0.01f)
-                move.Normalize();
+            input.horizontal = move.x;
+            input.vertical = move.y;
+        }
 
+        protected override void ModifyExtrapolatedInput(ref SimpleWASDInput input)
+        {
+            input.jump = false;
+            input.dash = false;
+        }
+
+        protected override void Simulate(SimpleWASDInput input, ref SimpleCCState state, float delta)
+        {
+            var move = new Vector3(input.horizontal, 0, input.vertical);
             var moveVector = move * _speed;
 
             if (move != Vector3.zero)
@@ -28,9 +38,9 @@ namespace PurrNet.Prediction.Tests
             vel.z = moveVector.z;
             _controller.linearVelocity = vel;
 
-            if (input.HasValue && state.wasShooting != input.Value.jump)
+            if (state.wasShooting != input.jump)
             {
-                state.wasShooting = input.Value.jump;
+                state.wasShooting = input.jump;
                 if (state.wasShooting)
                     Shoot();
             }

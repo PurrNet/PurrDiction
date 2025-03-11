@@ -25,12 +25,9 @@ namespace PurrNet.Prediction.Prebuilt
                 controller = gameObject.AddComponent<CharacterController>();
         }
 
-        protected override void Simulate(Input? input, ref State state, float delta)
+        protected override void Simulate(Input input, ref State state, float delta)
         {
-            if(!input.HasValue)
-                return;
-
-            var movement = input.Value.moveDirection;
+            var movement = input.moveDirection;
             movement.Normalize();
             var floatMovement = movement;
 

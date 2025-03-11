@@ -35,14 +35,11 @@ namespace PurrNet.Prediction
             currentState = state;
         }
 
-        protected override void Simulate(TestNodeInput? input, ref TestNodeData state, float delta)
+        protected override void Simulate(TestNodeInput input, ref TestNodeData state, float delta)
         {
-            if (!input.HasValue)
-                return;
-
-            if(state.wasKeyPressed != input.Value.isKeyPressed)
+            if(state.wasKeyPressed != input.isKeyPressed)
             {
-                state.wasKeyPressed = input.Value.isKeyPressed;
+                state.wasKeyPressed = input.isKeyPressed;
                 if(state.wasKeyPressed)
                     machine.Next();
             }

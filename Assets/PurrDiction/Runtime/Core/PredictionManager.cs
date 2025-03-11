@@ -142,13 +142,13 @@ namespace PurrNet.Prediction
 
         protected override void OnSpawned()
         {
-            networkManager.tickModule.onReliablePreTick += OnPreTick;
+            networkManager.tickModule.onReliablePostTick += OnPreTick;
             networkManager.tickModule.onReliablePostTick += OnPostTick;
         }
 
         protected override void OnDespawned()
         {
-            networkManager.tickModule.onReliablePreTick -= OnPreTick;
+            networkManager.tickModule.onReliablePostTick -= OnPreTick;
             networkManager.tickModule.onReliablePostTick -= OnPostTick;
 
             _lastServerFrame?.Dispose();
@@ -343,7 +343,7 @@ namespace PurrNet.Prediction
                 WriteInitialFrameToOthers(frame);
 
             for (var i = 0; i < _systems.Count; i++)
-                _systems[i].SimulateRemote(localTick, tickDelta);
+                _systems[i].SimulateTick(localTick, tickDelta);
 
             DoPhysicsPass();
 
@@ -380,7 +380,7 @@ namespace PurrNet.Prediction
                 {
                     var system = _systems[systemIdx];
                     system.GetLatestUnityState();
-                    system.UpdateRollbackInterpolationState(tickDelta, false);
+                    // system.UpdateRollbackInterpolationState(tickDelta, false);
 
                     if (system.IsOwner(myPlayer))
                         system.WriteInput(localTick, frame);
@@ -579,7 +579,13 @@ namespace PurrNet.Prediction
         private void OnPostTick()
         {
             if (_deltas.Count == 0)
+            {
+                if (isClient)
+                    UpdateInterpolation(false);
                 return;
+            }
+
+            UpdateInterpolation(false);
 
             isReplaying = true;
             isVerified = true;
@@ -614,7 +620,10 @@ namespace PurrNet.Prediction
                 SyncTransforms();
                 UpdateInterpolation(true);
             }
-            else localTickInContext = localTick;
+            else
+            {
+                localTickInContext = localTick;
+            }
 
             isReplaying = false;
         }
@@ -677,24 +686,11 @@ namespace PurrNet.Prediction
                 _clientTicks[info.sender] = ticks;
             }
 
-            var ticksQueued = ticks.Count;
-            var timeQueued = ticksQueued * tickDelta;
-            if (timeQueued > 0.3f)
-            {
-                ClearAllInputs();
-                ticks.Clear();
-            }
-
+            ticks.Clear();
             ticks.Enqueue(clientTick);
 
             using (inputPacket)
                 HandleIncomingInput(inputPacket, info);
-        }
-
-        private void ClearAllInputs()
-        {
-            for (var i = 0; i < _systems.Count; i++)
-                _systems[i].ClearInput();
         }
 
         private void HandleIncomingInput(BitPacker inputPacket,

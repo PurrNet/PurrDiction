@@ -156,8 +156,6 @@ namespace PurrNet.Prediction
 
         public abstract void QueueInput(BitPacker packer);
 
-        public abstract void ClearInput();
-
         public GameObject GetRoot()
         {
             // get the farthest root with a predicted identity
@@ -360,8 +358,6 @@ namespace PurrNet.Prediction
         public override void ReadInput(ulong tick, BitPacker packer) { }
 
         public override void QueueInput(BitPacker packer) { }
-
-        public override void ClearInput() { }
 
         internal override void UpdateView(float deltaTime)
         {

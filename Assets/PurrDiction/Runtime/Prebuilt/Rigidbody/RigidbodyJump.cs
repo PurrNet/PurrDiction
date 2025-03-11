@@ -35,11 +35,8 @@ namespace PurrNet.Prediction.Prebuilt
                 _rigidbody = gameObject.AddComponent<Rigidbody>();
         }
 
-        protected override void Simulate(JumpInput? input, ref JumpData state, float delta)
+        protected override void Simulate(JumpInput input, ref JumpData state, float delta)
         {
-            if (!input.HasValue)
-                return;
-
             bool isGrounded = IsGrounded();
 
             if (!isGrounded)
@@ -55,7 +52,7 @@ namespace PurrNet.Prediction.Prebuilt
 
             state.timeSinceJump += delta;
 
-            if (input.Value.jump && state.timeSinceJump >= jumpCooldown && isGrounded)
+            if (input.jump && state.timeSinceJump >= jumpCooldown && isGrounded)
             {
                 state.timeSinceJump = 0;
                 switch (upOrientation)

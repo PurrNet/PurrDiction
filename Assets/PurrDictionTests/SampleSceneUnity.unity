@@ -582,7 +582,8 @@ MonoBehaviour:
   _serverPort: 5000
   _maxConnections: 100
   _address: 127.0.0.1
-  _retryLatencyFactor: 1.8
+  _timeoutInSeconds: 5
+  _pollEventsInUpdate: 0
 --- !u!114 &1793795278
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -600,7 +601,7 @@ MonoBehaviour:
   _startClientFlags: 7
   _cookieScope: 1
   _dontDestroyOnLoad: 0
-  _transport: {fileID: 1793795277}
+  _transport: {fileID: 1793795281}
   _networkPrefabs: {fileID: 11400000, guid: 2190589f99f9abe479a1c7890b05f51f, type: 2}
   _networkRules: {fileID: 11400000, guid: d8799083b96579a42b8b2d03e4ceae98, type: 2}
   _visibilityRules: {fileID: 11400000, guid: 8f014a5bd8dc68646a2a3c0b18c5bbd8, type: 2}
@@ -641,6 +642,7 @@ MonoBehaviour:
   _address: 127.0.0.1
   _query: 
   _path: 
+  _pollEventsInUpdate: 0
   _enableSSL: 0
   _certPath: 
   _certPassword: 
@@ -661,6 +663,7 @@ MonoBehaviour:
   _roomName: dwdfefsfesfes
   _region: brazil
   _host: br.purrlay.riten.dev
+  _pollEventsInUpdate: 0
 --- !u!1 &1997087625
 GameObject:
   m_ObjectHideFlags: 0

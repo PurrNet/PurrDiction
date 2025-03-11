@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+using PurrNet.Logging;
 using PurrNet.Packing;
 using UnityEngine;
 
@@ -33,7 +33,7 @@ namespace PurrNet.Prediction
             if (IsOwner())
             {
                 if (!_inputHistory.TryGet(tick, out var input))
-                     Simulate(default, ref fullPredictedState.state, delta);
+                     Simulate(GetDefaultInput(), ref fullPredictedState.state, delta);
                 else Simulate(input, ref fullPredictedState.state, delta);
             }
             else
@@ -46,13 +46,13 @@ namespace PurrNet.Prediction
                         uint maxInputs = (uint)Mathf.CeilToInt(_repeatInputFactor * 10 / (delta * 60));
                         if (distanceInTicks <= maxInputs)
                              Simulate(extrainput, ref fullPredictedState.state, delta);
-                        else Simulate(null, ref fullPredictedState.state, delta);
+                        else Simulate(GetDefaultInput(), ref fullPredictedState.state, delta);
                         break;
                     case false when _inputHistory.TryGet(tick, out var input):
                         Simulate(input, ref fullPredictedState.state, delta);
                         break;
                     default:
-                        Simulate(null, ref fullPredictedState.state, delta);
+                        Simulate(GetDefaultInput(), ref fullPredictedState.state, delta);
                         break;
                 }
             }
@@ -74,11 +74,10 @@ namespace PurrNet.Prediction
             }
             else if (isServer)
             {
-                if (_queuedInputs.Count == 0)
+                if (!_queuedInput.HasValue)
                     return;
 
-                var input = _queuedInputs.Dequeue();
-
+                var input = _queuedInput.Value;
                 SanitizeInput(ref input);
                 _lastInput = input;
                 _inputHistory.Write(tick, input);
@@ -89,10 +88,12 @@ namespace PurrNet.Prediction
         {
             if (_inputHistory.TryGet(tick, out var input))
                 Simulate(input, ref fullPredictedState.state, delta);
-            else Simulate(null, ref fullPredictedState.state, delta);
+            else Simulate(GetDefaultInput(), ref fullPredictedState.state, delta);
         }
 
-        protected abstract void Simulate(INPUT? input, ref STATE state, float delta);
+        protected virtual INPUT GetDefaultInput() => default;
+
+        protected abstract void Simulate(INPUT input, ref STATE state, float delta);
 
         protected override void Simulate(ref STATE state, float delta)
         {
@@ -126,7 +127,7 @@ namespace PurrNet.Prediction
             else _inputHistory.Remove(tick);
         }
 
-        readonly Queue<INPUT> _queuedInputs = new();
+        private INPUT? _queuedInput;
 
         /// <summary>
         /// Sanitize the input before using it.
@@ -146,13 +147,8 @@ namespace PurrNet.Prediction
                 Packer<INPUT>.Read(packer, ref input);
                 var sanitizedInput = input;
                 SanitizeInput(ref sanitizedInput);
-                _queuedInputs.Enqueue(sanitizedInput);
+                _queuedInput = sanitizedInput;
             }
-        }
-
-        public override void ClearInput()
-        {
-            _queuedInputs.Clear();
         }
     }
 }

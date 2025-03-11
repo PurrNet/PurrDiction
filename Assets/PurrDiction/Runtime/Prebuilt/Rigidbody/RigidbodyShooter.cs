@@ -26,13 +26,10 @@ namespace PurrNet.Prediction.Prebuilt
             return state;
         }
 
-        protected override void Simulate(ShootInput? input, ref ShootData state, float delta)
+        protected override void Simulate(ShootInput input, ref ShootData state, float delta)
         {
-            if (!input.HasValue)
-                return;
-
             state.timeSinceShot += delta;
-            if (input.Value.shoot && state.timeSinceShot >= shootCooldown)
+            if (input.shoot && state.timeSinceShot >= shootCooldown)
             {
                 Shoot();
                 state.timeSinceShot = 0;
