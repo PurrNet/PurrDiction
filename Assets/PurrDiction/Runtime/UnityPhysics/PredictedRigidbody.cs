@@ -59,8 +59,8 @@ namespace PurrNet.Prediction
         {
             _rigidbody.linearVelocity += mode switch
             {
-                ForceMode.Force => force / _rigidbody.mass * Time.deltaTime,
-                ForceMode.Acceleration => force * Time.deltaTime,
+                ForceMode.Force => force / _rigidbody.mass * predictionManager.tickDelta,
+                ForceMode.Acceleration => force * predictionManager.tickDelta,
                 ForceMode.Impulse => force / _rigidbody.mass,
                 ForceMode.VelocityChange => force,
                 _ => throw new ArgumentOutOfRangeException(nameof(mode), mode, null)
