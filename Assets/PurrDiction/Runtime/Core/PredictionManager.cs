@@ -73,6 +73,8 @@ namespace PurrNet.Prediction
 
         public PredictedHierarchy hierarchy { get; private set; }
 
+        public PredictedPlayers players { get; private set; }
+
         internal Predicted3DPhysics physics3d { get; private set; }
 
         internal Predicted2DPhysics physics2d { get; private set; }
@@ -85,6 +87,7 @@ namespace PurrNet.Prediction
             tickDelta = 1f / tickRate;
 
             hierarchy = RegisterSystem<PredictedHierarchy>();
+            players = RegisterSystem<PredictedPlayers>();
             physics3d = RegisterSystem<Predicted3DPhysics>();
             physics2d = RegisterSystem<Predicted2DPhysics>();
 
