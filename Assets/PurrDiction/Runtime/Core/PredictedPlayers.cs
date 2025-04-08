@@ -26,6 +26,7 @@ namespace PurrNet.Prediction
         protected override void GetUnityState(ref PredictedPlayersState state)
         {
             var actual = predictionManager.networkManager.players;
+            state.players.Clear();
             state.players.AddRange(actual);
         }
     }
