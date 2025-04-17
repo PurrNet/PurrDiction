@@ -145,6 +145,12 @@ namespace PurrNet.Prediction
             set => _rigidbody.linearVelocity = value;
         }
 
+        public Vector2 velocity
+        {
+            get => _rigidbody.linearVelocity;
+            set => _rigidbody.linearVelocity = value;
+        }
+
         public float angularVelocity
         {
             get => _rigidbody.angularVelocity;
