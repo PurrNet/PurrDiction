@@ -284,7 +284,7 @@ namespace PurrNet.Prediction
             }
         }
 
-        [TargetRpc]
+        [TargetRpc(compressionLevel: CompressionLevel.Best)]
         private void SyncFullState([UsedImplicitly] PlayerID target, int tickRate, float delta, BitPacker data)
         {
             tickDelta = delta;
@@ -680,7 +680,7 @@ namespace PurrNet.Prediction
 
         readonly Dictionary<PlayerID, Queue<ulong>> _clientTicks = new ();
 
-        [ServerRpc(requireOwnership: false)]
+        [ServerRpc(requireOwnership: false, compressionLevel: CompressionLevel.Best)]
         private void SendInputToServer(ulong clientTick, BitPacker inputPacket, RPCInfo info = default)
         {
             if (!_clientTicks.TryGetValue(info.sender, out var ticks))

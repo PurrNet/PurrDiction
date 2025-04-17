@@ -1,3 +1,4 @@
+using System;
 using PurrNet.Pooling;
 using UnityEngine;
 
@@ -136,6 +137,109 @@ namespace PurrNet.Prediction
         public void RaiseCollisionStay(PredictedRigidbody2D other, DisposableList<Physics2DContactPoint> evContacts)
         {
             onCollisionStay?.Invoke(other, evContacts);
+        }
+
+        public Vector2 linearVelocity
+        {
+            get => _rigidbody.linearVelocity;
+            set => _rigidbody.linearVelocity = value;
+        }
+
+        public float angularVelocity
+        {
+            get => _rigidbody.angularVelocity;
+            set => _rigidbody.angularVelocity = value;
+        }
+
+        /// <summary>
+        /// Adds a force to the Rigidbody2D.
+        /// </summary>
+        /// <param name="force">Force vector in world coordinates.</param>
+        /// <param name="mode">Type of force to apply.</param>
+        public void AddForce(Vector2 force, ForceMode2D mode = ForceMode2D.Force)
+        {
+            _rigidbody.linearVelocity += mode switch
+            {
+                ForceMode2D.Force => force / _rigidbody.mass * predictionManager.tickDelta,
+                ForceMode2D.Impulse => force / _rigidbody.mass,
+                _ => throw new ArgumentOutOfRangeException(nameof(mode), mode, null)
+            };
+        }
+
+        /// <summary>
+        /// Adds a torque to the Rigidbody2D.
+        /// </summary>
+        /// <param name="torque">Torque value in world coordinates.</param>
+        /// <param name="mode">Type of torque to apply.</param>
+        public void AddTorque(float torque, ForceMode2D mode = ForceMode2D.Force)
+        {
+            _rigidbody.angularVelocity += mode switch
+            {
+                ForceMode2D.Force => torque / _rigidbody.mass * predictionManager.tickDelta,
+                ForceMode2D.Impulse => torque / _rigidbody.mass,
+                _ => throw new ArgumentOutOfRangeException(nameof(mode), mode, null)
+            };
+        }
+
+        /// <summary>
+        /// Adds a force to the Rigidbody2D in local coordinates.
+        /// </summary>
+        /// <param name="force">Force vector in local coordinates.</param>
+        /// <param name="mode">Type of force to apply.</param>
+        public void AddRelativeForce(Vector2 force, ForceMode2D mode = ForceMode2D.Force)
+        {
+            var relativeForce = _rigidbody.transform.TransformDirection(force);
+            AddForce(relativeForce, mode);
+        }
+
+        /// <summary>
+        /// Adds a torque to the Rigidbody2D relative to its local coordinate system.
+        /// </summary>
+        /// <param name="torque">Torque value in local coordinates.</param>
+        /// <param name="mode">Type of torque to apply.</param>
+        public void AddRelativeTorque(float torque, ForceMode2D mode = ForceMode2D.Force)
+        {
+            // In 2D, torque is always around the Z axis, so relative torque is the same as world torque
+            AddTorque(torque, mode);
+        }
+
+        /// <summary>
+        /// Applies a force at a specific position, creating both linear and angular motion.
+        /// </summary>
+        /// <param name="force">Force vector in world coordinates.</param>
+        /// <param name="position">Position in world coordinates where the force is applied.</param>
+        /// <param name="mode">Type of force to apply.</param>
+        public void AddForceAtPosition(Vector2 force, Vector2 position, ForceMode2D mode = ForceMode2D.Force)
+        {
+            // Apply linear force
+            AddForce(force, mode);
+
+            // Calculate and apply torque
+            Vector2 relativePosition = position - _rigidbody.worldCenterOfMass;
+            float torque = Vector2.SignedAngle(Vector2.right, relativePosition) * force.magnitude;
+            AddTorque(torque, mode);
+        }
+
+        /// <summary>
+        /// Applies a force to the Rigidbody2D that simulates an explosion effect.
+        /// </summary>
+        /// <param name="explosionForce">The force of the explosion.</param>
+        /// <param name="explosionPosition">The center of the explosion.</param>
+        /// <param name="explosionRadius">The radius of the explosion.</param>
+        /// <param name="mode">Type of force to apply.</param>
+        public void AddExplosionForce(float explosionForce, Vector2 explosionPosition, float explosionRadius, ForceMode2D mode = ForceMode2D.Force)
+        {
+            Vector2 explosionToObject = _rigidbody.position - explosionPosition;
+            float distance = explosionToObject.magnitude;
+
+            // Normalize without division by zero
+            Vector2 direction = distance > 0.01f ? explosionToObject / distance : Vector2.up;
+
+            // Calculate force based on distance
+            float force = explosionForce * (1.0f - Mathf.Clamp01(distance / explosionRadius));
+            
+            // Apply force
+            AddForceAtPosition(direction * force, _rigidbody.position, mode);
         }
     }
 }
