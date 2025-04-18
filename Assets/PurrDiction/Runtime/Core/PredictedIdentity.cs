@@ -1,4 +1,3 @@
-using System;
 using JetBrains.Annotations;
 using PurrNet.Logging;
 using PurrNet.Modules;
@@ -7,53 +6,6 @@ using UnityEngine;
 
 namespace PurrNet.Prediction
 {
-    public readonly struct PredictedID : IPackedAuto, IEquatable<PredictedID>
-    {
-        public readonly PackedUInt value;
-
-        public PredictedIdentity GetIdentity(PredictionManager manager)
-        {
-            return manager.GetIdentity(value);
-        }
-
-        public T GetIdentity<T>(PredictionManager manager) where T : PredictedIdentity
-        {
-            return (T)manager.GetIdentity(value);
-        }
-
-        public bool TryGetIdentity(PredictionManager manager, out PredictedIdentity identity)
-        {
-            identity = manager.GetIdentity(value);
-            return identity != null;
-        }
-
-        public bool TryGetIdentity<T>(PredictionManager manager, out T identity) where T : PredictedIdentity
-        {
-            identity = (T)manager.GetIdentity(value);
-            return identity != null;
-        }
-
-        public PredictedID(uint id)
-        {
-            this.value = id;
-        }
-
-        public bool Equals(PredictedID other)
-        {
-            return value == other.value;
-        }
-
-        public override bool Equals(object obj)
-        {
-            return obj is PredictedID other && Equals(other);
-        }
-
-        public override int GetHashCode()
-        {
-            return (int)value.value;
-        }
-    }
-
     public abstract class PredictedIdentity : MonoBehaviour
     {
         public PredictionManager predictionManager { get; protected set; }
@@ -79,8 +31,12 @@ namespace PurrNet.Prediction
         protected virtual void OnSpawned() {}
         protected virtual void OnDespawned() {}
 
+        public bool isServer { get; private set; }
+
         internal virtual void Setup(NetworkManager manager, PredictionManager world, uint id)
         {
+            isServer = manager.isServer;
+
             if (!isFreshSpawn)
                 return;
 
@@ -100,6 +56,10 @@ namespace PurrNet.Prediction
             if (predictionManager)
                 predictionManager.UnregisterInstance(this);
         }
+
+        public bool isOwner => IsOwner();
+
+        public bool isController => owner.HasValue ? owner == predictionManager.localPlayer : isServer;
 
         public bool IsOwner()
         {
@@ -140,7 +100,7 @@ namespace PurrNet.Prediction
 
         public abstract void UpdateRollbackInterpolationState(float delta, bool accumulateError);
 
-        internal abstract void ResetInterpolation();
+        public abstract void ResetInterpolation();
 
         internal abstract void UpdateView(float deltaTime);
 
@@ -213,7 +173,7 @@ namespace PurrNet.Prediction
 
         protected TickManager tickModule { get; private set; }
 
-        internal override void ResetInterpolation()
+        public override void ResetInterpolation()
         {
             _interpolatedState.Teleport(fullPredictedState);
         }

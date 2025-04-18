@@ -8,22 +8,8 @@ using UnityEngine;
 
 namespace PurrNet.Prediction
 {
-    public enum PredictionPhysicsProvider : byte
-    {
-        None,
-        UnityPhysics3D,
-        UnityPhysics2D
-    }
-
-    public enum UpdateViewMode : byte
-    {
-        [UsedImplicitly]
-        None,
-        Update,
-        LateUpdate
-    }
-
-    [DefaultExecutionOrder(1000)][AddComponentMenu("PurrDiction/Prediction Manager")]
+    [DefaultExecutionOrder(1000)]
+    [AddComponentMenu("PurrDiction/Prediction Manager")]
     public class PredictionManager : NetworkIdentity
     {
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterAssembliesLoaded)]
@@ -37,8 +23,6 @@ namespace PurrNet.Prediction
 
         readonly List<PredictedIdentity> _queue = new ();
         readonly List<PredictedIdentity> _systems = new ();
-
-        internal Action onPhysicsSet;
 
         public static bool TryGetInstance(int sceneHandle, out PredictionManager world)
         {
@@ -85,6 +69,7 @@ namespace PurrNet.Prediction
 
             tickRate = networkManager.tickModule.tickRate;
             tickDelta = 1f / tickRate;
+            _lastVerifiedTick = 0;
 
             hierarchy = RegisterSystem<PredictedHierarchy>();
             players = RegisterSystem<PredictedPlayers>();
@@ -208,14 +193,14 @@ namespace PurrNet.Prediction
 
         private uint _nextInstanceId;
 
-        readonly Dictionary<uint, PredictedIdentity> _instanceMap = new ();
+        readonly Dictionary<PredictedID, PredictedIdentity> _instanceMap = new ();
 
-        public bool TryGetIdentity(uint id, out PredictedIdentity instance)
+        public bool TryGetIdentity(PredictedID id, out PredictedIdentity instance)
         {
             return _instanceMap.TryGetValue(id, out instance);
         }
 
-        public PredictedIdentity GetIdentity(uint id)
+        public PredictedIdentity GetIdentity(PredictedID id)
         {
             return _instanceMap[id];
         }
@@ -228,14 +213,14 @@ namespace PurrNet.Prediction
                 return;
             }
 
-            _instanceMap[_nextInstanceId] = system;
+            _instanceMap[new PredictedID(_nextInstanceId)] = system;
             system.Setup(networkManager, this, _nextInstanceId++);
             _systems.Add(system);
         }
 
         public void UnregisterInstance(PredictedIdentity predictedIdentity)
         {
-            _instanceMap.Remove(predictedIdentity.id.value);
+            _instanceMap.Remove(predictedIdentity.id);
             _systems.Remove(predictedIdentity);
         }
 
@@ -579,6 +564,8 @@ namespace PurrNet.Prediction
             }
         }
 
+        private ulong _lastVerifiedTick;
+
         private void OnPostTick()
         {
             if (_deltas.Count == 0)
@@ -605,11 +592,11 @@ namespace PurrNet.Prediction
                 _lastFrame?.Dispose();
                 _lastFrame = result;
 
-                if (frameDelta.clientTick == 0)
-                    continue;
+                if (frameDelta.clientTick != 0)
+                    _lastVerifiedTick = frameDelta.clientTick;
 
                 hasRollback = true;
-                verifiedTick = frameDelta.clientTick;
+                verifiedTick = _lastVerifiedTick;
                 localTickInContext = verifiedTick;
                 RollbackToFrame(_lastFrame, verifiedTick, verifiedTick - 1);
                 SimulateFrame(verifiedTick);
