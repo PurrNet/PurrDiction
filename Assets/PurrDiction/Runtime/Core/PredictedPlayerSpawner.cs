@@ -25,8 +25,11 @@ namespace PurrNet.Prediction
 
         protected override void OnDespawned()
         {
-            predictionManager.players.onPlayerAdded -= OnPlayerLoadedScene;
-            predictionManager.players.onPlayerRemoved -= OnPlayerUnloadedScene;
+            if (predictionManager)
+            {
+                predictionManager.players.onPlayerAdded -= OnPlayerLoadedScene;
+                predictionManager.players.onPlayerRemoved -= OnPlayerUnloadedScene;
+            }
         }
 
         private void CleanupSpawnPoints()
