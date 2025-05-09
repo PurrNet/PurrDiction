@@ -11,6 +11,8 @@ namespace PurrNet.Prediction
         [SerializeField] private TransformInterpolationSettings _interpolationSettings;
         [SerializeField] private bool _characterControllerPatch = true;
 
+        public Transform graphics => _graphics;
+
         private Rigidbody _unityRigidbody;
         private Rigidbody2D _unity2dRigidbody;
         private CharacterController _unityCtrler;
