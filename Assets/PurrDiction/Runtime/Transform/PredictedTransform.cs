@@ -1,3 +1,4 @@
+using System;
 using PurrNet.Utils;
 using UnityEngine;
 
@@ -79,6 +80,23 @@ namespace PurrNet.Prediction
         private PredictedTransformState _oldPrediction;
         private Vector3 _accumulatedPositionError;
         private Quaternion _accumulatedRotationError = Quaternion.identity;
+        private bool _teleportNextFrame;
+
+        public override void ResetInterpolation()
+        {
+            base.ResetInterpolation();
+            _accumulatedPositionError = default;
+            _accumulatedRotationError = Quaternion.identity;
+            _viewState = null;
+            _oldPrediction = default;
+            _teleportNextFrame = true;
+        }
+
+        private void LateUpdate()
+        {
+            if (_teleportNextFrame)
+                _teleportNextFrame = false;
+        }
 
         protected override void ModifyRollbackViewState(ref PredictedTransformState state, float delta, bool accumulateError)
         {
@@ -121,6 +139,12 @@ namespace PurrNet.Prediction
 
             var snapRot = rotationError > rotThreshold.y;
             var skipRot = rotationError < rotThreshold.x;
+
+            if (_teleportNextFrame)
+            {
+                snapPos = true;
+                snapRot = true;
+            }
 
             if (snapPos || skipPos)
             {

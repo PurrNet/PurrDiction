@@ -162,8 +162,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _graphics: {fileID: 4657098590683829942}
-  _characterControllerPatch: 1
   _interpolationSettings: {fileID: 11400000, guid: 4a8aa8e44e23cfd4a8d4387ef3f36173, type: 2}
+  _characterControllerPatch: 1
 --- !u!114 &5033949691179653686
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -177,6 +177,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _rigidbody: {fileID: 4215181335398994366}
+  _eventMask: -1
 --- !u!135 &680557523356799579
 SphereCollider:
   m_ObjectHideFlags: 0

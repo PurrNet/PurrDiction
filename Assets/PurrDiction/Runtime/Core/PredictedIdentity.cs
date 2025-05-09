@@ -8,6 +8,11 @@ namespace PurrNet.Prediction
 {
     public abstract class PredictedIdentity : MonoBehaviour
     {
+        public virtual string GetExtraString()
+        {
+            return string.Empty;
+        }
+
         public PredictionManager predictionManager { get; protected set; }
 
         public PlayerID? owner;
@@ -135,6 +140,11 @@ namespace PurrNet.Prediction
 
     public abstract class PredictedIdentity<STATE> : PredictedIdentity where STATE : struct, IPredictedData<STATE>
     {
+        public override string ToString()
+        {
+            return currentState.ToString();
+        }
+
         internal struct FULL_STATE : IOptionalDispose
         {
             public STATE state;

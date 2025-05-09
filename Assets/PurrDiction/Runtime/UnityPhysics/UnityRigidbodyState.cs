@@ -9,7 +9,7 @@ namespace PurrNet.Prediction
 
         public override string ToString()
         {
-            return $"(linearVelocity: {linearVelocity}, angularVelocity: {angularVelocity})";
+            return $"LinearVelocity: {linearVelocity}\nAngularVelocity: {angularVelocity}";
         }
     }
 }

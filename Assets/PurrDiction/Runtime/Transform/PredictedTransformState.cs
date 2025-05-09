@@ -17,5 +17,10 @@ namespace PurrNet.Prediction
         {
             trs.GetPositionAndRotation(out unityPosition, out unityRotation);
         }
+
+        public override string ToString()
+        {
+            return $"Position: {unityPosition}\nRotation: {unityRotation}";
+        }
     }
 }

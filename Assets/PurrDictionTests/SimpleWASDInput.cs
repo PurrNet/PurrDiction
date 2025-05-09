@@ -11,7 +11,7 @@ namespace PurrNet.Prediction.Tests
 
         public override string ToString()
         {
-            return $"(horizontal: {horizontal}, vertical: {vertical}, jump: {jump}, dash: {dash})";
+            return $"horizontal: {horizontal}\nvertical: {vertical}\njump: {jump}\ndash: {dash})";
         }
     }
 
@@ -19,5 +19,10 @@ namespace PurrNet.Prediction.Tests
     {
         public float rotation;
         public bool wasShooting;
+
+        public override string ToString()
+        {
+            return $"rotation: {rotation}\nwasShooting: {wasShooting}";
+        }
     }
 }

@@ -10,20 +10,26 @@ namespace PurrNet.Prediction
         readonly List<InstanceDetails> _spawnedPrefabs = new ();
         readonly Dictionary<PredictedObjectID, GameObject> _instanceMap = new ();
         readonly Dictionary<GameObject, PredictedObjectID> _goToId = new ();
-
-        readonly List<PredictedObjectID> _toDelete = new ();
         readonly HashSet<PredictedObjectID> _isSceneObject = new ();
 
         private uint _nextInstanceId;
 
+        protected override PredictedHierarchyState GetInitialState()
+        {
+            var state = new PredictedHierarchyState(
+                new DisposableList<InstanceDetails>(16),
+                new DisposableList<PredictedObjectID>(16),
+                _nextInstanceId);
+            return state;
+        }
+
         protected override void GetUnityState(ref PredictedHierarchyState state)
         {
             int count = _spawnedPrefabs.Count;
-            var copy = new DisposableList<InstanceDetails>(count);
+            state.spawnedPrefabs.Clear();
             for (var i = 0; i < count; i++)
-                copy.Add(_spawnedPrefabs[i]);
-
-            state = new PredictedHierarchyState(copy, _nextInstanceId);
+                state.spawnedPrefabs.Add(_spawnedPrefabs[i]);
+            state.nextInstanceId = _nextInstanceId;
         }
 
         protected override void SetUnityState(PredictedHierarchyState state)
@@ -55,7 +61,7 @@ namespace PurrNet.Prediction
                     if (_instanceMap.Remove(details.instanceId, out var instance) && instance)
                     {
                         _goToId.Remove(instance);
-                        Delete(details, instance);
+                        Delete(details, instance, true);
                     }
                 }
 
@@ -108,7 +114,7 @@ namespace PurrNet.Prediction
 
             var pool = GetPool(prefabId);
 
-            if (pool.TryTake(key, out var instance))
+            if (pool.TryTakePrecise(key, out var instance))
             {
                 go = instance;
                 go.transform.SetPositionAndRotation(position, rotation);
@@ -147,18 +153,20 @@ namespace PurrNet.Prediction
         }
         protected override void Simulate(ref PredictedHierarchyState state, float delta)
         {
-            for (var o = 0; o < _toDelete.Count; o++)
-            {
-                var toDelete = _toDelete[o];
-                DeleteNow(toDelete);
-            }
-
-            _toDelete.Clear();
+            for (var o = 0; o < state.toDelete.Count; o++)
+                DeleteNow(state.toDelete[o]);
+            state.toDelete.Clear();
         }
 
         private void LateUpdate()
         {
-            ClearPool();
+            foreach (var (pid, pool) in _prefabToPool)
+            {
+                if (pid < 0)
+                    return;
+
+                pool.ClearOld(predictionManager);
+            }
         }
 
         protected override void OnDestroy()
@@ -178,11 +186,17 @@ namespace PurrNet.Prediction
             }
         }
 
-        private void Delete(InstanceDetails details, GameObject go)
+        private void Delete(InstanceDetails details, GameObject go, bool canPool)
         {
+            if (!canPool)
+            {
+                predictionManager.InternalDelete(go);
+                return;
+            }
+
             var pool = GetPool(details.prefabId);
 
-            if (pool.Put(details, go))
+            if (pool.Put(details, go, predictionManager.localTick))
             {
                 go.SetActive(false);
                 predictionManager.UnregisterInstance(go);
@@ -284,6 +298,7 @@ namespace PurrNet.Prediction
             if (!_instanceMap.Remove(id, out var instance))
                 return;
 
+            var isVerified = predictionManager.isVerified;
             _goToId.Remove(instance);
 
             var count = _spawnedPrefabs.Count;
@@ -293,14 +308,8 @@ namespace PurrNet.Prediction
                 if (details.instanceId.Equals(id))
                 {
                     _spawnedPrefabs.RemoveAt(i);
-
-                    if (details.prefabId < 0)
-                    {
-                        Delete(details, instance);
-                        return;
-                    }
-
-                    break;
+                    Delete(details, instance, !isVerified);
+                    return;
                 }
             }
 
@@ -315,7 +324,7 @@ namespace PurrNet.Prediction
             if (!_goToId.TryGetValue(pid.gameObject, out var poid))
                 return;
 
-            _toDelete.Add(poid);
+            currentState.toDelete.Add(poid);
         }
 
         public void Delete(PredictedObjectID? id)
@@ -323,7 +332,7 @@ namespace PurrNet.Prediction
             if (!id.HasValue)
                 return;
 
-            _toDelete.Add(id.Value);
+            currentState.toDelete.Add(id.Value);
         }
 
         public void Cleanup()
@@ -342,7 +351,6 @@ namespace PurrNet.Prediction
             _instanceMap.Clear();
             _goToId.Clear();
             _spawnedPrefabs.Clear();
-            _toDelete.Clear();
             _isSceneObject.Clear();
         }
     }

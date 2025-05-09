@@ -173,8 +173,9 @@ namespace PurrNet.Prediction
         {
             var components = ListPool<PredictedIdentity>.Instantiate();
             go.GetComponentsInChildren(true, components);
+            int count = components.Count;
 
-            for (var i = 0; i < components.Count; i++)
+            for (var i = 0; i < count; i++)
                 RegisterInstance(components[i]);
 
             ListPool<PredictedIdentity>.Destroy(components);
@@ -597,8 +598,9 @@ namespace PurrNet.Prediction
 
                 hasRollback = true;
                 verifiedTick = _lastVerifiedTick;
-                localTickInContext = verifiedTick;
+                localTickInContext = verifiedTick - 1;
                 RollbackToFrame(_lastFrame, verifiedTick, verifiedTick - 1);
+                localTickInContext = verifiedTick;
                 SimulateFrame(verifiedTick);
             }
 

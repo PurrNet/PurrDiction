@@ -14,6 +14,16 @@ namespace PurrNet.Prediction
 
         private History<INPUT> _inputHistory;
 
+        public override string ToString()
+        {
+            return $"State:\n{fullPredictedState.state}";
+        }
+
+        public override string GetExtraString()
+        {
+            return $"Input:\n{_lastInput}";
+        }
+
         protected abstract INPUT GetInput();
 
         private INPUT _lastInput;
