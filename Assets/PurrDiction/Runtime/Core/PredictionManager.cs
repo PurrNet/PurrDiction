@@ -507,7 +507,7 @@ namespace PurrNet.Prediction
 
         readonly Queue<FrameDelta> _deltas = new ();
 
-        [TargetRpc]
+        [TargetRpc(compressionLevel: CompressionLevel.Best)]
         private void SendFrameToRemote([UsedImplicitly] PlayerID player, ulong clientLocalTick, BitPackerWithLength delta)
         {
             delta.packer.SkipBytes(delta.originalLength);
