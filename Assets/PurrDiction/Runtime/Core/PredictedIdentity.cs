@@ -13,6 +13,10 @@ namespace PurrNet.Prediction
 
         public PredictionManager predictionManager { get; protected set; }
 
+        /// <summary>
+        /// Represents the identifier of the owner associated with this object.
+        /// Used to track ownership, enabling control over inputs.
+        /// </summary>
         public PlayerID? owner;
 
         /// <summary>
@@ -31,7 +35,15 @@ namespace PurrNet.Prediction
             return predictionManager.isSimulating;
         }
 
+        /// <summary>
+        /// Invoked immediately after the object is fully initialized and fresh spawned.
+        /// </summary>
         protected virtual void OnSpawned() {}
+
+        /// <summary>
+        /// Invoked when the object is being despawned and cleaned up.
+        /// Allows for any necessary teardown or resource release to be handled.
+        /// </summary>
         protected virtual void OnDespawned() {}
 
         public bool isServer { get; private set; }
