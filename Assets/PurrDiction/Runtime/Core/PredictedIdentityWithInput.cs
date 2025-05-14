@@ -110,7 +110,7 @@ namespace PurrNet.Prediction
             Simulate(_lastInput, ref state, delta);
         }
 
-        public override void WriteInput(ulong localTick, BitPacker input)
+        internal override void WriteInput(ulong localTick, BitPacker input)
         {
             if (_inputHistory.TryGet(localTick, out var savedInput))
             {
@@ -123,7 +123,7 @@ namespace PurrNet.Prediction
             }
         }
 
-        public override void ReadInput(ulong tick, BitPacker packer)
+        internal override void ReadInput(ulong tick, BitPacker packer)
         {
             bool hasInput = default;
             Packer<bool>.Read(packer, ref hasInput);
@@ -146,7 +146,7 @@ namespace PurrNet.Prediction
         /// <param name="input"></param>
         protected virtual void SanitizeInput(ref INPUT input) { }
 
-        public override void QueueInput(BitPacker packer)
+        internal override void QueueInput(BitPacker packer)
         {
             bool hasInput = default;
             Packer<bool>.Read(packer, ref hasInput);

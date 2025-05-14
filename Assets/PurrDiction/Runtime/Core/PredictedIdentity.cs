@@ -111,15 +111,15 @@ namespace PurrNet.Prediction
 
         internal abstract void GetLatestUnityState();
 
-        public abstract void WriteCurrentState(BitPacker packer);
+        internal abstract void WriteCurrentState(BitPacker packer);
 
-        public abstract void WriteInput(ulong localTick, BitPacker input);
+        internal abstract void WriteInput(ulong localTick, BitPacker input);
 
-        public abstract void ReadState(ulong tick, BitPacker packer);
+        internal abstract void ReadState(ulong tick, BitPacker packer);
 
-        public abstract void ReadInput(ulong tick, BitPacker packer);
+        internal abstract void ReadInput(ulong tick, BitPacker packer);
 
-        public abstract void QueueInput(BitPacker packer);
+        internal abstract void QueueInput(BitPacker packer);
 
         public GameObject GetRoot()
         {
@@ -302,14 +302,14 @@ namespace PurrNet.Prediction
 
         protected virtual void SetUnityState(STATE state) {}
 
-        public override void WriteCurrentState(BitPacker packer)
+        internal override void WriteCurrentState(BitPacker packer)
         {
             Packer<STATE>.Write(packer, fullPredictedState.state);
             Packer<PredictedIdentityState>.Write(packer, fullPredictedState.prediction);
         }
 
         [UsedImplicitly]
-        public override void ReadState(ulong tick, BitPacker packer)
+        internal override void ReadState(ulong tick, BitPacker packer)
         {
             STATE state = default;
             PredictedIdentityState prediction = default;
@@ -323,11 +323,11 @@ namespace PurrNet.Prediction
             });
         }
 
-        public override void WriteInput(ulong localTick, BitPacker input) { }
+        internal override void WriteInput(ulong localTick, BitPacker input) { }
 
-        public override void ReadInput(ulong tick, BitPacker packer) { }
+        internal override void ReadInput(ulong tick, BitPacker packer) { }
 
-        public override void QueueInput(BitPacker packer) { }
+        internal override void QueueInput(BitPacker packer) { }
 
         internal override void UpdateView(float deltaTime)
         {

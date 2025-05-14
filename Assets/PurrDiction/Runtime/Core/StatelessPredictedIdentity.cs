@@ -40,23 +40,23 @@ namespace PurrNet.Prediction
         {
         }
 
-        public override void WriteCurrentState(BitPacker packer)
+        internal override void WriteCurrentState(BitPacker packer)
         {
         }
 
-        public override void WriteInput(ulong localTick, BitPacker input)
+        internal override void WriteInput(ulong localTick, BitPacker input)
         {
         }
 
-        public override void ReadState(ulong tick, BitPacker packer)
+        internal override void ReadState(ulong tick, BitPacker packer)
         {
         }
 
-        public override void ReadInput(ulong tick, BitPacker packer)
+        internal override void ReadInput(ulong tick, BitPacker packer)
         {
         }
 
-        public override void QueueInput(BitPacker packer)
+        internal override void QueueInput(BitPacker packer)
         {
         }
     }
