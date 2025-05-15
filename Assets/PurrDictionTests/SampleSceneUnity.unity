@@ -662,7 +662,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _stopPlayingOnDisconnect: 1
   _startServerFlags: 9
-  _startClientFlags: 7
+  _startClientFlags: 6
   _cookieScope: 1
   _dontDestroyOnLoad: 0
   _transport: {fileID: 1793795277}

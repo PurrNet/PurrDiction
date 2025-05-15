@@ -123,13 +123,13 @@ namespace PurrNet.Prediction
 
         internal abstract void WriteCurrentState(BitPacker packer);
 
-        internal abstract void WriteInput(ulong localTick, BitPacker input);
+        internal abstract void WriteInput(ulong localTick, PlayerID receiver, BitPacker input, DeltaModule deltaModule);
 
         internal abstract void ReadState(ulong tick, BitPacker packer);
 
-        internal abstract void ReadInput(ulong tick, BitPacker packer);
+        internal abstract void ReadInput(ulong tick, BitPacker packer, DeltaModule deltaModule);
 
-        internal abstract void QueueInput(BitPacker packer);
+        internal abstract void QueueInput(PlayerID sender, BitPacker packer, DeltaModule deltaModule);
 
         public GameObject GetRoot()
         {

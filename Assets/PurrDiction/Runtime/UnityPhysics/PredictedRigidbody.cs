@@ -151,7 +151,7 @@ namespace PurrNet.Prediction
 
             // Calculate force based on distance
             float force = explosionForce * (1.0f - Mathf.Clamp01(distance / explosionRadius));
-            
+
             // Apply force
             AddForceAtPosition(direction * force, _rigidbody.position, mode);
         }

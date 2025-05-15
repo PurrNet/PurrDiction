@@ -1,4 +1,5 @@
-﻿using PurrNet.Packing;
+﻿using PurrNet.Modules;
+using PurrNet.Packing;
 
 namespace PurrNet.Prediction
 {
@@ -44,7 +45,7 @@ namespace PurrNet.Prediction
         {
         }
 
-        internal override void WriteInput(ulong localTick, BitPacker input)
+        internal override void WriteInput(ulong localTick, PlayerID receiver, BitPacker input, DeltaModule delta)
         {
         }
 
@@ -52,11 +53,11 @@ namespace PurrNet.Prediction
         {
         }
 
-        internal override void ReadInput(ulong tick, BitPacker packer)
+        internal override void ReadInput(ulong tick, BitPacker packer, DeltaModule delta)
         {
         }
 
-        internal override void QueueInput(BitPacker packer)
+        internal override void QueueInput(PlayerID sender, BitPacker packer, DeltaModule delta)
         {
         }
     }
