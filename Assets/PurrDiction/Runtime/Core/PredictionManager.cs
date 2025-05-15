@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
-using PurrNet.Logging;
 using PurrNet.Modules;
 using PurrNet.Packing;
 using PurrNet.Pooling;
@@ -9,7 +8,7 @@ using UnityEngine;
 
 namespace PurrNet.Prediction
 {
-    struct PlayerPacker
+    internal struct PlayerPacker
     {
         public PlayerID player;
         public BitPacker packer;
@@ -294,7 +293,7 @@ namespace PurrNet.Prediction
                 if (_systems[i].isEventHandler)
                     continue;
 
-                _systems[i].WriteCurrentState(packer);
+                _systems[i].WriteCurrentState(target, packer, _deltaModule);
             }
 
             for (var i = 0; i < count; i++)
@@ -304,7 +303,7 @@ namespace PurrNet.Prediction
             {
                 if (!_systems[i].isEventHandler)
                     continue;
-                _systems[i].WriteCurrentState(packer);
+                _systems[i].WriteCurrentState(target, packer, _deltaModule);
             }
         }
 
@@ -323,7 +322,7 @@ namespace PurrNet.Prediction
                 var system = _systems[i];
                 if (system.isEventHandler)
                     continue;
-                system.ReadState(localTick, data);
+                system.ReadState(localTick, data, _deltaModule);
                 system.Rollback(localTick);
                 system.ResetInterpolation();
             }
@@ -336,7 +335,7 @@ namespace PurrNet.Prediction
                 if (!_systems[i].isEventHandler)
                     continue;
 
-                _systems[i].ReadState(localTick, data);
+                _systems[i].ReadState(localTick, data, _deltaModule);
             }
 
             SyncTransforms();
@@ -451,7 +450,7 @@ namespace PurrNet.Prediction
                     if (_systems[i].isEventHandler)
                         continue;
 
-                    _systems[i].WriteCurrentState(frame);
+                    _systems[i].WriteCurrentState(player, frame, _deltaModule);
                 }
 
                 for (var i = 0; i < count; i++)
@@ -470,11 +469,7 @@ namespace PurrNet.Prediction
                     continue;
 
                 for (var j = 0; j < fCount; j++)
-                {
-                    // var player = _clientFrames[j].player;
-                    var packer = _clientFrames[j].packer;
-                    _systems[i].WriteCurrentState(packer);
-                }
+                    _systems[i].WriteCurrentState(_clientFrames[j].player, _clientFrames[j].packer, _deltaModule);
             }
         }
 
@@ -593,7 +588,7 @@ namespace PurrNet.Prediction
                 var system = _systems[i];
                 if (system.isEventHandler)
                     continue;
-                system.ReadState(stateTick, frame);
+                system.ReadState(stateTick, frame, _deltaModule);
                 system.Rollback(stateTick);
             }
 
@@ -604,7 +599,7 @@ namespace PurrNet.Prediction
             {
                 if (!_systems[i].isEventHandler)
                     continue;
-                _systems[i].ReadState(inputTick, frame);
+                _systems[i].ReadState(inputTick, frame, _deltaModule);
                 _systems[i].Rollback(inputTick);
             }
 

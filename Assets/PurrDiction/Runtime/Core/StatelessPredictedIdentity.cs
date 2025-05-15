@@ -41,7 +41,7 @@ namespace PurrNet.Prediction
         {
         }
 
-        internal override void WriteCurrentState(BitPacker packer)
+        internal override void WriteCurrentState(PlayerID target, BitPacker packer, DeltaModule deltaModule)
         {
         }
 
@@ -49,7 +49,7 @@ namespace PurrNet.Prediction
         {
         }
 
-        internal override void ReadState(ulong tick, BitPacker packer)
+        internal override void ReadState(ulong tick, BitPacker packer, DeltaModule delta)
         {
         }
 

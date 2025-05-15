@@ -2,6 +2,7 @@
 using PurrNet.Logging;
 using PurrNet.Modules;
 using PurrNet.Packing;
+using PurrNet.Utils;
 using UnityEngine;
 
 namespace PurrNet.Prediction
@@ -163,19 +164,39 @@ namespace PurrNet.Prediction
 
         protected virtual void SetUnityState(STATE state) {}
 
-        internal override void WriteCurrentState(BitPacker packer)
+        readonly struct DeltaKey<T> : IStableHashable
         {
-            Packer<STATE>.Write(packer, fullPredictedState.state);
-            Packer<PredictedIdentityState>.Write(packer, fullPredictedState.prediction);
+            private readonly PredictedID id;
+
+            public DeltaKey(PredictedID id)
+            {
+                this.id = id;
+            }
+
+            public uint GetStableHash()
+            {
+                return id.value.value ^ Hasher<T>.stableHash;
+            }
+        }
+
+        DeltaKey<STATE> stateKey => new (id);
+
+        DeltaKey<PredictedIdentityState> internalKey => new (id);
+
+        internal override void WriteCurrentState(PlayerID target, BitPacker packer, DeltaModule deltaModule)
+        {
+            deltaModule.Write(packer, target, stateKey, fullPredictedState.state);
+            deltaModule.Write(packer, target, internalKey, fullPredictedState.prediction);
         }
 
         [UsedImplicitly]
-        internal override void ReadState(ulong tick, BitPacker packer)
+        internal override void ReadState(ulong tick, BitPacker packer, DeltaModule deltaModule)
         {
             STATE state = default;
             PredictedIdentityState prediction = default;
-            Packer<STATE>.Read(packer, ref state);
-            Packer<PredictedIdentityState>.Read(packer, ref prediction);
+
+            deltaModule.Read(packer, stateKey, default, ref state);
+            deltaModule.Read(packer, internalKey, default, ref prediction);
 
             _stateHistory.Write(tick, new FULL_STATE
             {
