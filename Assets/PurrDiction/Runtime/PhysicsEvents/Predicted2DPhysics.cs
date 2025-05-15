@@ -58,28 +58,25 @@ namespace PurrNet.Prediction
 
         public override void PostSimulate(ulong tick, float delta)
         {
-            ModifyState((ref PredictedPhysics2DData state) =>
+            int count = currentState.events.Count;
+
+            if (predictionManager.isVerified)
             {
-                int count = state.events.Count;
-
-                if (predictionManager.isVerified)
+                var hierarchy = predictionManager.hierarchy;
+                for (var i = 0; i < count; i++)
                 {
-                    var hierarchy = predictionManager.hierarchy;
-                    for (var i = 0; i < count; i++)
-                    {
-                        var ev = state.events[i];
-                        TriggerEvent(hierarchy, ev);
-                        ev.Dispose();
-                    }
+                    var ev = currentState.events[i];
+                    TriggerEvent(hierarchy, ev);
+                    ev.Dispose();
                 }
-                else
-                {
-                    for (var i = 0; i < count; i++)
-                        state.events[i].Dispose();
-                }
+            }
+            else
+            {
+                for (var i = 0; i < count; i++)
+                    currentState.events[i].Dispose();
+            }
 
-                state.events.Clear();
-            });
+            currentState.events.Clear();
         }
 
         private static void TriggerEvent(PredictedHierarchy hierarchy, Physics2DEvent ev)
@@ -128,24 +125,23 @@ namespace PurrNet.Prediction
             if (hierarchy.TryGetId(caller.gameObject, out var me) &&
                 hierarchy.TryGetId(other.gameObject, out var otherId))
             {
-                ModifyState((ref PredictedPhysics2DData state) =>
+                var state = currentState;
+                var ev = new Physics2DEvent
                 {
-                    var ev = new Physics2DEvent
-                    {
-                        isTrigger = false,
-                        type = type,
-                        me = me,
-                        other = otherId
-                    };
+                    isTrigger = false,
+                    type = type,
+                    me = me,
+                    other = otherId
+                };
 
-                    ev.contacts = new DisposableList<Physics2DContactPoint>(other.contactCount);
-                    for (var i = 0; i < other.contactCount; i++)
-                        ev.contacts.Add(new Physics2DContactPoint(other.GetContact(i)));
-                    state.events.Add(ev);
+                ev.contacts = new DisposableList<Physics2DContactPoint>(other.contactCount);
+                for (var i = 0; i < other.contactCount; i++)
+                    ev.contacts.Add(new Physics2DContactPoint(other.GetContact(i)));
+                state.events.Add(ev);
 
-                    if (!predictionManager.isVerified)
-                        TriggerEvent(hierarchy, ev);
-                });
+                if (!predictionManager.isVerified)
+                    TriggerEvent(hierarchy, ev);
+                currentState = state;
             }
         }
 
@@ -155,21 +151,20 @@ namespace PurrNet.Prediction
             if (hierarchy.TryGetId(caller.gameObject, out var me) &&
                 hierarchy.TryGetId(other.gameObject, out var otherId))
             {
-                ModifyState((ref PredictedPhysics2DData state) =>
+                var state = currentState;
+                var ev = new Physics2DEvent
                 {
-                    var ev = new Physics2DEvent
-                    {
-                        isTrigger = true,
-                        type = type,
-                        me = me,
-                        other = otherId
-                    };
+                    isTrigger = true,
+                    type = type,
+                    me = me,
+                    other = otherId
+                };
 
-                    state.events.Add(ev);
+                state.events.Add(ev);
 
-                    if (!predictionManager.isVerified)
-                        TriggerEvent(hierarchy, ev);
-                });
+                if (!predictionManager.isVerified)
+                    TriggerEvent(hierarchy, ev);
+                currentState = state;
             }
         }
 

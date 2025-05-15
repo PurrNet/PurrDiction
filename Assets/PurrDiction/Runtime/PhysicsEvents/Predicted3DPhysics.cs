@@ -68,28 +68,25 @@ namespace PurrNet.Prediction
 
         public override void PostSimulate(ulong tick, float delta)
         {
-            ModifyState((ref PredictedPhysicsData state) =>
+            int count = currentState.events.Count;
+
+            if (predictionManager.isVerified)
             {
-                int count = state.events.Count;
-
-                if (predictionManager.isVerified)
+                var hierarchy = predictionManager.hierarchy;
+                for (var i = 0; i < count; i++)
                 {
-                    var hierarchy = predictionManager.hierarchy;
-                    for (var i = 0; i < count; i++)
-                    {
-                        var ev = state.events[i];
-                        TriggerEvent(hierarchy, ev);
-                        ev.Dispose();
-                    }
+                    var ev = currentState.events[i];
+                    TriggerEvent(hierarchy, ev);
+                    ev.Dispose();
                 }
-                else
-                {
-                    for (var i = 0; i < count; i++)
-                        state.events[i].Dispose();
-                }
+            }
+            else
+            {
+                for (var i = 0; i < count; i++)
+                    currentState.events[i].Dispose();
+            }
 
-                state.events.Clear();
-            });
+            currentState.events.Clear();
         }
 
         private static void TriggerEvent(PredictedHierarchy hierarchy, PhysicsEvent ev)
