@@ -63,6 +63,8 @@ namespace PurrNet.Prediction
 
         internal Predicted2DPhysics physics2d { get; private set; }
 
+        public PredictedTime time { get; private set; }
+
         protected override void OnEarlySpawn()
         {
             RegisterScene();
@@ -75,6 +77,7 @@ namespace PurrNet.Prediction
             players = RegisterSystem<PredictedPlayers>();
             physics3d = RegisterSystem<Predicted3DPhysics>();
             physics2d = RegisterSystem<Predicted2DPhysics>();
+            time = RegisterSystem<PredictedTime>();
 
             var roots = HashSetPool<GameObject>.Instantiate();
             var pid = -1;
