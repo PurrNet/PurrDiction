@@ -28,7 +28,10 @@ namespace PurrNet.Prediction
         public PredictedObjectID other;
         public DisposableList<PhysicsContactPoint> contacts;
 
-        public void Dispose() => contacts.Dispose();
+        public void Dispose()
+        {
+            contacts.Dispose();
+        }
     }
 
     public struct PredictedPhysicsData : IPredictedData<PredictedPhysicsData>
@@ -135,24 +138,23 @@ namespace PurrNet.Prediction
             if (hierarchy.TryGetId(caller.gameObject, out var me) &&
                 hierarchy.TryGetId(other.gameObject, out var otherId))
             {
-                ModifyState((ref PredictedPhysicsData state) =>
+                var state = currentState;
+                var ev = new PhysicsEvent
                 {
-                    var ev = new PhysicsEvent
-                    {
-                        isTrigger = false,
-                        type = type,
-                        me = me,
-                        other = otherId
-                    };
+                    isTrigger = false,
+                    type = type,
+                    me = me,
+                    other = otherId
+                };
 
-                    ev.contacts = new DisposableList<PhysicsContactPoint>(other.contactCount);
-                    for (var i = 0; i < other.contactCount; i++)
-                        ev.contacts.Add(new PhysicsContactPoint(other.GetContact(i)));
-                    state.events.Add(ev);
+                ev.contacts = new DisposableList<PhysicsContactPoint>(other.contactCount);
+                for (var i = 0; i < other.contactCount; i++)
+                    ev.contacts.Add(new PhysicsContactPoint(other.GetContact(i)));
+                state.events.Add(ev);
 
-                    if (!predictionManager.isVerified)
-                        TriggerEvent(hierarchy, ev);
-                });
+                if (!predictionManager.isVerified)
+                    TriggerEvent(hierarchy, ev);
+                currentState = state;
             }
         }
 
@@ -162,21 +164,20 @@ namespace PurrNet.Prediction
             if (hierarchy.TryGetId(caller.gameObject, out var me) &&
                 hierarchy.TryGetId(other.gameObject, out var otherId))
             {
-                ModifyState((ref PredictedPhysicsData state) =>
+                var state = currentState;
+                var ev = new PhysicsEvent
                 {
-                    var ev = new PhysicsEvent
-                    {
-                        isTrigger = true,
-                        type = type,
-                        me = me,
-                        other = otherId
-                    };
+                    isTrigger = true,
+                    type = type,
+                    me = me,
+                    other = otherId
+                };
 
-                    state.events.Add(ev);
+                state.events.Add(ev);
 
-                    if (!predictionManager.isVerified)
-                        TriggerEvent(hierarchy, ev);
-                });
+                if (!predictionManager.isVerified)
+                    TriggerEvent(hierarchy, ev);
+                currentState = state;
             }
         }
 
