@@ -56,6 +56,12 @@ namespace PurrNet.Prediction
             set => _rigidbody.angularVelocity = value;
         }
 
+        protected override void OnSpawned()
+        {
+            if (predictionManager.physics3d == null)
+                _eventMask = PhysicsEventMask.None;
+        }
+
         /// <summary>
         ///   <para>Adds a force to the Rigidbody.</para>
         /// </summary>

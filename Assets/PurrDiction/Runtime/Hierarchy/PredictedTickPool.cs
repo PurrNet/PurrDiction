@@ -76,7 +76,7 @@ namespace PurrNet.Prediction
 
                 if (delta > (uint)predictionManager.tickRate)
                 {
-                    predictionManager.InternalDelete(pair.gameObject);
+                    PredictionManager.InternalDelete(pair.gameObject);
                     _pool.RemoveAt(i--);
                 }
             }
@@ -85,7 +85,7 @@ namespace PurrNet.Prediction
         public void Clear(PredictionManager predictionManager)
         {
             foreach (var pair in _pool)
-                predictionManager.InternalDelete(pair.gameObject);
+                PredictionManager.InternalDelete(pair.gameObject);
             _pool.Clear();
         }
     }

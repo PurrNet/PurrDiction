@@ -1,43 +1,51 @@
+using PurrNet.Logging;
 using PurrNet.Packing;
+using PurrNet.Pooling;
 using UnityEngine;
 
 namespace PurrNet.Prediction.Tests
 {
+    [RegisterNetworkType(typeof(DisposableList<int>))]
     public static class TestDeltaPacking
     {
         [RuntimeInitializeOnLoadMethod]
         static void TestWasdInput()
         {
+            var old = new DisposableList<int>(1);
+            var @new = new DisposableList<int>(5);
 
-
-            var old = new SimpleWASDInput
-            {
-                horizontal = -0.7070313f,
-                vertical = -0.7070313f,
-                jump = false,
-                dash = true
-            };
-
-            var @new = new SimpleWASDInput
-            {
-                horizontal = -0.7070313f,
-                vertical = -0.7070313f,
-                jump = false,
-                dash = false
-            };
+            @new.Add(1);
 
             using var packer = BitPackerPool.Get();
 
-            DeltaPacker<SimpleWASDInput>.Write(packer, old, @new);
+            DeltaPacker<DisposableList<int>>.Write(packer, old, @new);
 
             packer.ResetPositionAndMode(true);
 
-            SimpleWASDInput newResult = default;
-            DeltaPacker<SimpleWASDInput>.Read(packer, old, ref newResult);
+            DisposableList<int> newResult = default;
+            DeltaPacker<DisposableList<int>>.Read(packer, old, ref newResult);
 
-            if (!newResult.Equals(@new))
+            if (!Packer.AreEqual(@new, newResult))
             {
-                Debug.LogError($"New:\n{@new}\nResult:\n{newResult}");
+                Debug.LogError($"Old:\n{@new.isDisposed}\nResult:\n{newResult.isDisposed}");
+
+                if (!@new.isDisposed)
+                {
+                    Debug.LogError($"Old Count: {@new.Count}");
+                    for (int i = 0; i < @new.Count; i++)
+                    {
+                        Debug.LogError($"Old[{i}]: {@new[i]}");
+                    }
+                }
+
+                if (!newResult.isDisposed)
+                {
+                    Debug.LogError($"Result Count: {newResult.Count}");
+                    for (int i = 0; i < newResult.Count; i++)
+                    {
+                        Debug.LogError($"Result[{i}]: {newResult[i]}");
+                    }
+                }
             }
         }
     }

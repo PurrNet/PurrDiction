@@ -1,4 +1,3 @@
-
 using System;
 using PurrNet.Pooling;
 
@@ -13,6 +12,40 @@ namespace PurrNet.Prediction
         {
             handledPlayers.Dispose();
             purrNetPlayers.Dispose();
+        }
+
+        public override string ToString()
+        {
+            string result = string.Empty;
+
+            if (!handledPlayers.isDisposed)
+            {
+                result += $"handledPlayers: {handledPlayers.Count}\n";
+                for (var i = 0; i < handledPlayers.Count; i++)
+                {
+                    var playerId = handledPlayers[i];
+                    result += $"(playerId: {playerId})";
+                    if (i < handledPlayers.Count - 1)
+                        result += "\n";
+                }
+
+                result += "\n";
+            }
+
+            if (!purrNetPlayers.isDisposed)
+            {
+                result += $"purrNetPlayers: {purrNetPlayers.Count}\n";
+                for (var i = 0; i < purrNetPlayers.Count; i++)
+                {
+                    var playerId = purrNetPlayers[i];
+                    result += $"(playerId: {playerId})";
+                    if (i < purrNetPlayers.Count - 1)
+                        result += "\n";
+                }
+                result += "\n";
+            }
+
+            return result;
         }
     }
 
@@ -33,6 +66,9 @@ namespace PurrNet.Prediction
 
         protected override void GetUnityState(ref PredictedPlayersState state)
         {
+            if (!isServer)
+                return;
+
             var actual = predictionManager.observers;
             state.purrNetPlayers.Clear();
             state.purrNetPlayers.AddRange(actual);

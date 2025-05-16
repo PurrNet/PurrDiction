@@ -190,7 +190,7 @@ namespace PurrNet.Prediction
         {
             if (!canPool)
             {
-                predictionManager.InternalDelete(go);
+                PredictionManager.InternalDelete(go);
                 return;
             }
 
@@ -201,7 +201,7 @@ namespace PurrNet.Prediction
                 go.SetActive(false);
                 predictionManager.UnregisterInstance(go);
             }
-            else predictionManager.InternalDelete(go);
+            else PredictionManager.InternalDelete(go);
         }
 
         internal void RegisterSceneObject(GameObject root, int pid)
@@ -313,7 +313,7 @@ namespace PurrNet.Prediction
                 }
             }
 
-            predictionManager.InternalDelete(instance);
+            PredictionManager.InternalDelete(instance);
         }
 
         public void Delete(PredictedIdentity pid)
@@ -345,7 +345,7 @@ namespace PurrNet.Prediction
                     continue;
                 }
 
-                predictionManager.InternalDelete(go);
+                PredictionManager.InternalDelete(go);
             }
 
             _instanceMap.Clear();

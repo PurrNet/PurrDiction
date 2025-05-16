@@ -4,6 +4,7 @@ using JetBrains.Annotations;
 using PurrNet.Modules;
 using PurrNet.Packing;
 using PurrNet.Pooling;
+using PurrNet.Utils;
 using UnityEngine;
 
 namespace PurrNet.Prediction
@@ -30,10 +31,27 @@ namespace PurrNet.Prediction
 
         [SerializeField] private PredictionPhysicsProvider _physicsProvider;
         [SerializeField] private UpdateViewMode _updateViewMode = UpdateViewMode.Update;
+        [SerializeField, PurrLock] private BuiltInSystems _builtInSystems =
+            BuiltInSystems.Physics3D |
+            BuiltInSystems.Physics2D |
+            BuiltInSystems.Time |
+            BuiltInSystems.Hierarchy |
+            BuiltInSystems.Players;
+        [SerializeField, PurrLock] private DeltaCompression _deltaCompression =
+            DeltaCompression.Input |
+            DeltaCompression.State;
+        [SerializeField] private bool _validateDeltaCompression;
+
         [SerializeField] private GameObject[] _prefabs;
 
         readonly List<PredictedIdentity> _queue = new ();
         readonly List<PredictedIdentity> _systems = new ();
+
+        public bool validateDeltaCompression
+        {
+            get => _validateDeltaCompression;
+            set => _validateDeltaCompression = value;
+        }
 
         public static bool TryGetInstance(int sceneHandle, out PredictionManager world)
         {
@@ -76,11 +94,26 @@ namespace PurrNet.Prediction
 
         public PredictedTime time { get; private set; }
 
-        private DeltaModule _deltaModule;
+        private DeltaModule _deltaModuleInput;
+        private DeltaModule _deltaModuleState;
+
+        bool ShouldRegisterSystem(BuiltInSystems system)
+        {
+            return (_builtInSystems & system) != 0;
+        }
 
         protected override void OnEarlySpawn()
         {
-            _deltaModule = networkManager.GetModule<DeltaModule>(isServer);
+            var deltaModule = networkManager.GetModule<DeltaModule>(isServer);
+
+            bool shouldDeltaInput = (_deltaCompression & DeltaCompression.Input) != 0;
+            bool shouldDeltaState = (_deltaCompression & DeltaCompression.State) != 0;
+
+            if (shouldDeltaInput)
+                _deltaModuleInput = deltaModule;
+
+            if (shouldDeltaState)
+                _deltaModuleState = deltaModule;
 
             RegisterScene();
 
@@ -88,24 +121,36 @@ namespace PurrNet.Prediction
             tickDelta = 1f / tickRate;
             _lastVerifiedTick = 0;
 
-            hierarchy = RegisterSystem<PredictedHierarchy>();
-            players = RegisterSystem<PredictedPlayers>();
-            physics3d = RegisterSystem<Predicted3DPhysics>();
-            physics2d = RegisterSystem<Predicted2DPhysics>();
-            time = RegisterSystem<PredictedTime>();
+            if (ShouldRegisterSystem(BuiltInSystems.Hierarchy))
+                hierarchy = RegisterSystem<PredictedHierarchy>();
+
+            if (ShouldRegisterSystem(BuiltInSystems.Players))
+                players = RegisterSystem<PredictedPlayers>();
+
+            if (ShouldRegisterSystem(BuiltInSystems.Physics3D))
+                physics3d = RegisterSystem<Predicted3DPhysics>();
+
+            if (ShouldRegisterSystem(BuiltInSystems.Physics2D))
+                physics2d = RegisterSystem<Predicted2DPhysics>();
+
+            if (ShouldRegisterSystem(BuiltInSystems.Time))
+                time = RegisterSystem<PredictedTime>();
 
             var roots = HashSetPool<GameObject>.Instantiate();
             var pid = -1;
 
-            for (var i = 0; i < _queue.Count; i++)
+            if (hierarchy != null)
             {
-                var queued = _queue[i];
-                var root = queued.GetRoot();
+                for (var i = 0; i < _queue.Count; i++)
+                {
+                    var queued = _queue[i];
+                    var root = queued.GetRoot();
 
-                if (roots.Add(root))
-                    hierarchy.RegisterSceneObject(root, pid--);
+                    if (roots.Add(root))
+                        hierarchy.RegisterSceneObject(root, pid--);
 
-                RegisterInstance(queued);
+                    RegisterInstance(queued);
+                }
             }
 
             _queue.Clear();
@@ -162,7 +207,8 @@ namespace PurrNet.Prediction
 
         private void CleanupAllSystems()
         {
-            hierarchy.Cleanup();
+            if (hierarchy)
+                hierarchy.Cleanup();
 
             for (var i = 0; i < _systems.Count; i++)
             {
@@ -293,17 +339,18 @@ namespace PurrNet.Prediction
                 if (_systems[i].isEventHandler)
                     continue;
 
-                _systems[i].WriteCurrentState(target, packer, _deltaModule);
+                _systems[i].WriteCurrentState(target, packer, _deltaModuleState);
             }
 
+
             for (var i = 0; i < count; i++)
-                _systems[i].WriteInput(localTick, target, packer, _deltaModule);
+                _systems[i].WriteInput(localTick, target, packer, _deltaModuleInput);
 
             for (var i = 0; i < count; i++)
             {
                 if (!_systems[i].isEventHandler)
                     continue;
-                _systems[i].WriteCurrentState(target, packer, _deltaModule);
+                _systems[i].WriteCurrentState(target, packer, _deltaModuleState);
             }
         }
 
@@ -322,20 +369,20 @@ namespace PurrNet.Prediction
                 var system = _systems[i];
                 if (system.isEventHandler)
                     continue;
-                system.ReadState(localTick, data, _deltaModule);
+                system.ReadState(localTick, data, _deltaModuleState);
                 system.Rollback(localTick);
                 system.ResetInterpolation();
             }
 
             for (var i = 0; i < count; i++)
-                _systems[i].ReadInput(localTick, data, _deltaModule);
+                _systems[i].ReadInput(localTick, data, _deltaModuleInput);
 
             for (var i = 0; i < count; i++)
             {
                 if (!_systems[i].isEventHandler)
                     continue;
 
-                _systems[i].ReadState(localTick, data, _deltaModule);
+                _systems[i].ReadState(localTick, data, _deltaModuleState);
             }
 
             SyncTransforms();
@@ -408,7 +455,7 @@ namespace PurrNet.Prediction
                     if (system.IsOwner(myPlayer))
                     {
                         Packer<PredictedID>.Write(frame, system.id);
-                        system.WriteInput(localTick, default, frame, _deltaModule);
+                        system.WriteInput(localTick, default, frame, _deltaModuleInput);
                         writtenCount += 1;
                     }
                 }
@@ -450,11 +497,11 @@ namespace PurrNet.Prediction
                     if (_systems[i].isEventHandler)
                         continue;
 
-                    _systems[i].WriteCurrentState(player, frame, _deltaModule);
+                    _systems[i].WriteCurrentState(player, frame, _deltaModuleState);
                 }
 
                 for (var i = 0; i < count; i++)
-                    _systems[i].WriteInput(localTick, player, frame, _deltaModule);
+                    _systems[i].WriteInput(localTick, player, frame, _deltaModuleInput);
             }
         }
 
@@ -469,7 +516,7 @@ namespace PurrNet.Prediction
                     continue;
 
                 for (var j = 0; j < fCount; j++)
-                    _systems[i].WriteCurrentState(_clientFrames[j].player, _clientFrames[j].packer, _deltaModule);
+                    _systems[i].WriteCurrentState(_clientFrames[j].player, _clientFrames[j].packer, _deltaModuleState);
             }
         }
 
@@ -588,18 +635,18 @@ namespace PurrNet.Prediction
                 var system = _systems[i];
                 if (system.isEventHandler)
                     continue;
-                system.ReadState(stateTick, frame, _deltaModule);
+                system.ReadState(stateTick, frame, _deltaModuleState);
                 system.Rollback(stateTick);
             }
 
             for (var i = 0; i < count; ++i)
-                _systems[i].ReadInput(inputTick, frame, _deltaModule);
+                _systems[i].ReadInput(inputTick, frame, _deltaModuleInput);
 
             for (var i = 0; i < count; ++i)
             {
                 if (!_systems[i].isEventHandler)
                     continue;
-                _systems[i].ReadState(inputTick, frame, _deltaModule);
+                _systems[i].ReadState(inputTick, frame, _deltaModuleState);
                 _systems[i].Rollback(inputTick);
             }
 
@@ -752,7 +799,7 @@ namespace PurrNet.Prediction
 
                     if (system.IsOwner(info.sender, senderIsServer))
                     {
-                        system.QueueInput(info.sender, inputPacket, _deltaModule);
+                        system.QueueInput(info.sender, inputPacket, _deltaModuleInput);
                     }
                     else
                     {
@@ -830,7 +877,7 @@ namespace PurrNet.Prediction
             return go;
         }
 
-        internal void InternalDelete(GameObject instance)
+        internal static void InternalDelete(GameObject instance)
         {
             UnityProxy.DestroyImmediateDirectly(instance);
         }

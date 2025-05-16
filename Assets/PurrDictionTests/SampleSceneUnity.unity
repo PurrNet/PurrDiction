@@ -556,6 +556,9 @@ MonoBehaviour:
   _visitiblityRules: {fileID: 0}
   _physicsProvider: 1
   _updateViewMode: 1
+  _builtInSystems: -1
+  _deltaCompression: -1
+  _validateDeltaCompression: 0
   _prefabs:
   - {fileID: 2990978637306053845, guid: 14ef4fb9c3d76ce4686663df0c0f2555, type: 3}
   - {fileID: 208167536026591109, guid: eb91489127ad82e4cbc003840e08c8f8, type: 3}
@@ -662,7 +665,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _stopPlayingOnDisconnect: 1
   _startServerFlags: 9
-  _startClientFlags: 6
+  _startClientFlags: 7
   _cookieScope: 1
   _dontDestroyOnLoad: 0
   _transport: {fileID: 1793795277}

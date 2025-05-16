@@ -1,10 +1,5 @@
 namespace PurrNet.Prediction
 {
-    public struct PredictedTimeState : IPredictedData<PredictedTimeState>
-    {
-        public ulong tick;
-    }
-
     public class PredictedTime : PredictedIdentity<PredictedTimeState>
     {
         public ulong tick => currentState.tick;
@@ -26,6 +21,11 @@ namespace PurrNet.Prediction
         protected override void Simulate(ref PredictedTimeState state, float delta)
         {
             state.tick += 1;
+        }
+
+        protected override PredictedTimeState Interpolate(PredictedTimeState from, PredictedTimeState to, float t)
+        {
+            return to;
         }
     }
 }
