@@ -48,5 +48,10 @@ namespace PurrNet.Prediction
         {
             return (int)value.value;
         }
+
+        public override string ToString()
+        {
+            return $"PredictedID({value.value})";
+        }
     }
 }

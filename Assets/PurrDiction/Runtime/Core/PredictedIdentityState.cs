@@ -4,5 +4,10 @@
     {
         public PlayerID? owner;
         public PredictedID predictedID;
+
+        public override string ToString()
+        {
+            return $"{{owner: {(owner?.ToString() ?? "NULL")}, predictedID: {predictedID}}}";
+        }
     }
 }

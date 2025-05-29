@@ -558,7 +558,7 @@ MonoBehaviour:
   _updateViewMode: 1
   _builtInSystems: -1
   _deltaCompression: -1
-  _validateDeltaCompression: 0
+  _validateDeltaCompression: 1
   _prefabs:
   - {fileID: 2990978637306053845, guid: 14ef4fb9c3d76ce4686663df0c0f2555, type: 3}
   - {fileID: 208167536026591109, guid: eb91489127ad82e4cbc003840e08c8f8, type: 3}
