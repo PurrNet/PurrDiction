@@ -151,6 +151,7 @@ namespace PurrNet.Prediction
             _prefabToPool.Add(prefabId, pool);
             return pool;
         }
+
         protected override void Simulate(ref PredictedHierarchyState state, float delta)
         {
             for (var o = 0; o < state.toDelete.Count; o++)

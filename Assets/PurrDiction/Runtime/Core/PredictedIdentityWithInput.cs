@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using PurrNet.Logging;
 using PurrNet.Modules;
 using PurrNet.Packing;
 using PurrNet.Utils;
@@ -85,10 +87,14 @@ namespace PurrNet.Prediction
             }
             else if (isServer)
             {
-                if (!_queuedInput.HasValue)
+                if (_queuedInput.Count == 0)
+                {
+                    _lastInput = GetDefaultInput();
+                    _inputHistory.Write(tick, _lastInput);
                     return;
+                }
 
-                var input = _queuedInput.Value;
+                var input = _queuedInput.Dequeue();
                 SanitizeInput(ref input);
                 _lastInput = input;
                 _inputHistory.Write(tick, input);
@@ -174,7 +180,7 @@ namespace PurrNet.Prediction
             else _inputHistory.Remove(tick);
         }
 
-        private INPUT? _queuedInput;
+        private readonly Queue<INPUT> _queuedInput = new ();
 
         /// <summary>
         /// Sanitize the input before using it.
@@ -200,7 +206,9 @@ namespace PurrNet.Prediction
 
                 var sanitizedInput = input;
                 SanitizeInput(ref sanitizedInput);
-                _queuedInput = sanitizedInput;
+                if (_queuedInput.Count > 2)
+                    _queuedInput.Clear();
+                _queuedInput.Enqueue(sanitizedInput);
             }
         }
     }

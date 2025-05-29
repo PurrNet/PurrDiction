@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
+using PurrNet.Logging;
 using PurrNet.Modules;
 using PurrNet.Packing;
 using PurrNet.Pooling;
+using PurrNet.Transports;
 using PurrNet.Utils;
 using UnityEngine;
 
@@ -193,13 +195,13 @@ namespace PurrNet.Prediction
 
         protected override void OnSpawned()
         {
-            networkManager.tickModule.onReliablePostTick += OnPreTick;
+            networkManager.tickModule.onReliablePreTick += OnPreTick;
             networkManager.tickModule.onReliablePostTick += OnPostTick;
         }
 
         protected override void OnDespawned()
         {
-            networkManager.tickModule.onReliablePostTick -= OnPreTick;
+            networkManager.tickModule.onReliablePreTick -= OnPreTick;
             networkManager.tickModule.onReliablePostTick -= OnPostTick;
 
             CleanupAllSystems();
@@ -354,7 +356,7 @@ namespace PurrNet.Prediction
             }
         }
 
-        [TargetRpc(compressionLevel: CompressionLevel.Best)]
+        [TargetRpc(compressionLevel: CompressionLevel.Best, channel: Channel.UnreliableSequenced)]
         private void SyncFullState([UsedImplicitly] PlayerID target, int tickRate, float delta, BitPacker data)
         {
             tickDelta = delta;
@@ -767,7 +769,7 @@ namespace PurrNet.Prediction
 
         readonly Dictionary<PlayerID, Queue<ulong>> _clientTicks = new ();
 
-        [ServerRpc(requireOwnership: false)]
+        [ServerRpc(requireOwnership: false, channel: Channel.UnreliableSequenced)]
         private void SendInputToServer(ulong clientTick, PackedUInt count, BitPacker inputPacket, RPCInfo info = default)
         {
             if (!_clientTicks.TryGetValue(info.sender, out var ticks))
@@ -776,7 +778,8 @@ namespace PurrNet.Prediction
                 _clientTicks[info.sender] = ticks;
             }
 
-            ticks.Clear();
+            if (ticks.Count > 2)
+                ticks.Clear();
             ticks.Enqueue(clientTick);
 
             using (inputPacket)
