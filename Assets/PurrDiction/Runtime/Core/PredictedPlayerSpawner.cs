@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using PurrNet.Logging;
 using PurrNet.Modules;
@@ -19,13 +18,16 @@ namespace PurrNet.Prediction
 
         protected override void OnSpawned()
         {
-            predictionManager.players.onPlayerAdded += OnPlayerLoadedScene;
-            predictionManager.players.onPlayerRemoved += OnPlayerUnloadedScene;
+            if (predictionManager.players != null)
+            {
+                predictionManager.players.onPlayerAdded += OnPlayerLoadedScene;
+                predictionManager.players.onPlayerRemoved += OnPlayerUnloadedScene;
+            }
         }
 
         protected override void OnDespawned()
         {
-            if (predictionManager)
+            if (predictionManager && predictionManager.players != null)
             {
                 predictionManager.players.onPlayerAdded -= OnPlayerLoadedScene;
                 predictionManager.players.onPlayerRemoved -= OnPlayerUnloadedScene;
@@ -54,19 +56,6 @@ namespace PurrNet.Prediction
             if (!_destroyOnDisconnect)
                 return;
 
-            var main = NetworkManager.main;
-
-            if (!main || !main.TryGetModule(out ScenesModule scenes, true))
-                return;
-
-            var unityScene = gameObject.scene;
-
-            if (!scenes.TryGetSceneID(unityScene, out var sceneID))
-                return;
-
-            if (!PredictionManager.TryGetInstance(gameObject.scene.handle, out var predictionManager))
-                return;
-
             if (_players.TryGetValue(player, out var playerID))
             {
                 predictionManager.hierarchy.Delete(playerID);
@@ -76,18 +65,10 @@ namespace PurrNet.Prediction
 
         private void OnPlayerLoadedScene(PlayerID player)
         {
+            if (!enabled)
+                return;
+
             var main = NetworkManager.main;
-
-            if (!main || !main.TryGetModule(out ScenesModule scenes, true))
-                return;
-
-            var unityScene = gameObject.scene;
-
-            if (!scenes.TryGetSceneID(unityScene, out var sceneID))
-                return;
-
-            if (!PredictionManager.TryGetInstance(gameObject.scene.handle, out var predictionManager))
-                return;
 
             if (_players.ContainsKey(player))
                 return;

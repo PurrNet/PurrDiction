@@ -56,6 +56,12 @@ namespace PurrNet.Prediction
             set => _rigidbody.angularVelocity = value;
         }
 
+        protected override void OnSpawned()
+        {
+            if (predictionManager.physics3d == null)
+                _eventMask = PhysicsEventMask.None;
+        }
+
         /// <summary>
         ///   <para>Adds a force to the Rigidbody.</para>
         /// </summary>
@@ -151,7 +157,7 @@ namespace PurrNet.Prediction
 
             // Calculate force based on distance
             float force = explosionForce * (1.0f - Mathf.Clamp01(distance / explosionRadius));
-            
+
             // Apply force
             AddForceAtPosition(direction * force, _rigidbody.position, mode);
         }

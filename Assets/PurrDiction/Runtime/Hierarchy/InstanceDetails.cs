@@ -4,20 +4,6 @@ using UnityEngine;
 
 namespace PurrNet.Prediction
 {
-    public readonly struct PooledInstance
-    {
-        public readonly GameObject gameObject;
-        public readonly Vector3 spawnPosition;
-        public readonly ulong addedTick;
-
-        public PooledInstance(GameObject gameObject, Vector3 spawnPosition, ulong addedTick)
-        {
-            this.gameObject = gameObject;
-            this.spawnPosition = spawnPosition;
-            this.addedTick = addedTick;
-        }
-    }
-
     public readonly struct InstanceDetails : IPackedAuto, IEquatable<InstanceDetails>
     {
         public readonly PackedInt prefabId;
@@ -52,7 +38,7 @@ namespace PurrNet.Prediction
 
         public override string ToString()
         {
-            return $"PrefabId: {prefabId}, InstanceId: {instanceId}, SpawnPosition: {spawnPosition}, SpawnRotation: {spawnRotation}";
+            return $"PrefabId: {prefabId}\nInstanceId: {instanceId}\nSpawnPosition: {spawnPosition}\nSpawnRotation: {spawnRotation}";
         }
     }
 }

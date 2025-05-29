@@ -20,7 +20,7 @@ namespace PurrNet.Prediction
 
         public override string ToString()
         {
-            return $"Position: {unityPosition}\nRotation: {unityRotation}";
+            return $"P: {unityPosition}\nR: {unityRotation}";
         }
     }
 }

@@ -1,3 +1,4 @@
+using System;
 using PurrNet.Pooling;
 using UnityEngine;
 
@@ -5,6 +6,7 @@ namespace PurrNet.Prediction.Tests
 {
     public class SimpleRotatingPlatform : PredictedIdentity<SimpleRotatingPlatform.State>
     {
+        [SerializeField] private MeshRenderer _renderer;
         [SerializeField] private PredictedRigidbody _predictedRigidbody;
 
         public struct State : IPredictedData<State>
@@ -15,6 +17,11 @@ namespace PurrNet.Prediction.Tests
             {
                 return $"Collision count: {collisionCount}";
             }
+        }
+
+        private void Awake()
+        {
+            _renderer.material.color = UnityEngine.Random.ColorHSV();
         }
 
         protected override void OnSpawned()

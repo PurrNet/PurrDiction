@@ -28,6 +28,13 @@ namespace PurrNet.Prediction
             _rigidbody = GetComponent<Rigidbody2D>();
         }
 
+        protected override void OnSpawned()
+        {
+            if (predictionManager.physics2d == null)
+                _eventMask = PhysicsEventMask.None;
+        }
+
+
         protected override UnityRigidbody2DState GetInitialState()
         {
             return new UnityRigidbody2DState
@@ -243,7 +250,7 @@ namespace PurrNet.Prediction
 
             // Calculate force based on distance
             float force = explosionForce * (1.0f - Mathf.Clamp01(distance / explosionRadius));
-            
+
             // Apply force
             AddForceAtPosition(direction * force, _rigidbody.position, mode);
         }

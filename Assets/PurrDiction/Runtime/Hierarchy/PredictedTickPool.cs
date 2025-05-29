@@ -14,7 +14,7 @@ namespace PurrNet.Prediction
 
         public bool Put(InstanceDetails id, GameObject go, ulong tick)
         {
-            _pool.Add(new PooledInstance(go, id.spawnPosition, tick));
+            _pool.Add(new PooledInstance(go, id.spawnPosition, tick, id.instanceId));
             return true;
         }
 
@@ -24,8 +24,11 @@ namespace PurrNet.Prediction
             {
                 var instance = _pool[i];
 
-                if (instance.spawnPosition == id.spawnPosition)
+                if (instance.id.Equals(id.instanceId))
                 {
+                    var distance = Vector3.Distance(instance.spawnPosition, id.spawnPosition);
+                    if (distance > 0.1f)
+                        return TryTake(id, out go);
                     go = instance.gameObject;
                     _pool.RemoveAt(i);
                     return true;
@@ -41,7 +44,7 @@ namespace PurrNet.Prediction
             int closestIndex = -1;
             float closestError = float.MaxValue;
 
-            for (var i = 0; i < _pool.Count; i++)
+            for (var i = _pool.Count - 1; i >= 0; i--)
             {
                 var instance = _pool[i];
 
@@ -74,9 +77,9 @@ namespace PurrNet.Prediction
                 var currentTick = predictionManager.localTick;
                 var delta = currentTick - tick;
 
-                if (delta > (uint)predictionManager.tickRate)
+                if (delta > (uint)predictionManager.tickRate * 2)
                 {
-                    predictionManager.InternalDelete(pair.gameObject);
+                    PredictionManager.InternalDelete(pair.gameObject);
                     _pool.RemoveAt(i--);
                 }
             }
@@ -85,7 +88,7 @@ namespace PurrNet.Prediction
         public void Clear(PredictionManager predictionManager)
         {
             foreach (var pair in _pool)
-                predictionManager.InternalDelete(pair.gameObject);
+                PredictionManager.InternalDelete(pair.gameObject);
             _pool.Clear();
         }
     }
