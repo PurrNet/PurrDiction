@@ -14,41 +14,8 @@ namespace PurrNet.Prediction
             return currentState.ToString();
         }
 
-        internal struct FULL_STATE : IOptionalDispose
-        {
-            public STATE state;
-            public PredictedIdentityState prediction;
-
-            public FULL_STATE DeepCopy()
-            {
-                using var packer = BitPackerPool.Get();
-
-                Packer<STATE>.Write(packer, state);
-                Packer<PredictedIdentityState>.Write(packer, prediction);
-
-                packer.ResetPositionAndMode(true);
-
-                var data = new FULL_STATE();
-
-                Packer<STATE>.Read(packer, ref data.state);
-                Packer<PredictedIdentityState>.Read(packer, ref data.prediction);
-
-                return data;
-            }
-
-            public void Dispose()
-            {
-                state.Dispose();
-            }
-
-            public override string ToString()
-            {
-                return $"{{state: {state}, prediction: {prediction}}}";
-            }
-        }
-
-        private Interpolated<FULL_STATE> _interpolatedState;
-        private History<FULL_STATE> _stateHistory;
+        private Interpolated<FULL_STATE<STATE>> _interpolatedState;
+        private History<FULL_STATE<STATE>> _stateHistory;
 
         protected TickManager tickModule { get; private set; }
 
@@ -59,17 +26,17 @@ namespace PurrNet.Prediction
 
         internal override void PrepareInput(bool isServer, bool isLocal, ulong tick) { }
 
-        private FULL_STATE FULLInterpolate(FULL_STATE from, FULL_STATE to, float t)
+        private FULL_STATE<STATE> FULLInterpolate(FULL_STATE<STATE> from, FULL_STATE<STATE> to, float t)
         {
             var state = Interpolate(from.state, to.state, t);
-            return new FULL_STATE
+            return new FULL_STATE<STATE>
             {
                 state = state,
                 prediction = from.prediction
             };
         }
 
-        internal FULL_STATE fullPredictedState;
+        internal FULL_STATE<STATE> fullPredictedState;
 
         public STATE currentState
         {
@@ -101,8 +68,8 @@ namespace PurrNet.Prediction
             // if TickRate is 30, then this should be 2
             var interpolationBuffer = (int)Mathf.Max(world.tickRate / (float)10, 2);
 
-            _interpolatedState = new Interpolated<FULL_STATE>(FULLInterpolate, 1f / world.tickRate, copy, interpolationBuffer);
-            _stateHistory = new History<FULL_STATE>(world.tickRate * 5);
+            _interpolatedState = new Interpolated<FULL_STATE<STATE>>(FULLInterpolate, 1f / world.tickRate, copy, interpolationBuffer);
+            _stateHistory = new History<FULL_STATE<STATE>>(world.tickRate * 5);
             _stateHistory.Write(0, copy);
         }
 
@@ -129,11 +96,11 @@ namespace PurrNet.Prediction
             _stateHistory.Write(tick, fullPredictedState.DeepCopy());
         }
 
-        FULL_STATE? _viewState;
+        FULL_STATE<STATE>? _viewState;
 
         public override void UpdateRollbackInterpolationState(float delta, bool accumulateError)
         {
-            var copy = fullPredictedState.DeepCopy().DeepCopy();
+            var copy = fullPredictedState.DeepCopy();
             ModifyRollbackViewState(ref copy.state, delta, accumulateError);
 
             _viewState?.Dispose();
@@ -175,7 +142,7 @@ namespace PurrNet.Prediction
 
             public uint GetStableHash()
             {
-                return Hasher<T>.stableHash/* ^ id.value.value*/;
+                return Hasher<T>.stableHash ^ id.value.value;
             }
         }
 
@@ -215,7 +182,7 @@ namespace PurrNet.Prediction
                 Packer<PredictedIdentityState>.Read(packer, ref prediction);
             }
 
-            _stateHistory.Write(tick, new FULL_STATE
+            _stateHistory.Write(tick, new FULL_STATE<STATE>
             {
                 state = state,
                 prediction = prediction

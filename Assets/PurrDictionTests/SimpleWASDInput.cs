@@ -10,6 +10,8 @@ namespace PurrNet.Prediction.Tests
         public bool jump;
         public bool dash;
 
+        public void Dispose() { }
+
         public override string ToString()
         {
             return $"horizontal: {horizontal}\nvertical: {vertical}\njump: {jump}\ndash: {dash})";
@@ -37,6 +39,8 @@ namespace PurrNet.Prediction.Tests
     {
         public float rotation;
         public bool wasShooting;
+
+        public void Dispose() { }
 
         public override string ToString()
         {

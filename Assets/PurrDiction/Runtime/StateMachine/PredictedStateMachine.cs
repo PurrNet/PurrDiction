@@ -150,6 +150,8 @@ namespace PurrNet.Prediction.StateMachine
         {
             public int wantedState;
             public int stateIndex;
+
+            public void Dispose() { }
         }
     }
 

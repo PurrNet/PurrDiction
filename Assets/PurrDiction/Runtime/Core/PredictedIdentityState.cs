@@ -9,5 +9,7 @@
         {
             return $"{{owner: {(owner?.ToString() ?? "NULL")}, predictedID: {predictedID}}}";
         }
+
+        public void Dispose() { }
     }
 }

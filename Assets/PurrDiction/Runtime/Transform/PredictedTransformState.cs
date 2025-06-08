@@ -22,5 +22,7 @@ namespace PurrNet.Prediction
         {
             return $"P: {unityPosition}\nR: {unityRotation}";
         }
+
+        public void Dispose() { }
     }
 }

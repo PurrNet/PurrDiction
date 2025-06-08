@@ -8,7 +8,7 @@ namespace PurrNet.Prediction.Tests
     public class TestState : PredictedStateNode<TestState.StateData>
     {
         public static List<TestState> Instances = new();
-        
+
         private void Awake()
         {
             Instances.Add(this);
@@ -23,7 +23,7 @@ namespace PurrNet.Prediction.Tests
         public override void ViewEnter(bool isVerified)
         {
             base.ViewEnter(isVerified);
-            
+
             //Debug.Log($"View entered state: {gameObject.name} | {isVerified}");
         }
 
@@ -31,7 +31,7 @@ namespace PurrNet.Prediction.Tests
         {
             Instances[0].machine.Next();
         }
-        
+
         [ContextMenu("Force next state")]
         private void ForceNextState()
         {
@@ -46,7 +46,7 @@ namespace PurrNet.Prediction.Tests
 
         public struct StateData : IPredictedData<StateData>
         {
-            
+            public void Dispose() { }
         }
     }
 }

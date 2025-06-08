@@ -73,11 +73,15 @@ namespace PurrNet.Prediction.Prebuilt
         public struct ShootData : IPredictedData<ShootData>
         {
             public float timeSinceShot;
+
+            public void Dispose() { }
         }
 
         public struct ShootInput : IPredictedData
         {
             public bool shoot;
+
+            public void Dispose() { }
         }
     }
 }

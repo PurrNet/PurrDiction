@@ -8,5 +8,7 @@
         {
             return $"tick={tick}";
         }
+
+        public void Dispose() { }
     }
 }

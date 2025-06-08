@@ -17,6 +17,8 @@ namespace PurrNet.Prediction.Tests
             {
                 return $"Collision count: {collisionCount}";
             }
+
+            public void Dispose() { }
         }
 
         private void Awake()

@@ -104,11 +104,15 @@ namespace PurrNet.Prediction.Prebuilt
         {
             public float timeInAir;
             public float timeSinceJump;
+
+            public void Dispose() { }
         }
 
         public struct JumpInput : IPredictedData
         {
             public bool jump;
+
+            public void Dispose() { }
         }
 
         private enum UpDirection

@@ -1,8 +1,9 @@
+using System;
 using System.Collections.Generic;
 
 namespace PurrNet.Prediction
 {
-    public sealed class History<T> where T : struct, IOptionalDispose
+    public sealed class History<T> where T : struct, IDisposable
     {
         struct Entry
         {
@@ -27,7 +28,7 @@ namespace PurrNet.Prediction
             {
                 if (index < 0 || index >= m_data.Count)
                 {
-                    throw new System.IndexOutOfRangeException($"Index {index} is out of range. Only from 0 to {m_data.Count - 1} is valid.");
+                    throw new IndexOutOfRangeException($"Index {index} is out of range. Only from 0 to {m_data.Count - 1} is valid.");
                 }
                 return m_data[index].Data;
             }
@@ -80,7 +81,7 @@ namespace PurrNet.Prediction
 
             if (m_maxCount > 0)
             {
-                m_limitToCut = System.Math.Max(m_maxCount + 10, m_maxCount + m_maxCount / 2);
+                m_limitToCut = Math.Max(m_maxCount + 10, m_maxCount + m_maxCount / 2);
                 m_data = new List<Entry>(m_maxCount);
             }
             else

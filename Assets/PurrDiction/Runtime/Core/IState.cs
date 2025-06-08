@@ -3,18 +3,13 @@ using PurrNet.Packing;
 
 namespace PurrNet.Prediction
 {
-    public interface IOptionalDispose : IDisposable
+    public interface IPredictedData : IDisposable, IPackedAuto
     {
-        void IDisposable.Dispose() {}
+
     }
-    
-    public interface IPredictedData : IOptionalDispose, IPackedAuto
-    {
-        
-    }
-    
+
     public interface IPredictedData<T> : IPredictedData, IMath<T>
     {
-        
+
     }
 }

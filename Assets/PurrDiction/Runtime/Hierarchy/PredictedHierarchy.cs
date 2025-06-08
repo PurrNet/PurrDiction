@@ -27,8 +27,13 @@ namespace PurrNet.Prediction
         {
             int count = _spawnedPrefabs.Count;
             state.spawnedPrefabs.Clear();
+
+            if (state.spawnedPrefabs.list.Capacity < count)
+                state.spawnedPrefabs.list.Capacity = count;
+
             for (var i = 0; i < count; i++)
                 state.spawnedPrefabs.Add(_spawnedPrefabs[i]);
+
             state.nextInstanceId = _nextInstanceId;
         }
 
@@ -354,5 +359,7 @@ namespace PurrNet.Prediction
             _spawnedPrefabs.Clear();
             _isSceneObject.Clear();
         }
+
+        public override void UpdateRollbackInterpolationState(float delta, bool accumulateError) { }
     }
 }

@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
-using PurrNet.Logging;
 using PurrNet.Modules;
 using PurrNet.Packing;
 using PurrNet.Pooling;
@@ -424,9 +423,8 @@ namespace PurrNet.Prediction
                 for (var systemIdx = 0; systemIdx < count; systemIdx++)
                 {
                     var system = _systems[systemIdx];
-
                     system.GetLatestUnityState();
-                    system.SaveStateInHistory(localTick);
+                    // system.SaveStateInHistory(localTick);
                 }
 
                 if (cachedIsClient)

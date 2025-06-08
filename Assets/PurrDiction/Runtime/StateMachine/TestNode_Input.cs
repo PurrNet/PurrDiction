@@ -48,11 +48,15 @@ namespace PurrNet.Prediction
         public struct TestNodeData : IPredictedData<TestNodeData>
         {
             public bool wasKeyPressed;
+
+            public void Dispose() { }
         }
 
         public struct TestNodeInput : IPredictedData
         {
             public bool isKeyPressed;
+
+            public void Dispose() { }
         }
     }
 }

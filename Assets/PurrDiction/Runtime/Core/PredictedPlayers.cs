@@ -96,5 +96,7 @@ namespace PurrNet.Prediction
                 onPlayerRemoved?.Invoke(playerId);
             }
         }
+
+        public override void UpdateRollbackInterpolationState(float delta, bool accumulateError) { }
     }
 }
