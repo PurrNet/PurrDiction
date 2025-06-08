@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using PurrNet.Packing;
+using UnityEngine;
 
 namespace PurrNet.Prediction
 {
@@ -13,5 +14,38 @@ namespace PurrNet.Prediction
         }
 
         public void Dispose() { }
+    }
+
+    public struct UnityRigidbodyCompressedState : IPackedAuto
+    {
+        public CompressedVector3 linearVelocity;
+        public CompressedVector3 angularVelocity;
+
+        public UnityRigidbodyCompressedState(UnityRigidbodyState state)
+        {
+            linearVelocity = new CompressedVector3(
+                new CompressedFloat(state.linearVelocity.x),
+                new CompressedFloat(state.linearVelocity.y),
+                new CompressedFloat(state.linearVelocity.z)
+            );
+
+            angularVelocity = new CompressedVector3(
+                new CompressedFloat(state.angularVelocity.x),
+                new CompressedFloat(state.angularVelocity.y),
+                new CompressedFloat(state.angularVelocity.z)
+            );
+        }
+    }
+
+    public struct UnityRigidbodyHalfState : IPackedAuto
+    {
+        public HalfVector3 linearVelocity;
+        public HalfVector3 angularVelocity;
+
+        public UnityRigidbodyHalfState(UnityRigidbodyState state)
+        {
+            linearVelocity = state.linearVelocity;
+            angularVelocity = state.angularVelocity;
+        }
     }
 }

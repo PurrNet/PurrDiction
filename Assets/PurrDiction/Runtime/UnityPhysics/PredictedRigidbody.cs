@@ -1,4 +1,6 @@
 using System;
+using PurrNet.Modules;
+using PurrNet.Packing;
 using PurrNet.Pooling;
 using UnityEngine;
 
@@ -16,6 +18,13 @@ namespace PurrNet.Prediction
         TriggerStay = 1 << 5
     }
 
+    public enum FloatAccuracy
+    {
+        Prefect = 0,
+        Medium = 1,
+        Low = 2
+    }
+
     [RequireComponent(typeof(Rigidbody))]
     [RequireComponent(typeof(PredictedTransform))]
     [AddComponentMenu("PurrDiction/Unity Rigidbody/Predicted Rigidbody")]
@@ -25,6 +34,7 @@ namespace PurrNet.Prediction
         public delegate void OnTriggerDelegate(PredictedRigidbody other);
 
         [SerializeField] private Rigidbody _rigidbody;
+        [SerializeField] private FloatAccuracy _floatAccuracy = FloatAccuracy.Medium;
         [SerializeField] private PhysicsEventMask _eventMask = (PhysicsEventMask)0x3F;
         public new Rigidbody rigidbody => _rigidbody;
 
@@ -60,6 +70,60 @@ namespace PurrNet.Prediction
         {
             if (predictionManager.physics3d == null)
                 _eventMask = PhysicsEventMask.None;
+        }
+
+        protected override void WriteDeltaState(PlayerID target, BitPacker packer, DeltaModule deltaModule, ref PackedUInt cache)
+        {
+            switch (_floatAccuracy)
+            {
+                case FloatAccuracy.Prefect:
+                    base.WriteDeltaState(target, packer, deltaModule, ref cache);
+                    break;
+                case FloatAccuracy.Medium:
+                {
+                    var key = new DeltaKey<UnityRigidbodyCompressedState>(id);
+                    deltaModule.Write(packer, target, key, new UnityRigidbodyCompressedState(currentState), ref cache);
+                    break;
+                }
+                case FloatAccuracy.Low:
+                {
+                    var key = new DeltaKey<UnityRigidbodyHalfState>(id);
+                    deltaModule.Write(packer, target, key, new UnityRigidbodyHalfState(currentState), ref cache);
+                    break;
+                }
+                default: throw new ArgumentOutOfRangeException();
+            }
+        }
+
+        protected override void ReadDeltaState(BitPacker packer, DeltaModule deltaModule, ref UnityRigidbodyState state, ref PackedUInt cache)
+        {
+            switch (_floatAccuracy)
+            {
+                case FloatAccuracy.Prefect:
+                    base.ReadDeltaState(packer, deltaModule, ref state, ref cache);
+                    break;
+                case FloatAccuracy.Medium:
+                {
+                    var key = new DeltaKey<UnityRigidbodyCompressedState>(id);
+                    UnityRigidbodyCompressedState compressedState = default;
+                    deltaModule.Read(packer, key, default, ref compressedState, ref cache);
+
+                    state.linearVelocity = compressedState.linearVelocity;
+                    state.angularVelocity = compressedState.angularVelocity;
+                    break;
+                }
+                case FloatAccuracy.Low:
+                {
+                    var key = new DeltaKey<UnityRigidbodyHalfState>(id);
+                    UnityRigidbodyHalfState halfState = default;
+                    deltaModule.Read(packer, key, default, ref halfState, ref cache);
+
+                    state.linearVelocity = halfState.linearVelocity;
+                    state.angularVelocity = halfState.angularVelocity;
+                    break;
+                }
+                default: throw new ArgumentOutOfRangeException();
+            }
         }
 
         /// <summary>
