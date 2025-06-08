@@ -11,22 +11,11 @@ namespace PurrNet.Prediction
 
         public FULL_STATE<T> DeepCopy()
         {
-#if UNITY_EDITOR
-            var initialMemory = GC.GetTotalMemory(false);
-#endif
-            var result = new FULL_STATE<T>
+            return new FULL_STATE<T>
             {
                 state = Packer.Copy(state),
                 prediction = prediction
             };
-
-#if UNITY_EDITOR
-            var finalMemory = GC.GetTotalMemory(false);
-            if (finalMemory > initialMemory)
-                UnityEngine.Debug.LogWarning($"DeepCopy of FULL_STATE<{typeof(T).Name}> increased memory usage by {finalMemory - initialMemory} bytes.");
-#endif
-
-            return result;
         }
 
         public void Dispose()
