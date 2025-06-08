@@ -30,18 +30,11 @@ namespace PurrNet.Prediction
         [SerializeField, PurrLock] private DeltaCompression _deltaCompression =
             DeltaCompression.Input |
             DeltaCompression.State;
-        [SerializeField] private bool _validateDeltaCompression;
 
         [SerializeField] private GameObject[] _prefabs;
 
         readonly List<PredictedIdentity> _queue = new ();
         readonly List<PredictedIdentity> _systems = new ();
-
-        public bool validateDeltaCompression
-        {
-            get => _validateDeltaCompression;
-            set => _validateDeltaCompression = value;
-        }
 
         public static bool TryGetInstance(int sceneHandle, out PredictionManager world)
         {
@@ -321,7 +314,6 @@ namespace PurrNet.Prediction
         private void WriteFullFrame(BitPacker packer, PlayerID target)
         {
             int count = _systems.Count;
-
             Packer<PackedInt>.Write(packer, count);
 
             for (var i = 0; i < count; i++)

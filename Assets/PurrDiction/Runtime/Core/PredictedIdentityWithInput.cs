@@ -143,9 +143,7 @@ namespace PurrNet.Prediction
                 using var tmp = BitPackerPool.Get();
 
                 if (deltaModule != null)
-                {
-                    deltaModule.Write(tmp, receiver, key, savedInput, predictionManager.validateDeltaCompression);
-                }
+                    deltaModule.Write(tmp, receiver, key, savedInput);
                 else Packer<INPUT>.Write(tmp, savedInput);
 
                 var count = tmp.positionInBits;

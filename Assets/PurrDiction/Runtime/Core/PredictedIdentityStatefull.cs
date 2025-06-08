@@ -154,9 +154,8 @@ namespace PurrNet.Prediction
         {
             if (deltaModule != null)
             {
-                var validation = predictionManager.validateDeltaCompression;
-                deltaModule.Write(packer, target, stateKey, fullPredictedState.state, validation);
-                deltaModule.Write(packer, target, internalKey, fullPredictedState.prediction, validation);
+                deltaModule.Write(packer, target, stateKey, fullPredictedState.state);
+                deltaModule.Write(packer, target, internalKey, fullPredictedState.prediction);
             }
             else
             {
