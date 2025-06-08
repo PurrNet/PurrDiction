@@ -555,7 +555,7 @@ MonoBehaviour:
   _networkRules: {fileID: 0}
   _visitiblityRules: {fileID: 0}
   _physicsProvider: 1
-  _updateViewMode: 0
+  _updateViewMode: 1
   _builtInSystems: -1
   _deltaCompression: -1
   _validateDeltaCompression: 1

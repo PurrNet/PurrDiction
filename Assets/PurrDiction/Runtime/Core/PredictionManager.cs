@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
+using PurrNet.Logging;
 using PurrNet.Modules;
 using PurrNet.Packing;
 using PurrNet.Pooling;
@@ -10,17 +11,6 @@ using UnityEngine;
 
 namespace PurrNet.Prediction
 {
-    internal struct PlayerPacker
-    {
-        public PlayerID player;
-        public BitPacker packer;
-
-        public void Dispose()
-        {
-            packer?.Dispose();
-        }
-    }
-
     [DefaultExecutionOrder(1000)]
     [AddComponentMenu("PurrDiction/Prediction Manager")]
     public class PredictionManager : NetworkIdentity

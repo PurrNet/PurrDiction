@@ -175,7 +175,7 @@ namespace PurrNet.Prediction
 
             public uint GetStableHash()
             {
-                return Hasher<T>.stableHash;
+                return Hasher<T>.stableHash/* ^ id.value.value*/;
             }
         }
 
