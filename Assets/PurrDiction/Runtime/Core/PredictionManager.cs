@@ -378,7 +378,7 @@ namespace PurrNet.Prediction
             SyncTransforms();
         }
 
-        readonly List<PlayerPacker> _clientFrames = new ();
+        readonly List<PlayerPacker> _clientFrames = new (16);
 
         void OnPreTick()
         {
