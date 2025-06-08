@@ -150,12 +150,12 @@ namespace PurrNet.Prediction
 
         DeltaKey<PredictedIdentityState> internalKey => new (id);
 
-        internal override void WriteCurrentState(PlayerID target, BitPacker packer, DeltaModule deltaModule)
+        internal override void WriteCurrentState(PlayerID target, BitPacker packer, DeltaModule deltaModule, ref PackedUInt cache)
         {
             if (deltaModule != null)
             {
-                deltaModule.Write(packer, target, stateKey, fullPredictedState.state);
-                deltaModule.Write(packer, target, internalKey, fullPredictedState.prediction);
+                deltaModule.Write(packer, target, stateKey, fullPredictedState.state, ref cache);
+                deltaModule.Write(packer, target, internalKey, fullPredictedState.prediction, ref cache);
             }
             else
             {
@@ -165,15 +165,15 @@ namespace PurrNet.Prediction
         }
 
         [UsedImplicitly]
-        internal override void ReadState(ulong tick, BitPacker packer, DeltaModule deltaModule)
+        internal override void ReadState(ulong tick, BitPacker packer, DeltaModule deltaModule, ref PackedUInt cache)
         {
             STATE state = default;
             PredictedIdentityState prediction = default;
 
             if (deltaModule != null)
             {
-                deltaModule.Read(packer, stateKey, default, ref state);
-                deltaModule.Read(packer, internalKey, default, ref prediction);
+                deltaModule.Read(packer, stateKey, default, ref state, ref cache);
+                deltaModule.Read(packer, internalKey, default, ref prediction, ref cache);
             }
             else
             {
@@ -188,11 +188,11 @@ namespace PurrNet.Prediction
             });
         }
 
-        internal override void WriteInput(ulong localTick, PlayerID receiver, BitPacker input, DeltaModule deltaModule) { }
+        internal override void WriteInput(ulong localTick, PlayerID receiver, BitPacker input, DeltaModule deltaModule, ref PackedUInt cache) { }
 
-        internal override void ReadInput(ulong tick, BitPacker packer, DeltaModule deltaModule) { }
+        internal override void ReadInput(ulong tick, BitPacker packer, DeltaModule deltaModule, ref PackedUInt cache) { }
 
-        internal override void QueueInput(PlayerID sender, BitPacker packer, DeltaModule deltaModule) { }
+        internal override void QueueInput(PlayerID sender, BitPacker packer, DeltaModule deltaModule, ref PackedUInt cache) { }
 
         internal override void UpdateView(float deltaTime)
         {
