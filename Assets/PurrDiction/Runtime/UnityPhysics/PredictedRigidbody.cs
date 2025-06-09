@@ -21,7 +21,7 @@ namespace PurrNet.Prediction
 
     public enum FloatAccuracy
     {
-        Prefect = 0,
+        Purrfect = 0,
         Medium = 1,
         Low = 2
     }
@@ -77,7 +77,7 @@ namespace PurrNet.Prediction
         {
             switch (_floatAccuracy)
             {
-                case FloatAccuracy.Prefect:
+                case FloatAccuracy.Purrfect:
                     base.WriteDeltaState(target, packer, deltaModule, ref cache);
                     break;
                 case FloatAccuracy.Medium:
@@ -100,7 +100,7 @@ namespace PurrNet.Prediction
         {
             switch (_floatAccuracy)
             {
-                case FloatAccuracy.Prefect:
+                case FloatAccuracy.Purrfect:
                     base.ReadDeltaState(packer, deltaModule, ref state, ref cache);
                     break;
                 case FloatAccuracy.Medium:
