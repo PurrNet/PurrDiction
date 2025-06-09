@@ -2,6 +2,7 @@ using System;
 using PurrNet.Modules;
 using PurrNet.Packing;
 using PurrNet.Pooling;
+using PurrNet.Utils;
 using UnityEngine;
 
 namespace PurrNet.Prediction
@@ -33,9 +34,9 @@ namespace PurrNet.Prediction
         public delegate void OnCollisionDelegate(PredictedRigidbody other, DisposableList<PhysicsContactPoint> evContacts);
         public delegate void OnTriggerDelegate(PredictedRigidbody other);
 
-        [SerializeField] private Rigidbody _rigidbody;
-        [SerializeField] private FloatAccuracy _floatAccuracy = FloatAccuracy.Medium;
-        [SerializeField] private PhysicsEventMask _eventMask = (PhysicsEventMask)0x3F;
+        [SerializeField, PurrLock] private Rigidbody _rigidbody;
+        [SerializeField, PurrLock] private FloatAccuracy _floatAccuracy = FloatAccuracy.Medium;
+        [SerializeField, PurrLock] private PhysicsEventMask _eventMask = (PhysicsEventMask)0x3F;
         public new Rigidbody rigidbody => _rigidbody;
 
         public Rigidbody rb => _rigidbody;
