@@ -598,7 +598,7 @@ namespace PurrNet.Prediction
 
         readonly Queue<FrameDelta> _deltas = new ();
 
-        [TargetRpc]
+        [TargetRpc(compressionLevel: CompressionLevel.Best)]
         private void SendFrameToRemote([UsedImplicitly] PlayerID player, ulong clientLocalTick, BitPackerWithLength delta)
         {
             delta.packer.SkipBytes(delta.originalLength);
@@ -764,7 +764,7 @@ namespace PurrNet.Prediction
                 _clientTicks[info.sender] = ticks;
             }
 
-            if (ticks.Count > 2)
+            if (ticks.Count >= 2)
                 ticks.Clear();
             ticks.Enqueue(clientTick);
 

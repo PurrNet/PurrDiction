@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using PurrNet.Logging;
 using PurrNet.Modules;
 using PurrNet.Packing;
 using PurrNet.Utils;
@@ -204,7 +203,7 @@ namespace PurrNet.Prediction
 
                 var sanitizedInput = input;
                 SanitizeInput(ref sanitizedInput);
-                if (_queuedInput.Count > 2)
+                if (_queuedInput.Count >= 2)
                     _queuedInput.Clear();
                 _queuedInput.Enqueue(sanitizedInput);
             }
