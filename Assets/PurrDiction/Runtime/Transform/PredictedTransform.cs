@@ -45,13 +45,13 @@ namespace PurrNet.Prediction
                 case FloatAccuracy.Medium:
                 {
                     var key = new DeltaKey<PredictedTransformCompressedState>(id);
-                    deltaModule.Write(packer, target, key, new PredictedTransformCompressedState(currentState), ref cache);
+                    deltaModule.WriteReliable(packer, target, key, new PredictedTransformCompressedState(currentState));
                     break;
                 }
                 case FloatAccuracy.Low:
                 {
                     var key = new DeltaKey<PredictedTransformHalfState>(id);
-                    deltaModule.Write(packer, target, key, new PredictedTransformHalfState(currentState), ref cache);
+                    deltaModule.WriteReliable(packer, target, key, new PredictedTransformHalfState(currentState));
                     break;
                 }
                 default: throw new ArgumentOutOfRangeException();
@@ -70,7 +70,7 @@ namespace PurrNet.Prediction
                 {
                     var key = new DeltaKey<PredictedTransformCompressedState>(id);
                     PredictedTransformCompressedState compressedState = default;
-                    deltaModule.Read(packer, key, default, ref compressedState, ref cache);
+                    deltaModule.ReadReliable(packer, key, ref compressedState);
 
                     state.unityPosition = compressedState.unityPosition;
                     state.unityRotation = ((Quaternion)compressedState.unityRotation).normalized;
@@ -80,7 +80,7 @@ namespace PurrNet.Prediction
                 {
                     var key = new DeltaKey<PredictedTransformHalfState>(id);
                     PredictedTransformHalfState compressedState = default;
-                    deltaModule.Read(packer, key, default, ref compressedState, ref cache);
+                    deltaModule.ReadReliable(packer, key, ref compressedState);
 
                     state.unityPosition = compressedState.unityPosition;
                     state.unityRotation = ((Quaternion)compressedState.unityRotation).normalized;

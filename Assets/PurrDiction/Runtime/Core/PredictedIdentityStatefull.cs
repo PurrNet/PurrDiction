@@ -22,6 +22,14 @@ namespace PurrNet.Prediction
         }
     }
 
+    public readonly struct RawKey<T> : IStableHashable
+    {
+        public uint GetStableHash()
+        {
+            return Hasher<T>.stableHash;
+        }
+    }
+
     public abstract class PredictedIdentity<STATE> : PredictedIdentity where STATE : struct, IPredictedData<STATE>
     {
         public override string ToString()
@@ -148,14 +156,14 @@ namespace PurrNet.Prediction
 
         protected DeltaKey<STATE> stateKey => new (id);
 
-        protected DeltaKey<PredictedIdentityState> internalKey => new (id);
+        protected RawKey<PredictedIdentityState> internalKey => new ();
 
         internal override void WriteCurrentState(PlayerID target, BitPacker packer, DeltaModule deltaModule, ref PackedUInt cache)
         {
             if (deltaModule != null)
             {
+                deltaModule.WriteReliable(packer, target, internalKey, fullPredictedState.prediction);
                 WriteDeltaState(target, packer, deltaModule, ref cache);
-                deltaModule.Write(packer, target, internalKey, fullPredictedState.prediction, ref cache);
             }
             else
             {
@@ -166,7 +174,7 @@ namespace PurrNet.Prediction
 
         protected virtual void WriteDeltaState(PlayerID target, BitPacker packer, DeltaModule deltaModule, ref PackedUInt cache)
         {
-            deltaModule.Write(packer, target, stateKey, fullPredictedState.state, ref cache);
+            deltaModule.WriteReliable(packer, target, stateKey, fullPredictedState.state);
         }
 
         [UsedImplicitly]
@@ -177,8 +185,9 @@ namespace PurrNet.Prediction
 
             if (deltaModule != null)
             {
+                deltaModule.ReadReliable(packer, internalKey, ref prediction);
+                id = prediction.predictedID;
                 ReadDeltaState(packer, deltaModule, ref state, ref cache);
-                deltaModule.Read(packer, internalKey, default, ref prediction, ref cache);
             }
             else
             {
@@ -195,7 +204,7 @@ namespace PurrNet.Prediction
 
         protected virtual void ReadDeltaState(BitPacker packer, DeltaModule deltaModule, ref STATE state, ref PackedUInt cache)
         {
-            deltaModule.Read(packer, stateKey, default, ref state, ref cache);
+            deltaModule.ReadReliable(packer, stateKey, ref state);
         }
 
         internal override void WriteInput(ulong localTick, PlayerID receiver, BitPacker input, DeltaModule deltaModule, ref PackedUInt cache) { }

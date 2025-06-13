@@ -35,6 +35,11 @@ namespace PurrNet.Prediction
                 new CompressedFloat(state.angularVelocity.z).Round()
             );
         }
+
+        public override string ToString()
+        {
+            return $"UnityRigidbodyCompressedState LinearVelocity: {linearVelocity}\nAngularVelocity: {angularVelocity}";
+        }
     }
 
     public struct UnityRigidbodyHalfState : IPackedAuto
@@ -46,6 +51,11 @@ namespace PurrNet.Prediction
         {
             linearVelocity = state.linearVelocity;
             angularVelocity = state.angularVelocity;
+        }
+
+        public override string ToString()
+        {
+            return $"UnityRigidbodyHalfState LinearVelocity: {(Vector3)linearVelocity}\nAngularVelocity: {(Vector3)angularVelocity}";
         }
     }
 }

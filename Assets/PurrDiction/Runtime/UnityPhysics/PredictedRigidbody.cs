@@ -83,13 +83,13 @@ namespace PurrNet.Prediction
                 case FloatAccuracy.Medium:
                 {
                     var key = new DeltaKey<UnityRigidbodyCompressedState>(id);
-                    deltaModule.Write(packer, target, key, new UnityRigidbodyCompressedState(currentState), ref cache);
+                    deltaModule.WriteReliable(packer, target, key, new UnityRigidbodyCompressedState(currentState));
                     break;
                 }
                 case FloatAccuracy.Low:
                 {
                     var key = new DeltaKey<UnityRigidbodyHalfState>(id);
-                    deltaModule.Write(packer, target, key, new UnityRigidbodyHalfState(currentState), ref cache);
+                    deltaModule.WriteReliable(packer, target, key, new UnityRigidbodyHalfState(currentState));
                     break;
                 }
                 default: throw new ArgumentOutOfRangeException();
@@ -107,7 +107,7 @@ namespace PurrNet.Prediction
                 {
                     var key = new DeltaKey<UnityRigidbodyCompressedState>(id);
                     UnityRigidbodyCompressedState compressedState = default;
-                    deltaModule.Read(packer, key, default, ref compressedState, ref cache);
+                    deltaModule.ReadReliable(packer, key, ref compressedState);
 
                     state.linearVelocity = compressedState.linearVelocity;
                     state.angularVelocity = compressedState.angularVelocity;
@@ -117,7 +117,7 @@ namespace PurrNet.Prediction
                 {
                     var key = new DeltaKey<UnityRigidbodyHalfState>(id);
                     UnityRigidbodyHalfState halfState = default;
-                    deltaModule.Read(packer, key, default, ref halfState, ref cache);
+                    deltaModule.ReadReliable(packer, key, ref halfState);
 
                     state.linearVelocity = halfState.linearVelocity;
                     state.angularVelocity = halfState.angularVelocity;
