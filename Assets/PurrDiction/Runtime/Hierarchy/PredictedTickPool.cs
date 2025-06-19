@@ -85,7 +85,7 @@ namespace PurrNet.Prediction
             }
         }
 
-        public void Clear(PredictionManager predictionManager)
+        public void Clear()
         {
             foreach (var pair in _pool)
                 PredictionManager.InternalDelete(pair.gameObject);

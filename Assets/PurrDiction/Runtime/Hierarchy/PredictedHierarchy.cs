@@ -188,7 +188,7 @@ namespace PurrNet.Prediction
                 if (pid < 0)
                     return;
 
-                pool.Clear(predictionManager);
+                pool.Clear();
             }
         }
 
