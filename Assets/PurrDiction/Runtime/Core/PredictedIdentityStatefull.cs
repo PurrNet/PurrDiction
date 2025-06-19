@@ -18,15 +18,7 @@ namespace PurrNet.Prediction
 
         public uint GetStableHash()
         {
-            return Hasher<T>.stableHash ^ id.value.value;
-        }
-    }
-
-    public readonly struct RawKey<T> : IStableHashable
-    {
-        public uint GetStableHash()
-        {
-            return Hasher<T>.stableHash;
+            return Hasher<T>.stableHash ^ id.componentId.value ^ id.objectId.instanceId.value;
         }
     }
 
@@ -67,7 +59,7 @@ namespace PurrNet.Prediction
             set => fullPredictedState.state = value;
         }
 
-        internal override void Setup(NetworkManager manager, PredictionManager world, uint id)
+        internal override void Setup(NetworkManager manager, PredictionManager world, PredictedID id)
         {
             if (!isFreshSpawn)
             {
@@ -106,7 +98,7 @@ namespace PurrNet.Prediction
         internal override void GetLatestUnityState()
         {
             fullPredictedState.prediction.owner = owner;
-            fullPredictedState.prediction.predictedID = id;
+            // fullPredictedState.prediction.predictedID = id;
             GetUnityState(ref fullPredictedState.state);
         }
 
@@ -148,7 +140,7 @@ namespace PurrNet.Prediction
             fullPredictedState = state.DeepCopy();
 
             owner = fullPredictedState.prediction.owner;
-            id = fullPredictedState.prediction.predictedID;
+            // id = fullPredictedState.prediction.predictedID;
             SetUnityState(fullPredictedState.state);
         }
 
@@ -156,7 +148,7 @@ namespace PurrNet.Prediction
 
         protected DeltaKey<STATE> stateKey => new (id);
 
-        protected RawKey<PredictedIdentityState> internalKey => new ();
+        protected DeltaKey<PredictedIdentityState> internalKey => new (id);
 
         internal override void WriteCurrentState(PlayerID target, BitPacker packer, DeltaModule deltaModule, ref PackedUInt cache)
         {
@@ -172,9 +164,9 @@ namespace PurrNet.Prediction
             }
         }
 
-        protected virtual void WriteDeltaState(PlayerID target, BitPacker packer, DeltaModule deltaModule, ref PackedUInt cache)
+        protected virtual bool WriteDeltaState(PlayerID target, BitPacker packer, DeltaModule deltaModule, ref PackedUInt cache)
         {
-            deltaModule.WriteReliable(packer, target, stateKey, fullPredictedState.state);
+            return deltaModule.WriteReliable(packer, target, stateKey, fullPredictedState.state);
         }
 
         [UsedImplicitly]
@@ -186,7 +178,6 @@ namespace PurrNet.Prediction
             if (deltaModule != null)
             {
                 deltaModule.ReadReliable(packer, internalKey, ref prediction);
-                id = prediction.predictedID;
                 ReadDeltaState(packer, deltaModule, ref state, ref cache);
             }
             else

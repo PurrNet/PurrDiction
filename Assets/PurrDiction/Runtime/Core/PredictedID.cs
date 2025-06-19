@@ -5,7 +5,8 @@ namespace PurrNet.Prediction
 {
     public readonly struct PredictedID : IPackedAuto, IEquatable<PredictedID>
     {
-        public readonly PackedUInt value;
+        public readonly PredictedObjectID objectId;
+        public readonly PackedUInt componentId;
 
         public PredictedIdentity GetIdentity(PredictionManager manager)
         {
@@ -29,14 +30,15 @@ namespace PurrNet.Prediction
             return identity != null;
         }
 
-        public PredictedID(uint id)
+        public PredictedID(PredictedObjectID objId, uint id)
         {
-            this.value = id;
+            objectId = objId;
+            componentId = id;
         }
 
         public bool Equals(PredictedID other)
         {
-            return value == other.value;
+            return objectId.Equals(other.objectId) && componentId.value == other.componentId.value;
         }
 
         public override bool Equals(object obj)
@@ -46,12 +48,12 @@ namespace PurrNet.Prediction
 
         public override int GetHashCode()
         {
-            return (int)value.value;
+            return HashCode.Combine(objectId, componentId.value);
         }
 
         public override string ToString()
         {
-            return $"PredictedID({value.value})";
+            return $"PredictedID({objectId.instanceId.value}, {componentId.value})";
         }
     }
 }

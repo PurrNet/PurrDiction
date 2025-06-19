@@ -40,6 +40,25 @@ namespace PurrNet.Prediction.Editor
 
                 bool bothNonEmpty = !string.IsNullOrEmpty(extraContent) && !string.IsNullOrEmpty(content);
 
+                if (Application.isPlaying)
+                {
+                    EditorGUILayout.BeginHorizontal("box", GUILayout.ExpandWidth(false));
+                    GUILayout.Label($"ID: {predictedIdentity.id}", GUILayout.ExpandWidth(false));
+                    GUILayout.FlexibleSpace();
+                    GUILayout.Label(
+                        $"Owner ID: {(predictedIdentity.owner.HasValue ? predictedIdentity.owner.Value.ToString() : "None")}",
+                        GUILayout.ExpandWidth(false));
+                    GUILayout.FlexibleSpace();
+                    var pm = predictedIdentity.predictionManager;
+                    GUILayout.Label(
+                        pm
+                            ? $"Local Player: {(pm.localPlayer.HasValue ? pm.localPlayer.Value.ToString() : "None")}"
+                            : "Not ready",
+                        GUILayout.ExpandWidth(false));
+
+                    EditorGUILayout.EndHorizontal();
+                }
+
                 GUILayout.BeginHorizontal(GUILayout.ExpandWidth(true));
                 if (!string.IsNullOrEmpty(extraContent))
                 {

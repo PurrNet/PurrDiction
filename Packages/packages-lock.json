@@ -226,15 +226,15 @@
       "dependencies": {},
       "hash": "d1ef610e9fe3ad0b490cce91594449fc0af809a6"
     },
-    "purrnet": {
-      "version": "https://github.com/BlenMiner/PurrNet.git?path=/Assets/PurrNet#dev",
+    "dev.purrnet.purrnet": {
+      "version": "1.11.2-beta.33",
       "depth": 0,
-      "source": "git",
+      "source": "registry",
       "dependencies": {
         "com.unity.nuget.mono-cecil": "1.11.4",
         "com.unity.nuget.newtonsoft-json": "3.2.1"
       },
-      "hash": "36d75d2720afcbe694e03ae448cd77fe5687fef1"
+      "url": "https://package.openupm.com"
     },
     "com.unity.modules.accessibility": {
       "version": "1.0.0",

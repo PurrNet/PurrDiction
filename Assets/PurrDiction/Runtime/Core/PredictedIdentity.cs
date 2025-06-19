@@ -48,7 +48,7 @@ namespace PurrNet.Prediction
 
         public bool isServer { get; private set; }
 
-        internal virtual void Setup(NetworkManager manager, PredictionManager world, uint id)
+        internal virtual void Setup(NetworkManager manager, PredictionManager world, PredictedID id)
         {
             isServer = manager.isServer;
 
@@ -58,7 +58,7 @@ namespace PurrNet.Prediction
             isFreshSpawn = false;
 
             owner = null;
-            this.id = new PredictedID(id);
+            this.id = id;
             predictionManager = world;
 
             OnSpawned();

@@ -32,7 +32,7 @@ namespace PurrNet.Prediction
 
         public PredictedHierarchy hierarchy { get; private set; }
 
-        internal override void Setup(NetworkManager manager, PredictionManager world, uint id)
+        internal override void Setup(NetworkManager manager, PredictionManager world, PredictedID id)
         {
             base.Setup(manager, world, id);
 
@@ -127,7 +127,7 @@ namespace PurrNet.Prediction
 
             public uint GetStableHash()
             {
-                return id.value.value ^ Hasher<INPUT>.stableHash;
+                return (uint)id.GetHashCode() ^ Hasher<INPUT>.stableHash;
             }
         }
 

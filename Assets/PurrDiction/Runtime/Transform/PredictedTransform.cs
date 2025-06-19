@@ -35,24 +35,21 @@ namespace PurrNet.Prediction
             _hasView = _graphics;
         }
 
-        protected override void WriteDeltaState(PlayerID target, BitPacker packer, DeltaModule deltaModule, ref PackedUInt cache)
+        protected override bool WriteDeltaState(PlayerID target, BitPacker packer, DeltaModule deltaModule, ref PackedUInt cache)
         {
             switch (_floatAccuracy)
             {
                 case FloatAccuracy.Purrfect:
-                    base.WriteDeltaState(target, packer, deltaModule, ref cache);
-                    break;
+                    return base.WriteDeltaState(target, packer, deltaModule, ref cache);
                 case FloatAccuracy.Medium:
                 {
                     var key = new DeltaKey<PredictedTransformCompressedState>(id);
-                    deltaModule.WriteReliable(packer, target, key, new PredictedTransformCompressedState(currentState));
-                    break;
+                    return deltaModule.WriteReliable(packer, target, key, new PredictedTransformCompressedState(currentState));
                 }
                 case FloatAccuracy.Low:
                 {
                     var key = new DeltaKey<PredictedTransformHalfState>(id);
-                    deltaModule.WriteReliable(packer, target, key, new PredictedTransformHalfState(currentState));
-                    break;
+                    return deltaModule.WriteReliable(packer, target, key, new PredictedTransformHalfState(currentState));
                 }
                 default: throw new ArgumentOutOfRangeException();
             }

@@ -1,4 +1,5 @@
 using System;
+using PurrNet.Logging;
 using PurrNet.Modules;
 using PurrNet.Packing;
 using PurrNet.Pooling;
@@ -73,24 +74,22 @@ namespace PurrNet.Prediction
                 _eventMask = PhysicsEventMask.None;
         }
 
-        protected override void WriteDeltaState(PlayerID target, BitPacker packer, DeltaModule deltaModule, ref PackedUInt cache)
+        protected override bool WriteDeltaState(PlayerID target, BitPacker packer, DeltaModule deltaModule, ref PackedUInt cache)
         {
             switch (_floatAccuracy)
             {
                 case FloatAccuracy.Purrfect:
-                    base.WriteDeltaState(target, packer, deltaModule, ref cache);
-                    break;
+                    return base.WriteDeltaState(target, packer, deltaModule, ref cache);
                 case FloatAccuracy.Medium:
                 {
                     var key = new DeltaKey<UnityRigidbodyCompressedState>(id);
-                    deltaModule.WriteReliable(packer, target, key, new UnityRigidbodyCompressedState(currentState));
-                    break;
+                    return deltaModule.WriteReliable(packer, target, key, new UnityRigidbodyCompressedState(currentState));
                 }
                 case FloatAccuracy.Low:
                 {
                     var key = new DeltaKey<UnityRigidbodyHalfState>(id);
-                    deltaModule.WriteReliable(packer, target, key, new UnityRigidbodyHalfState(currentState));
-                    break;
+                    var res = deltaModule.WriteReliable(packer, target, key, new UnityRigidbodyHalfState(currentState));
+                    return res;
                 }
                 default: throw new ArgumentOutOfRangeException();
             }

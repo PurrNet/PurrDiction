@@ -12,7 +12,7 @@ namespace PurrNet.Prediction
         readonly Dictionary<GameObject, PredictedObjectID> _goToId = new ();
         readonly HashSet<PredictedObjectID> _isSceneObject = new ();
 
-        private uint _nextInstanceId;
+        private uint _nextInstanceId = 1;
 
         protected override PredictedHierarchyState GetInitialState()
         {
@@ -123,7 +123,7 @@ namespace PurrNet.Prediction
             {
                 go = instance;
                 go.transform.SetPositionAndRotation(position, rotation);
-                predictionManager.RegisterInstance(go);
+                predictionManager.RegisterInstance(go, key.instanceId);
                 go.SetActive(true);
             }
             else
@@ -134,7 +134,7 @@ namespace PurrNet.Prediction
                     return default;
                 }
 
-                go = predictionManager.InternalCreate(prefab, position, rotation);
+                go = predictionManager.InternalCreate(prefab, position, rotation, instanceId);
             }
 
             _instanceMap.Add(instanceId, go);
@@ -220,6 +220,8 @@ namespace PurrNet.Prediction
             _goToId.Add(root, instanceId);
             _spawnedPrefabs.Add(key);
             _nextInstanceId++;
+
+            predictionManager.RegisterInstance(root, instanceId);
         }
 
         public PredictedObjectID? Create(GameObject prefab)

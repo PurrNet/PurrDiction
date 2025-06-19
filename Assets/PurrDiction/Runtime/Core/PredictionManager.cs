@@ -121,8 +121,6 @@ namespace PurrNet.Prediction
 
                     if (roots.Add(root))
                         hierarchy.RegisterSceneObject(root, pid--);
-
-                    RegisterInstance(queued);
                 }
             }
 
@@ -189,28 +187,32 @@ namespace PurrNet.Prediction
                     DestroyImmediate(_systems[i]);
             }
 
-            _nextInstanceId = 0;
             _instanceMap.Clear();
             _queue.Clear();
             _systems.Clear();
+            _nextSystemId = 0;
         }
+
+        private uint _nextSystemId;
 
         public T RegisterSystem<T>() where T : PredictedIdentity
         {
             var system = gameObject.AddComponent<T>();
             system.hideFlags = HideFlags.NotEditable;
-            RegisterInstance(system);
+            RegisterInstance(system, new PredictedObjectID(0), _nextSystemId++);
             return system;
         }
 
-        public void RegisterInstance(GameObject go)
+        public void RegisterInstance(GameObject go, PredictedObjectID objectID)
         {
             var components = ListPool<PredictedIdentity>.Instantiate();
             go.GetComponentsInChildren(true, components);
             int count = components.Count;
 
-            for (var i = 0; i < count; i++)
-                RegisterInstance(components[i]);
+            for (uint i = 0; i < count; i++)
+            {
+                RegisterInstance(components[(int)i], objectID, i);
+            }
 
             ListPool<PredictedIdentity>.Destroy(components);
         }
@@ -226,8 +228,6 @@ namespace PurrNet.Prediction
             ListPool<PredictedIdentity>.Destroy(components);
         }
 
-        private uint _nextInstanceId;
-
         readonly Dictionary<PredictedID, PredictedIdentity> _instanceMap = new ();
 
         public bool TryGetIdentity(PredictedID id, out PredictedIdentity instance)
@@ -240,7 +240,7 @@ namespace PurrNet.Prediction
             return _instanceMap[id];
         }
 
-        private void RegisterInstance(PredictedIdentity system)
+        private void RegisterInstance(PredictedIdentity system, PredictedObjectID objectId, uint componentId)
         {
             if (!isSpawned)
             {
@@ -248,8 +248,10 @@ namespace PurrNet.Prediction
                 return;
             }
 
-            _instanceMap[new PredictedID(_nextInstanceId)] = system;
-            system.Setup(networkManager, this, _nextInstanceId++);
+            var pid = new PredictedID(objectId, componentId);
+            _instanceMap[pid] = system;
+            system.Setup(networkManager, this, pid);
+
             _systems.Add(system);
         }
 
@@ -476,6 +478,7 @@ namespace PurrNet.Prediction
                 var frame = _clientFrames[j].packer;
                 var player = _clientFrames[j].player;
 
+
                 Packer<PackedInt>.Write(frame, count);
 
                 for (var i = 0; i < count; i++)
@@ -483,7 +486,10 @@ namespace PurrNet.Prediction
                     if (_systems[i].isEventHandler)
                         continue;
 
+                    //int framePos = frame.positionInBits;
                     _systems[i].WriteCurrentState(player, frame, _deltaModuleState, ref cache);
+                    //var writtenBits = frame.positionInBits - framePos;
+                    //PurrLogger.Log($"{_systems[i].GetType().Name} wrote {writtenBits} bits for player {player} at frame {localTick}.", _systems[i]);
                 }
 
                 for (var i = 0; i < count; i++)
@@ -852,17 +858,17 @@ namespace PurrNet.Prediction
             return id != -1;
         }
 
-        internal GameObject InternalCreate(GameObject prefab)
+        internal GameObject InternalCreate(GameObject prefab, PredictedObjectID objectId)
         {
             var go = UnityProxy.InstantiateDirectly(prefab);
-            RegisterInstance(go);
+            RegisterInstance(go, objectId);
             return go;
         }
 
-        internal GameObject InternalCreate(GameObject prefab, Vector3 position, Quaternion rotation)
+        internal GameObject InternalCreate(GameObject prefab, Vector3 position, Quaternion rotation, PredictedObjectID objectId)
         {
             var go = UnityProxy.InstantiateDirectly(prefab, position, rotation);
-            RegisterInstance(go);
+            RegisterInstance(go, objectId);
             return go;
         }
 
