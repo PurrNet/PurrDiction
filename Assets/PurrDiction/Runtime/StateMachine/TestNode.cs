@@ -24,7 +24,7 @@ namespace PurrNet.Prediction
 
         public struct TestNodeData : IPredictedData<TestNodeData>
         {
-
+            public void Dispose() { }
         }
     }
 }

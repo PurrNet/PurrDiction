@@ -1,4 +1,3 @@
-using PurrNet.Logging;
 using PurrNet.Packing;
 using PurrNet.Pooling;
 using UnityEngine;
@@ -13,8 +12,10 @@ namespace PurrNet.Prediction.Tests
         {
             var old = new DisposableList<int>(1);
             var @new = new DisposableList<int>(5);
+            old.Dispose();
 
             @new.Add(1);
+            @new.Add(5);
 
             using var packer = BitPackerPool.Get();
 

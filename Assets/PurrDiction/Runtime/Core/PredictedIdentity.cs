@@ -48,7 +48,7 @@ namespace PurrNet.Prediction
 
         public bool isServer { get; private set; }
 
-        internal virtual void Setup(NetworkManager manager, PredictionManager world, uint id)
+        internal virtual void Setup(NetworkManager manager, PredictionManager world, PredictedID id)
         {
             isServer = manager.isServer;
 
@@ -58,7 +58,7 @@ namespace PurrNet.Prediction
             isFreshSpawn = false;
 
             owner = null;
-            this.id = new PredictedID(id);
+            this.id = id;
             predictionManager = world;
 
             OnSpawned();
@@ -121,15 +121,15 @@ namespace PurrNet.Prediction
 
         internal abstract void GetLatestUnityState();
 
-        internal abstract void WriteCurrentState(PlayerID receiver, BitPacker packer, DeltaModule deltaModule);
+        internal abstract void WriteCurrentState(PlayerID receiver, BitPacker packer, DeltaModule deltaModule, ref PackedUInt cache);
 
-        internal abstract void WriteInput(ulong localTick, PlayerID receiver, BitPacker input, DeltaModule deltaModule);
+        internal abstract void WriteInput(ulong localTick, PlayerID receiver, BitPacker input, DeltaModule deltaModule, ref PackedUInt cache);
 
-        internal abstract void ReadState(ulong tick, BitPacker packer, DeltaModule deltaModule);
+        internal abstract void ReadState(ulong tick, BitPacker packer, DeltaModule deltaModule, ref PackedUInt cache);
 
-        internal abstract void ReadInput(ulong tick, BitPacker packer, DeltaModule deltaModule);
+        internal abstract void ReadInput(ulong tick, BitPacker packer, DeltaModule deltaModule, ref PackedUInt cache);
 
-        internal abstract void QueueInput(PlayerID sender, BitPacker packer, DeltaModule deltaModule);
+        internal abstract void QueueInput(PlayerID sender, BitPacker packer, DeltaModule deltaModule, ref PackedUInt cache);
 
         public GameObject GetRoot()
         {

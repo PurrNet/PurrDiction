@@ -12,5 +12,7 @@ namespace PurrNet.Prediction
         {
             return $"(linearVelocity: {linearVelocity}, angularVelocity: {angularVelocity})";
         }
+
+        public void Dispose() { }
     }
 }

@@ -12,7 +12,7 @@ namespace PurrNet.Prediction
         readonly Dictionary<GameObject, PredictedObjectID> _goToId = new ();
         readonly HashSet<PredictedObjectID> _isSceneObject = new ();
 
-        private uint _nextInstanceId;
+        private uint _nextInstanceId = 1;
 
         protected override PredictedHierarchyState GetInitialState()
         {
@@ -27,8 +27,13 @@ namespace PurrNet.Prediction
         {
             int count = _spawnedPrefabs.Count;
             state.spawnedPrefabs.Clear();
+
+            if (state.spawnedPrefabs.list.Capacity < count)
+                state.spawnedPrefabs.list.Capacity = count;
+
             for (var i = 0; i < count; i++)
                 state.spawnedPrefabs.Add(_spawnedPrefabs[i]);
+
             state.nextInstanceId = _nextInstanceId;
         }
 
@@ -118,7 +123,7 @@ namespace PurrNet.Prediction
             {
                 go = instance;
                 go.transform.SetPositionAndRotation(position, rotation);
-                predictionManager.RegisterInstance(go);
+                predictionManager.RegisterInstance(go, key.instanceId);
                 go.SetActive(true);
             }
             else
@@ -129,7 +134,7 @@ namespace PurrNet.Prediction
                     return default;
                 }
 
-                go = predictionManager.InternalCreate(prefab, position, rotation);
+                go = predictionManager.InternalCreate(prefab, position, rotation, instanceId);
             }
 
             _instanceMap.Add(instanceId, go);
@@ -183,7 +188,7 @@ namespace PurrNet.Prediction
                 if (pid < 0)
                     return;
 
-                pool.Clear(predictionManager);
+                pool.Clear();
             }
         }
 
@@ -215,6 +220,8 @@ namespace PurrNet.Prediction
             _goToId.Add(root, instanceId);
             _spawnedPrefabs.Add(key);
             _nextInstanceId++;
+
+            predictionManager.RegisterInstance(root, instanceId);
         }
 
         public PredictedObjectID? Create(GameObject prefab)
@@ -354,5 +361,7 @@ namespace PurrNet.Prediction
             _spawnedPrefabs.Clear();
             _isSceneObject.Clear();
         }
+
+        public override void UpdateRollbackInterpolationState(float delta, bool accumulateError) { }
     }
 }

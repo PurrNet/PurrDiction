@@ -118,6 +118,8 @@ namespace PurrNet.Prediction.Prebuilt
         {
             public Vector3 direction;
             public float force;
+
+            public void Dispose() { }
         }
 
         private enum OffsetType

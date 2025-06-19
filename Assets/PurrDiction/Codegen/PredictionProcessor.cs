@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using JetBrains.Annotations;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
 using PurrNet.Codegen;
@@ -11,6 +12,7 @@ using Unity.CompilationPipeline.Common.ILPostProcessing;
 
 namespace Purrdiction.Codegen
 {
+    [UsedImplicitly]
     public class PredictionProcessor : ILPostProcessor
     {
         static DisposableList<TypeDefinition> GetAllTypes(ModuleDefinition module)

@@ -7,6 +7,21 @@ using UnityEngine;
 
 namespace PurrNet.Prediction
 {
+    public readonly struct DeltaKey<T> : IStableHashable
+    {
+        private readonly PredictedID id;
+
+        public DeltaKey(PredictedID id)
+        {
+            this.id = id;
+        }
+
+        public uint GetStableHash()
+        {
+            return Hasher<T>.stableHash ^ id.componentId.value ^ id.objectId.instanceId.value;
+        }
+    }
+
     public abstract class PredictedIdentity<STATE> : PredictedIdentity where STATE : struct, IPredictedData<STATE>
     {
         public override string ToString()
@@ -14,41 +29,8 @@ namespace PurrNet.Prediction
             return currentState.ToString();
         }
 
-        internal struct FULL_STATE : IOptionalDispose
-        {
-            public STATE state;
-            public PredictedIdentityState prediction;
-
-            public FULL_STATE DeepCopy()
-            {
-                using var packer = BitPackerPool.Get();
-
-                Packer<STATE>.Write(packer, state);
-                Packer<PredictedIdentityState>.Write(packer, prediction);
-
-                packer.ResetPositionAndMode(true);
-
-                var data = new FULL_STATE();
-
-                Packer<STATE>.Read(packer, ref data.state);
-                Packer<PredictedIdentityState>.Read(packer, ref data.prediction);
-
-                return data;
-            }
-
-            public void Dispose()
-            {
-                state.Dispose();
-            }
-
-            public override string ToString()
-            {
-                return $"{{state: {state}, prediction: {prediction}}}";
-            }
-        }
-
-        private Interpolated<FULL_STATE> _interpolatedState;
-        private History<FULL_STATE> _stateHistory;
+        private Interpolated<FULL_STATE<STATE>> _interpolatedState;
+        private History<FULL_STATE<STATE>> _stateHistory;
 
         protected TickManager tickModule { get; private set; }
 
@@ -59,17 +41,17 @@ namespace PurrNet.Prediction
 
         internal override void PrepareInput(bool isServer, bool isLocal, ulong tick) { }
 
-        private FULL_STATE FULLInterpolate(FULL_STATE from, FULL_STATE to, float t)
+        private FULL_STATE<STATE> FULLInterpolate(FULL_STATE<STATE> from, FULL_STATE<STATE> to, float t)
         {
             var state = Interpolate(from.state, to.state, t);
-            return new FULL_STATE
+            return new FULL_STATE<STATE>
             {
                 state = state,
                 prediction = from.prediction
             };
         }
 
-        internal FULL_STATE fullPredictedState;
+        internal FULL_STATE<STATE> fullPredictedState;
 
         public STATE currentState
         {
@@ -77,7 +59,7 @@ namespace PurrNet.Prediction
             set => fullPredictedState.state = value;
         }
 
-        internal override void Setup(NetworkManager manager, PredictionManager world, uint id)
+        internal override void Setup(NetworkManager manager, PredictionManager world, PredictedID id)
         {
             if (!isFreshSpawn)
             {
@@ -101,8 +83,8 @@ namespace PurrNet.Prediction
             // if TickRate is 30, then this should be 2
             var interpolationBuffer = (int)Mathf.Max(world.tickRate / (float)10, 2);
 
-            _interpolatedState = new Interpolated<FULL_STATE>(FULLInterpolate, 1f / world.tickRate, copy, interpolationBuffer);
-            _stateHistory = new History<FULL_STATE>(world.tickRate * 5);
+            _interpolatedState = new Interpolated<FULL_STATE<STATE>>(FULLInterpolate, 1f / world.tickRate, copy, interpolationBuffer);
+            _stateHistory = new History<FULL_STATE<STATE>>(world.tickRate * 5);
             _stateHistory.Write(0, copy);
         }
 
@@ -116,7 +98,7 @@ namespace PurrNet.Prediction
         internal override void GetLatestUnityState()
         {
             fullPredictedState.prediction.owner = owner;
-            fullPredictedState.prediction.predictedID = id;
+            // fullPredictedState.prediction.predictedID = id;
             GetUnityState(ref fullPredictedState.state);
         }
 
@@ -129,11 +111,11 @@ namespace PurrNet.Prediction
             _stateHistory.Write(tick, fullPredictedState.DeepCopy());
         }
 
-        FULL_STATE? _viewState;
+        FULL_STATE<STATE>? _viewState;
 
         public override void UpdateRollbackInterpolationState(float delta, bool accumulateError)
         {
-            var copy = fullPredictedState.DeepCopy().DeepCopy();
+            var copy = fullPredictedState.DeepCopy();
             ModifyRollbackViewState(ref copy.state, delta, accumulateError);
 
             _viewState?.Dispose();
@@ -158,38 +140,22 @@ namespace PurrNet.Prediction
             fullPredictedState = state.DeepCopy();
 
             owner = fullPredictedState.prediction.owner;
-            id = fullPredictedState.prediction.predictedID;
+            // id = fullPredictedState.prediction.predictedID;
             SetUnityState(fullPredictedState.state);
         }
 
         protected virtual void SetUnityState(STATE state) {}
 
-        readonly struct DeltaKey<T> : IStableHashable
-        {
-            private readonly PredictedID id;
+        protected DeltaKey<STATE> stateKey => new (id);
 
-            public DeltaKey(PredictedID id)
-            {
-                this.id = id;
-            }
+        protected DeltaKey<PredictedIdentityState> internalKey => new (id);
 
-            public uint GetStableHash()
-            {
-                return Hasher<T>.stableHash;
-            }
-        }
-
-        DeltaKey<STATE> stateKey => new (id);
-
-        DeltaKey<PredictedIdentityState> internalKey => new (id);
-
-        internal override void WriteCurrentState(PlayerID target, BitPacker packer, DeltaModule deltaModule)
+        internal override void WriteCurrentState(PlayerID target, BitPacker packer, DeltaModule deltaModule, ref PackedUInt cache)
         {
             if (deltaModule != null)
             {
-                var validation = predictionManager.validateDeltaCompression;
-                deltaModule.Write(packer, target, stateKey, fullPredictedState.state, validation);
-                deltaModule.Write(packer, target, internalKey, fullPredictedState.prediction, validation);
+                deltaModule.WriteReliable(packer, target, internalKey, fullPredictedState.prediction);
+                WriteDeltaState(target, packer, deltaModule, ref cache);
             }
             else
             {
@@ -198,16 +164,21 @@ namespace PurrNet.Prediction
             }
         }
 
+        protected virtual bool WriteDeltaState(PlayerID target, BitPacker packer, DeltaModule deltaModule, ref PackedUInt cache)
+        {
+            return deltaModule.WriteReliable(packer, target, stateKey, fullPredictedState.state);
+        }
+
         [UsedImplicitly]
-        internal override void ReadState(ulong tick, BitPacker packer, DeltaModule deltaModule)
+        internal override void ReadState(ulong tick, BitPacker packer, DeltaModule deltaModule, ref PackedUInt cache)
         {
             STATE state = default;
             PredictedIdentityState prediction = default;
 
             if (deltaModule != null)
             {
-                deltaModule.Read(packer, stateKey, default, ref state);
-                deltaModule.Read(packer, internalKey, default, ref prediction);
+                deltaModule.ReadReliable(packer, internalKey, ref prediction);
+                ReadDeltaState(packer, deltaModule, ref state, ref cache);
             }
             else
             {
@@ -215,18 +186,23 @@ namespace PurrNet.Prediction
                 Packer<PredictedIdentityState>.Read(packer, ref prediction);
             }
 
-            _stateHistory.Write(tick, new FULL_STATE
+            _stateHistory.Write(tick, new FULL_STATE<STATE>
             {
                 state = state,
                 prediction = prediction
             });
         }
 
-        internal override void WriteInput(ulong localTick, PlayerID receiver, BitPacker input, DeltaModule deltaModule) { }
+        protected virtual void ReadDeltaState(BitPacker packer, DeltaModule deltaModule, ref STATE state, ref PackedUInt cache)
+        {
+            deltaModule.ReadReliable(packer, stateKey, ref state);
+        }
 
-        internal override void ReadInput(ulong tick, BitPacker packer, DeltaModule deltaModule) { }
+        internal override void WriteInput(ulong localTick, PlayerID receiver, BitPacker input, DeltaModule deltaModule, ref PackedUInt cache) { }
 
-        internal override void QueueInput(PlayerID sender, BitPacker packer, DeltaModule deltaModule) { }
+        internal override void ReadInput(ulong tick, BitPacker packer, DeltaModule deltaModule, ref PackedUInt cache) { }
+
+        internal override void QueueInput(PlayerID sender, BitPacker packer, DeltaModule deltaModule, ref PackedUInt cache) { }
 
         internal override void UpdateView(float deltaTime)
         {

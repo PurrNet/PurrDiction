@@ -14,13 +14,4 @@ namespace PurrNet.Prediction
         Hierarchy = 1 << 3,
         Players = 1 << 4
     }
-
-    [Flags]
-    public enum DeltaCompression
-    {
-        [UsedImplicitly]
-        None = 0,
-        Input = 1 << 0,
-        State = 1 << 1
-    }
 }

@@ -27,5 +27,7 @@ namespace PurrNet.Prediction
         {
             return to;
         }
+
+        public override void UpdateRollbackInterpolationState(float delta, bool accumulateError) { }
     }
 }

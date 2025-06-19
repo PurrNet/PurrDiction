@@ -102,11 +102,15 @@ namespace PurrNet.Prediction.Prebuilt
         public struct State : IPredictedData<State>
         {
             public float rotation;
+
+            public void Dispose() { }
         }
 
         public struct Input : IPredictedData
         {
             public Vector3 moveDirection;
+
+            public void Dispose() { }
         }
     }
 }

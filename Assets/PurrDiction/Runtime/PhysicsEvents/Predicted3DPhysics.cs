@@ -23,7 +23,6 @@ namespace PurrNet.Prediction
     {
         public bool isTrigger;
         public PhysicsEventType type;
-
         public PredictedObjectID me;
         public PredictedObjectID other;
         public DisposableList<PhysicsContactPoint> contacts;

@@ -20,7 +20,7 @@ namespace PurrNet.Prediction
 
         public bool TryTakePrecise(InstanceDetails id, out GameObject go)
         {
-            for (var i = 0; i < _pool.Count; i++)
+            for (var i = _pool.Count - 1; i >= 0; i--)
             {
                 var instance = _pool[i];
 
@@ -85,7 +85,7 @@ namespace PurrNet.Prediction
             }
         }
 
-        public void Clear(PredictionManager predictionManager)
+        public void Clear()
         {
             foreach (var pair in _pool)
                 PredictionManager.InternalDelete(pair.gameObject);

@@ -1,3 +1,6 @@
+using System;
+using PurrNet.Modules;
+using PurrNet.Packing;
 using PurrNet.Utils;
 using UnityEngine;
 
@@ -7,6 +10,7 @@ namespace PurrNet.Prediction
     public class PredictedTransform : PredictedIdentity<PredictedTransformState>
     {
         [SerializeField, PurrLock] private Transform _graphics;
+        [SerializeField, PurrLock] private FloatAccuracy _floatAccuracy = FloatAccuracy.Medium;
         [SerializeField] private TransformInterpolationSettings _interpolationSettings;
         [SerializeField] private bool _characterControllerPatch = true;
 
@@ -29,6 +33,58 @@ namespace PurrNet.Prediction
             _hasRigidbody = _unityRigidbody != null;
             _hasRigidbody2d = _unity2dRigidbody != null;
             _hasView = _graphics;
+        }
+
+        protected override bool WriteDeltaState(PlayerID target, BitPacker packer, DeltaModule deltaModule, ref PackedUInt cache)
+        {
+            switch (_floatAccuracy)
+            {
+                case FloatAccuracy.Purrfect:
+                    return base.WriteDeltaState(target, packer, deltaModule, ref cache);
+                case FloatAccuracy.Medium:
+                {
+                    var key = new DeltaKey<PredictedTransformCompressedState>(id);
+                    return deltaModule.WriteReliable(packer, target, key, new PredictedTransformCompressedState(currentState));
+                }
+                case FloatAccuracy.Low:
+                {
+                    var key = new DeltaKey<PredictedTransformHalfState>(id);
+                    return deltaModule.WriteReliable(packer, target, key, new PredictedTransformHalfState(currentState));
+                }
+                default: throw new ArgumentOutOfRangeException();
+            }
+
+        }
+
+        protected override void ReadDeltaState(BitPacker packer, DeltaModule deltaModule, ref PredictedTransformState state, ref PackedUInt cache)
+        {
+            switch (_floatAccuracy)
+            {
+                case FloatAccuracy.Purrfect:
+                    base.ReadDeltaState(packer, deltaModule, ref state, ref cache);
+                    break;
+                case FloatAccuracy.Medium:
+                {
+                    var key = new DeltaKey<PredictedTransformCompressedState>(id);
+                    PredictedTransformCompressedState compressedState = default;
+                    deltaModule.ReadReliable(packer, key, ref compressedState);
+
+                    state.unityPosition = compressedState.unityPosition;
+                    state.unityRotation = ((Quaternion)compressedState.unityRotation).normalized;
+                    break;
+                }
+                case FloatAccuracy.Low:
+                {
+                    var key = new DeltaKey<PredictedTransformHalfState>(id);
+                    PredictedTransformHalfState compressedState = default;
+                    deltaModule.ReadReliable(packer, key, ref compressedState);
+
+                    state.unityPosition = compressedState.unityPosition;
+                    state.unityRotation = ((Quaternion)compressedState.unityRotation).normalized;
+                    break;
+                }
+                default: throw new ArgumentOutOfRangeException();
+            }
         }
 
         protected override PredictedTransformState GetInitialState()

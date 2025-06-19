@@ -1,4 +1,3 @@
-using System;
 using PurrNet.Pooling;
 using UnityEngine;
 
@@ -9,6 +8,12 @@ namespace PurrNet.Prediction.Tests
         [SerializeField] private MeshRenderer _renderer;
         [SerializeField] private PredictedRigidbody _predictedRigidbody;
 
+        private void Reset()
+        {
+            _predictedRigidbody = GetComponentInChildren<PredictedRigidbody>();
+            _renderer = GetComponentInChildren<MeshRenderer>();
+        }
+
         public struct State : IPredictedData<State>
         {
             public int collisionCount;
@@ -17,11 +22,13 @@ namespace PurrNet.Prediction.Tests
             {
                 return $"Collision count: {collisionCount}";
             }
+
+            public void Dispose() { }
         }
 
         private void Awake()
         {
-            _renderer.material.color = UnityEngine.Random.ColorHSV();
+            _renderer.material.color = Random.ColorHSV();
         }
 
         protected override void OnSpawned()

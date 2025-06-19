@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using PurrNet.Packing;
+using UnityEngine;
 
 namespace PurrNet.Prediction
 {
@@ -22,5 +23,39 @@ namespace PurrNet.Prediction
         {
             return $"P: {unityPosition}\nR: {unityRotation}";
         }
+
+        public void Dispose() { }
+    }
+
+    public struct PredictedTransformCompressedState : IPredictedData<PredictedTransformCompressedState>
+    {
+        public CompressedVector3 unityPosition;
+        public PackedQuaternion unityRotation;
+
+        public PredictedTransformCompressedState(PredictedTransformState state)
+        {
+            unityPosition = new CompressedVector3(
+                new CompressedFloat(state.unityPosition.x).Round(),
+                new CompressedFloat(state.unityPosition.y).Round(),
+                new CompressedFloat(state.unityPosition.z).Round()
+            );
+            unityRotation = new PackedQuaternion(state.unityRotation);
+        }
+
+        public void Dispose() { }
+    }
+
+    public struct PredictedTransformHalfState : IPredictedData<PredictedTransformHalfState>
+    {
+        public HalfVector3 unityPosition;
+        public HalfQuaternion unityRotation;
+
+        public PredictedTransformHalfState(PredictedTransformState state)
+        {
+            unityPosition = state.unityPosition;
+            unityRotation = state.unityRotation;
+        }
+
+        public void Dispose() { }
     }
 }
