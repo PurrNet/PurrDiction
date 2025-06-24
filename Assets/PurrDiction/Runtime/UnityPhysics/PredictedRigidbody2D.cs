@@ -28,7 +28,7 @@ namespace PurrNet.Prediction
             _rigidbody = GetComponent<Rigidbody2D>();
         }
 
-        protected override void OnSpawned()
+        protected override void LateAwake()
         {
             if (predictionManager.physics2d == null)
                 _eventMask = PhysicsEventMask.None;

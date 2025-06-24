@@ -31,12 +31,12 @@ namespace PurrNet.Prediction.Tests
             _renderer.material.color = Random.ColorHSV();
         }
 
-        protected override void OnSpawned()
+        protected override void LateAwake()
         {
             _predictedRigidbody.onCollisionEnter += OnUnityCollisionEnter;
         }
 
-        protected override void OnDespawned()
+        protected override void Destroyed()
         {
             _predictedRigidbody.onCollisionEnter -= OnUnityCollisionEnter;
         }

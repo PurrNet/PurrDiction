@@ -16,7 +16,7 @@ namespace PurrNet.Prediction
 
         private void Awake() => CleanupSpawnPoints();
 
-        protected override void OnSpawned()
+        protected override void LateAwake()
         {
             if (predictionManager.players != null)
             {
@@ -25,7 +25,7 @@ namespace PurrNet.Prediction
             }
         }
 
-        protected override void OnDespawned()
+        protected override void Destroyed()
         {
             if (predictionManager && predictionManager.players != null)
             {

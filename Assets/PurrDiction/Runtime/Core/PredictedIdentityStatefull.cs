@@ -104,7 +104,7 @@ namespace PurrNet.Prediction
 
         internal override void SimulateTick(ulong tick, float delta) => Simulate(ref fullPredictedState.state, delta);
 
-        internal override void SimulateRemote(ulong tick, float delta) => Simulate(ref fullPredictedState.state, delta);
+        internal virtual void SimulateRemote(ulong tick, float delta) => Simulate(ref fullPredictedState.state, delta);
 
         internal override void SaveStateInHistory(ulong tick)
         {

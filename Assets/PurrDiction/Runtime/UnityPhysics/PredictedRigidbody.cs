@@ -68,7 +68,7 @@ namespace PurrNet.Prediction
             set => _rigidbody.angularVelocity = value;
         }
 
-        protected override void OnSpawned()
+        protected override void LateAwake()
         {
             if (predictionManager.physics3d == null)
                 _eventMask = PhysicsEventMask.None;

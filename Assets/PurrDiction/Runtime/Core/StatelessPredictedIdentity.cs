@@ -13,7 +13,7 @@ namespace PurrNet.Prediction
         {
         }
 
-        internal override void SimulateRemote(ulong tick, float delta)
+        internal virtual void SimulateRemote(ulong tick, float delta)
         {
         }
 
