@@ -133,7 +133,7 @@ namespace PurrNet.Prediction
 
         DeltaKey key => new DeltaKey(id);
 
-        internal override void WriteInput(ulong localTick, PlayerID receiver, BitPacker input, DeltaModule deltaModule, ref PackedUInt cache)
+        internal override void WriteInput(ulong localTick, PlayerID receiver, BitPacker input, DeltaModule deltaModule)
         {
             if (_inputHistory.TryGet(localTick, out var savedInput))
             {
@@ -142,7 +142,7 @@ namespace PurrNet.Prediction
                 using var tmp = BitPackerPool.Get();
 
                 if (deltaModule != null)
-                    deltaModule.Write(tmp, receiver, key, savedInput, ref cache);
+                    deltaModule.WriteReliable(tmp, receiver, key, savedInput);
                 else Packer<INPUT>.Write(tmp, savedInput);
 
                 var count = tmp.positionInBits;
@@ -156,7 +156,7 @@ namespace PurrNet.Prediction
             }
         }
 
-        internal override void ReadInput(ulong tick, BitPacker packer, DeltaModule deltaModule, ref PackedUInt cache)
+        internal override void ReadInput(ulong tick, BitPacker packer, DeltaModule deltaModule)
         {
             bool hasInput = default;
             Packer<bool>.Read(packer, ref hasInput);
@@ -169,7 +169,7 @@ namespace PurrNet.Prediction
                 INPUT input = default;
 
                 if (deltaModule != null)
-                    deltaModule.Read(packer, key, default, ref input, ref cache);
+                    deltaModule.ReadReliable(packer, key, ref input);
                 else Packer<INPUT>.Read(packer, ref input);
 
                 _inputHistory.Write(tick, input);
@@ -186,7 +186,7 @@ namespace PurrNet.Prediction
         /// <param name="input"></param>
         protected virtual void SanitizeInput(ref INPUT input) { }
 
-        internal override void QueueInput(PlayerID sender, BitPacker packer, DeltaModule deltaModule, ref PackedUInt cache)
+        internal override void QueueInput(BitPacker packer, DeltaModule deltaModule)
         {
             bool hasInput = default;
             Packer<bool>.Read(packer, ref hasInput);
@@ -198,7 +198,7 @@ namespace PurrNet.Prediction
 
                 INPUT input = default;
                 if (deltaModule != null)
-                    deltaModule.Read(packer, key, sender, ref input, ref cache);
+                    deltaModule.ReadReliable(packer, key, ref input);
                 else Packer<INPUT>.Read(packer, ref input);
 
                 var sanitizedInput = input;

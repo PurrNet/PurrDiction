@@ -41,23 +41,23 @@ namespace PurrNet.Prediction
         {
         }
 
-        internal override void WriteCurrentState(PlayerID target, BitPacker packer, DeltaModule deltaModule, ref PackedUInt cache)
+        internal override void WriteCurrentState(PlayerID target, BitPacker packer, DeltaModule deltaModule)
         {
         }
 
-        internal override void WriteInput(ulong localTick, PlayerID receiver, BitPacker input, DeltaModule delta, ref PackedUInt cache)
+        internal override void WriteInput(ulong localTick, PlayerID receiver, BitPacker input, DeltaModule delta)
         {
         }
 
-        internal override void ReadState(ulong tick, BitPacker packer, DeltaModule delta, ref PackedUInt cache)
+        internal override void ReadState(ulong tick, BitPacker packer, DeltaModule delta)
         {
         }
 
-        internal override void ReadInput(ulong tick, BitPacker packer, DeltaModule delta, ref PackedUInt cache)
+        internal override void ReadInput(ulong tick, BitPacker packer, DeltaModule delta)
         {
         }
 
-        internal override void QueueInput(PlayerID sender, BitPacker packer, DeltaModule delta, ref PackedUInt cache)
+        internal override void QueueInput(BitPacker packer, DeltaModule delta)
         {
         }
     }

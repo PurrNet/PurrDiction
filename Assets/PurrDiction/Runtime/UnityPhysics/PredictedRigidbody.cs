@@ -74,12 +74,12 @@ namespace PurrNet.Prediction
                 _eventMask = PhysicsEventMask.None;
         }
 
-        protected override bool WriteDeltaState(PlayerID target, BitPacker packer, DeltaModule deltaModule, ref PackedUInt cache)
+        protected override bool WriteDeltaState(PlayerID target, BitPacker packer, DeltaModule deltaModule)
         {
             switch (_floatAccuracy)
             {
                 case FloatAccuracy.Purrfect:
-                    return base.WriteDeltaState(target, packer, deltaModule, ref cache);
+                    return base.WriteDeltaState(target, packer, deltaModule);
                 case FloatAccuracy.Medium:
                 {
                     var key = new DeltaKey<UnityRigidbodyCompressedState>(id);
@@ -95,12 +95,12 @@ namespace PurrNet.Prediction
             }
         }
 
-        protected override void ReadDeltaState(BitPacker packer, DeltaModule deltaModule, ref UnityRigidbodyState state, ref PackedUInt cache)
+        protected override void ReadDeltaState(BitPacker packer, DeltaModule deltaModule, ref UnityRigidbodyState state)
         {
             switch (_floatAccuracy)
             {
                 case FloatAccuracy.Purrfect:
-                    base.ReadDeltaState(packer, deltaModule, ref state, ref cache);
+                    base.ReadDeltaState(packer, deltaModule, ref state);
                     break;
                 case FloatAccuracy.Medium:
                 {

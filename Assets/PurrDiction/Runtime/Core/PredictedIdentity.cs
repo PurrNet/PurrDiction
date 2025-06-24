@@ -121,15 +121,15 @@ namespace PurrNet.Prediction
 
         internal abstract void GetLatestUnityState();
 
-        internal abstract void WriteCurrentState(PlayerID receiver, BitPacker packer, DeltaModule deltaModule, ref PackedUInt cache);
+        internal abstract void WriteCurrentState(PlayerID receiver, BitPacker packer, DeltaModule deltaModule);
 
-        internal abstract void WriteInput(ulong localTick, PlayerID receiver, BitPacker input, DeltaModule deltaModule, ref PackedUInt cache);
+        internal abstract void WriteInput(ulong localTick, PlayerID receiver, BitPacker input, DeltaModule deltaModule);
 
-        internal abstract void ReadState(ulong tick, BitPacker packer, DeltaModule deltaModule, ref PackedUInt cache);
+        internal abstract void ReadState(ulong tick, BitPacker packer, DeltaModule deltaModule);
 
-        internal abstract void ReadInput(ulong tick, BitPacker packer, DeltaModule deltaModule, ref PackedUInt cache);
+        internal abstract void ReadInput(ulong tick, BitPacker packer, DeltaModule deltaModule);
 
-        internal abstract void QueueInput(PlayerID sender, BitPacker packer, DeltaModule deltaModule, ref PackedUInt cache);
+        internal abstract void QueueInput(BitPacker packer, DeltaModule deltaModule);
 
         public GameObject GetRoot()
         {

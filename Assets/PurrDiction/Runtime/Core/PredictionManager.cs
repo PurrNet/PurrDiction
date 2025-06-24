@@ -314,18 +314,18 @@ namespace PurrNet.Prediction
                 if (_systems[i].isEventHandler)
                     continue;
 
-                _systems[i].WriteCurrentState(target, packer, _deltaModuleState, ref cache);
+                _systems[i].WriteCurrentState(target, packer, _deltaModuleState);
             }
 
 
             for (var i = 0; i < count; i++)
-                _systems[i].WriteInput(localTick, target, packer, _deltaModuleState, ref cache);
+                _systems[i].WriteInput(localTick, target, packer, _deltaModuleState);
 
             for (var i = 0; i < count; i++)
             {
                 if (!_systems[i].isEventHandler)
                     continue;
-                _systems[i].WriteCurrentState(target, packer, _deltaModuleState, ref cache);
+                _systems[i].WriteCurrentState(target, packer, _deltaModuleState);
             }
         }
 
@@ -345,20 +345,20 @@ namespace PurrNet.Prediction
                 var system = _systems[i];
                 if (system.isEventHandler)
                     continue;
-                system.ReadState(localTick, data, _deltaModuleState, ref cache);
+                system.ReadState(localTick, data, _deltaModuleState);
                 system.Rollback(localTick);
                 system.ResetInterpolation();
             }
 
             for (var i = 0; i < count; i++)
-                _systems[i].ReadInput(localTick, data, _deltaModuleState, ref cache);
+                _systems[i].ReadInput(localTick, data, _deltaModuleState);
 
             for (var i = 0; i < count; i++)
             {
                 if (!_systems[i].isEventHandler)
                     continue;
 
-                _systems[i].ReadState(localTick, data, _deltaModuleState, ref cache);
+                _systems[i].ReadState(localTick, data, _deltaModuleState);
             }
 
             SyncTransforms();
@@ -430,7 +430,7 @@ namespace PurrNet.Prediction
                 {
                     Packer<PredictedID>.Write(frame, system.id);
                     cache = default;
-                    system.WriteInput(localTick, default, frame, _deltaModuleState, ref cache);
+                    system.WriteInput(localTick, default, frame, _deltaModuleState);
                     writtenCount += 1;
                 }
             }
@@ -487,13 +487,13 @@ namespace PurrNet.Prediction
                         continue;
 
                     //int framePos = frame.positionInBits;
-                    _systems[i].WriteCurrentState(player, frame, _deltaModuleState, ref cache);
+                    _systems[i].WriteCurrentState(player, frame, _deltaModuleState);
                     //var writtenBits = frame.positionInBits - framePos;
                     //PurrLogger.Log($"{_systems[i].GetType().Name} wrote {writtenBits} bits for player {player} at frame {localTick}.", _systems[i]);
                 }
 
                 for (var i = 0; i < count; i++)
-                    _systems[i].WriteInput(localTick, player, frame, _deltaModuleState, ref cache);
+                    _systems[i].WriteInput(localTick, player, frame, _deltaModuleState);
             }
         }
 
@@ -508,7 +508,7 @@ namespace PurrNet.Prediction
                     continue;
 
                 for (var j = 0; j < fCount; j++)
-                    _systems[i].WriteCurrentState(_clientFrames[j].player, _clientFrames[j].packer, _deltaModuleState, ref cache);
+                    _systems[i].WriteCurrentState(_clientFrames[j].player, _clientFrames[j].packer, _deltaModuleState);
             }
         }
 
@@ -628,18 +628,18 @@ namespace PurrNet.Prediction
                 var system = _systems[i];
                 if (system.isEventHandler)
                     continue;
-                system.ReadState(stateTick, frame, _deltaModuleState, ref cache);
+                system.ReadState(stateTick, frame, _deltaModuleState);
                 system.Rollback(stateTick);
             }
 
             for (var i = 0; i < count; ++i)
-                _systems[i].ReadInput(inputTick, frame, _deltaModuleState, ref cache);
+                _systems[i].ReadInput(inputTick, frame, _deltaModuleState);
 
             for (var i = 0; i < count; ++i)
             {
                 if (!_systems[i].isEventHandler)
                     continue;
-                _systems[i].ReadState(inputTick, frame, _deltaModuleState, ref cache);
+                _systems[i].ReadState(inputTick, frame, _deltaModuleState);
                 _systems[i].Rollback(inputTick);
             }
 
@@ -794,7 +794,7 @@ namespace PurrNet.Prediction
 
                     if (system.IsOwner(info.sender, senderIsServer))
                     {
-                        system.QueueInput(info.sender, inputPacket, _deltaModuleState, ref cache);
+                        system.QueueInput(inputPacket, _deltaModuleState);
                     }
                     else
                     {
