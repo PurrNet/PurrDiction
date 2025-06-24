@@ -306,7 +306,6 @@ namespace PurrNet.Prediction
         private void WriteFullFrame(BitPacker packer, PlayerID target)
         {
             int count = _systems.Count;
-            PackedUInt cache = default;
             Packer<PackedInt>.Write(packer, count);
 
             for (var i = 0; i < count; i++)
@@ -337,7 +336,6 @@ namespace PurrNet.Prediction
 
             PackedInt _count = default;
             Packer<PackedInt>.Read(data, ref _count);
-            PackedUInt cache = default;
             int count = _count;
 
             for (var i = 0; i < count; i++)
@@ -385,12 +383,11 @@ namespace PurrNet.Prediction
             }
 
             bool hasClients = _clientTicks.Count > 0;
-            PackedUInt cache = default;
 
             if (cachedIsServer && hasClients)
             {
                 ResetAllPackers();
-                WriteInitialFrameToOthers(ref cache);
+                WriteInitialFrameToOthers();
             }
 
             for (var i = 0; i < _systems.Count; i++)
@@ -400,7 +397,7 @@ namespace PurrNet.Prediction
 
             if (cachedIsServer && hasClients)
             {
-                WriteEventHandles(ref cache);
+                WriteEventHandles();
                 SendFrameToOthers();
             }
 
@@ -419,7 +416,6 @@ namespace PurrNet.Prediction
 
         private void FinalizeInputOnClient(PlayerID myPlayer)
         {
-            PackedUInt cache;
             using var frame = BitPackerPool.Get();
             uint writtenCount = 0;
             for (var systemIdx = 0; systemIdx < _systems.Count; systemIdx++)
@@ -429,7 +425,6 @@ namespace PurrNet.Prediction
                 if (system.IsOwner(myPlayer))
                 {
                     Packer<PredictedID>.Write(frame, system.id);
-                    cache = default;
                     system.WriteInput(localTick, default, frame, _deltaModuleState);
                     writtenCount += 1;
                 }
@@ -468,7 +463,7 @@ namespace PurrNet.Prediction
             }
         }
 
-        private void WriteInitialFrameToOthers(ref PackedUInt cache)
+        private void WriteInitialFrameToOthers()
         {
             var count = _systems.Count;
             var fCount = _clientFrames.Count;
@@ -497,7 +492,7 @@ namespace PurrNet.Prediction
             }
         }
 
-        private void WriteEventHandles(ref PackedUInt cache)
+        private void WriteEventHandles()
         {
             var fCount = _clientFrames.Count;
             int count = _systems.Count;
@@ -616,7 +611,6 @@ namespace PurrNet.Prediction
 
         private void RollbackToFrame(BitPacker frame, ulong inputTick, ulong stateTick)
         {
-            PackedUInt cache = default;
             frame.ResetPositionAndMode(true);
 
             PackedInt _count = default;
@@ -782,7 +776,6 @@ namespace PurrNet.Prediction
             try
             {
                 bool senderIsServer = info.sender == default;
-                PackedUInt cache = default;
 
                 for (var i = 0; i < count; i++)
                 {
