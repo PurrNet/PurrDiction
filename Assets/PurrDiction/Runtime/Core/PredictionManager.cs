@@ -164,14 +164,14 @@ namespace PurrNet.Prediction
 
         protected override void OnSpawned()
         {
-            networkManager.tickModule.onReliablePreTick += OnPreTick;
-            networkManager.tickModule.onReliablePostTick += OnPostTick;
+            networkManager.tickModule.onPreTick += OnPreTick;
+            networkManager.tickModule.onPostTick += OnPostTick;
         }
 
         protected override void OnDespawned()
         {
-            networkManager.tickModule.onReliablePreTick -= OnPreTick;
-            networkManager.tickModule.onReliablePostTick -= OnPostTick;
+            networkManager.tickModule.onPreTick -= OnPreTick;
+            networkManager.tickModule.onPostTick -= OnPostTick;
 
             CleanupAllSystems();
         }
