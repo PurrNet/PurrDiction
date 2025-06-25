@@ -94,12 +94,12 @@ namespace PurrNet.Prediction
                 PurrLogger.LogError($"Mismatch: Action count {_spawnedPrefabs.Count} != {state.spawnedPrefabs.Count}");
         }
 
-        public PredictedObjectID? Create(int prefabId)
+        public PredictedObjectID? Create(int prefabId, PlayerID? owner = null)
         {
             if (!predictionManager.TryGetPrefab(prefabId, out var prefab))
                 return default;
 
-            return Create(prefab);
+            return Create(prefab, owner);
         }
 
         public PredictedObjectID? Create(GameObject prefab, Vector3 position, Quaternion rotation)
@@ -232,19 +232,19 @@ namespace PurrNet.Prediction
             if (!predictionManager.TryGetPrefab(prefab, out var pid))
                 return default;
 
-            return Create(pid, position, rotation);
+            return Create(pid, position, rotation, owner);
         }
 
-        public bool TryCreate(int prefabId, out PredictedObjectID id)
+        public bool TryCreate(int prefabId, out PredictedObjectID id, PlayerID? owner = null)
         {
-            var result = Create(prefabId);
+            var result = Create(prefabId, owner);
             id = result.GetValueOrDefault();
             return result.HasValue;
         }
 
-        public bool TryCreate(GameObject prefab, out PredictedObjectID id)
+        public bool TryCreate(GameObject prefab, out PredictedObjectID id, PlayerID? owner = null)
         {
-            var result = Create(prefab);
+            var result = Create(prefab, owner);
             id = result.GetValueOrDefault();
             return result.HasValue;
         }
