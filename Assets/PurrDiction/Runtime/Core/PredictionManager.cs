@@ -26,9 +26,7 @@ namespace PurrNet.Prediction
             BuiltInSystems.Time |
             BuiltInSystems.Hierarchy |
             BuiltInSystems.Players;
-        [SerializeField, PurrLock] private bool _deltaCompression = true;
-
-        [SerializeField] private GameObject[] _prefabs;
+        [SerializeField] private PredictedPrefabs _predictedPrefabs;
 
         readonly List<PredictedIdentity> _queue = new ();
         readonly List<PredictedIdentity> _systems = new ();
@@ -41,18 +39,11 @@ namespace PurrNet.Prediction
         private void Awake()
         {
             _instances[gameObject.scene.handle] = this;
-            switch (_physicsProvider)
-            {
-                case PredictionPhysicsProvider.UnityPhysics3D:
-                    Physics.simulationMode = SimulationMode.Script;
-                    break;
-                case PredictionPhysicsProvider.UnityPhysics2D:
-                    Physics2D.simulationMode = SimulationMode2D.Script;
-                    break;
-                case PredictionPhysicsProvider.None:
-                default:
-                    break;
-            }
+
+            if ((_physicsProvider & PredictionPhysicsProvider.UnityPhysics2D) != 0)
+                Physics2D.simulationMode = SimulationMode2D.Script;
+            if ((_physicsProvider & PredictionPhysicsProvider.UnityPhysics3D) != 0)
+                Physics.simulationMode = SimulationMode.Script;
         }
 
         public float tickDelta { get; private set; }
@@ -84,9 +75,7 @@ namespace PurrNet.Prediction
         protected override void OnEarlySpawn()
         {
             var deltaModule = networkManager.GetModule<DeltaModule>(isServer);
-
-            if (_deltaCompression)
-                _deltaModuleState = deltaModule;
+            _deltaModuleState = deltaModule;
 
             RegisterScene();
 
@@ -126,15 +115,10 @@ namespace PurrNet.Prediction
 
             _queue.Clear();
 
-            switch (_physicsProvider)
+            if ((_physicsProvider & PredictionPhysicsProvider.UnityPhysics2D) != 0 ||
+                (_physicsProvider & PredictionPhysicsProvider.UnityPhysics3D) != 0)
             {
-                case PredictionPhysicsProvider.UnityPhysics3D:
-                case PredictionPhysicsProvider.UnityPhysics2D:
-                    Time.fixedDeltaTime = tickDelta;
-                    break;
-                case PredictionPhysicsProvider.None:
-                default:
-                    break;
+                Time.fixedDeltaTime = tickDelta;
             }
         }
 
@@ -571,27 +555,21 @@ namespace PurrNet.Prediction
         private void DoPhysicsPass()
         {
             isInPhysicsPass = true;
-            switch (_physicsProvider)
+
+            if ((_physicsProvider & PredictionPhysicsProvider.UnityPhysics2D) != 0)
             {
-                case PredictionPhysicsProvider.None:
-                    break;
-                case PredictionPhysicsProvider.UnityPhysics3D:
-                {
-                    var physicsScene = gameObject.scene.GetPhysicsScene();
-                    if (physicsScene.IsValid())
-                        physicsScene.Simulate(tickDelta);
-                    break;
-                }
-                case PredictionPhysicsProvider.UnityPhysics2D:
-                {
-                    var physicsScene = gameObject.scene.GetPhysicsScene2D();
-                    if (physicsScene.IsValid())
-                        physicsScene.Simulate(tickDelta);
-                    break;
-                }
-                default:
-                    throw new NotImplementedException();
+                var physicsScene = gameObject.scene.GetPhysicsScene2D();
+                if (physicsScene.IsValid())
+                    physicsScene.Simulate(tickDelta);
             }
+
+            if ((_physicsProvider & PredictionPhysicsProvider.UnityPhysics3D) != 0)
+            {
+                var physicsScene = gameObject.scene.GetPhysicsScene();
+                if (physicsScene.IsValid())
+                    physicsScene.Simulate(tickDelta);
+            }
+
             isInPhysicsPass = false;
         }
 
@@ -652,18 +630,11 @@ namespace PurrNet.Prediction
 
         private void SyncTransforms()
         {
-            switch (_physicsProvider)
-            {
-                case PredictionPhysicsProvider.UnityPhysics3D:
-                    Physics.SyncTransforms();
-                    break;
-                case PredictionPhysicsProvider.UnityPhysics2D:
-                    Physics2D.SyncTransforms();
-                    break;
-                case PredictionPhysicsProvider.None:
-                default:
-                    break;
-            }
+            if ((_physicsProvider & PredictionPhysicsProvider.UnityPhysics2D) != 0)
+                Physics2D.SyncTransforms();
+
+            if ((_physicsProvider & PredictionPhysicsProvider.UnityPhysics3D) != 0)
+                Physics.SyncTransforms();
         }
 
         private ulong _lastVerifiedTick;
@@ -845,19 +816,19 @@ namespace PurrNet.Prediction
 
         public bool TryGetPrefab(int pid, out GameObject prefab)
         {
-            if (pid < 0 || pid >= _prefabs.Length)
+            if (pid < 0 || pid >= _predictedPrefabs.prefabs.Count)
             {
                 prefab = null;
                 return false;
             }
 
-            prefab = _prefabs[pid];
+            prefab = _predictedPrefabs.prefabs[pid];
             return true;
         }
 
         public bool TryGetPrefab(GameObject prefab, out int id)
         {
-            id = Array.IndexOf(_prefabs, prefab);
+            id = _predictedPrefabs.prefabs.IndexOf(prefab);
             return id != -1;
         }
 

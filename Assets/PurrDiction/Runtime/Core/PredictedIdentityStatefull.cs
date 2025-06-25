@@ -152,16 +152,8 @@ namespace PurrNet.Prediction
 
         internal override void WriteCurrentState(PlayerID target, BitPacker packer, DeltaModule deltaModule)
         {
-            if (deltaModule != null)
-            {
-                deltaModule.WriteReliable(packer, target, internalKey, fullPredictedState.prediction);
-                WriteDeltaState(target, packer, deltaModule);
-            }
-            else
-            {
-                Packer<STATE>.Write(packer, fullPredictedState.state);
-                Packer<PredictedIdentityState>.Write(packer, fullPredictedState.prediction);
-            }
+            deltaModule.WriteReliable(packer, target, internalKey, fullPredictedState.prediction);
+            WriteDeltaState(target, packer, deltaModule);
         }
 
         protected virtual bool WriteDeltaState(PlayerID target, BitPacker packer, DeltaModule deltaModule)
@@ -175,16 +167,8 @@ namespace PurrNet.Prediction
             STATE state = default;
             PredictedIdentityState prediction = default;
 
-            if (deltaModule != null)
-            {
-                deltaModule.ReadReliable(packer, internalKey, ref prediction);
-                ReadDeltaState(packer, deltaModule, ref state);
-            }
-            else
-            {
-                Packer<STATE>.Read(packer, ref state);
-                Packer<PredictedIdentityState>.Read(packer, ref prediction);
-            }
+            deltaModule.ReadReliable(packer, internalKey, ref prediction);
+            ReadDeltaState(packer, deltaModule, ref state);
 
             _stateHistory.Write(tick, new FULL_STATE<STATE>
             {

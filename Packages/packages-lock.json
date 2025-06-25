@@ -227,7 +227,7 @@
       "hash": "d1ef610e9fe3ad0b490cce91594449fc0af809a6"
     },
     "dev.purrnet.purrnet": {
-      "version": "1.12.0-beta.11",
+      "version": "1.12.1",
       "depth": 0,
       "source": "registry",
       "dependencies": {
