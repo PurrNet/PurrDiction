@@ -264,12 +264,12 @@ namespace PurrNet.Prediction
             };
         }
 
-        protected override void UpdateView(PredictedTransformState interpolatedState, PredictedTransformState? verified)
+        protected override void UpdateView(PredictedTransformState viewState, PredictedTransformState? verified)
         {
             if (!_hasView)
                 return;
 
-            _graphics.SetPositionAndRotation(interpolatedState.unityPosition, interpolatedState.unityRotation);
+            _graphics.SetPositionAndRotation(viewState.unityPosition, viewState.unityRotation);
         }
     }
 }

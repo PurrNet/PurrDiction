@@ -638,7 +638,7 @@ namespace PurrNet.Prediction
                 Physics.SyncTransforms();
         }
 
-        private ulong _lastVerifiedTick;
+        private ulong _lastVerifiedTick = 1;
 
         private void OnPostTick()
         {
@@ -655,7 +655,7 @@ namespace PurrNet.Prediction
             isVerified = true;
 
             bool hasRollback = false;
-            ulong verifiedTick = 0;
+            ulong verifiedTick = 1;
             while (_deltas.Count > 0)
             {
                 using var previousFrame = _deltas.Dequeue();
@@ -665,8 +665,8 @@ namespace PurrNet.Prediction
 
                 hasRollback = true;
                 verifiedTick = _lastVerifiedTick;
-                localTickInContext = verifiedTick - 1;
-                RollbackToFrame(previousFrame.packer, verifiedTick, verifiedTick - 1);
+                localTickInContext = verifiedTick == 0 ? 0 : verifiedTick - 1;
+                RollbackToFrame(previousFrame.packer, verifiedTick, localTickInContext);
                 localTickInContext = verifiedTick;
                 SimulateFrame(verifiedTick);
             }

@@ -146,9 +146,9 @@ namespace PurrNet.Prediction
 
         protected virtual void SetUnityState(STATE state) {}
 
-        protected DeltaKey<STATE> stateKey => new (id);
+        private DeltaKey<STATE> stateKey => new (id);
 
-        protected DeltaKey<PredictedIdentityState> internalKey => new (id);
+        private DeltaKey<PredictedIdentityState> internalKey => new (id);
 
         internal override void WriteCurrentState(PlayerID target, BitPacker packer, DeltaModule deltaModule)
         {
@@ -202,7 +202,7 @@ namespace PurrNet.Prediction
             UpdateView(_interpolatedState.Advance(deltaTime).state, _stateHistory.Count > 0 ? _stateHistory[^1].state : null);
         }
 
-        protected virtual void UpdateView(STATE interpolatedState, STATE? verified) {}
+        protected virtual void UpdateView(STATE viewState, STATE? verified) {}
 
         protected virtual STATE Interpolate(STATE from, STATE to, float t)
         {
