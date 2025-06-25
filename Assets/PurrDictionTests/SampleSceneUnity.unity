@@ -598,11 +598,10 @@ MonoBehaviour:
   _directChildren: []
   _networkRules: {fileID: 0}
   _visitiblityRules: {fileID: 0}
-  _physicsProvider: 255
+  _physicsProvider: 1
   _updateViewMode: 1
   _builtInSystems: -1
   _predictedPrefabs: {fileID: 11400000, guid: 3bc69f3464f686748883b06b540e96d4, type: 2}
-  _deltaCompression: 1
 --- !u!4 &1558659896
 Transform:
   m_ObjectHideFlags: 0

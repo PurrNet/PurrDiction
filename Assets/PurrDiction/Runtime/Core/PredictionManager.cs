@@ -430,6 +430,7 @@ namespace PurrNet.Prediction
                 {
                     _systems[systemIdx].GetLatestUnityState();
                     _systems[systemIdx].UpdateRollbackInterpolationState(tickDelta, false);
+                    _systems[systemIdx].SaveStateInHistory(localTick);
                 }
             }
             else
