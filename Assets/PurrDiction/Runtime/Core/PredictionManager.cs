@@ -344,7 +344,6 @@ namespace PurrNet.Prediction
                 if (system.isEventHandler)
                     continue;
                 system.ReadState(localTick, data, _deltaModuleState);
-                system.SaveStateInHistory(localTick);
                 system.Rollback(localTick);
                 system.ResetInterpolation();
             }
