@@ -344,6 +344,7 @@ namespace PurrNet.Prediction
                 if (system.isEventHandler)
                     continue;
                 system.ReadState(localTick, data, _deltaModuleState);
+                system.SaveStateInHistory(localTick);
                 system.Rollback(localTick);
                 system.ResetInterpolation();
             }
@@ -373,6 +374,8 @@ namespace PurrNet.Prediction
             var cachedIsClient = isClient;
 
             isSimulating = true;
+            if (cachedIsServer)
+                isVerified = true;
 
             var scount = _systems.Count;
             for (var i = 0; i < scount; i++)
@@ -449,7 +452,7 @@ namespace PurrNet.Prediction
                 for (var systemIdx = 0; systemIdx < count; systemIdx++)
                 {
                     _systems[systemIdx].GetLatestUnityState();
-                    // _systems[systemIdx].SaveStateInHistory(localTick);
+                    _systems[systemIdx].SaveStateInHistory(localTick);
                 }
             }
         }

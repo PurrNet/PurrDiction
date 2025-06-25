@@ -23,6 +23,14 @@ namespace PurrNet.Prediction.Tests
             input.dash = false;
         }
 
+        protected override void UpdateView(SimpleCCState interpolatedState, SimpleCCState? verified)
+        {
+            if (verified.HasValue)
+            {
+                Debug.Log(verified.Value.ToString());
+            }
+        }
+
         protected override void Simulate(SimpleWASDInput input, ref SimpleCCState state, float delta)
         {
             var move = new Vector3(input.horizontal, 0, input.vertical);
