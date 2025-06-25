@@ -102,12 +102,12 @@ namespace PurrNet.Prediction
             return Create(prefab, owner);
         }
 
-        public PredictedObjectID? Create(GameObject prefab, Vector3 position, Quaternion rotation)
+        public PredictedObjectID? Create(GameObject prefab, Vector3 position, Quaternion rotation, PlayerID? owner = null)
         {
             if (!predictionManager.TryGetPrefab(prefab, out var pid))
                 return default;
 
-            return Create(pid, position, rotation);
+            return Create(pid, position, rotation, owner);
         }
 
         public PredictedObjectID? Create(int prefabId, Vector3 position, Quaternion rotation, PlayerID? owner = null)

@@ -1,3 +1,4 @@
+using PurrNet.Logging;
 using PurrNet.Pooling;
 using UnityEngine;
 

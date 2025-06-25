@@ -364,12 +364,14 @@ namespace PurrNet.Prediction
 
         readonly List<PlayerPacker> _clientFrames = new (16);
 
+        public bool cachedIsServer { get; private set; }
+
         void OnPreTick()
         {
             localTickInContext = localTick;
 
             var myPlayer = localPlayer ?? default;
-            var cachedIsServer = isServer;
+            cachedIsServer = isServer;
             var cachedIsClient = isClient;
 
             isSimulating = true;
@@ -539,6 +541,12 @@ namespace PurrNet.Prediction
         /// </summary>
         [UsedImplicitly]
         public bool isVerified { get; private set; }
+
+        public bool isVerifiedAndReplaying
+        {
+            get => isVerified && isReplaying;
+        }
+
 
         /// <summary>
         /// Is the prediction manager currently simulating a frame?

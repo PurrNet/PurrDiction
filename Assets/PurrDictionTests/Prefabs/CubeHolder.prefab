@@ -114,7 +114,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _rigidbody: {fileID: 1844987416951553775}
-  _floatAccuracy: 2
+  _floatAccuracy: 1
   _eventMask: 1
 --- !u!114 &-8545406667589423836
 MonoBehaviour:
