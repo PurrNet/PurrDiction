@@ -32,9 +32,9 @@ namespace PurrNet.Prediction
 
         public PredictedHierarchy hierarchy { get; private set; }
 
-        internal override void Setup(NetworkManager manager, PredictionManager world, PredictedID id)
+        internal override void Setup(NetworkManager manager, PredictionManager world, PredictedID id, PlayerID? owner)
         {
-            base.Setup(manager, world, id);
+            base.Setup(manager, world, id, owner);
 
             hierarchy = world.hierarchy;
             _inputHistory = new History<INPUT>(world.tickRate * 5);

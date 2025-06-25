@@ -59,7 +59,7 @@ namespace PurrNet.Prediction
             set => fullPredictedState.state = value;
         }
 
-        internal override void Setup(NetworkManager manager, PredictionManager world, PredictedID id)
+        internal override void Setup(NetworkManager manager, PredictionManager world, PredictedID id, PlayerID? owner)
         {
             if (!isFreshSpawn)
             {
@@ -68,7 +68,7 @@ namespace PurrNet.Prediction
                 return;
             }
 
-            base.Setup(manager, world, id);
+            base.Setup(manager, world, id, owner);
 
             tickModule = manager.tickModule;
 

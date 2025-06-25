@@ -90,7 +90,7 @@ namespace PurrNet.Prediction
             }
             else
             {
-                newPlayer = predictionManager.hierarchy.Create(_playerPrefab);
+                newPlayer = predictionManager.hierarchy.Create(_playerPrefab, owner: player);
             }
 
             if (!newPlayer.HasValue)
