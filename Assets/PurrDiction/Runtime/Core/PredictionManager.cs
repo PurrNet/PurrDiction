@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
+using PurrNet.Logging;
 using PurrNet.Modules;
 using PurrNet.Packing;
 using PurrNet.Pooling;
@@ -165,7 +166,7 @@ namespace PurrNet.Prediction
             if (hierarchy)
                 hierarchy.Cleanup();
 
-            for (var i = 0; i < _systems.Count; i++)
+            for (var i = _systems.Count - 1; i >= 0; i--)
             {
                 if (_systems[i])
                     DestroyImmediate(_systems[i]);
