@@ -94,23 +94,23 @@ namespace PurrNet.Prediction
                 PurrLogger.LogError($"Mismatch: Action count {_spawnedPrefabs.Count} != {state.spawnedPrefabs.Count}");
         }
 
-        public PredictedObjectID? Create(int prefabId)
+        public PredictedObjectID? Create(int prefabId, PlayerID? owner = null)
         {
             if (!predictionManager.TryGetPrefab(prefabId, out var prefab))
                 return default;
 
-            return Create(prefab);
+            return Create(prefab, owner);
         }
 
-        public PredictedObjectID? Create(GameObject prefab, Vector3 position, Quaternion rotation)
+        public PredictedObjectID? Create(GameObject prefab, Vector3 position, Quaternion rotation, PlayerID? owner = null)
         {
             if (!predictionManager.TryGetPrefab(prefab, out var pid))
                 return default;
 
-            return Create(pid, position, rotation);
+            return Create(pid, position, rotation, owner);
         }
 
-        public PredictedObjectID? Create(int prefabId, Vector3 position, Quaternion rotation)
+        public PredictedObjectID? Create(int prefabId, Vector3 position, Quaternion rotation, PlayerID? owner = null)
         {
             var instanceId = new PredictedObjectID(_nextInstanceId);
             var key = new InstanceDetails(prefabId, instanceId, position, rotation);
@@ -123,7 +123,7 @@ namespace PurrNet.Prediction
             {
                 go = instance;
                 go.transform.SetPositionAndRotation(position, rotation);
-                predictionManager.RegisterInstance(go, key.instanceId);
+                predictionManager.RegisterInstance(go, key.instanceId, owner);
                 go.SetActive(true);
             }
             else
@@ -134,7 +134,7 @@ namespace PurrNet.Prediction
                     return default;
                 }
 
-                go = predictionManager.InternalCreate(prefab, position, rotation, instanceId);
+                go = predictionManager.InternalCreate(prefab, position, rotation, instanceId, owner);
             }
 
             _instanceMap.Add(instanceId, go);
@@ -221,10 +221,10 @@ namespace PurrNet.Prediction
             _spawnedPrefabs.Add(key);
             _nextInstanceId++;
 
-            predictionManager.RegisterInstance(root, instanceId);
+            predictionManager.RegisterInstance(root, instanceId, null);
         }
 
-        public PredictedObjectID? Create(GameObject prefab)
+        public PredictedObjectID? Create(GameObject prefab, PlayerID? owner = null)
         {
             var trs = prefab.transform;
             trs.GetPositionAndRotation(out var position, out var rotation);
@@ -232,19 +232,19 @@ namespace PurrNet.Prediction
             if (!predictionManager.TryGetPrefab(prefab, out var pid))
                 return default;
 
-            return Create(pid, position, rotation);
+            return Create(pid, position, rotation, owner);
         }
 
-        public bool TryCreate(int prefabId, out PredictedObjectID id)
+        public bool TryCreate(int prefabId, out PredictedObjectID id, PlayerID? owner = null)
         {
-            var result = Create(prefabId);
+            var result = Create(prefabId, owner);
             id = result.GetValueOrDefault();
             return result.HasValue;
         }
 
-        public bool TryCreate(GameObject prefab, out PredictedObjectID id)
+        public bool TryCreate(GameObject prefab, out PredictedObjectID id, PlayerID? owner = null)
         {
-            var result = Create(prefab);
+            var result = Create(prefab, owner);
             id = result.GetValueOrDefault();
             return result.HasValue;
         }

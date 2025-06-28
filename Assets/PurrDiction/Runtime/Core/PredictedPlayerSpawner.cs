@@ -16,7 +16,7 @@ namespace PurrNet.Prediction
 
         private void Awake() => CleanupSpawnPoints();
 
-        protected override void OnSpawned()
+        protected override void LateAwake()
         {
             if (predictionManager.players != null)
             {
@@ -25,7 +25,7 @@ namespace PurrNet.Prediction
             }
         }
 
-        protected override void OnDespawned()
+        protected override void Destroyed()
         {
             if (predictionManager && predictionManager.players != null)
             {
@@ -86,11 +86,11 @@ namespace PurrNet.Prediction
             {
                 var spawnPoint = spawnPoints[_currentSpawnPoint];
                 _currentSpawnPoint = (_currentSpawnPoint + 1) % spawnPoints.Count;
-                newPlayer = predictionManager.hierarchy.Create(_playerPrefab, spawnPoint.position, spawnPoint.rotation);
+                newPlayer = predictionManager.hierarchy.Create(_playerPrefab, spawnPoint.position, spawnPoint.rotation, player);
             }
             else
             {
-                newPlayer = predictionManager.hierarchy.Create(_playerPrefab);
+                newPlayer = predictionManager.hierarchy.Create(_playerPrefab, owner: player);
             }
 
             if (!newPlayer.HasValue)

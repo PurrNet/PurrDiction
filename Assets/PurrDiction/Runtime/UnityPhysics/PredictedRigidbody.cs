@@ -68,18 +68,18 @@ namespace PurrNet.Prediction
             set => _rigidbody.angularVelocity = value;
         }
 
-        protected override void OnSpawned()
+        protected override void LateAwake()
         {
             if (predictionManager.physics3d == null)
                 _eventMask = PhysicsEventMask.None;
         }
 
-        protected override bool WriteDeltaState(PlayerID target, BitPacker packer, DeltaModule deltaModule, ref PackedUInt cache)
+        protected override bool WriteDeltaState(PlayerID target, BitPacker packer, DeltaModule deltaModule)
         {
             switch (_floatAccuracy)
             {
                 case FloatAccuracy.Purrfect:
-                    return base.WriteDeltaState(target, packer, deltaModule, ref cache);
+                    return base.WriteDeltaState(target, packer, deltaModule);
                 case FloatAccuracy.Medium:
                 {
                     var key = new DeltaKey<UnityRigidbodyCompressedState>(id);
@@ -95,12 +95,12 @@ namespace PurrNet.Prediction
             }
         }
 
-        protected override void ReadDeltaState(BitPacker packer, DeltaModule deltaModule, ref UnityRigidbodyState state, ref PackedUInt cache)
+        protected override void ReadDeltaState(BitPacker packer, DeltaModule deltaModule, ref UnityRigidbodyState state)
         {
             switch (_floatAccuracy)
             {
                 case FloatAccuracy.Purrfect:
-                    base.ReadDeltaState(packer, deltaModule, ref state, ref cache);
+                    base.ReadDeltaState(packer, deltaModule, ref state);
                     break;
                 case FloatAccuracy.Medium:
                 {
@@ -257,7 +257,7 @@ namespace PurrNet.Prediction
             if (!_eventMask.HasFlag(PhysicsEventMask.CollisionEnter))
                 return;
 
-            if (!predictionManager.isSimulating || predictionManager.isVerified)
+            if (!predictionManager.isSimulating || predictionManager.isVerifiedAndReplaying)
                 return;
 
             predictionManager.physics3d.RegisterEvent(PhysicsEventType.Enter, this, other);
@@ -268,7 +268,7 @@ namespace PurrNet.Prediction
             if (!_eventMask.HasFlag(PhysicsEventMask.CollisionExit))
                 return;
 
-            if (!predictionManager.isSimulating || predictionManager.isVerified)
+            if (!predictionManager.isSimulating || predictionManager.isVerifiedAndReplaying)
                 return;
 
             predictionManager.physics3d.RegisterEvent(PhysicsEventType.Exit, this, other);
@@ -279,7 +279,7 @@ namespace PurrNet.Prediction
             if (!_eventMask.HasFlag(PhysicsEventMask.CollisionStay))
                 return;
 
-            if (!predictionManager.isSimulating || predictionManager.isVerified)
+            if (!predictionManager.isSimulating || predictionManager.isVerifiedAndReplaying)
                 return;
 
             predictionManager.physics3d.RegisterEvent(PhysicsEventType.Stay, this, other);
@@ -290,7 +290,7 @@ namespace PurrNet.Prediction
             if (!_eventMask.HasFlag(PhysicsEventMask.TriggerEnter))
                 return;
 
-            if (!predictionManager.isSimulating || predictionManager.isVerified)
+            if (!predictionManager.isSimulating || predictionManager.isVerifiedAndReplaying)
                 return;
 
             predictionManager.physics3d.RegisterEvent(PhysicsEventType.Enter, this, other);
@@ -301,7 +301,7 @@ namespace PurrNet.Prediction
             if (!_eventMask.HasFlag(PhysicsEventMask.TriggerExit))
                 return;
 
-            if (!predictionManager.isSimulating || predictionManager.isVerified)
+            if (!predictionManager.isSimulating || predictionManager.isVerifiedAndReplaying)
                 return;
 
             predictionManager.physics3d.RegisterEvent(PhysicsEventType.Exit, this, other);
@@ -312,7 +312,7 @@ namespace PurrNet.Prediction
             if (!_eventMask.HasFlag(PhysicsEventMask.TriggerStay))
                 return;
 
-            if (!predictionManager.isSimulating || predictionManager.isVerified)
+            if (!predictionManager.isSimulating || predictionManager.isVerifiedAndReplaying)
                 return;
 
             predictionManager.physics3d.RegisterEvent(PhysicsEventType.Stay, this, other);

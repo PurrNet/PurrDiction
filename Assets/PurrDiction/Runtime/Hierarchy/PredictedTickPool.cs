@@ -43,8 +43,10 @@ namespace PurrNet.Prediction
         {
             int closestIndex = -1;
             float closestError = float.MaxValue;
+            var c = _pool.Count;
 
-            for (var i = _pool.Count - 1; i >= 0; i--)
+            //for (var i = _pool.Count - 1; i >= 0; i--)
+            for (var i = 0; i < c; i++)
             {
                 var instance = _pool[i];
 

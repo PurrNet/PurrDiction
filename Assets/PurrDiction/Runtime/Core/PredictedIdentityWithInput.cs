@@ -35,9 +35,9 @@ namespace PurrNet.Prediction
 
         public PredictedHierarchy hierarchy { get; private set; }
 
-        internal override void Setup(NetworkManager manager, PredictionManager world, PredictedID id)
+        internal override void Setup(NetworkManager manager, PredictionManager world, PredictedID id, PlayerID? owner)
         {
-            base.Setup(manager, world, id);
+            base.Setup(manager, world, id, owner);
 
             hierarchy = world.hierarchy;
             _inputHistory = new History<INPUT>(world.tickRate * 5);
@@ -142,17 +142,14 @@ namespace PurrNet.Prediction
 
         DeltaKey key => new DeltaKey(id);
 
-        internal override void WriteInput(ulong localTick, PlayerID receiver, BitPacker input, DeltaModule deltaModule, ref PackedUInt cache)
+        internal override void WriteInput(ulong localTick, PlayerID receiver, BitPacker input, DeltaModule deltaModule)
         {
             if (_inputHistory.TryGet(localTick, out var savedInput))
             {
                 Packer<bool>.Write(input, true);
 
                 using var tmp = BitPackerPool.Get();
-
-                if (deltaModule != null)
-                    deltaModule.Write(tmp, receiver, key, savedInput, ref cache);
-                else Packer<INPUT>.Write(tmp, savedInput);
+                deltaModule.WriteReliable(tmp, receiver, key, savedInput);
 
                 var count = tmp.positionInBits;
                 Packer<PackedUInt>.Write(input, (uint)count);
@@ -165,7 +162,7 @@ namespace PurrNet.Prediction
             }
         }
 
-        internal override void ReadInput(ulong tick, BitPacker packer, DeltaModule deltaModule, ref PackedUInt cache)
+        internal override void ReadInput(ulong tick, BitPacker packer, DeltaModule deltaModule)
         {
             bool hasInput = default;
             Packer<bool>.Read(packer, ref hasInput);
@@ -176,11 +173,7 @@ namespace PurrNet.Prediction
                 Packer<PackedUInt>.Read(packer, ref count);
 
                 INPUT input = default;
-
-                if (deltaModule != null)
-                    deltaModule.Read(packer, key, default, ref input, ref cache);
-                else Packer<INPUT>.Read(packer, ref input);
-
+                deltaModule.ReadReliable(packer, key, ref input);
                 _inputHistory.Write(tick, input);
             }
             else _inputHistory.Remove(tick);
@@ -195,7 +188,7 @@ namespace PurrNet.Prediction
         /// <param name="input"></param>
         protected virtual void SanitizeInput(ref INPUT input) { }
 
-        internal override void QueueInput(PlayerID sender, BitPacker packer, DeltaModule deltaModule, ref PackedUInt cache)
+        internal override void QueueInput(BitPacker packer, DeltaModule deltaModule)
         {
             bool hasInput = default;
             Packer<bool>.Read(packer, ref hasInput);
@@ -206,9 +199,7 @@ namespace PurrNet.Prediction
                 Packer<PackedUInt>.Read(packer, ref count);
 
                 INPUT input = default;
-                if (deltaModule != null)
-                    deltaModule.Read(packer, key, sender, ref input, ref cache);
-                else Packer<INPUT>.Read(packer, ref input);
+                deltaModule.ReadReliable(packer, key, ref input);
 
                 var sanitizedInput = input;
                 SanitizeInput(ref sanitizedInput);

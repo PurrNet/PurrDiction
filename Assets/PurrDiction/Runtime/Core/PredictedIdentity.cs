@@ -38,17 +38,17 @@ namespace PurrNet.Prediction
         /// <summary>
         /// Invoked immediately after the object is fully initialized and fresh spawned.
         /// </summary>
-        protected virtual void OnSpawned() {}
+        protected virtual void LateAwake() {}
 
         /// <summary>
         /// Invoked when the object is being despawned and cleaned up.
         /// Allows for any necessary teardown or resource release to be handled.
         /// </summary>
-        protected virtual void OnDespawned() {}
+        protected virtual void Destroyed() {}
 
         public bool isServer { get; private set; }
 
-        internal virtual void Setup(NetworkManager manager, PredictionManager world, PredictedID id)
+        internal virtual void Setup(NetworkManager manager, PredictionManager world, PredictedID id, PlayerID? owner)
         {
             isServer = manager.isServer;
 
@@ -57,16 +57,16 @@ namespace PurrNet.Prediction
 
             isFreshSpawn = false;
 
-            owner = null;
+            this.owner = owner;
             this.id = id;
             predictionManager = world;
 
-            OnSpawned();
+            LateAwake();
         }
 
         protected virtual void OnDestroy()
         {
-            OnDespawned();
+            Destroyed();
 
             if (predictionManager)
                 predictionManager.UnregisterInstance(this);
@@ -107,8 +107,6 @@ namespace PurrNet.Prediction
 
         internal abstract void PrepareInput(bool isServer, bool isLocal, ulong tick);
 
-        internal abstract void SimulateRemote(ulong tick, float delta);
-
         internal abstract void SaveStateInHistory(ulong tick);
 
         internal abstract void Rollback(ulong tick);
@@ -121,15 +119,15 @@ namespace PurrNet.Prediction
 
         internal abstract void GetLatestUnityState();
 
-        internal abstract void WriteCurrentState(PlayerID receiver, BitPacker packer, DeltaModule deltaModule, ref PackedUInt cache);
+        internal abstract void WriteCurrentState(PlayerID receiver, BitPacker packer, DeltaModule deltaModule);
 
-        internal abstract void WriteInput(ulong localTick, PlayerID receiver, BitPacker input, DeltaModule deltaModule, ref PackedUInt cache);
+        internal abstract void WriteInput(ulong localTick, PlayerID receiver, BitPacker input, DeltaModule deltaModule);
 
-        internal abstract void ReadState(ulong tick, BitPacker packer, DeltaModule deltaModule, ref PackedUInt cache);
+        internal abstract void ReadState(ulong tick, BitPacker packer, DeltaModule deltaModule);
 
-        internal abstract void ReadInput(ulong tick, BitPacker packer, DeltaModule deltaModule, ref PackedUInt cache);
+        internal abstract void ReadInput(ulong tick, BitPacker packer, DeltaModule deltaModule);
 
-        internal abstract void QueueInput(PlayerID sender, BitPacker packer, DeltaModule deltaModule, ref PackedUInt cache);
+        internal abstract void QueueInput(BitPacker packer, DeltaModule deltaModule);
 
         public GameObject GetRoot()
         {

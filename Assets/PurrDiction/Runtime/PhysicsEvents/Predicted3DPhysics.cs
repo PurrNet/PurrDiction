@@ -69,7 +69,7 @@ namespace PurrNet.Prediction
         {
             int count = currentState.events.Count;
 
-            if (predictionManager.isVerified)
+            if (predictionManager.isVerifiedAndReplaying)
             {
                 var hierarchy = predictionManager.hierarchy;
                 for (var i = 0; i < count; i++)
@@ -148,7 +148,7 @@ namespace PurrNet.Prediction
                     ev.contacts.Add(new PhysicsContactPoint(other.GetContact(i)));
                 state.events.Add(ev);
 
-                if (!predictionManager.isVerified)
+                if (!predictionManager.isVerifiedAndReplaying)
                     TriggerEvent(hierarchy, ev);
                 currentState = state;
             }
@@ -171,7 +171,7 @@ namespace PurrNet.Prediction
 
                 state.events.Add(ev);
 
-                if (!predictionManager.isVerified)
+                if (!predictionManager.isVerifiedAndReplaying)
                     TriggerEvent(hierarchy, ev);
                 currentState = state;
             }

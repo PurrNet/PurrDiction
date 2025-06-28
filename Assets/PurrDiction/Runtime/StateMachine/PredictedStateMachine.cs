@@ -48,7 +48,7 @@ namespace PurrNet.Prediction.StateMachine
             }
         }
 
-        protected override void UpdateView(SMState interpolatedState, SMState? verified)
+        protected override void UpdateView(SMState viewState, SMState? verified)
         {
             if (verified.HasValue)
             {
@@ -62,11 +62,11 @@ namespace PurrNet.Prediction.StateMachine
                 }
             }
 
-            if(interpolatedState.stateIndex != _previousViewStateIndex)
+            if(viewState.stateIndex != _previousViewStateIndex)
             {
                 if(_previousViewStateIndex > -1 && _states[_previousViewStateIndex] != null)
                     _states[_previousViewStateIndex].ViewExit(false);
-                _previousViewStateIndex = interpolatedState.stateIndex;
+                _previousViewStateIndex = viewState.stateIndex;
                 if(_previousViewStateIndex > -1 && _states[_previousViewStateIndex] != null)
                     _states[_previousViewStateIndex].ViewEnter(false);
             }
