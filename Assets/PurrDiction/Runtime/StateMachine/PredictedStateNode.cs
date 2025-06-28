@@ -22,7 +22,14 @@ namespace PurrNet.Prediction.StateMachine
 
         public virtual void Enter() {}
         public virtual void ViewEnter(bool isVerified) { }
-        public virtual void StateSimulate(float delta) { }
+        protected virtual void StateSimulate(ref T state, float delta) {}
+
+        public void StateSimulate(float delta)
+        {
+            var s= currentState;
+            StateSimulate(ref s, delta);
+            currentState=s;
+        }
         public virtual void Exit() {}
         public virtual void ViewExit(bool isVerified) { }
     }
@@ -39,7 +46,15 @@ namespace PurrNet.Prediction.StateMachine
 
         public virtual void Enter() { }
         public virtual void ViewEnter(bool isVerified) { }
-        public virtual void StateSimulate(float delta) { }
+        protected virtual void StateSimulate(in TInput input, ref T state, float delta) {}
+
+        public void StateSimulate(float delta)
+        {
+            var s= currentState;
+            var i = currentInput;
+            StateSimulate(in i, ref s, delta);
+            currentState=s;
+        }
         public virtual void Exit() { }
         public virtual void ViewExit(bool isVerified) { }
     }

@@ -11,7 +11,7 @@ namespace PurrNet.Prediction
             Debug.Log($"Entered state {gameObject.name}", machine);
         }
 
-        public override void StateSimulate(float delta)
+        protected override void StateSimulate(ref TestNodeData state, float delta)
         {
             //Happens within simulation
         }
