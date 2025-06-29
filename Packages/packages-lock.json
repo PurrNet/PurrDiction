@@ -224,10 +224,10 @@
       "depth": 0,
       "source": "git",
       "dependencies": {},
-      "hash": "d1ef610e9fe3ad0b490cce91594449fc0af809a6"
+      "hash": "610157ad762084380380148ba8ce14e266a6da97"
     },
     "dev.purrnet.purrnet": {
-      "version": "1.12.0-beta.5",
+      "version": "1.12.4-beta.1",
       "depth": 0,
       "source": "registry",
       "dependencies": {
