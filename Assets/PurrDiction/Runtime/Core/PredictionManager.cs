@@ -125,24 +125,14 @@ namespace PurrNet.Prediction
         private void RegisterScene()
         {
             var identities = ListPool<PredictedIdentity>.Instantiate();
-            var rootGameObjects = gameObject.scene.GetRootGameObjects();
+            SceneObjectsModule.GetScenePredictedIdentities(gameObject.scene, identities);
 
-            foreach (var rootObject in rootGameObjects)
+            int count = identities.Count;
+            for (var i = 0; i < count; ++i)
             {
-                rootObject.GetComponentsInChildren(true, identities);
-
-                if (identities.Count == 0) continue;
-
-                rootObject.MakeSureAwakeIsCalled();
-
-                int count = identities.Count;
-                for (var i = 0; i < count; ++i)
-                {
-                    var pid = identities[i];
-                    _queue.Add(pid);
-                }
+                var pid = identities[i];
+                _queue.Add(pid);
             }
-
             ListPool<PredictedIdentity>.Destroy(identities);
         }
 
