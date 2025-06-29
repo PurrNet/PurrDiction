@@ -22,6 +22,7 @@ namespace PurrNet.Prediction
         private bool _generating;
         public List<GameObject> prefabs => _prefabs;
 
+#if UNITY_EDITOR
         private void OnValidate()
         {
             if (_autoGenerate)
@@ -30,6 +31,7 @@ namespace PurrNet.Prediction
                 EditorApplication.delayCall += Generate;
             }
         }
+#endif
 
         /// <summary>
         /// Editor only method to generate network prefabs from a specified folder.
