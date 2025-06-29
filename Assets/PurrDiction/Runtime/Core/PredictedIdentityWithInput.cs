@@ -16,6 +16,9 @@ namespace PurrNet.Prediction
 
         private History<INPUT> _inputHistory;
 
+        public INPUT currentInput => _currentInput;
+        private INPUT _currentInput;
+
         public override string ToString()
         {
             return $"State:\n{fullPredictedState.state}";
@@ -45,8 +48,8 @@ namespace PurrNet.Prediction
             if (IsOwner())
             {
                 if (!_inputHistory.TryGet(tick, out var input))
-                     Simulate(GetDefaultInput(), ref fullPredictedState.state, delta);
-                else Simulate(input, ref fullPredictedState.state, delta);
+                    PreSimulate(GetDefaultInput(), ref fullPredictedState.state, delta);
+                else PreSimulate(input, ref fullPredictedState.state, delta);
             }
             else
             {
@@ -57,14 +60,14 @@ namespace PurrNet.Prediction
                             ModifyExtrapolatedInput(ref extrainput);
                         uint maxInputs = (uint)Mathf.CeilToInt(_repeatInputFactor * 10 / (delta * 60));
                         if (distanceInTicks <= maxInputs)
-                             Simulate(extrainput, ref fullPredictedState.state, delta);
-                        else Simulate(GetDefaultInput(), ref fullPredictedState.state, delta);
+                            PreSimulate(extrainput, ref fullPredictedState.state, delta);
+                        else PreSimulate(GetDefaultInput(), ref fullPredictedState.state, delta);
                         break;
                     case false when _inputHistory.TryGet(tick, out var input):
-                        Simulate(input, ref fullPredictedState.state, delta);
+                        PreSimulate(input, ref fullPredictedState.state, delta);
                         break;
                     default:
-                        Simulate(GetDefaultInput(), ref fullPredictedState.state, delta);
+                        PreSimulate(GetDefaultInput(), ref fullPredictedState.state, delta);
                         break;
                 }
             }
@@ -103,17 +106,23 @@ namespace PurrNet.Prediction
         internal override void SimulateRemote(ulong tick, float delta)
         {
             if (_inputHistory.TryGet(tick, out var input))
-                Simulate(input, ref fullPredictedState.state, delta);
-            else Simulate(GetDefaultInput(), ref fullPredictedState.state, delta);
+                PreSimulate(input, ref fullPredictedState.state, delta);
+            else PreSimulate(GetDefaultInput(), ref fullPredictedState.state, delta);
         }
 
         protected virtual INPUT GetDefaultInput() => default;
 
+        private void PreSimulate(INPUT input, ref STATE state, float delta)
+        {
+            _currentInput = input;
+            Simulate(input, ref state, delta);
+        }
+        
         protected abstract void Simulate(INPUT input, ref STATE state, float delta);
 
         protected override void Simulate(ref STATE state, float delta)
         {
-            Simulate(_lastInput, ref state, delta);
+            PreSimulate(_lastInput, ref state, delta);
         }
 
         readonly struct DeltaKey : IStableHashable

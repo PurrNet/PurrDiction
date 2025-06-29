@@ -79,8 +79,10 @@ namespace PurrNet.Prediction.StateMachine
             if (_states.Count <= 0 || state.wantedState <= -1)
                 return;
 
-            if(state.stateIndex > -1 && _states[state.stateIndex] != null)
+            if (state.stateIndex > -1 && _states[state.stateIndex] != null)
+            {
                 _states[state.stateIndex].StateSimulate(delta);
+            }
 
             if(state.wantedState != state.stateIndex)
             {

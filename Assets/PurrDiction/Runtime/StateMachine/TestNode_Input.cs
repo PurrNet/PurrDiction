@@ -27,7 +27,7 @@ namespace PurrNet.Prediction
             return input;
         }
 
-        public override void StateSimulate(float delta)
+        protected override void StateSimulate(in TestNodeInput input, ref TestNodeData testNodeData, float delta)
         {
             base.StateSimulate(delta);
 
