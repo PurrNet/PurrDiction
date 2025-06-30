@@ -50,7 +50,7 @@ namespace PurrNet.Prediction.Tests
             predictionManager.hierarchy.Delete(this);
         }
 
-        private void OnUnityCollisionEnter(PredictedRigidbody other, DisposableList<PhysicsContactPoint> evContacts)
+        private void OnUnityCollisionEnter(PredictedObjectID other, DisposableList<PhysicsContactPoint> evContacts)
         {
             var copy = currentState;
             copy.collisionCount += 1;
