@@ -90,21 +90,20 @@ namespace PurrNet.Prediction
 
         private static void TriggerEvent(PredictedHierarchy hierarchy, PhysicsEvent ev)
         {
-            if (hierarchy.TryGetComponent<PredictedRigidbody>(ev.me, out var me) &&
-                hierarchy.TryGetComponent<PredictedRigidbody>(ev.other, out var other))
+            if (hierarchy.TryGetComponent<PredictedRigidbody>(ev.me, out var me))
             {
                 if (ev.isTrigger)
                 {
                     switch (ev.type)
                     {
                         case PhysicsEventType.Enter:
-                            me.RaiseTriggerEnter(other);
+                            me.RaiseTriggerEnter(ev.other);
                             break;
                         case PhysicsEventType.Exit:
-                            me.RaiseTriggerExit(other);
+                            me.RaiseTriggerExit(ev.other);
                             break;
                         case PhysicsEventType.Stay:
-                            me.RaiseTriggerStay(other);
+                            me.RaiseTriggerStay(ev.other);
                             break;
                         default: throw new ArgumentOutOfRangeException();
                     }
@@ -114,13 +113,13 @@ namespace PurrNet.Prediction
                     switch (ev.type)
                     {
                         case PhysicsEventType.Enter:
-                            me.RaiseCollisionEnter(other, ev.contacts);
+                            me.RaiseCollisionEnter(ev.other, ev.contacts);
                             break;
                         case PhysicsEventType.Exit:
-                            me.RaiseCollisionExit(other, ev.contacts);
+                            me.RaiseCollisionExit(ev.other, ev.contacts);
                             break;
                         case PhysicsEventType.Stay:
-                            me.RaiseCollisionStay(other, ev.contacts);
+                            me.RaiseCollisionStay(ev.other, ev.contacts);
                             break;
                         default: throw new ArgumentOutOfRangeException();
                     }
