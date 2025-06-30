@@ -248,8 +248,11 @@ namespace PurrNet.Prediction
 
         protected override void SetUnityState(UnityRigidbodyState state)
         {
-            _rigidbody.linearVelocity = state.linearVelocity;
-            _rigidbody.angularVelocity = state.angularVelocity;
+            if (!_rigidbody.isKinematic)
+            {
+                _rigidbody.linearVelocity = state.linearVelocity;
+                _rigidbody.angularVelocity = state.angularVelocity;
+            }
         }
 
         private void OnCollisionEnter(Collision other)
