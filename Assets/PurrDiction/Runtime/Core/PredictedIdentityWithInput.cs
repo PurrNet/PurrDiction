@@ -33,13 +33,10 @@ namespace PurrNet.Prediction
 
         private INPUT _lastInput;
 
-        public PredictedHierarchy hierarchy { get; private set; }
-
         internal override void Setup(NetworkManager manager, PredictionManager world, PredictedID id, PlayerID? owner)
         {
             base.Setup(manager, world, id, owner);
 
-            hierarchy = world.hierarchy;
             _inputHistory = new History<INPUT>(world.tickRate * 5);
         }
 
@@ -117,7 +114,7 @@ namespace PurrNet.Prediction
             _currentInput = input;
             Simulate(input, ref state, delta);
         }
-        
+
         protected abstract void Simulate(INPUT input, ref STATE state, float delta);
 
         protected override void Simulate(ref STATE state, float delta)

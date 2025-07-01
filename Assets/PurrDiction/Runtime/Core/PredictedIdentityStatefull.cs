@@ -24,6 +24,8 @@ namespace PurrNet.Prediction
 
     public abstract class PredictedIdentity<STATE> : PredictedIdentity where STATE : struct, IPredictedData<STATE>
     {
+        public PredictedHierarchy hierarchy { get; private set; }
+
         public override string ToString()
         {
             return currentState.ToString();
@@ -61,10 +63,13 @@ namespace PurrNet.Prediction
 
         internal override void Setup(NetworkManager manager, PredictionManager world, PredictedID id, PlayerID? owner)
         {
+            hierarchy = world.hierarchy;
+
             if (!isFreshSpawn)
             {
                 fullPredictedState.state = GetInitialState();
                 GetLatestUnityState();
+                base.Setup(manager, world, id, owner);
                 return;
             }
 
