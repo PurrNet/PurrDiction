@@ -51,14 +51,13 @@ namespace PurrNet.Prediction
         internal virtual void Setup(NetworkManager manager, PredictionManager world, PredictedID id, PlayerID? owner)
         {
             isServer = manager.isServer;
+            this.owner = owner;
+            this.id = id;
 
             if (!isFreshSpawn)
                 return;
 
             isFreshSpawn = false;
-
-            this.owner = owner;
-            this.id = id;
             predictionManager = world;
 
             LateAwake();
