@@ -810,9 +810,6 @@ namespace PurrNet.Prediction
 
             if (ticks.waitForInput && ticks.inputQueue.Count >= _inputQueueSettings.minInputs)
                 ticks.waitForInput = false;
-
-            /*using (inputPacket)
-                HandleIncomingInput(inputPacket, count, info);*/
         }
 
         private void HandleIncomingInput(BitPacker inputPacket, PackedUInt count, PlayerID sender)
@@ -826,10 +823,7 @@ namespace PurrNet.Prediction
                     PredictedID pid = default;
                     Packer<PredictedID>.Read(inputPacket, ref pid);
 
-                    if (!_instanceMap.TryGetValue(pid, out var system))
-                        continue;
-
-                    if (system.IsOwner(sender, senderIsServer))
+                    if (_instanceMap.TryGetValue(pid, out var system) && system.IsOwner(sender, senderIsServer))
                     {
                         system.QueueInput(inputPacket, sender, _deltaModuleState);
                     }
