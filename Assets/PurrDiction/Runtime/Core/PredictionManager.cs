@@ -4,11 +4,19 @@ using JetBrains.Annotations;
 using PurrNet.Modules;
 using PurrNet.Packing;
 using PurrNet.Pooling;
+using PurrNet.Transports;
 using PurrNet.Utils;
 using UnityEngine;
 
 namespace PurrNet.Prediction
 {
+    [Serializable]
+    public struct InputQueueSettings
+    {
+        public int minInputs;
+        public int maxInputs;
+    }
+
     [DefaultExecutionOrder(1000)]
     [AddComponentMenu("PurrDiction/Prediction Manager")]
     public class PredictionManager : NetworkIdentity
@@ -27,6 +35,11 @@ namespace PurrNet.Prediction
             BuiltInSystems.Hierarchy |
             BuiltInSystems.Players;
         [SerializeField] private PredictedPrefabs _predictedPrefabs;
+        [SerializeField] private InputQueueSettings _inputQueueSettings = new()
+        {
+            minInputs = 1,
+            maxInputs = 4
+        };
 
         readonly List<PredictedIdentity> _queue = new ();
         readonly List<PredictedIdentity> _systems = new ();
@@ -265,7 +278,7 @@ namespace PurrNet.Prediction
             if (player == localPlayer)
                 return;
 
-            _clientTicks[player] = new Queue<ulong>();
+            _clientTicks[player] = new();
             _clientFrames.Add(new PlayerPacker
             {
                 player = player,
@@ -323,7 +336,7 @@ namespace PurrNet.Prediction
             }
 
             for (var i = 0; i < count; i++)
-                _systems[i].ReadInput(localTick, data, _deltaModuleState);
+                _systems[i].ReadInput(localTick, default, data, _deltaModuleState);
 
             for (var i = 0; i < count; i++)
             {
@@ -353,14 +366,17 @@ namespace PurrNet.Prediction
                 isVerified = true;
 
             var scount = _systems.Count;
+            bool hasClients = _clientTicks.Count > 0;
+
+            if (cachedIsServer && hasClients)
+                PrepareInputs();
+
             for (var i = 0; i < scount; i++)
             {
                 var system = _systems[i];
                 bool controller = system.IsOwner(myPlayer, cachedIsServer);
                 system.PrepareInput(cachedIsServer, controller, localTick);
             }
-
-            bool hasClients = _clientTicks.Count > 0;
 
             if (cachedIsServer && hasClients)
             {
@@ -390,6 +406,21 @@ namespace PurrNet.Prediction
 
             localTick += 1;
             localTickInContext = localTick;
+        }
+
+        private void PrepareInputs()
+        {
+            foreach (var (player, queue) in _clientTicks)
+            {
+                if (queue.Count == 0)
+                {
+                    queue.waitForInput = true;
+                    continue;
+                }
+
+                var dequeued = queue.inputQueue.Peek();
+                HandleIncomingInput(dequeued.inputPacket, dequeued.count, player);
+            }
         }
 
         private void FinalizeInputOnClient(PlayerID myPlayer)
@@ -498,7 +529,15 @@ namespace PurrNet.Prediction
                 if (!_clientTicks.TryGetValue(player, out var queue))
                     continue;
 
-                ulong tick = queue.Count > 0 ? queue.Dequeue() : 0;
+                ulong tick = 0;
+
+                if (queue.Count > 0 && !queue.waitForInput)
+                {
+                    var dequeued = queue.inputQueue.Dequeue();
+                    tick = dequeued.clientTick;
+                    dequeued.inputPacket.Dispose();
+                }
+
                 var deltaLen = packer.ToByteData().length;
 
                 SendFrameToRemote(player, tick, new BitPackerWithLength(deltaLen, packer));
@@ -606,7 +645,7 @@ namespace PurrNet.Prediction
             }
 
             for (var i = 0; i < count; ++i)
-                _systems[i].ReadInput(inputTick, frame, _deltaModuleState);
+                _systems[i].ReadInput(inputTick, default, frame, _deltaModuleState);
 
             for (var i = 0; i < count; ++i)
             {
@@ -724,30 +763,63 @@ namespace PurrNet.Prediction
             isSimulating = false;
         }
 
-        readonly Dictionary<PlayerID, Queue<ulong>> _clientTicks = new ();
+        public struct InputQueueValue
+        {
+            public ulong clientTick;
+            public PackedUInt count;
+            public BitPacker inputPacket;
+        }
 
-        [ServerRpc(requireOwnership: false)]
+        public class InputQueue
+        {
+            public bool waitForInput;
+            public Queue<InputQueueValue> inputQueue = new ();
+            public int Count => inputQueue.Count;
+        }
+
+        readonly Dictionary<PlayerID, InputQueue> _clientTicks = new ();
+
+        [ServerRpc(requireOwnership: false, channel: Channel.Unreliable)]
         private void SendInputToServer(ulong clientTick, PackedUInt count, BitPacker inputPacket, RPCInfo info = default)
         {
             if (!_clientTicks.TryGetValue(info.sender, out var ticks))
             {
-                ticks = new Queue<ulong>();
+                ticks = new InputQueue
+                {
+                    waitForInput = true
+                };
                 _clientTicks[info.sender] = ticks;
             }
 
-            if (ticks.Count >= 2)
-                ticks.Clear();
-            ticks.Enqueue(clientTick);
+            // if we are past the max inputs, let's remove until we are at the min inputs
+            if (ticks.Count > _inputQueueSettings.maxInputs)
+            {
+                while (ticks.Count > _inputQueueSettings.minInputs)
+                {
+                    var oldInput = ticks.inputQueue.Dequeue();
+                    oldInput.inputPacket.Dispose();
+                }
+            }
 
-            using (inputPacket)
-                HandleIncomingInput(inputPacket, count, info);
+            ticks.inputQueue.Enqueue(new InputQueueValue
+            {
+                clientTick = clientTick,
+                count = count,
+                inputPacket = inputPacket
+            });
+
+            if (ticks.waitForInput && ticks.inputQueue.Count >= _inputQueueSettings.minInputs)
+                ticks.waitForInput = false;
+
+            /*using (inputPacket)
+                HandleIncomingInput(inputPacket, count, info);*/
         }
 
-        private void HandleIncomingInput(BitPacker inputPacket, PackedUInt count, RPCInfo info = default)
+        private void HandleIncomingInput(BitPacker inputPacket, PackedUInt count, PlayerID sender)
         {
             try
             {
-                bool senderIsServer = info.sender == default;
+                bool senderIsServer = sender == default;
 
                 for (var i = 0; i < count; i++)
                 {
@@ -757,9 +829,9 @@ namespace PurrNet.Prediction
                     if (!_instanceMap.TryGetValue(pid, out var system))
                         continue;
 
-                    if (system.IsOwner(info.sender, senderIsServer))
+                    if (system.IsOwner(sender, senderIsServer))
                     {
-                        system.QueueInput(inputPacket, _deltaModuleState);
+                        system.QueueInput(inputPacket, sender, _deltaModuleState);
                     }
                     else
                     {

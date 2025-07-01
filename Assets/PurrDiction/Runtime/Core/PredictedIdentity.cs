@@ -124,9 +124,9 @@ namespace PurrNet.Prediction
 
         internal abstract void ReadState(ulong tick, BitPacker packer, DeltaModule deltaModule);
 
-        internal abstract void ReadInput(ulong tick, BitPacker packer, DeltaModule deltaModule);
+        internal abstract void ReadInput(ulong tick, PlayerID sender, BitPacker packer, DeltaModule deltaModule);
 
-        internal abstract void QueueInput(BitPacker packer, DeltaModule deltaModule);
+        internal abstract void QueueInput(BitPacker packer, PlayerID sender, DeltaModule deltaModule);
 
         public GameObject GetRoot()
         {

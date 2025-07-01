@@ -53,11 +53,11 @@ namespace PurrNet.Prediction
         {
         }
 
-        internal override void ReadInput(ulong tick, BitPacker packer, DeltaModule delta)
+        internal override void ReadInput(ulong tick, PlayerID sender, BitPacker packer, DeltaModule delta)
         {
         }
 
-        internal override void QueueInput(BitPacker packer, DeltaModule delta)
+        internal override void QueueInput(BitPacker packer, PlayerID sender, DeltaModule delta)
         {
         }
     }

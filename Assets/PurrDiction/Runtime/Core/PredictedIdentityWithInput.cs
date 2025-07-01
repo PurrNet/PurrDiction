@@ -86,7 +86,7 @@ namespace PurrNet.Prediction
             }
             else if (isServer)
             {
-                if (_queuedInput.Count == 0)
+                if (_queuedInput.Count <= 0)
                 {
                     _lastInput = GetDefaultInput();
                     _inputHistory.Write(tick, _lastInput);
@@ -144,14 +144,8 @@ namespace PurrNet.Prediction
             if (_inputHistory.TryGet(localTick, out var savedInput))
             {
                 Packer<bool>.Write(input, true);
-
-                using var tmp = BitPackerPool.Get();
-                deltaModule.WriteReliable(tmp, receiver, key, savedInput);
-
-                var count = tmp.positionInBits;
-                Packer<PackedUInt>.Write(input, (uint)count);
-                tmp.SetBitPosition(0);
-                input.WriteBits(tmp, count);
+                // deltaModule.WriteReliable(input, receiver, key, savedInput);
+                deltaModule.Write(input, receiver, key, savedInput);
             }
             else
             {
@@ -159,18 +153,16 @@ namespace PurrNet.Prediction
             }
         }
 
-        internal override void ReadInput(ulong tick, BitPacker packer, DeltaModule deltaModule)
+        internal override void ReadInput(ulong tick, PlayerID sender, BitPacker packer, DeltaModule deltaModule)
         {
             bool hasInput = default;
             Packer<bool>.Read(packer, ref hasInput);
 
             if (hasInput)
             {
-                PackedUInt count = default;
-                Packer<PackedUInt>.Read(packer, ref count);
-
                 INPUT input = default;
-                deltaModule.ReadReliable(packer, key, ref input);
+                // deltaModule.ReadReliable(packer, key, ref input);
+                deltaModule.Read(packer, key, sender, ref input);
                 _inputHistory.Write(tick, input);
             }
             else _inputHistory.Remove(tick);
@@ -185,23 +177,20 @@ namespace PurrNet.Prediction
         /// <param name="input"></param>
         protected virtual void SanitizeInput(ref INPUT input) { }
 
-        internal override void QueueInput(BitPacker packer, DeltaModule deltaModule)
+        internal override void QueueInput(BitPacker packer, PlayerID sender, DeltaModule deltaModule)
         {
             bool hasInput = default;
             Packer<bool>.Read(packer, ref hasInput);
 
             if (hasInput)
             {
-                PackedUInt count = default;
-                Packer<PackedUInt>.Read(packer, ref count);
-
                 INPUT input = default;
-                deltaModule.ReadReliable(packer, key, ref input);
+                // deltaModule.ReadReliable(packer, key, ref input);
+                deltaModule.Read(packer, key, sender, ref input);
 
                 var sanitizedInput = input;
                 SanitizeInput(ref sanitizedInput);
-                if (_queuedInput.Count >= 2)
-                    _queuedInput.Clear();
+                _queuedInput.Clear();
                 _queuedInput.Enqueue(sanitizedInput);
             }
         }
