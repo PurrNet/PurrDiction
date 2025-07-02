@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
+using PurrNet.Logging;
 using PurrNet.Modules;
 using PurrNet.Packing;
 using PurrNet.Pooling;
@@ -198,7 +199,10 @@ namespace PurrNet.Prediction
 
             for (uint i = 0; i < count; i++)
             {
-                RegisterInstance(components[(int)i], objectID, i, owner);
+                var component = components[(int)i];
+
+                if (!_systems.Contains(component))
+                    RegisterInstance(components[(int)i], objectID, i, owner);
             }
 
             ListPool<PredictedIdentity>.Destroy(components);
