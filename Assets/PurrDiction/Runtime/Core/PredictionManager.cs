@@ -4,7 +4,6 @@ using JetBrains.Annotations;
 using PurrNet.Modules;
 using PurrNet.Packing;
 using PurrNet.Pooling;
-using PurrNet.Transports;
 using PurrNet.Utils;
 using UnityEngine;
 
@@ -776,13 +775,13 @@ namespace PurrNet.Prediction
         public class InputQueue
         {
             public bool waitForInput;
-            public Queue<InputQueueValue> inputQueue = new ();
+            public readonly Queue<InputQueueValue> inputQueue = new ();
             public int Count => inputQueue.Count;
         }
 
         readonly Dictionary<PlayerID, InputQueue> _clientTicks = new ();
 
-        [ServerRpc(requireOwnership: false, channel: Channel.Unreliable)]
+        [ServerRpc(requireOwnership: false)]
         private void SendInputToServer(ulong clientTick, PackedUInt count, BitPacker inputPacket, RPCInfo info = default)
         {
             if (!_clientTicks.TryGetValue(info.sender, out var ticks))

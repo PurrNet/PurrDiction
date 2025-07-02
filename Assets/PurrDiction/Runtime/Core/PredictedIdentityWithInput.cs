@@ -146,8 +146,8 @@ namespace PurrNet.Prediction
                 Packer<bool>.Write(input, true);
 
                 using var tmp = BitPackerPool.Get();
-                // deltaModule.WriteReliable(input, receiver, key, savedInput);
-                deltaModule.Write(input, receiver, key, savedInput);
+                deltaModule.WriteReliable(input, receiver, key, savedInput);
+                // deltaModule.Write(input, receiver, key, savedInput);
                 var count = tmp.positionInBits;
                 tmp.SetBitPosition(0);
 
@@ -170,8 +170,8 @@ namespace PurrNet.Prediction
                 Packer<PackedUInt>.Read(packer);
 
                 INPUT input = default;
-                // deltaModule.ReadReliable(packer, key, ref input);
-                deltaModule.Read(packer, key, sender, ref input);
+                deltaModule.ReadReliable(packer, key, ref input);
+                // deltaModule.Read(packer, key, sender, ref input);
                 _inputHistory.Write(tick, input);
             }
             else _inputHistory.Remove(tick);
@@ -196,8 +196,8 @@ namespace PurrNet.Prediction
                 Packer<PackedUInt>.Read(packer);
 
                 INPUT input = default;
-                // deltaModule.ReadReliable(packer, key, ref input);
-                deltaModule.Read(packer, key, sender, ref input);
+                deltaModule.ReadReliable(packer, key, ref input);
+                // deltaModule.Read(packer, key, sender, ref input);
 
                 var sanitizedInput = input;
                 SanitizeInput(ref sanitizedInput);
