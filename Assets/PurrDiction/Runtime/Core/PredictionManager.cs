@@ -4,6 +4,7 @@ using JetBrains.Annotations;
 using PurrNet.Modules;
 using PurrNet.Packing;
 using PurrNet.Pooling;
+using PurrNet.Transports;
 using PurrNet.Utils;
 using UnityEngine;
 
@@ -307,7 +308,7 @@ namespace PurrNet.Prediction
 
 
             for (var i = 0; i < count; i++)
-                _systems[i].WriteInput(localTick, target, packer, _deltaModuleState);
+                _systems[i].WriteInput(localTick, target, packer, _deltaModuleState, true);
 
             for (var i = 0; i < count; i++)
             {
@@ -338,7 +339,7 @@ namespace PurrNet.Prediction
             }
 
             for (var i = 0; i < count; i++)
-                _systems[i].ReadInput(localTick, default, data, _deltaModuleState);
+                _systems[i].ReadInput(localTick, default, data, _deltaModuleState, true);
 
             for (var i = 0; i < count; i++)
             {
@@ -436,7 +437,7 @@ namespace PurrNet.Prediction
                 if (system.IsOwner(myPlayer))
                 {
                     Packer<PredictedID>.Write(frame, system.id);
-                    system.WriteInput(localTick, default, frame, _deltaModuleState);
+                    system.WriteInput(localTick, default, frame, _deltaModuleState, false);
                     writtenCount += 1;
                 }
             }
@@ -492,15 +493,11 @@ namespace PurrNet.Prediction
                 {
                     if (_systems[i].isEventHandler)
                         continue;
-
-                    //int framePos = frame.positionInBits;
                     _systems[i].WriteCurrentState(player, frame, _deltaModuleState);
-                    //var writtenBits = frame.positionInBits - framePos;
-                    //PurrLogger.Log($"{_systems[i].GetType().Name} wrote {writtenBits} bits for player {player} at frame {localTick}.", _systems[i]);
                 }
 
                 for (var i = 0; i < count; i++)
-                    _systems[i].WriteInput(localTick, player, frame, _deltaModuleState);
+                    _systems[i].WriteInput(localTick, player, frame, _deltaModuleState, true);
             }
         }
 
@@ -647,7 +644,7 @@ namespace PurrNet.Prediction
             }
 
             for (var i = 0; i < count; ++i)
-                _systems[i].ReadInput(inputTick, default, frame, _deltaModuleState);
+                _systems[i].ReadInput(inputTick, default, frame, _deltaModuleState, true);
 
             for (var i = 0; i < count; ++i)
             {
@@ -781,7 +778,7 @@ namespace PurrNet.Prediction
 
         readonly Dictionary<PlayerID, InputQueue> _clientTicks = new ();
 
-        [ServerRpc(requireOwnership: false)]
+        [ServerRpc(requireOwnership: false, channel: Channel.Unreliable)]
         private void SendInputToServer(ulong clientTick, PackedUInt count, BitPacker inputPacket, RPCInfo info = default)
         {
             if (!_clientTicks.TryGetValue(info.sender, out var ticks))
@@ -827,16 +824,9 @@ namespace PurrNet.Prediction
 
                     if (_instanceMap.TryGetValue(pid, out var system) && system.IsOwner(sender, senderIsServer))
                     {
-                        system.QueueInput(inputPacket, sender, _deltaModuleState);
+                        system.QueueInput(inputPacket, sender, _deltaModuleState, false);
                     }
-                    else
-                    {
-                        if (Packer<bool>.Read(inputPacket))
-                        {
-                            var dataSize = Packer<PackedUInt>.Read(inputPacket);
-                            inputPacket.SkipBits((int)dataSize.value);
-                        }
-                    }
+                    else break;
                 }
             }
             catch

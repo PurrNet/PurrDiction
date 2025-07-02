@@ -41,7 +41,7 @@ namespace PurrNet.Prediction
         {
         }
 
-        internal override void WriteInput(ulong localTick, PlayerID receiver, BitPacker input, DeltaModule deltaModule)
+        internal override void WriteInput(ulong localTick, PlayerID receiver, BitPacker input, DeltaModule deltaModule, bool reliable)
         {
         }
 
@@ -49,11 +49,11 @@ namespace PurrNet.Prediction
         {
         }
 
-        internal override void ReadInput(ulong tick, PlayerID sender, BitPacker packer, DeltaModule deltaModule)
+        internal override void ReadInput(ulong tick, PlayerID sender, BitPacker packer, DeltaModule deltaModule, bool reliable)
         {
         }
 
-        internal override void QueueInput(BitPacker packer, PlayerID sender, DeltaModule deltaModule)
+        internal override void QueueInput(BitPacker packer, PlayerID sender, DeltaModule deltaModule, bool reliable)
         {
         }
     }
