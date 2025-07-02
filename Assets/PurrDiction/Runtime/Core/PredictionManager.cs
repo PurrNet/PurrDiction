@@ -831,9 +831,11 @@ namespace PurrNet.Prediction
                     }
                     else
                     {
-                        PackedUInt dataSize = default;
-                        Packer<PackedUInt>.Read(inputPacket, ref dataSize);
-                        inputPacket.SkipBits((int)dataSize.value);
+                        if (Packer<bool>.Read(inputPacket))
+                        {
+                            var dataSize = Packer<PackedUInt>.Read(inputPacket);
+                            inputPacket.SkipBits((int)dataSize.value);
+                        }
                     }
                 }
             }
