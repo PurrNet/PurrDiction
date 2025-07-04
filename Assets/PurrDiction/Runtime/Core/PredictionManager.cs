@@ -227,7 +227,7 @@ namespace PurrNet.Prediction
 
         public PredictedIdentity GetIdentity(PredictedID id)
         {
-            return _instanceMap[id];
+            return _instanceMap.GetValueOrDefault(id);
         }
 
         private void RegisterInstance(PredictedIdentity system, PredictedObjectID objectId, uint componentId, PlayerID? owner)
