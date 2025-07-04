@@ -88,8 +88,13 @@ namespace PurrNet.Prediction
             // if TickRate is 30, then this should be 2
             var interpolationBuffer = (int)Mathf.Max(world.tickRate / (float)10, 2);
 
-            _interpolatedState = new Interpolated<FULL_STATE<STATE>>(FULLInterpolate, 1f / world.tickRate, copy, interpolationBuffer);
-            _stateHistory = new History<FULL_STATE<STATE>>(world.tickRate * 5);
+            if (_interpolatedState == null)
+                _interpolatedState = new Interpolated<FULL_STATE<STATE>>(FULLInterpolate, 1f / world.tickRate, copy, interpolationBuffer);
+            else _interpolatedState.Teleport(copy);
+
+            if (_stateHistory == null)
+                _stateHistory = new History<FULL_STATE<STATE>>(world.tickRate * 5);
+            else _stateHistory.Clear();
             _stateHistory.Write(0, copy);
         }
 

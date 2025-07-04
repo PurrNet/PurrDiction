@@ -49,6 +49,8 @@ namespace PurrNet.Prediction
             return _instances.TryGetValue(sceneHandle, out world);
         }
 
+        GameObjectPoolCollection _pools;
+
         private void Awake()
         {
             _instances[gameObject.scene.handle] = this;
@@ -57,6 +59,33 @@ namespace PurrNet.Prediction
                 Physics2D.simulationMode = SimulationMode2D.Script;
             if ((_physicsProvider & PredictionPhysicsProvider.UnityPhysics3D) != 0)
                 Physics.simulationMode = SimulationMode.Script;
+        }
+
+        private void Start()
+        {
+            InitPooling();
+        }
+
+        private static GameObject _poolParent;
+
+        private void InitPooling()
+        {
+            if (!_poolParent)
+            {
+                _poolParent = new GameObject("PooledPrefabs");
+#if !PURRNET_DEBUG_POOLING
+                _poolParent.hideFlags = HideFlags.HideAndDontSave;
+#endif
+                _poolParent.SetActive(false);
+            }
+
+            _pools = new GameObjectPoolCollection(_poolParent.transform);
+            for (var i = 0; i < _predictedPrefabs.prefabs.Count; i++)
+            {
+                var prefab = _predictedPrefabs.prefabs[i];
+                if (prefab.pooling.usePooling)
+                    _pools.Register(prefab.prefab, prefab.pooling.initialSize);
+            }
         }
 
         public float tickDelta { get; private set; }
@@ -190,7 +219,7 @@ namespace PurrNet.Prediction
             return system;
         }
 
-        public void RegisterInstance(GameObject go, PredictedObjectID objectID, PlayerID? owner)
+        public void RegisterInstance(GameObject go, PredictedObjectID objectID, PlayerID? owner, bool reset)
         {
             var components = ListPool<PredictedIdentity>.Instantiate();
             go.GetComponentsInChildren(true, components);
@@ -201,7 +230,11 @@ namespace PurrNet.Prediction
                 var component = components[(int)i];
 
                 if (!_systems.Contains(component))
-                    RegisterInstance(components[(int)i], objectID, i, owner);
+                {
+                    if (reset)
+                        component.ResetState();
+                    RegisterInstance(component, objectID, i, owner);
+                }
             }
 
             ListPool<PredictedIdentity>.Destroy(components);
@@ -214,6 +247,20 @@ namespace PurrNet.Prediction
 
             for (var i = 0; i < components.Count; i++)
                 UnregisterInstance(components[i]);
+
+            ListPool<PredictedIdentity>.Destroy(components);
+        }
+
+        public void UnregisterPooledInstance(GameObject go)
+        {
+            var components = ListPool<PredictedIdentity>.Instantiate();
+            go.GetComponentsInChildren(true, components);
+
+            for (var i = 0; i < components.Count; i++)
+            {
+                UnregisterInstance(components[i]);
+                components[i].TriggerDestroyedEvent();
+            }
 
             ListPool<PredictedIdentity>.Destroy(components);
         }
@@ -873,33 +920,89 @@ namespace PurrNet.Prediction
                 return false;
             }
 
-            prefab = _predictedPrefabs.prefabs[pid];
+            prefab = _predictedPrefabs.prefabs[pid].prefab;
             return true;
         }
 
         public bool TryGetPrefab(GameObject prefab, out int id)
         {
-            id = _predictedPrefabs.prefabs.IndexOf(prefab);
-            return id != -1;
+            var prefabs = _predictedPrefabs.prefabs;
+            for (id = 0; id < prefabs.Count; id++)
+            {
+                if (prefabs[id].prefab == prefab)
+                    return true;
+            }
+
+            id = -1;
+            return false;
         }
 
-        internal GameObject InternalCreate(GameObject prefab, PredictedObjectID objectId, PlayerID? owner)
+        public static void ProperlySetPosAndRot(Transform transform, Vector3 position, Quaternion rotation)
         {
-            var go = UnityProxy.InstantiateDirectly(prefab);
-            RegisterInstance(go, objectId, owner);
-            return go;
+            transform.SetPositionAndRotation(position, rotation);
+
+            if (transform.TryGetComponent(out Rigidbody2D rb2d))
+            {
+                rb2d.position = position;
+                rb2d.rotation = rotation.eulerAngles.z;
+            }
+
+            if (transform.TryGetComponent(out Rigidbody rb))
+            {
+                rb.position = position;
+                rb.rotation = rotation;
+            }
+
+            if (transform.TryGetComponent(out CharacterController ctrler) && ctrler.enabled)
+            {
+                ctrler.enabled = false;
+                transform.SetPositionAndRotation(position, rotation);
+                ctrler.enabled = true;
+            }
         }
 
         internal GameObject InternalCreate(GameObject prefab, Vector3 position, Quaternion rotation, PredictedObjectID objectId, PlayerID? owner)
         {
-            var go = UnityProxy.InstantiateDirectly(prefab, position, rotation);
-            RegisterInstance(go, objectId, owner);
-            return go;
+            if (_pools.TryGetPool(prefab, out var pool))
+            {
+                var go = pool.Allocate();
+                var trs = go.transform;
+                trs.SetParent(null);
+                ProperlySetPosAndRot(trs, position, rotation);
+                go.SetActive(true);
+                RegisterInstance(go, objectId, owner, true);
+                return go;
+            }
+            else
+            {
+                var go = UnityProxy.InstantiateDirectly(prefab, position, rotation);
+                RegisterInstance(go, objectId, owner, false);
+                return go;
+            }
         }
 
-        internal static void InternalDelete(GameObject instance)
+        internal void InternalDelete(PackedInt prefabId, GameObject instance)
         {
-            UnityProxy.DestroyImmediateDirectly(instance);
+            if (!_predictedPrefabs)
+            {
+                UnityProxy.DestroyImmediateDirectly(instance);
+                return;
+            }
+
+            if (prefabId < 0 || prefabId >= _predictedPrefabs.prefabs.Count)
+            {
+                UnityProxy.DestroyImmediateDirectly(instance);
+                return;
+            }
+
+            var prefab = _predictedPrefabs.prefabs[prefabId].prefab;
+
+            if (_pools.TryGetPool(prefab, out var pool))
+            {
+                UnregisterPooledInstance(instance);
+                pool.Delete(instance);
+            }
+            else UnityProxy.DestroyImmediateDirectly(instance);
         }
 
         public void SetOwnership(PredictedObjectID? root, PlayerID? player)

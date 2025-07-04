@@ -123,7 +123,7 @@ namespace PurrNet.Prediction
             {
                 go = instance;
                 go.transform.SetPositionAndRotation(position, rotation);
-                predictionManager.RegisterInstance(go, key.instanceId, owner);
+                predictionManager.RegisterInstance(go, key.instanceId, owner, false);
                 go.SetActive(true);
             }
             else
@@ -188,7 +188,7 @@ namespace PurrNet.Prediction
                 if (pid < 0)
                     return;
 
-                pool.Clear();
+                pool.Clear(predictionManager);
             }
         }
 
@@ -196,7 +196,7 @@ namespace PurrNet.Prediction
         {
             if (!canPool)
             {
-                PredictionManager.InternalDelete(go);
+                predictionManager.InternalDelete(details.prefabId, go);
                 return;
             }
 
@@ -207,7 +207,10 @@ namespace PurrNet.Prediction
                 go.SetActive(false);
                 predictionManager.UnregisterInstance(go);
             }
-            else PredictionManager.InternalDelete(go);
+            else
+            {
+                predictionManager.InternalDelete(details.prefabId,go);
+            }
         }
 
         internal void RegisterSceneObject(GameObject root, int pid)
@@ -221,7 +224,7 @@ namespace PurrNet.Prediction
             _spawnedPrefabs.Add(key);
             _nextInstanceId++;
 
-            predictionManager.RegisterInstance(root, instanceId, null);
+            predictionManager.RegisterInstance(root, instanceId, null, false);
         }
 
         public PredictedObjectID? Create(GameObject prefab, PlayerID? owner = null)
@@ -321,7 +324,7 @@ namespace PurrNet.Prediction
                 }
             }
 
-            PredictionManager.InternalDelete(instance);
+            throw new KeyNotFoundException($"PredictedObjectID {id} not found in spawned prefabs.");
         }
 
         public void Delete(PredictedIdentity pid)
@@ -345,15 +348,18 @@ namespace PurrNet.Prediction
 
         public void Cleanup()
         {
-            foreach (var (poid, go) in _instanceMap)
+            foreach (var instance in _spawnedPrefabs)
             {
-                if (_isSceneObject.Contains(poid))
+                if (!_instanceMap.TryGetValue(instance.instanceId, out var go))
+                    continue;
+
+                if (_isSceneObject.Contains(instance.instanceId))
                 {
                     predictionManager.UnregisterInstance(go);
                     continue;
                 }
 
-                PredictionManager.InternalDelete(go);
+                predictionManager.InternalDelete(instance.prefabId, go);
             }
 
             _instanceMap.Clear();

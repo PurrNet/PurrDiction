@@ -14,7 +14,7 @@ namespace PurrNet.Prediction
 
         public bool Put(InstanceDetails id, GameObject go, ulong tick)
         {
-            _pool.Add(new PooledInstance(go, id.spawnPosition, tick, id.instanceId));
+            _pool.Add(new PooledInstance(go, id.prefabId, id.spawnPosition, tick, id.instanceId));
             return true;
         }
 
@@ -81,16 +81,16 @@ namespace PurrNet.Prediction
 
                 if (delta > (uint)predictionManager.tickRate * 2)
                 {
-                    PredictionManager.InternalDelete(pair.gameObject);
+                    predictionManager.InternalDelete(pair.prefabId, pair.gameObject);
                     _pool.RemoveAt(i--);
                 }
             }
         }
 
-        public void Clear()
+        public void Clear(PredictionManager predictionManager)
         {
             foreach (var pair in _pool)
-                PredictionManager.InternalDelete(pair.gameObject);
+                predictionManager.InternalDelete(pair.prefabId, pair.gameObject);
             _pool.Clear();
         }
     }

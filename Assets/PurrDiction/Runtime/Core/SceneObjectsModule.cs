@@ -27,14 +27,11 @@ namespace PurrNet.Prediction
 
             if (sceneInfo)
             {
-                var copy = new List<GameObject>(sceneInfo.rootGameObjects);
+                var copy = new List<GameObject>();
 
                 // add any missing root objects
                 foreach (var rootObject in rootGameObjects)
-                {
-                    if (copy.Contains(rootObject)) continue;
                     copy.Add(rootObject);
-                }
 
                 rootGameObjects = copy.ToArray();
             }

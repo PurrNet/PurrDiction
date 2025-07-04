@@ -171,6 +171,13 @@ namespace PurrNet.Prediction
             m_data.RemoveRange(index, m_data.Count - index);
         }
 
+        public void Clear()
+        {
+            for (int i = 0; i < m_data.Count; i++)
+                m_data[i].Data.Dispose();
+            m_data.Clear();
+        }
+
         /// <summary>
         /// Returns if possible the data at the specified tick number.
         /// </summary>

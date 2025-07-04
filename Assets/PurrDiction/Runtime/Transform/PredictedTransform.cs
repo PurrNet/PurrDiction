@@ -24,6 +24,13 @@ namespace PurrNet.Prediction
         private bool _hasRigidbody;
         private bool _hasView;
 
+        public override void ResetState()
+        {
+            base.ResetState();
+            if (_graphics)
+                _graphics.SetPositionAndRotation(transform.position, transform.rotation);
+        }
+
         private void Awake()
         {
             _unityCtrler = GetComponent<CharacterController>();
@@ -89,10 +96,12 @@ namespace PurrNet.Prediction
 
         protected override PredictedTransformState GetInitialState()
         {
+            var trs = transform;
+            trs.GetPositionAndRotation(out var pos, out var rot);
             return new PredictedTransformState
             {
-                unityPosition = transform.position,
-                unityRotation = transform.rotation
+                unityPosition = pos,
+                unityRotation = rot
             };
         }
 

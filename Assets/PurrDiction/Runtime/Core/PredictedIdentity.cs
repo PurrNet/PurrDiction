@@ -35,6 +35,14 @@ namespace PurrNet.Prediction
             return predictionManager.isSimulating;
         }
 
+        public virtual void ResetState()
+        {
+            isServer = false;
+            isFreshSpawn = true;
+            owner = null;
+            id = default;
+        }
+
         /// <summary>
         /// Invoked immediately after the object is fully initialized and fresh spawned.
         /// </summary>
@@ -45,6 +53,11 @@ namespace PurrNet.Prediction
         /// Allows for any necessary teardown or resource release to be handled.
         /// </summary>
         protected virtual void Destroyed() {}
+
+        internal void TriggerDestroyedEvent()
+        {
+            Destroyed();
+        }
 
         public bool isServer { get; private set; }
 

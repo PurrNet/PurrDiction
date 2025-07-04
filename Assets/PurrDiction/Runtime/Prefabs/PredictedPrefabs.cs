@@ -17,14 +17,38 @@ namespace PurrNet.Prediction
     {
         [SerializeField] private bool _autoGenerate = true;
         [SerializeField] private Object _folder;
-        [SerializeField] private List<GameObject> _prefabs = new ();
+
+        [SerializeField] private PoolSettings _defaultPooling = new PoolSettings
+        {
+            usePooling = false,
+            initialSize = 0
+        };
+
+        [SerializeField, HideInInspector, Obsolete] private List<GameObject> _prefabs = new ();
+        [SerializeField] private List<PredictedPrefab> _newPrefabs = new ();
 
         private bool _generating;
-        public List<GameObject> prefabs => _prefabs;
+        public List<PredictedPrefab> prefabs => _newPrefabs;
 
 #if UNITY_EDITOR
         private void OnValidate()
         {
+#pragma warning disable CS0612
+            if (_prefabs.Count > 0)
+            {
+                for (int i = _prefabs.Count - 1; i >= 0; i--)
+                {
+                    _newPrefabs.Add(new PredictedPrefab
+                    {
+                        prefab = _prefabs[i],
+                        pooling = _defaultPooling
+                    });
+                }
+                _prefabs.Clear();
+                EditorUtility.SetDirty(this);
+            }
+#pragma warning restore CS0612
+
             if (_autoGenerate)
             {
                 // schedule for next editor update
@@ -57,9 +81,9 @@ namespace PurrNet.Prediction
                 if (_folder == null || string.IsNullOrEmpty(AssetDatabase.GetAssetPath(_folder)))
                 {
                     EditorUtility.DisplayProgressBar("Getting Network Prefabs", "No folder found...", 0f);
-                    if (_autoGenerate && _prefabs.Count > 0)
+                    if (_autoGenerate && _newPrefabs.Count > 0)
                     {
-                        _prefabs.Clear();
+                        _newPrefabs.Clear();
                         EditorUtility.SetDirty(this);
                         AssetDatabase.SaveAssets();
                     }
@@ -76,9 +100,9 @@ namespace PurrNet.Prediction
                 {
                     EditorUtility.DisplayProgressBar("Getting Network Prefabs", "No folder path...", 0f);
 
-                    if (_autoGenerate && _prefabs.Count > 0)
+                    if (_autoGenerate && _newPrefabs.Count > 0)
                     {
-                        _prefabs.Clear();
+                        _newPrefabs.Clear();
                         EditorUtility.SetDirty(this);
                         AssetDatabase.SaveAssets();
                     }
@@ -92,8 +116,8 @@ namespace PurrNet.Prediction
                 EditorUtility.DisplayProgressBar("Getting Network Prefabs", "Getting existing paths...", 0f);
 
                 var existingPaths = new HashSet<string>();
-                foreach (var prefabData in _prefabs)
-                    existingPaths.Add(AssetDatabase.GetAssetPath(prefabData));
+                foreach (var prefabData in _newPrefabs)
+                    existingPaths.Add(AssetDatabase.GetAssetPath(prefabData.prefab));
 
                 EditorUtility.DisplayProgressBar("Getting Network Prefabs", "Finding paths...", 0.1f);
 
@@ -131,14 +155,14 @@ namespace PurrNet.Prediction
 
                 EditorUtility.DisplayProgressBar("Getting Network Prefabs", "Removing invalid prefabs...", 0.95f);
 
-                int removed = _prefabs.RemoveAll(prefabData =>
-                    !prefabData || !File.Exists(AssetDatabase.GetAssetPath(prefabData)));
+                int removed = _newPrefabs.RemoveAll(prefabData =>
+                    !prefabData.prefab || !File.Exists(AssetDatabase.GetAssetPath(prefabData.prefab)));
 
-                for (int i = 0; i < _prefabs.Count; i++)
+                for (int i = 0; i < _newPrefabs.Count; i++)
                 {
-                    if (!foundPrefabs.Contains(_prefabs[i]))
+                    if (!foundPrefabs.Contains(_newPrefabs[i].prefab))
                     {
-                        _prefabs.RemoveAt(i);
+                        _newPrefabs.RemoveAt(i);
                         removed++;
                         i--;
                     }
@@ -150,7 +174,11 @@ namespace PurrNet.Prediction
                     var foundPath = AssetDatabase.GetAssetPath(foundPrefab);
                     if (!existingPaths.Contains(foundPath))
                     {
-                        _prefabs.Add(foundPrefab);
+                        _newPrefabs.Add(new PredictedPrefab
+                        {
+                            prefab = foundPrefab,
+                            pooling = _defaultPooling
+                        });
                         added++;
                     }
                 }

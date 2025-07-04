@@ -7,7 +7,7 @@ MonoImporter:
   - _parent: {instanceID: 0}
   - _networkRules: {instanceID: 0}
   - _visitiblityRules: {instanceID: 0}
-  - _predictedPrefabs: {fileID: 11400000, guid: 3bc69f3464f686748883b06b540e96d4, type: 2}
+  - _predictedPrefabs: {instanceID: 0}
   executionOrder: 0
   icon: {fileID: 2800000, guid: 2cd568a0a9728a1428ab0917a525951c, type: 3}
   userData: 
