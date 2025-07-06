@@ -39,12 +39,8 @@ namespace PurrNet.Prediction.Tests
             vel.z = moveVector.z;
             _controller.linearVelocity = vel;
 
-            if (state.wasShooting != input.jump)
-            {
-                state.wasShooting = input.jump;
-                if (state.wasShooting)
-                    Shoot();
-            }
+            if (input.jump)
+                Shoot();
         }
 
         private void Shoot()
@@ -61,9 +57,13 @@ namespace PurrNet.Prediction.Tests
             {
                 horizontal = Input.GetAxisRaw("Horizontal"),
                 vertical = Input.GetAxisRaw("Vertical"),
-                jump = Input.GetKey(KeyCode.Space),
                 dash = Input.GetKey(KeyCode.LeftShift)
             };
+        }
+
+        protected override void UpdateInput(ref SimpleWASDInput input)
+        {
+            input.jump |= Input.GetKeyDown(KeyCode.Space);
         }
     }
 }

@@ -38,13 +38,12 @@ namespace PurrNet.Prediction.Tests
     public struct SimpleCCState : IPredictedData<SimpleCCState>
     {
         public float rotation;
-        public bool wasShooting;
 
         public void Dispose() { }
 
         public override string ToString()
         {
-            return $"rotation: {rotation}\nwasShooting: {wasShooting}";
+            return $"rotation: {rotation}";
         }
     }
 }
