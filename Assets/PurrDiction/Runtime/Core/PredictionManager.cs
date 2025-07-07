@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
+using PurrNet.Logging;
 using PurrNet.Modules;
 using PurrNet.Packing;
 using PurrNet.Pooling;
@@ -143,7 +144,7 @@ namespace PurrNet.Prediction
             var roots = HashSetPool<GameObject>.Instantiate();
             var pid = -1;
 
-            if (hierarchy != null)
+            if (hierarchy)
             {
                 for (var i = 0; i < _queue.Count; i++)
                 {
@@ -151,7 +152,10 @@ namespace PurrNet.Prediction
                     var root = queued.GetRoot();
 
                     if (roots.Add(root))
-                        hierarchy.RegisterSceneObject(root, pid--);
+                    {
+                        if (!_poolParent || root.transform.root != _poolParent.transform)
+                            hierarchy.RegisterSceneObject(root, pid--);
+                    }
                 }
             }
 
