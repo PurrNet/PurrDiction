@@ -91,13 +91,9 @@ namespace PurrNet.Prediction.Prebuilt
 #endif
 
 
-        protected override JumpInput GetInput()
+        protected override void GetFinalInput(ref JumpInput input)
         {
-            var input = new JumpInput()
-            {
-                jump = Input.GetKey(jumpKey)
-            };
-            return input;
+            input.jump = Input.GetKey(jumpKey);
         }
 
         public struct JumpData : IPredictedData<JumpData>

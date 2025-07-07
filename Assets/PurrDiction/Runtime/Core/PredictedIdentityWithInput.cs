@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using PurrNet.Modules;
 using PurrNet.Packing;
@@ -30,8 +29,8 @@ namespace PurrNet.Prediction
             return $"Input:\n{_lastInput}";
         }
 
-        protected abstract INPUT GetInput();
-        
+        protected abstract void GetFinalInput(ref INPUT input);
+
         protected virtual void UpdateInput(ref INPUT input) { }
 
         private INPUT _lastInput;
@@ -83,11 +82,11 @@ namespace PurrNet.Prediction
         {
             if (isLocal)
             {
-                var input = _nextInput;
-                SanitizeInput(ref input);
-                _lastInput = input;
-                _inputHistory.Write(tick, input);
-                _nextInput = GetInput();
+                GetFinalInput(ref _nextInput);
+                SanitizeInput(ref _nextInput);
+                _lastInput = _nextInput;
+                _inputHistory.Write(tick, _nextInput);
+                _nextInput = GetDefaultInput();
             }
             else if (isServer)
             {

@@ -17,14 +17,9 @@ namespace PurrNet.Prediction
             Debug.Log($"Exit state {gameObject.name}");
         }
 
-        protected override TestNodeInput GetInput()
+        protected override void GetFinalInput(ref TestNodeInput input)
         {
-            var input = new TestNodeInput()
-            {
-                isKeyPressed = Input.GetKey(KeyCode.X)
-            };
-
-            return input;
+            input.isKeyPressed = Input.GetKey(KeyCode.X);
         }
 
         protected override void StateSimulate(in TestNodeInput input, ref TestNodeData testNodeData, float delta)

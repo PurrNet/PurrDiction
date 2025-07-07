@@ -42,14 +42,12 @@ namespace PurrNet.Prediction.Prebuilt
             transform.rotation = Quaternion.Euler(0, state.rotation, 0);
         }
 
-        protected override Input GetInput()
+        protected override void GetFinalInput(ref Input input)
         {
-            var input = new Input()
+            input = new Input()
             {
                 moveDirection = GetCameraRelativeMovement(GetMovementInput())
             };
-
-            return input;
         }
 
         private Vector3 GetCameraRelativeMovement(Vector2 inputDirection)

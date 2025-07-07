@@ -32,14 +32,12 @@ namespace PurrNet.Prediction.Prebuilt
             _rigidbody.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
         }
 
-        protected override Input GetInput()
+        protected override void GetFinalInput(ref Input input)
         {
-            var input = new Input()
+            input = new Input()
             {
                 moveDirection = GetCameraRelativeMovement(GetMovementInput())
             };
-
-            return input;
         }
 
         protected override void Simulate(Input input, ref State state, float delta)

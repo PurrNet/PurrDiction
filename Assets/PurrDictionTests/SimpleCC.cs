@@ -51,14 +51,11 @@ namespace PurrNet.Prediction.Tests
             projectileRb.linearVelocity = transform.forward * 10;
         }
 
-        protected override SimpleWASDInput GetInput()
+        protected override void GetFinalInput(ref SimpleWASDInput input)
         {
-            return new SimpleWASDInput
-            {
-                horizontal = Input.GetAxisRaw("Horizontal"),
-                vertical = Input.GetAxisRaw("Vertical"),
-                dash = Input.GetKey(KeyCode.LeftShift)
-            };
+            input.horizontal = Input.GetAxisRaw("Horizontal");
+            input.vertical = Input.GetAxisRaw("Vertical");
+            input.dash = Input.GetKey(KeyCode.LeftShift);
         }
 
         protected override void UpdateInput(ref SimpleWASDInput input)

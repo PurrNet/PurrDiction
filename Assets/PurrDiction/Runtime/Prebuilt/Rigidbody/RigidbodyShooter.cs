@@ -61,13 +61,12 @@ namespace PurrNet.Prediction.Prebuilt
         }
 #endif
 
-        protected override ShootInput GetInput()
+        protected override void GetFinalInput(ref ShootInput input)
         {
-            var input = new ShootInput()
+            input = new ShootInput()
             {
                 shoot = Input.GetKey(shootKey)
             };
-            return input;
         }
 
         public struct ShootData : IPredictedData<ShootData>
