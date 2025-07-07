@@ -70,6 +70,9 @@ namespace PurrNet.Prediction
 
         private void InitPooling()
         {
+            if (!_predictedPrefabs)
+                return;
+
             if (!_poolParent)
             {
                 _poolParent = new GameObject("PooledPrefabs");
