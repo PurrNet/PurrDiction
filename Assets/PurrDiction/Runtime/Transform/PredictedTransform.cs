@@ -31,6 +31,7 @@ namespace PurrNet.Prediction
         public override void ResetState()
         {
             base.ResetState();
+
             if (_graphics)
                 _graphics.SetPositionAndRotation(transform.position, transform.rotation);
         }

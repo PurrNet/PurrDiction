@@ -73,6 +73,13 @@ namespace PurrNet.Prediction
             set => _rigidbody.isKinematic = value;
         }
 
+        private bool _defaultKinematic;
+
+        private void Awake()
+        {
+            _defaultKinematic = _rigidbody.isKinematic;
+        }
+
         protected override void LateAwake()
         {
             if (predictionManager.physics3d == null)
@@ -236,6 +243,12 @@ namespace PurrNet.Prediction
         private void Reset()
         {
             _rigidbody = GetComponent<Rigidbody>();
+        }
+
+        public override void ResetState()
+        {
+            base.ResetState();
+            _rigidbody.isKinematic = _defaultKinematic;
         }
 
         protected override UnityRigidbodyState GetInitialState()

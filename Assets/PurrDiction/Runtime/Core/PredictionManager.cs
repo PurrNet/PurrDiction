@@ -946,18 +946,18 @@ namespace PurrNet.Prediction
 
         public static void ProperlySetPosAndRot(Transform transform, Vector3 position, Quaternion rotation)
         {
-            transform.SetPositionAndRotation(position, rotation);
-
             if (transform.TryGetComponent(out Rigidbody2D rb2d))
             {
                 rb2d.position = position;
                 rb2d.rotation = rotation.eulerAngles.z;
+                transform.SetPositionAndRotation(position, rotation);
             }
 
             if (transform.TryGetComponent(out Rigidbody rb))
             {
                 rb.position = position;
                 rb.rotation = rotation;
+                transform.SetPositionAndRotation(position, rotation);
             }
 
             if (transform.TryGetComponent(out CharacterController ctrler) && ctrler.enabled)
@@ -966,6 +966,7 @@ namespace PurrNet.Prediction
                 transform.SetPositionAndRotation(position, rotation);
                 ctrler.enabled = true;
             }
+
         }
 
         internal GameObject InternalCreate(GameObject prefab, Vector3 position, Quaternion rotation, PredictedObjectID objectId, PlayerID? owner)
