@@ -1,4 +1,5 @@
 using System;
+using JetBrains.Annotations;
 using PurrNet.Modules;
 using PurrNet.Packing;
 using PurrNet.Utils;
@@ -23,6 +24,9 @@ namespace PurrNet.Prediction
         private bool _hasRigidbody2d;
         private bool _hasRigidbody;
         private bool _hasView;
+
+        [NonSerialized, UsedImplicitly]
+        public bool updateGraphics = true;
 
         public override void ResetState()
         {
@@ -278,7 +282,8 @@ namespace PurrNet.Prediction
             if (!_hasView)
                 return;
 
-            _graphics.SetPositionAndRotation(viewState.unityPosition, viewState.unityRotation);
+            if (updateGraphics)
+                _graphics.SetPositionAndRotation(viewState.unityPosition, viewState.unityRotation);
         }
     }
 }
