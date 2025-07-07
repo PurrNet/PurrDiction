@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using PurrNet.Logging;
 using UnityEngine;
 
 namespace PurrNet.Prediction.StateMachine
@@ -136,7 +137,10 @@ namespace PurrNet.Prediction.StateMachine
         {
             var index = _states.IndexOf(state);
             if (index == -1)
+            {
+                PurrLogger.LogError($"Can't switch state. Either state ({state}) is invalid, or doesn't exist in states list!", this);
                 return;
+            }
 
             SetState(index);
         }
