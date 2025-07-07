@@ -41,6 +41,12 @@ namespace PurrNet.Prediction
             _interpolatedState.Teleport(fullPredictedState);
         }
 
+        public override void ResetState()
+        {
+            base.ResetState();
+            _interpolatedState?.Teleport(fullPredictedState);
+        }
+
         internal override void PrepareInput(bool isServer, bool isLocal, ulong tick) { }
 
         private FULL_STATE<STATE> FULLInterpolate(FULL_STATE<STATE> from, FULL_STATE<STATE> to, float t)
