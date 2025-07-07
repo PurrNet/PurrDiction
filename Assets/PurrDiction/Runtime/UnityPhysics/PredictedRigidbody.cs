@@ -115,6 +115,7 @@ namespace PurrNet.Prediction
 
                     state.linearVelocity = compressedState.linearVelocity;
                     state.angularVelocity = compressedState.angularVelocity;
+                    state.isKinematic = compressedState.isKinematic;
                     break;
                 }
                 case FloatAccuracy.Low:
@@ -125,6 +126,7 @@ namespace PurrNet.Prediction
 
                     state.linearVelocity = halfState.linearVelocity;
                     state.angularVelocity = halfState.angularVelocity;
+                    state.isKinematic = halfState.isKinematic;
                     break;
                 }
                 default: throw new ArgumentOutOfRangeException();

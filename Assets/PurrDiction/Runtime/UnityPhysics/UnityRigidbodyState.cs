@@ -42,7 +42,7 @@ namespace PurrNet.Prediction
 
         public override string ToString()
         {
-            return $"UnityRigidbodyCompressedState LinearVelocity: {linearVelocity}\nAngularVelocity: {angularVelocity}";
+            return $"UnityRigidbodyCompressedState LinearVelocity: {linearVelocity}\nAngularVelocity: {angularVelocity}\nIsKinematic: {isKinematic}";
         }
     }
 
@@ -61,7 +61,7 @@ namespace PurrNet.Prediction
 
         public override string ToString()
         {
-            return $"UnityRigidbodyHalfState LinearVelocity: {(Vector3)linearVelocity}\nAngularVelocity: {(Vector3)angularVelocity}";
+            return $"UnityRigidbodyHalfState LinearVelocity: {(Vector3)linearVelocity}\nAngularVelocity: {(Vector3)angularVelocity}\nIsKinematic: {isKinematic}";
         }
     }
 }
