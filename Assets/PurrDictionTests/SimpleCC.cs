@@ -1,4 +1,3 @@
-using PurrNet.Logging;
 using UnityEngine;
 
 namespace PurrNet.Prediction.Tests
