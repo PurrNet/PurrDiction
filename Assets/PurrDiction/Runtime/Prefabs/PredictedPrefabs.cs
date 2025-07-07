@@ -28,6 +28,7 @@ namespace PurrNet.Prediction
         [SerializeField] private List<PredictedPrefab> _newPrefabs = new ();
 
         private bool _generating;
+        public bool autoGenerate => _autoGenerate;
         public List<PredictedPrefab> prefabs => _newPrefabs;
 
 #if UNITY_EDITOR

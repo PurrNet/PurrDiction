@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using PurrNet.Modules;
 using PurrNet.Packing;
@@ -30,8 +31,11 @@ namespace PurrNet.Prediction
         }
 
         protected abstract INPUT GetInput();
+        
+        protected virtual void UpdateInput(ref INPUT input) { }
 
         private INPUT _lastInput;
+        private INPUT _nextInput;
 
         internal override void Setup(NetworkManager manager, PredictionManager world, PredictedID id, PlayerID? owner)
         {
@@ -79,10 +83,11 @@ namespace PurrNet.Prediction
         {
             if (isLocal)
             {
-                var input = GetInput();
+                var input = _nextInput;
                 SanitizeInput(ref input);
                 _lastInput = input;
                 _inputHistory.Write(tick, input);
+                _nextInput = GetInput();
             }
             else if (isServer)
             {
@@ -98,6 +103,12 @@ namespace PurrNet.Prediction
                 _lastInput = input;
                 _inputHistory.Write(tick, input);
             }
+        }
+
+        protected virtual void Update()
+        {
+            if(isController)
+                UpdateInput(ref _nextInput);
         }
 
         internal override void SimulateRemote(ulong tick, float delta)
