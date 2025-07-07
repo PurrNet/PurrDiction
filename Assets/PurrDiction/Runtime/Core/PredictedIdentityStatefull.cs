@@ -38,13 +38,13 @@ namespace PurrNet.Prediction
 
         public override void ResetInterpolation()
         {
-            _interpolatedState.Teleport(fullPredictedState);
+            _interpolatedState?.Teleport(fullPredictedState);
         }
 
         public override void ResetState()
         {
             base.ResetState();
-            _interpolatedState?.Teleport(fullPredictedState);
+            ResetInterpolation();
         }
 
         internal override void PrepareInput(bool isServer, bool isLocal, ulong tick) { }
