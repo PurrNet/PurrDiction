@@ -41,7 +41,12 @@ namespace PurrNet.Prediction
             isFreshSpawn = true;
             owner = null;
             id = default;
+            OnRemovedFromPool();
         }
+
+        protected virtual void OnRemovedFromPool() {}
+
+        protected virtual void OnAddedToPool() {}
 
         /// <summary>
         /// Invoked immediately after the object is fully initialized and fresh spawned.
@@ -155,6 +160,11 @@ namespace PurrNet.Prediction
             }
 
             return current.gameObject;
+        }
+
+        internal void TriggerOnPooledEvent()
+        {
+            OnAddedToPool();
         }
     }
 }

@@ -67,6 +67,12 @@ namespace PurrNet.Prediction
             set => _rigidbody.angularVelocity = value;
         }
 
+        public bool isKinematic
+        {
+            get => _rigidbody.isKinematic;
+            set => _rigidbody.isKinematic = value;
+        }
+
         protected override void LateAwake()
         {
             if (predictionManager.physics3d == null)
@@ -235,19 +241,23 @@ namespace PurrNet.Prediction
             return new UnityRigidbodyState
             {
                 linearVelocity = _rigidbody.linearVelocity,
-                angularVelocity = _rigidbody.angularVelocity
+                angularVelocity = _rigidbody.angularVelocity,
+                isKinematic = _rigidbody.isKinematic
             };
         }
 
         protected override void GetUnityState(ref UnityRigidbodyState state)
         {
+            state.isKinematic = _rigidbody.isKinematic;
             state.linearVelocity = _rigidbody.linearVelocity;
             state.angularVelocity = _rigidbody.angularVelocity;
         }
 
         protected override void SetUnityState(UnityRigidbodyState state)
         {
-            if (!_rigidbody.isKinematic)
+            _rigidbody.isKinematic = state.isKinematic;
+
+            if (!state.isKinematic)
             {
                 _rigidbody.linearVelocity = state.linearVelocity;
                 _rigidbody.angularVelocity = state.angularVelocity;

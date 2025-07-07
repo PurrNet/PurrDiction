@@ -266,6 +266,7 @@ namespace PurrNet.Prediction
             {
                 UnregisterInstance(components[i]);
                 components[i].TriggerDestroyedEvent();
+                components[i].TriggerOnPooledEvent();
             }
 
             ListPool<PredictedIdentity>.Destroy(components);

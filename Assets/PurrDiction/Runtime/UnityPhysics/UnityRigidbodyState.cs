@@ -7,10 +7,11 @@ namespace PurrNet.Prediction
     {
         public Vector3 linearVelocity;
         public Vector3 angularVelocity;
+        public bool isKinematic;
 
         public override string ToString()
         {
-            return $"LinearVelocity: {linearVelocity}\nAngularVelocity: {angularVelocity}";
+            return $"LinearVelocity: {linearVelocity}\nAngularVelocity: {angularVelocity}\nIsKinematic: {isKinematic}";
         }
 
         public void Dispose() { }
@@ -20,6 +21,7 @@ namespace PurrNet.Prediction
     {
         public CompressedVector3 linearVelocity;
         public CompressedVector3 angularVelocity;
+        public bool isKinematic;
 
         public UnityRigidbodyCompressedState(UnityRigidbodyState state)
         {
@@ -34,6 +36,8 @@ namespace PurrNet.Prediction
                 new CompressedFloat(state.angularVelocity.y).Round(),
                 new CompressedFloat(state.angularVelocity.z).Round()
             );
+
+            isKinematic = state.isKinematic;
         }
 
         public override string ToString()
@@ -46,11 +50,13 @@ namespace PurrNet.Prediction
     {
         public HalfVector3 linearVelocity;
         public HalfVector3 angularVelocity;
+        public bool isKinematic;
 
         public UnityRigidbodyHalfState(UnityRigidbodyState state)
         {
             linearVelocity = state.linearVelocity;
             angularVelocity = state.angularVelocity;
+            isKinematic = state.isKinematic;
         }
 
         public override string ToString()
