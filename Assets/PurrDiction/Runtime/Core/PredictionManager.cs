@@ -490,7 +490,7 @@ namespace PurrNet.Prediction
             {
                 var system = _systems[systemIdx];
                 system.GetLatestUnityState();
-                if (system.IsOwner(myPlayer) && system.hasInput)
+                if (system.hasInput && system.IsOwner(myPlayer))
                 {
                     Packer<PredictedID>.Write(frame, system.id);
                     system.WriteInput(localTick, default, frame, _deltaModuleState, false);
