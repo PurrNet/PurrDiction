@@ -35,6 +35,7 @@ namespace PurrNet.Prediction
             BuiltInSystems.Hierarchy |
             BuiltInSystems.Players;
         [SerializeField] private PredictedPrefabs _predictedPrefabs;
+        [SerializeField] private bool _movePooledObjectsToPoolParent = true;
         [SerializeField] private InputQueueSettings _inputQueueSettings = new()
         {
             minInputs = 1,
@@ -82,7 +83,7 @@ namespace PurrNet.Prediction
                 _poolParent.SetActive(false);
             }
 
-            _pools = new GameObjectPoolCollection(_poolParent.transform);
+            _pools = new GameObjectPoolCollection(_poolParent.transform, _movePooledObjectsToPoolParent);
             for (var i = 0; i < _predictedPrefabs.prefabs.Count; i++)
             {
                 var prefab = _predictedPrefabs.prefabs[i];
@@ -990,9 +991,12 @@ namespace PurrNet.Prediction
             {
                 var go = pool.Allocate();
                 var trs = go.transform;
-                trs.SetParent(null);
                 ProperlySetPosAndRot(trs, position, rotation);
-                go.SetActive(true);
+
+                if (_movePooledObjectsToPoolParent)
+                    trs.SetParent(null);
+                else go.SetActive(true);
+
                 RegisterInstance(go, objectId, owner, true);
                 return go;
             }
