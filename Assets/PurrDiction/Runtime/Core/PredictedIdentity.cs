@@ -27,6 +27,8 @@ namespace PurrNet.Prediction
 
         internal bool isFreshSpawn = true;
 
+        public virtual bool hasInput => false;
+
         internal virtual bool isEventHandler => false;
 
         [UsedByIL]

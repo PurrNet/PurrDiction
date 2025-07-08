@@ -14,6 +14,8 @@ namespace PurrNet.Prediction
         [SerializeField] protected float _repeatInputFactor = 0.8f;
         [SerializeField] protected bool _extrapolateInput = true;
 
+        public override bool hasInput => true;
+
         private History<INPUT> _inputHistory;
 
         public INPUT currentInput => _currentInput;

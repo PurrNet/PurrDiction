@@ -482,13 +482,15 @@ namespace PurrNet.Prediction
 
         private void FinalizeInputOnClient(PlayerID myPlayer)
         {
+            const int MTU = 1024;
+
             using var frame = BitPackerPool.Get();
             uint writtenCount = 0;
             for (var systemIdx = 0; systemIdx < _systems.Count; systemIdx++)
             {
                 var system = _systems[systemIdx];
                 system.GetLatestUnityState();
-                if (system.IsOwner(myPlayer))
+                if (system.IsOwner(myPlayer) && system.hasInput)
                 {
                     Packer<PredictedID>.Write(frame, system.id);
                     system.WriteInput(localTick, default, frame, _deltaModuleState, false);
@@ -496,7 +498,9 @@ namespace PurrNet.Prediction
                 }
             }
 
-            SendInputToServer(localTick, writtenCount, frame);
+            if (frame.positionInBytes >= MTU)
+                SendInputToServerReliable(localTick, writtenCount, frame);
+            else SendInputToServer(localTick, writtenCount, frame);
         }
 
         private void FinalizeTickOnServer(bool cachedIsClient)
@@ -832,8 +836,19 @@ namespace PurrNet.Prediction
 
         readonly Dictionary<PlayerID, InputQueue> _clientTicks = new ();
 
+        [ServerRpc(requireOwnership: false, channel: Channel.ReliableUnordered)]
+        private void SendInputToServerReliable(ulong clientTick, PackedUInt count, BitPacker inputPacket, RPCInfo info = default)
+        {
+            ReceivedInput(clientTick, count, inputPacket, info);
+        }
+
         [ServerRpc(requireOwnership: false, channel: Channel.Unreliable)]
         private void SendInputToServer(ulong clientTick, PackedUInt count, BitPacker inputPacket, RPCInfo info = default)
+        {
+            ReceivedInput(clientTick, count, inputPacket, info);
+        }
+
+        private void ReceivedInput(ulong clientTick, PackedUInt count, BitPacker inputPacket, RPCInfo info)
         {
             if (!_clientTicks.TryGetValue(info.sender, out var ticks))
             {
