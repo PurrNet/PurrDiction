@@ -23,22 +23,6 @@ namespace PurrNet.Prediction
         {
             return _pools.TryGetValue(prefab, out pool);
         }
-
-        public GameObject Allocate(GameObject prefab)
-        {
-            if (!_pools.TryGetValue(prefab, out var pool))
-                throw new KeyNotFoundException($"No pool registered for prefab: {prefab.name}");
-
-            return pool.Allocate();
-        }
-
-        public void Delete(GameObject prefab, GameObject obj)
-        {
-            if (!_pools.TryGetValue(prefab, out var pool))
-                throw new KeyNotFoundException($"No pool registered for prefab: {prefab.name}");
-
-            pool.Delete(obj);
-        }
     }
 
     public class GameObjectPool : GenericPool<GameObject>
