@@ -967,21 +967,19 @@ namespace PurrNet.Prediction
                 rb2d.rotation = rotation.eulerAngles.z;
                 transform.SetPositionAndRotation(position, rotation);
             }
-
-            if (transform.TryGetComponent(out Rigidbody rb))
+            else if  (transform.TryGetComponent(out Rigidbody rb))
             {
                 rb.position = position;
                 rb.rotation = rotation;
                 transform.SetPositionAndRotation(position, rotation);
             }
-
-            if (transform.TryGetComponent(out CharacterController ctrler) && ctrler.enabled)
+            else if (transform.TryGetComponent(out CharacterController ctrler) && ctrler.enabled)
             {
                 ctrler.enabled = false;
                 transform.SetPositionAndRotation(position, rotation);
                 ctrler.enabled = true;
             }
-
+            else transform.SetPositionAndRotation(position, rotation);
         }
 
         internal GameObject InternalCreate(GameObject prefab, Vector3 position, Quaternion rotation, PredictedObjectID objectId, PlayerID? owner)
