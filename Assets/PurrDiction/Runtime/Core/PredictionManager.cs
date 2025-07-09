@@ -259,6 +259,8 @@ namespace PurrNet.Prediction
 
         public void UnregisterPooledInstance(GameObject go)
         {
+            if (!go) return;
+
             var components = ListPool<PredictedIdentity>.Instantiate();
             go.GetComponentsInChildren(true, components);
 
