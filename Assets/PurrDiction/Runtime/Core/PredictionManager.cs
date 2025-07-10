@@ -213,6 +213,7 @@ namespace PurrNet.Prediction
             _queue.Clear();
             _systems.Clear();
             _nextSystemId = 0;
+            _deltas.Clear();
         }
 
         private uint _nextSystemId;
@@ -310,6 +311,7 @@ namespace PurrNet.Prediction
             _systems.Remove(predictedIdentity);
         }
 
+
         protected override void OnObserverRemoved(PlayerID player)
         {
             _clientTicks.Remove(player);
@@ -340,7 +342,7 @@ namespace PurrNet.Prediction
             if (player == localPlayer)
                 return;
 
-            _clientTicks[player] = new();
+            _clientTicks[player] = new InputQueue();
             _clientFrames.Add(new PlayerPacker
             {
                 player = player,

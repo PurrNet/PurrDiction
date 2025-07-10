@@ -28,6 +28,8 @@ namespace PurrNet.Prediction
 
         protected override void LateAwake()
         {
+            if (!enabled)
+                return;
             TryToPopulateHierarchy(true, out _serverHierarchy);
             TryToPopulateHierarchy(false, out _clientHierarchy);
 
@@ -123,6 +125,9 @@ namespace PurrNet.Prediction
 
         protected override void Simulate(ref PredictedIdentitySpawnerState state, float delta)
         {
+            if (_clientHierarchy == null)
+                return;
+
             if (_finalizeNextFrame.HasValue && Time.frameCount > _finalizeNextFrame.Value)
             {
                 _finalizeNextFrame = null;
