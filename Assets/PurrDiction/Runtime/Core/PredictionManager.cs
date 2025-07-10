@@ -252,7 +252,10 @@ namespace PurrNet.Prediction
             go.GetComponentsInChildren(true, components);
 
             for (var i = 0; i < components.Count; i++)
-                UnregisterInstance(components[i]);
+            {
+                if (components[i].hideFlags != HideFlags.NotEditable)
+                    UnregisterInstance(components[i]);
+            }
 
             ListPool<PredictedIdentity>.Destroy(components);
         }

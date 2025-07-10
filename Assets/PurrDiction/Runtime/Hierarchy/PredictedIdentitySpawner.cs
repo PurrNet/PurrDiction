@@ -105,21 +105,37 @@ namespace PurrNet.Prediction
                 var reservedId = _serverHierarchy.ReserveNetworkID();
                 firstId ??= reservedId;
                 _serverHierarchy.ManualEarlySpawn(identity, reservedId);
-                _serverHierarchy.ManualFinalizeSpawn(identity);
 
                 foreach (var observer in predictionManager.observers)
                     _serverHierarchy.ManualAddObserver(identity, observer);
 
                 if (owner.HasValue && networkManager.TryGetModule(true, out GlobalOwnershipModule module))
                     module.GiveOwnership(identity, owner.Value, false, silent: true, isSpawner: true);
+
+                _serverHierarchy.ManualFinalizeSpawn(identity);
             }
 
             _areSpawned = true;
             return firstId;
         }
 
+        private int? _finalizeNextFrame;
+
         protected override void Simulate(ref PredictedIdentitySpawnerState state, float delta)
         {
+            if (_finalizeNextFrame.HasValue && Time.frameCount > _finalizeNextFrame.Value)
+            {
+                _finalizeNextFrame = null;
+
+                for (int i = 0; i < _identitiesToSpawn.Length; i++)
+                {
+                    var identity = _identitiesToSpawn[i];
+                    if (identity == null)
+                        continue;
+                    _clientHierarchy.ManualFinalizeSpawn(identity);
+                }
+            }
+
             if (_areSpawned || !predictionManager.isVerifiedAndReplaying)
                 return;
 
@@ -134,7 +150,7 @@ namespace PurrNet.Prediction
                     continue;
 
                 _clientHierarchy.ManualEarlySpawn(identity, new NetworkID(firstId, (ulong)i));
-                _clientHierarchy.ManualFinalizeSpawn(identity);
+                _finalizeNextFrame = Time.frameCount;
             }
 
             _areSpawned = true;
