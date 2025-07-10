@@ -93,8 +93,8 @@ namespace PurrNet.Prediction
 
         private NetworkID? SpawnAllIdentitiesOnServer()
         {
-            NetworkID? firstId = null;
             var networkManager = predictionManager.networkManager;
+            NetworkID? firstId = null;
 
             for (int i = 0; i < _identitiesToSpawn.Length; i++)
             {
@@ -110,10 +110,8 @@ namespace PurrNet.Prediction
                 foreach (var observer in predictionManager.observers)
                     _serverHierarchy.ManualAddObserver(identity, observer);
 
-                /*if (owner.HasValue && networkManager.TryGetModule(true, out GlobalOwnershipModule module))
-                {
+                if (owner.HasValue && networkManager.TryGetModule(true, out GlobalOwnershipModule module))
                     module.GiveOwnership(identity, owner.Value, false, silent: true, isSpawner: true);
-                }*/
             }
 
             _areSpawned = true;

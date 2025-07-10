@@ -10,8 +10,8 @@ namespace PurrNet.Prediction.Tests
         [RuntimeInitializeOnLoadMethod]
         static void TestWasdInput()
         {
-            var old = new DisposableList<int>(1);
-            var @new = new DisposableList<int>(5);
+            var old = DisposableList<int>.Create(1);
+            var @new = DisposableList<int>.Create(5);
             old.Dispose();
 
             @new.Add(1);

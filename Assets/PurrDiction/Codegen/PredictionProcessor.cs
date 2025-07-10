@@ -17,7 +17,7 @@ namespace Purrdiction.Codegen
     {
         static DisposableList<TypeDefinition> GetAllTypes(ModuleDefinition module)
         {
-            var types = new DisposableList<TypeDefinition>(32);
+            var types = DisposableList<TypeDefinition>.Create(32);
 
             types.AddRange(module.Types);
             foreach (var type in module.Types)
