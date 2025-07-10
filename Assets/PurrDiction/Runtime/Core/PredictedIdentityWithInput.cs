@@ -31,7 +31,7 @@ namespace PurrNet.Prediction
             return $"Input:\n{_lastInput}";
         }
 
-        protected abstract void GetFinalInput(ref INPUT input);
+        protected virtual void GetFinalInput(ref INPUT input) {}
 
         protected virtual void UpdateInput(ref INPUT input) { }
 
