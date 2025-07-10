@@ -3,7 +3,7 @@ using PurrNet.Packing;
 
 namespace PurrNet.Prediction
 {
-    public class StaticPredictedIdentity : PredictedIdentity
+    public sealed class StaticPredictedIdentity : PredictedIdentity
     {
         internal override void SimulateTick(ulong tick, float delta)
         {
