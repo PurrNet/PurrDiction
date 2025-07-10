@@ -17,8 +17,8 @@ namespace PurrNet.Prediction
         protected override PredictedHierarchyState GetInitialState()
         {
             var state = new PredictedHierarchyState(
-                new DisposableList<InstanceDetails>(16),
-                new DisposableList<PredictedObjectID>(16),
+                DisposableList<InstanceDetails>.Create(16),
+                DisposableList<PredictedObjectID>.Create(16),
                 _nextInstanceId);
             return state;
         }

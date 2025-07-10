@@ -59,8 +59,8 @@ namespace PurrNet.Prediction
         {
             return new PredictedPlayersState
             {
-                handledPlayers = new DisposableList<PlayerID>(16),
-                purrNetPlayers = new DisposableList<PlayerID>(16)
+                handledPlayers = DisposableList<PlayerID>.Create(16),
+                purrNetPlayers = DisposableList<PlayerID>.Create(16)
             };
         }
 

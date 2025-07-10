@@ -52,7 +52,7 @@ namespace PurrNet.Prediction
         {
             return new PredictedPhysics2DData
             {
-                events = new DisposableList<Physics2DEvent>(16)
+                events = DisposableList<Physics2DEvent>.Create(16)
             };
         }
 
@@ -62,11 +62,11 @@ namespace PurrNet.Prediction
 
             if (predictionManager.isVerifiedAndReplaying)
             {
-                var hierarchy = predictionManager.hierarchy;
+                var h = predictionManager.hierarchy;
                 for (var i = 0; i < count; i++)
                 {
                     var ev = currentState.events[i];
-                    TriggerEvent(hierarchy, ev);
+                    TriggerEvent(h, ev);
                     ev.Dispose();
                 }
             }
@@ -120,9 +120,9 @@ namespace PurrNet.Prediction
 
         public void RegisterEvent(PhysicsEventType type, PredictedRigidbody2D caller, Collision2D other)
         {
-            var hierarchy = predictionManager.hierarchy;
-            if (hierarchy.TryGetId(caller.gameObject, out var me) &&
-                hierarchy.TryGetId(other.gameObject, out var otherId))
+            var h = predictionManager.hierarchy;
+            if (h.TryGetId(caller.gameObject, out var me) &&
+                h.TryGetId(other.gameObject, out var otherId))
             {
                 var state = currentState;
                 var ev = new Physics2DEvent
@@ -133,22 +133,22 @@ namespace PurrNet.Prediction
                     other = otherId
                 };
 
-                ev.contacts = new DisposableList<Physics2DContactPoint>(other.contactCount);
+                ev.contacts = DisposableList<Physics2DContactPoint>.Create(other.contactCount);
                 for (var i = 0; i < other.contactCount; i++)
                     ev.contacts.Add(new Physics2DContactPoint(other.GetContact(i)));
                 state.events.Add(ev);
 
                 if (!predictionManager.isVerifiedAndReplaying)
-                    TriggerEvent(hierarchy, ev);
+                    TriggerEvent(h, ev);
                 currentState = state;
             }
         }
 
         public void RegisterEvent(PhysicsEventType type, PredictedRigidbody2D caller, Collider2D other)
         {
-            var hierarchy = predictionManager.hierarchy;
-            if (hierarchy.TryGetId(caller.gameObject, out var me) &&
-                hierarchy.TryGetId(other.gameObject, out var otherId))
+            var h = predictionManager.hierarchy;
+            if (h.TryGetId(caller.gameObject, out var me) &&
+                h.TryGetId(other.gameObject, out var otherId))
             {
                 var state = currentState;
                 var ev = new Physics2DEvent
@@ -162,7 +162,7 @@ namespace PurrNet.Prediction
                 state.events.Add(ev);
 
                 if (!predictionManager.isVerifiedAndReplaying)
-                    TriggerEvent(hierarchy, ev);
+                    TriggerEvent(h, ev);
                 currentState = state;
             }
         }
