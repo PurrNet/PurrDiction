@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
+using PurrNet.Logging;
 using PurrNet.Modules;
 using PurrNet.Packing;
 using PurrNet.Pooling;
@@ -955,6 +956,13 @@ namespace PurrNet.Prediction
 
         public bool TryGetPrefab(GameObject prefab, out int id)
         {
+            if (!_predictedPrefabs)
+            {
+                PurrLogger.LogError($"No predicted prefabs scriptable found on prediction manager! Make sure you've populated the field.", this);
+                id = -1;
+                return false;
+            }
+            
             var prefabs = _predictedPrefabs.prefabs;
             for (id = 0; id < prefabs.Count; id++)
             {
