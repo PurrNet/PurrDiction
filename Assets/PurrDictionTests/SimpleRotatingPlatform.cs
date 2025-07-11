@@ -35,11 +35,13 @@ namespace PurrNet.Prediction.Tests
         protected override void LateAwake()
         {
             _predictedRigidbody.onCollisionEnter += OnUnityCollisionEnter;
+            _predictedRigidbody.onTriggerEnter += OnUnityTriggerEnter;
         }
 
         protected override void Destroyed()
         {
             _predictedRigidbody.onCollisionEnter -= OnUnityCollisionEnter;
+            _predictedRigidbody.onTriggerEnter -= OnUnityTriggerEnter;
         }
 
         protected override void Simulate(ref State data, float delta)
@@ -50,7 +52,12 @@ namespace PurrNet.Prediction.Tests
             predictionManager.hierarchy.Delete(this);
         }
 
-        private void OnUnityCollisionEnter(PredictedObjectID other, DisposableList<PhysicsContactPoint> evContacts)
+        private void OnUnityTriggerEnter(GameObject other)
+        {
+            PurrLogger.Log($"Triggered with {other} on {gameObject.name}");
+        }
+
+        private void OnUnityCollisionEnter(GameObject other, DisposableList<PhysicsContactPoint> evContacts)
         {
             var copy = currentState;
             copy.collisionCount += 1;

@@ -962,7 +962,7 @@ namespace PurrNet.Prediction
                 id = -1;
                 return false;
             }
-            
+
             var prefabs = _predictedPrefabs.prefabs;
             for (id = 0; id < prefabs.Count; id++)
             {
@@ -1056,6 +1056,25 @@ namespace PurrNet.Prediction
             }
 
             ListPool<PredictedIdentity>.Destroy(children);
+        }
+
+        public static bool TryGetClosestPredictedID(GameObject go, out PredictedID pid)
+        {
+            if (go.TryGetComponent<PredictedIdentity>(out var identity))
+            {
+                pid = identity.id;
+                return true;
+            }
+
+            var parent = go.GetComponentInParent<PredictedIdentity>();
+            if (parent != null)
+            {
+                pid = parent.id;
+                return true;
+            }
+
+            pid = default;
+            return false;
         }
     }
 }

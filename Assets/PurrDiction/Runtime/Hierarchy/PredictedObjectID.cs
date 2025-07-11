@@ -6,7 +6,7 @@ namespace PurrNet.Prediction
     public readonly struct PredictedObjectID : IPackedAuto, IEquatable<PredictedObjectID>
     {
         public readonly PackedUInt instanceId;
-        
+
         public PredictedObjectID(uint instanceId)
         {
             this.instanceId = instanceId;
@@ -25,6 +25,11 @@ namespace PurrNet.Prediction
         public override int GetHashCode()
         {
             return (int)instanceId.value;
+        }
+
+        public override string ToString()
+        {
+            return $"{instanceId.value}";
         }
     }
 }

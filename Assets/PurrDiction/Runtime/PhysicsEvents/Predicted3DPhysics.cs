@@ -23,8 +23,8 @@ namespace PurrNet.Prediction
     {
         public bool isTrigger;
         public PhysicsEventType type;
-        public PredictedObjectID me;
-        public PredictedObjectID other;
+        public PredictedID me;
+        public PredictedID other;
         public DisposableList<PhysicsContactPoint> contacts;
 
         public void Dispose()
@@ -71,11 +71,10 @@ namespace PurrNet.Prediction
 
             if (predictionManager.isVerifiedAndReplaying)
             {
-                var h = predictionManager.hierarchy;
                 for (var i = 0; i < count; i++)
                 {
                     var ev = currentState.events[i];
-                    TriggerEvent(h, ev);
+                    TriggerEvent(predictionManager, ev);
                     ev.Dispose();
                 }
             }
@@ -88,22 +87,23 @@ namespace PurrNet.Prediction
             currentState.events.Clear();
         }
 
-        private static void TriggerEvent(PredictedHierarchy hierarchy, PhysicsEvent ev)
+        private static void TriggerEvent(PredictionManager predictionManager, PhysicsEvent ev)
         {
-            if (hierarchy.TryGetComponent<PredictedRigidbody>(ev.me, out var me))
+            if (ev.me.TryGetIdentity<PredictedRigidbody>(predictionManager, out var me))
             {
+                var otherGo = ev.other.GetGameObject(predictionManager);
                 if (ev.isTrigger)
                 {
                     switch (ev.type)
                     {
                         case PhysicsEventType.Enter:
-                            me.RaiseTriggerEnter(ev.other);
+                            me.RaiseTriggerEnter(otherGo);
                             break;
                         case PhysicsEventType.Exit:
-                            me.RaiseTriggerExit(ev.other);
+                            me.RaiseTriggerExit(otherGo);
                             break;
                         case PhysicsEventType.Stay:
-                            me.RaiseTriggerStay(ev.other);
+                            me.RaiseTriggerStay(otherGo);
                             break;
                         default: throw new ArgumentOutOfRangeException();
                     }
@@ -113,13 +113,13 @@ namespace PurrNet.Prediction
                     switch (ev.type)
                     {
                         case PhysicsEventType.Enter:
-                            me.RaiseCollisionEnter(ev.other, ev.contacts);
+                            me.RaiseCollisionEnter(otherGo, ev.contacts);
                             break;
                         case PhysicsEventType.Exit:
-                            me.RaiseCollisionExit(ev.other, ev.contacts);
+                            me.RaiseCollisionExit(otherGo, ev.contacts);
                             break;
                         case PhysicsEventType.Stay:
-                            me.RaiseCollisionStay(ev.other, ev.contacts);
+                            me.RaiseCollisionStay(otherGo, ev.contacts);
                             break;
                         default: throw new ArgumentOutOfRangeException();
                     }
@@ -129,16 +129,14 @@ namespace PurrNet.Prediction
 
         public void RegisterEvent(PhysicsEventType type, PredictedRigidbody caller, Collision other)
         {
-            var h = predictionManager.hierarchy;
-            if (h.TryGetId(caller.gameObject, out var me) &&
-                h.TryGetId(other.gameObject, out var otherId))
+            if (PredictionManager.TryGetClosestPredictedID(other.gameObject, out var otherId))
             {
                 var state = currentState;
                 var ev = new PhysicsEvent
                 {
                     isTrigger = false,
                     type = type,
-                    me = me,
+                    me = caller.id,
                     other = otherId
                 };
 
@@ -148,30 +146,28 @@ namespace PurrNet.Prediction
                 state.events.Add(ev);
 
                 if (!predictionManager.isVerifiedAndReplaying)
-                    TriggerEvent(h, ev);
+                    TriggerEvent(predictionManager, ev);
                 currentState = state;
             }
         }
 
         public void RegisterEvent(PhysicsEventType type, PredictedRigidbody caller, Collider other)
         {
-            var h = predictionManager.hierarchy;
-            if (h.TryGetId(caller.gameObject, out var me) &&
-                h.TryGetId(other.gameObject, out var otherId))
+            if (PredictionManager.TryGetClosestPredictedID(other.gameObject, out var otherId))
             {
                 var state = currentState;
                 var ev = new PhysicsEvent
                 {
                     isTrigger = true,
                     type = type,
-                    me = me,
+                    me = caller.id,
                     other = otherId
                 };
 
                 state.events.Add(ev);
 
                 if (!predictionManager.isVerifiedAndReplaying)
-                    TriggerEvent(h, ev);
+                    TriggerEvent(predictionManager, ev);
                 currentState = state;
             }
         }

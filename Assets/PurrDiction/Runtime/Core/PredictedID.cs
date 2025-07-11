@@ -1,5 +1,6 @@
 ﻿using System;
 using PurrNet.Packing;
+using UnityEngine;
 
 namespace PurrNet.Prediction
 {
@@ -11,6 +12,13 @@ namespace PurrNet.Prediction
         public PredictedIdentity GetIdentity(PredictionManager manager)
         {
             return manager.GetIdentity(this);
+        }
+
+        public GameObject GetGameObject(PredictionManager manager)
+        {
+            var id = manager.GetIdentity(this);
+            if (!id) return null;
+            return id.gameObject;
         }
 
         public T GetIdentity<T>(PredictionManager manager) where T : PredictedIdentity
@@ -26,8 +34,22 @@ namespace PurrNet.Prediction
 
         public bool TryGetIdentity<T>(PredictionManager manager, out T identity) where T : PredictedIdentity
         {
-            identity = (T)manager.GetIdentity(this);
-            return identity != null;
+            var id = manager.GetIdentity(this);
+
+            if (!id)
+            {
+                identity = null;
+                return false;
+            }
+
+            if (id is not T predictedIdentity)
+            {
+                identity = null;
+                return false;
+            }
+
+            identity = predictedIdentity;
+            return true;
         }
 
         public PredictedID(PredictedObjectID objId, uint id)

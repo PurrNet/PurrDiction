@@ -31,8 +31,8 @@ namespace PurrNet.Prediction
     [AddComponentMenu("PurrDiction/Unity Rigidbody/Predicted Rigidbody")]
     public class PredictedRigidbody : PredictedIdentity<UnityRigidbodyState>
     {
-        public delegate void OnCollisionDelegate(PredictedObjectID other, DisposableList<PhysicsContactPoint> evContacts);
-        public delegate void OnTriggerDelegate(PredictedObjectID other);
+        public delegate void OnCollisionDelegate(GameObject other, DisposableList<PhysicsContactPoint> evContacts);
+        public delegate void OnTriggerDelegate(GameObject other);
 
         [SerializeField, PurrLock] private Rigidbody _rigidbody;
         [SerializeField, PurrLock] private FloatAccuracy _floatAccuracy = FloatAccuracy.Medium;
@@ -345,32 +345,32 @@ namespace PurrNet.Prediction
             predictionManager.physics3d.RegisterEvent(PhysicsEventType.Stay, this, other);
         }
 
-        public void RaiseTriggerEnter(PredictedObjectID other)
+        public void RaiseTriggerEnter(GameObject other)
         {
             onTriggerEnter?.Invoke(other);
         }
 
-        public void RaiseTriggerExit(PredictedObjectID other)
+        public void RaiseTriggerExit(GameObject other)
         {
             onTriggerExit?.Invoke(other);
         }
 
-        public void RaiseTriggerStay(PredictedObjectID other)
+        public void RaiseTriggerStay(GameObject other)
         {
             onTriggerStay?.Invoke(other);
         }
 
-        public void RaiseCollisionEnter(PredictedObjectID other, DisposableList<PhysicsContactPoint> evContacts)
+        public void RaiseCollisionEnter(GameObject other, DisposableList<PhysicsContactPoint> evContacts)
         {
             onCollisionEnter?.Invoke(other, evContacts);
         }
 
-        public void RaiseCollisionExit(PredictedObjectID other, DisposableList<PhysicsContactPoint> evContacts)
+        public void RaiseCollisionExit(GameObject other, DisposableList<PhysicsContactPoint> evContacts)
         {
             onCollisionExit?.Invoke(other, evContacts);
         }
 
-        public void RaiseCollisionStay(PredictedObjectID other, DisposableList<PhysicsContactPoint> evContacts)
+        public void RaiseCollisionStay(GameObject other, DisposableList<PhysicsContactPoint> evContacts)
         {
             onCollisionStay?.Invoke(other, evContacts);
         }
