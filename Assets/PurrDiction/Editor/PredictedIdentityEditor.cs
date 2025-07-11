@@ -82,6 +82,13 @@ namespace PurrNet.Prediction.Editor
                     else GUILayout.Box(content, _box);
                 }
                 GUILayout.EndHorizontal();
+
+                if (predictedIdentity.GetType().GetCustomAttributes(typeof(PredictionUnsafeAttribute), true).Length > 0)
+                {
+                    EditorGUILayout.HelpBox("This identity is marked as PredictionUnsafe, which means use at your own risk.\n" +
+                                            "It may not behave as expected or works against prediction.",
+                        MessageType.Warning);
+                }
             }
         }
     }

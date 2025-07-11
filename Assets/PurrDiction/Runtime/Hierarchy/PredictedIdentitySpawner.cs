@@ -15,6 +15,7 @@ namespace PurrNet.Prediction
         }
     }
 
+    [PredictionUnsafe]
     public class PredictedIdentitySpawner : PredictedIdentity<PredictedIdentitySpawnerState>
     {
         [SerializeField] private NetworkIdentity[] _identitiesToSpawn;

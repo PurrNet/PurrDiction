@@ -1,4 +1,3 @@
-using UnityEngine;
 using PurrNet.Packing;
 
 namespace PurrNet.Prediction
