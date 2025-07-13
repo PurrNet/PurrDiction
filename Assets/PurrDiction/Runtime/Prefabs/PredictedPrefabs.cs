@@ -1,9 +1,9 @@
+using System;
 using System.Collections.Generic;
 using JetBrains.Annotations;
 using UnityEngine;
 using Object = UnityEngine.Object;
 #if UNITY_EDITOR
-using System;
 using System.IO;
 using PurrNet.Logging;
 using PurrNet.Utils;
@@ -18,13 +18,13 @@ namespace PurrNet.Prediction
         [SerializeField] private bool _autoGenerate = true;
         [SerializeField] private Object _folder;
 
-        [SerializeField] private PoolSettings _defaultPooling = new PoolSettings
+        [SerializeField, UsedImplicitly] private PoolSettings _defaultPooling = new PoolSettings
         {
             usePooling = false,
             initialSize = 0
         };
 
-        [SerializeField, HideInInspector, Obsolete] private List<GameObject> _prefabs = new ();
+        [SerializeField, HideInInspector, Obsolete, UsedImplicitly] private List<GameObject> _prefabs = new ();
         [SerializeField] private List<PredictedPrefab> _newPrefabs = new ();
 
         private bool _generating;
