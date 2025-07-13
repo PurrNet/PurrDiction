@@ -31,7 +31,7 @@ namespace PurrNet.Prediction
     [AddComponentMenu("PurrDiction/Unity Rigidbody/Predicted Rigidbody")]
     public class PredictedRigidbody : PredictedIdentity<UnityRigidbodyState>
     {
-        public delegate void OnCollisionDelegate(GameObject other, DisposableList<PhysicsContactPoint> evContacts);
+        public delegate void OnCollisionDelegate(GameObject other, PhysicsCollision physicsEvent);
         public delegate void OnTriggerDelegate(GameObject other);
 
         [SerializeField, PurrLock] private Rigidbody _rigidbody;
@@ -360,17 +360,17 @@ namespace PurrNet.Prediction
             onTriggerStay?.Invoke(other);
         }
 
-        public void RaiseCollisionEnter(GameObject other, DisposableList<PhysicsContactPoint> evContacts)
+        public void RaiseCollisionEnter(GameObject other, PhysicsCollision evContacts)
         {
             onCollisionEnter?.Invoke(other, evContacts);
         }
 
-        public void RaiseCollisionExit(GameObject other, DisposableList<PhysicsContactPoint> evContacts)
+        public void RaiseCollisionExit(GameObject other, PhysicsCollision evContacts)
         {
             onCollisionExit?.Invoke(other, evContacts);
         }
 
-        public void RaiseCollisionStay(GameObject other, DisposableList<PhysicsContactPoint> evContacts)
+        public void RaiseCollisionStay(GameObject other, PhysicsCollision evContacts)
         {
             onCollisionStay?.Invoke(other, evContacts);
         }

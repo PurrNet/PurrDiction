@@ -19,18 +19,24 @@ namespace PurrNet.Prediction
         }
     }
 
-    public struct PhysicsEvent : IDisposable
+    public struct PhysicsCollision : IDisposable
+    {
+        public DisposableList<PhysicsContactPoint> contacts;
+        public Vector3 impulse;
+        public Vector3 relativeVelocity;
+
+        public void Dispose() => contacts.Dispose();
+    }
+
+    public struct PhysicsEvent : IPackedAuto, IDisposable
     {
         public bool isTrigger;
         public PhysicsEventType type;
         public PredictedID me;
         public PredictedID other;
-        public DisposableList<PhysicsContactPoint> contacts;
+        public PhysicsCollision collision;
 
-        public void Dispose()
-        {
-            contacts.Dispose();
-        }
+        public void Dispose() => collision.Dispose();
     }
 
     public struct PredictedPhysicsData : IPredictedData<PredictedPhysicsData>
@@ -113,13 +119,13 @@ namespace PurrNet.Prediction
                     switch (ev.type)
                     {
                         case PhysicsEventType.Enter:
-                            me.RaiseCollisionEnter(otherGo, ev.contacts);
+                            me.RaiseCollisionEnter(otherGo, ev.collision);
                             break;
                         case PhysicsEventType.Exit:
-                            me.RaiseCollisionExit(otherGo, ev.contacts);
+                            me.RaiseCollisionExit(otherGo, ev.collision);
                             break;
                         case PhysicsEventType.Stay:
-                            me.RaiseCollisionStay(otherGo, ev.contacts);
+                            me.RaiseCollisionStay(otherGo, ev.collision);
                             break;
                         default: throw new ArgumentOutOfRangeException();
                     }
@@ -137,12 +143,17 @@ namespace PurrNet.Prediction
                     isTrigger = false,
                     type = type,
                     me = caller.id,
-                    other = otherId
+                    other = otherId,
+                    collision = new PhysicsCollision
+                    {
+                        impulse = other.impulse,
+                        relativeVelocity = other.relativeVelocity,
+                        contacts = DisposableList<PhysicsContactPoint>.Create(other.contactCount)
+                    }
                 };
 
-                ev.contacts = DisposableList<PhysicsContactPoint>.Create(other.contactCount);
                 for (var i = 0; i < other.contactCount; i++)
-                    ev.contacts.Add(new PhysicsContactPoint(other.GetContact(i)));
+                    ev.collision.contacts.Add(new PhysicsContactPoint(other.GetContact(i)));
                 state.events.Add(ev);
 
                 if (!predictionManager.isVerifiedAndReplaying)

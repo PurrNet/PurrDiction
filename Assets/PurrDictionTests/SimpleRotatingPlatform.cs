@@ -1,5 +1,4 @@
 using PurrNet.Logging;
-using PurrNet.Pooling;
 using UnityEngine;
 
 namespace PurrNet.Prediction.Tests
@@ -57,7 +56,7 @@ namespace PurrNet.Prediction.Tests
             PurrLogger.Log($"Triggered with {other} on {gameObject.name}");
         }
 
-        private void OnUnityCollisionEnter(GameObject other, DisposableList<PhysicsContactPoint> evContacts)
+        private void OnUnityCollisionEnter(GameObject other, PhysicsCollision collision)
         {
             var copy = currentState;
             copy.collisionCount += 1;
