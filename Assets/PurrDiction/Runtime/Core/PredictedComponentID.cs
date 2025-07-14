@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace PurrNet.Prediction
 {
-    public readonly struct PredictedID : IPackedAuto, IEquatable<PredictedID>
+    public readonly struct PredictedComponentID : IPackedAuto, IEquatable<PredictedComponentID>
     {
         public readonly PredictedObjectID objectId;
         public readonly PackedUInt componentId;
@@ -52,20 +52,20 @@ namespace PurrNet.Prediction
             return true;
         }
 
-        public PredictedID(PredictedObjectID objId, uint id)
+        public PredictedComponentID(PredictedObjectID objId, uint id)
         {
             objectId = objId;
             componentId = id;
         }
 
-        public bool Equals(PredictedID other)
+        public bool Equals(PredictedComponentID other)
         {
             return objectId.Equals(other.objectId) && componentId.value == other.componentId.value;
         }
 
         public override bool Equals(object obj)
         {
-            return obj is PredictedID other && Equals(other);
+            return obj is PredictedComponentID other && Equals(other);
         }
 
         public override int GetHashCode()

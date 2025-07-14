@@ -24,8 +24,8 @@ namespace PurrNet.Prediction
         public bool isTrigger;
         public PhysicsEventType type;
 
-        public PredictedID me;
-        public PredictedID other;
+        public PredictedComponentID me;
+        public PredictedComponentID other;
         public DisposableList<Physics2DContactPoint> contacts;
 
         public void Dispose() => contacts.Dispose();

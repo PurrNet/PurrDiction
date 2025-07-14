@@ -279,14 +279,14 @@ namespace PurrNet.Prediction
             ListPool<PredictedIdentity>.Destroy(components);
         }
 
-        readonly Dictionary<PredictedID, PredictedIdentity> _instanceMap = new ();
+        readonly Dictionary<PredictedComponentID, PredictedIdentity> _instanceMap = new ();
 
-        public bool TryGetIdentity(PredictedID id, out PredictedIdentity instance)
+        public bool TryGetIdentity(PredictedComponentID id, out PredictedIdentity instance)
         {
             return _instanceMap.TryGetValue(id, out instance);
         }
 
-        public PredictedIdentity GetIdentity(PredictedID id)
+        public PredictedIdentity GetIdentity(PredictedComponentID id)
         {
             return _instanceMap.GetValueOrDefault(id);
         }
@@ -299,7 +299,7 @@ namespace PurrNet.Prediction
                 return;
             }
 
-            var pid = new PredictedID(objectId, componentId);
+            var pid = new PredictedComponentID(objectId, componentId);
             _instanceMap[pid] = system;
             system.Setup(networkManager, this, pid, owner);
 
@@ -500,7 +500,7 @@ namespace PurrNet.Prediction
                 system.GetLatestUnityState();
                 if (system.hasInput && system.IsOwner(myPlayer))
                 {
-                    Packer<PredictedID>.Write(frame, system.id);
+                    Packer<PredictedComponentID>.Write(frame, system.id);
                     system.WriteInput(localTick, default, frame, _deltaModuleState, false);
                     writtenCount += 1;
                 }
@@ -896,8 +896,8 @@ namespace PurrNet.Prediction
 
                 for (var i = 0; i < count; i++)
                 {
-                    PredictedID pid = default;
-                    Packer<PredictedID>.Read(inputPacket, ref pid);
+                    PredictedComponentID pid = default;
+                    Packer<PredictedComponentID>.Read(inputPacket, ref pid);
 
                     if (_instanceMap.TryGetValue(pid, out var system) && system.IsOwner(sender, senderIsServer))
                     {
@@ -1058,7 +1058,7 @@ namespace PurrNet.Prediction
             ListPool<PredictedIdentity>.Destroy(children);
         }
 
-        public static bool TryGetClosestPredictedID(GameObject go, out PredictedID pid)
+        public static bool TryGetClosestPredictedID(GameObject go, out PredictedComponentID pid)
         {
             if (go.TryGetComponent<PredictedIdentity>(out var identity))
             {

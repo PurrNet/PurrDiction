@@ -32,8 +32,8 @@ namespace PurrNet.Prediction
     {
         public bool isTrigger;
         public PhysicsEventType type;
-        public PredictedID me;
-        public PredictedID other;
+        public PredictedComponentID me;
+        public PredictedComponentID other;
         public PhysicsCollision collision;
 
         public void Dispose() => collision.Dispose();

@@ -23,7 +23,7 @@ namespace PurrNet.Prediction
         /// The unique identifier for this object.
         /// Can be used to identify the object across the network.
         /// </summary>
-        public PredictedID id;
+        public PredictedComponentID id;
 
         internal bool isFreshSpawn = true;
 
@@ -68,7 +68,7 @@ namespace PurrNet.Prediction
 
         public bool isServer { get; private set; }
 
-        internal virtual void Setup(NetworkManager manager, PredictionManager world, PredictedID id, PlayerID? owner)
+        internal virtual void Setup(NetworkManager manager, PredictionManager world, PredictedComponentID id, PlayerID? owner)
         {
             isServer = manager.isServer;
             this.owner = owner;

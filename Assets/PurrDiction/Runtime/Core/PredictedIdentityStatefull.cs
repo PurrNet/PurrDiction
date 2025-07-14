@@ -9,9 +9,9 @@ namespace PurrNet.Prediction
 {
     public readonly struct DeltaKey<T> : IStableHashable
     {
-        private readonly PredictedID id;
+        private readonly PredictedComponentID id;
 
-        public DeltaKey(PredictedID id)
+        public DeltaKey(PredictedComponentID id)
         {
             this.id = id;
         }
@@ -67,7 +67,7 @@ namespace PurrNet.Prediction
             set => fullPredictedState.state = value;
         }
 
-        internal override void Setup(NetworkManager manager, PredictionManager world, PredictedID id, PlayerID? owner)
+        internal override void Setup(NetworkManager manager, PredictionManager world, PredictedComponentID id, PlayerID? owner)
         {
             hierarchy = world.hierarchy;
 
