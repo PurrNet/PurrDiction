@@ -31,6 +31,7 @@ namespace PurrNet.Prediction
         {
             if (!enabled)
                 return;
+
             TryToPopulateHierarchy(true, out _serverHierarchy);
             TryToPopulateHierarchy(false, out _clientHierarchy);
 
@@ -43,6 +44,18 @@ namespace PurrNet.Prediction
 
         protected override void Destroyed()
         {
+            for (int i = 0; i < _identitiesToSpawn.Length; i++)
+            {
+                var identity = _identitiesToSpawn[i];
+                if (identity && identity.isSpawned)
+                {
+                    _serverHierarchy?.ManualDespawn(identity);
+
+                    if (_clientHierarchy != null && predictionManager.isVerified)
+                        _clientHierarchy.ManualDespawn(identity);
+                }
+            }
+
             if (_serverHierarchy != null)
                 predictionManager.onObserverRemoved -= OnObserverRemoved;
         }
@@ -108,7 +121,6 @@ namespace PurrNet.Prediction
                 var reservedId = _serverHierarchy.ReserveNetworkID();
                 firstId ??= reservedId;
                 _serverHierarchy.ManualEarlySpawn(identity, reservedId);
-
                 foreach (var observer in predictionManager.observers)
                     _serverHierarchy.ManualAddObserver(identity, observer);
 
