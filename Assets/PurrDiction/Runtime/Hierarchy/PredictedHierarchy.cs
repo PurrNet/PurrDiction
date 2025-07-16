@@ -333,7 +333,11 @@ namespace PurrNet.Prediction
                 return;
 
             if (!_goToId.TryGetValue(pid.gameObject, out var poid))
+            {
+                PurrLogger.LogError($"PredictedObjectID for GameObject `{pid.gameObject.name}` not found.\n" +
+                                    $"Delete the root GameObject or add a `PredictedObjectSeparator` to this GameObject.", this);
                 return;
+            }
 
             currentState.toDelete.Add(poid);
         }

@@ -60,10 +60,7 @@ namespace PurrNet.Prediction
                 Physics2D.simulationMode = SimulationMode2D.Script;
             if ((_physicsProvider & PredictionPhysicsProvider.UnityPhysics3D) != 0)
                 Physics.simulationMode = SimulationMode.Script;
-        }
 
-        private void Start()
-        {
             InitPooling();
         }
 
@@ -185,16 +182,19 @@ namespace PurrNet.Prediction
             ListPool<PredictedIdentity>.Destroy(identities);
         }
 
+        private TickManager _tickManager;
+
         protected override void OnSpawned()
         {
-            networkManager.tickModule.onPreTick += OnPreTick;
-            networkManager.tickModule.onPostTick += OnPostTick;
+            _tickManager = networkManager.tickModule;
+            _tickManager.onPreTick += OnPreTick;
+            _tickManager.onPostTick += OnPostTick;
         }
 
         protected override void OnDespawned()
         {
-            networkManager.tickModule.onPreTick -= OnPreTick;
-            networkManager.tickModule.onPostTick -= OnPostTick;
+            _tickManager.onPreTick -= OnPreTick;
+            _tickManager.onPostTick -= OnPostTick;
 
             CleanupAllSystems();
         }
@@ -207,7 +207,7 @@ namespace PurrNet.Prediction
             for (var i = _systems.Count - 1; i >= 0; i--)
             {
                 if (_systems[i])
-                    DestroyImmediate(_systems[i]);
+                    Destroy(_systems[i]);
             }
 
             _instanceMap.Clear();
@@ -250,6 +250,9 @@ namespace PurrNet.Prediction
 
         public void UnregisterInstance(GameObject go)
         {
+            if (!go)
+                return;
+
             var components = ListPool<PredictedIdentity>.Instantiate();
             go.GetComponentsInChildren(true, components);
 
@@ -336,6 +339,12 @@ namespace PurrNet.Prediction
             foreach (var packer in _clientFrames)
                 packer.Dispose();
             _clientFrames.Clear();
+
+            if (_tickManager != null)
+            {
+                _tickManager.onPreTick -= OnPreTick;
+                _tickManager.onPostTick -= OnPostTick;
+            }
         }
 
         protected override void OnObserverAdded(PlayerID player)
