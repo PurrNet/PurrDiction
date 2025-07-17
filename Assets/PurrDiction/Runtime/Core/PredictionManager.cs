@@ -193,8 +193,11 @@ namespace PurrNet.Prediction
 
         protected override void OnDespawned()
         {
-            _tickManager.onPreTick -= OnPreTick;
-            _tickManager.onPostTick -= OnPostTick;
+            if (_tickManager != null)
+            {
+                _tickManager.onPreTick -= OnPreTick;
+                _tickManager.onPostTick -= OnPostTick;
+            }
 
             CleanupAllSystems();
         }
