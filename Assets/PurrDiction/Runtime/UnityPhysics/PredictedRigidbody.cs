@@ -37,6 +37,7 @@ namespace PurrNet.Prediction
         [SerializeField, PurrLock] private Rigidbody _rigidbody;
         [SerializeField, PurrLock] private FloatAccuracy _floatAccuracy = FloatAccuracy.Medium;
         [SerializeField, PurrLock] private PhysicsEventMask _eventMask = (PhysicsEventMask)0x3F;
+        [SerializeField] private bool _ignoreTriggerOnTrigger;
         public new Rigidbody rigidbody => _rigidbody;
 
         public Rigidbody rb => _rigidbody;
@@ -320,6 +321,9 @@ namespace PurrNet.Prediction
             if (!predictionManager.isSimulating || predictionManager.isVerifiedAndReplaying)
                 return;
 
+            if (_ignoreTriggerOnTrigger && other.isTrigger)
+                return;
+
             predictionManager.physics3d.RegisterEvent(PhysicsEventType.Enter, this, other);
         }
 
@@ -331,6 +335,9 @@ namespace PurrNet.Prediction
             if (!predictionManager.isSimulating || predictionManager.isVerifiedAndReplaying)
                 return;
 
+            if (_ignoreTriggerOnTrigger && other.isTrigger)
+                return;
+
             predictionManager.physics3d.RegisterEvent(PhysicsEventType.Exit, this, other);
         }
 
@@ -340,6 +347,9 @@ namespace PurrNet.Prediction
                 return;
 
             if (!predictionManager.isSimulating || predictionManager.isVerifiedAndReplaying)
+                return;
+
+            if (_ignoreTriggerOnTrigger && other.isTrigger)
                 return;
 
             predictionManager.physics3d.RegisterEvent(PhysicsEventType.Stay, this, other);
