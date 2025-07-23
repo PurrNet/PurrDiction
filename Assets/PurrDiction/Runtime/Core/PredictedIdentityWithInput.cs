@@ -112,7 +112,7 @@ namespace PurrNet.Prediction
                 UpdateInput(ref _nextInput);
         }
 
-        internal override void SimulateRemote(ulong tick, float delta)
+        internal virtual void SimulateRemote(ulong tick, float delta)
         {
             if (_inputHistory.TryGet(tick, out var input))
                 PreSimulate(input, ref fullPredictedState.state, delta);

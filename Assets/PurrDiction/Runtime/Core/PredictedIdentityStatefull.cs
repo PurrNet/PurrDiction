@@ -61,10 +61,9 @@ namespace PurrNet.Prediction
 
         internal FULL_STATE<STATE> fullPredictedState;
 
-        public STATE currentState
+        public ref STATE currentState
         {
-            get => fullPredictedState.state;
-            set => fullPredictedState.state = value;
+            get => ref fullPredictedState.state;
         }
 
         internal override void Setup(NetworkManager manager, PredictionManager world, PredictedComponentID id, PlayerID? owner)
@@ -119,8 +118,6 @@ namespace PurrNet.Prediction
         }
 
         internal override void SimulateTick(ulong tick, float delta) => Simulate(ref fullPredictedState.state, delta);
-
-        internal virtual void SimulateRemote(ulong tick, float delta) => Simulate(ref fullPredictedState.state, delta);
 
         internal override void SaveStateInHistory(ulong tick)
         {
@@ -204,6 +201,8 @@ namespace PurrNet.Prediction
 
         internal override void QueueInput(BitPacker packer, PlayerID sender, DeltaModule deltaModule, bool reliable) { }
 
+        public STATE viewState;
+
         internal override void UpdateView(float deltaTime)
         {
             if (_interpolatedState == null)
@@ -215,7 +214,8 @@ namespace PurrNet.Prediction
                 _viewState = null;
             }
 
-            UpdateView(_interpolatedState.Advance(deltaTime).state, _stateHistory.Count > 0 ? _stateHistory[^1].state : null);
+            viewState = _interpolatedState.Advance(deltaTime).state;
+            UpdateView(viewState, _stateHistory.Count > 0 ? _stateHistory[^1].state : null);
         }
 
         protected virtual void UpdateView(STATE viewState, STATE? verified) {}
