@@ -28,13 +28,11 @@ namespace PurrNet.Prediction
             if (sceneInfo)
             {
                 var copy = new List<GameObject>();
-
-                // add any missing root objects
-                foreach (var rootObject in rootGameObjects)
+                foreach (var rootObject in sceneInfo.rootGameObjects)
                     copy.Add(rootObject);
-
                 rootGameObjects = copy.ToArray();
             }
+            else PurrLogger.LogError($"Scene {scene.name} does not have a PurrSceneInfo component.", null);
 
             foreach (var rootObject in rootGameObjects)
             {
