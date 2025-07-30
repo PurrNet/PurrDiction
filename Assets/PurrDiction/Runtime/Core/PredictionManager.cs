@@ -395,6 +395,8 @@ namespace PurrNet.Prediction
         [TargetRpc(compressionLevel: CompressionLevel.Best)]
         private void SyncFullState([UsedImplicitly] PlayerID target, int tickRate, float delta, BitPacker data)
         {
+            isSimulating = true;
+
             tickDelta = delta;
             this.tickRate = tickRate;
 
@@ -424,6 +426,8 @@ namespace PurrNet.Prediction
             }
 
             SyncTransforms();
+
+            isSimulating = false;
         }
 
         readonly List<PlayerPacker> _clientFrames = new (16);
@@ -757,6 +761,7 @@ namespace PurrNet.Prediction
 
             UpdateInterpolation(false);
 
+            isSimulating = true;
             isReplaying = true;
             isVerified = true;
 
@@ -791,6 +796,7 @@ namespace PurrNet.Prediction
             }
 
             isReplaying = false;
+            isSimulating = false;
         }
 
         private void UpdateInterpolation(bool accumulateError)

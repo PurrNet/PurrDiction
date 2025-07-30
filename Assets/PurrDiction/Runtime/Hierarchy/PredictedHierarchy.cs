@@ -217,12 +217,6 @@ namespace PurrNet.Prediction
             {
                 predictionManager.InternalDelete(details.prefabId,go);
             }
-
-            if (!predictionManager.isSimulating)
-            {
-                ref var state = ref currentState;
-                GetUnityState(ref state);
-            }
         }
 
         internal void RegisterSceneObject(GameObject root, int pid)
