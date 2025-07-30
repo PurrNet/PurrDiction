@@ -142,6 +142,12 @@ namespace PurrNet.Prediction
             _spawnedPrefabs.Add(key);
             _nextInstanceId++;
 
+            if (!predictionManager.isSimulating)
+            {
+                ref var state = ref currentState;
+                GetUnityState(ref state);
+            }
+
             return instanceId;
         }
 
@@ -210,6 +216,12 @@ namespace PurrNet.Prediction
             else
             {
                 predictionManager.InternalDelete(details.prefabId,go);
+            }
+
+            if (!predictionManager.isSimulating)
+            {
+                ref var state = ref currentState;
+                GetUnityState(ref state);
             }
         }
 

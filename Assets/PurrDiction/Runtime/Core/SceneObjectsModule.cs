@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using PurrNet.Modules;
-using UnityEngine;
 using UnityEngine.SceneManagement;
 
 namespace PurrNet.Prediction
@@ -25,16 +24,11 @@ namespace PurrNet.Prediction
             }
 
             if (sceneInfo)
-            {
-                var copy = new List<GameObject>();
-                foreach (var rootObject in sceneInfo.rootGameObjects)
-                    copy.Add(rootObject);
-                rootGameObjects = copy.ToArray();
-            }
+                rootGameObjects = sceneInfo.rootGameObjects.ToArray();
 
             foreach (var rootObject in rootGameObjects)
             {
-                if (rootObject == null || rootObject.scene.handle != scene.handle) continue;
+                if (!rootObject || rootObject.scene.handle != scene.handle) continue;
 
                 rootObject.gameObject.GetComponentsInChildren(true, _sceneIdentities);
 
