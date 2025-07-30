@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using PurrNet.Logging;
 using PurrNet.Modules;
 using UnityEngine;
 using UnityEngine.SceneManagement;
