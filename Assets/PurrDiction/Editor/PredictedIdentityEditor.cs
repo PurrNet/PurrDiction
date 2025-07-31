@@ -10,8 +10,8 @@ namespace PurrNet.Prediction.Editor
 #elif ODIN_INSPECTOR
     public class PredictedIdentityEditor : Sirenix.OdinInspector.Editor.OdinEditor
 #else
-#endif
     public class PredictedIdentityEditor : UnityEditor.Editor
+#endif
     {
         static GUIStyle _box;
 
