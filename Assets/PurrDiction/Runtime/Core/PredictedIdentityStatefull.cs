@@ -203,6 +203,8 @@ namespace PurrNet.Prediction
 
         public STATE viewState;
 
+        public STATE? verifiedState => _stateHistory.Count > 0 ? _stateHistory[^1].state : null;
+
         internal override void UpdateView(float deltaTime)
         {
             if (_interpolatedState == null)
