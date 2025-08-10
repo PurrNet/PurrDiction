@@ -14,6 +14,12 @@ namespace PurrNet.Prediction
             return manager.GetIdentity(this);
         }
 
+        public bool TryGetGameObject(PredictionManager manager, out GameObject gameObject)
+        {
+            gameObject = GetGameObject(manager);
+            return gameObject;
+        }
+
         public GameObject GetGameObject(PredictionManager manager)
         {
             var id = manager.GetIdentity(this);
