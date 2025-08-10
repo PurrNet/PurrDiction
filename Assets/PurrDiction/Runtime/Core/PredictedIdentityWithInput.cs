@@ -169,10 +169,7 @@ namespace PurrNet.Prediction
 
         internal override void ReadInput(ulong tick, PlayerID sender, BitPacker packer, DeltaModule deltaModule, bool reliable)
         {
-            bool hasInput = default;
-            Packer<bool>.Read(packer, ref hasInput);
-
-            if (hasInput)
+            if (Packer<bool>.Read(packer))
             {
                 INPUT input = default;
                 if (reliable)
@@ -194,10 +191,7 @@ namespace PurrNet.Prediction
 
         internal override void QueueInput(BitPacker packer, PlayerID sender, DeltaModule deltaModule, bool reliable)
         {
-            bool hasInput = default;
-            Packer<bool>.Read(packer, ref hasInput);
-
-            if (hasInput)
+            if (Packer<bool>.Read(packer))
             {
                 INPUT input = default;
 
