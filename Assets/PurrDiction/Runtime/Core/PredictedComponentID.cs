@@ -36,13 +36,7 @@ namespace PurrNet.Prediction
         {
             var id = manager.GetIdentity(this);
 
-            if (!id)
-            {
-                identity = null;
-                return false;
-            }
-
-            if (id is not T predictedIdentity)
+            if (!id || id is not T predictedIdentity)
             {
                 identity = null;
                 return false;
