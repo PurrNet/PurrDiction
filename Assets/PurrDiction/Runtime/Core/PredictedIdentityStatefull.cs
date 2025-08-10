@@ -159,7 +159,7 @@ namespace PurrNet.Prediction
 
         protected virtual void SetUnityState(STATE state) {}
 
-        private DeltaKey<STATE> stateKey => new (id);
+        protected DeltaKey<STATE> stateKey => new (id);
 
         private DeltaKey<PredictedIdentityState> internalKey => new (id);
 
