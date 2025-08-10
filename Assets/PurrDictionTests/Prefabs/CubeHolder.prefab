@@ -14,7 +14,6 @@ GameObject:
   - component: {fileID: 2346156292922855443}
   - component: {fileID: 5825657312840132502}
   - component: {fileID: -8545406667589423836}
-  - component: {fileID: 823541326560089332}
   m_Layer: 0
   m_Name: CubeHolder
   m_TagString: Untagged
@@ -117,6 +116,7 @@ MonoBehaviour:
   _rigidbody: {fileID: 1844987416951553775}
   _floatAccuracy: 1
   _eventMask: -1
+  _ignoreTriggerOnTrigger: 0
 --- !u!114 &-8545406667589423836
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -131,18 +131,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _renderer: {fileID: 6575460605615584244}
   _predictedRigidbody: {fileID: 5825657312840132502}
---- !u!114 &823541326560089332
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 208167536026591109}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5c6e148ec355dd94ba140d0766cf62f0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &1096194966585776966
 GameObject:
   m_ObjectHideFlags: 0
