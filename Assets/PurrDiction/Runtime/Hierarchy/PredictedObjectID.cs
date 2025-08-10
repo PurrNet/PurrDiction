@@ -1,5 +1,6 @@
 ﻿using System;
 using PurrNet.Packing;
+using UnityEngine;
 
 namespace PurrNet.Prediction
 {
@@ -10,6 +11,16 @@ namespace PurrNet.Prediction
         public PredictedObjectID(uint instanceId)
         {
             this.instanceId = instanceId;
+        }
+
+        public GameObject GetGameObject(PredictionManager manager)
+        {
+            return manager.hierarchy.GetGameObject(this);
+        }
+
+        public bool TryGetGameObject(PredictionManager manager, out GameObject gameObject)
+        {
+            return manager.hierarchy.TryGetGameObject(this, out gameObject);
         }
 
         public bool Equals(PredictedObjectID other)
