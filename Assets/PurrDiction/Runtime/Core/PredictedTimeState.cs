@@ -1,6 +1,4 @@
-﻿using PurrNet.Packing;
-
-namespace PurrNet.Prediction
+﻿namespace PurrNet.Prediction
 {
     public struct PredictedTimeState : IPredictedData<PredictedTimeState>
     {
