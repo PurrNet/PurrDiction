@@ -48,7 +48,7 @@ namespace PurrNet.Prediction.Tests
             if (data.collisionCount < 5)
                 return;
 
-            predictionManager.hierarchy.Delete(this);
+            predictionManager.hierarchy.Delete(gameObject);
         }
 
         private void OnUnityTriggerEnter(GameObject other)

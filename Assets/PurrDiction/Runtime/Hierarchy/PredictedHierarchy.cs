@@ -333,19 +333,31 @@ namespace PurrNet.Prediction
             throw new KeyNotFoundException($"PredictedObjectID {id} not found in spawned prefabs.");
         }
 
-        public void Delete(PredictedIdentity pid)
+        public void Delete(GameObject go)
         {
-            if (!pid)
+            if (!go)
                 return;
 
-            if (!_goToId.TryGetValue(pid.gameObject, out var poid))
+            if (!_goToId.TryGetValue(go, out var poid))
             {
-                PurrLogger.LogError($"PredictedObjectID for GameObject `{pid.gameObject.name}` not found.\n" +
+                if (go.TryGetComponent<PredictedGameObject>(out var pgo))
+                {
+                    pgo.SetActive(false);
+                    return;
+                }
+
+                PurrLogger.LogError($"PredictedObjectID for GameObject `{go.name}` not found.\n" +
                                     $"Delete the root GameObject or add a `PredictedObjectSeparator` to this GameObject.", this);
                 return;
             }
 
             currentState.toDelete.Add(poid);
+        }
+
+        public void Delete(PredictedIdentity pid)
+        {
+            if (pid)
+                Delete(pid.gameObject);
         }
 
         public void Delete(PredictedObjectID? id)
@@ -358,8 +370,9 @@ namespace PurrNet.Prediction
 
         public void Cleanup()
         {
-            foreach (var instance in _spawnedPrefabs)
+            for (var i = 0; i < _spawnedPrefabs.Count; i++)
             {
+                var instance = _spawnedPrefabs[i];
                 if (!_instanceMap.TryGetValue(instance.instanceId, out var go))
                     continue;
 

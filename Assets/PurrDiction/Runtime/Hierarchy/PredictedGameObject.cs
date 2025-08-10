@@ -23,5 +23,13 @@ namespace PurrNet.Prediction
         {
             gameObject.SetActive(state.isActive);
         }
+
+        public void SetActive(bool active)
+        {
+            ref var state = ref currentState;
+            if (active == state.isActive) return;
+            state.isActive = active;
+            SetUnityState(state);
+        }
     }
 }
