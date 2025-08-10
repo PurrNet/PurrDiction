@@ -5,7 +5,7 @@ namespace PurrNet.Prediction
     public struct PredictedTimeState : IPredictedData<PredictedTimeState>
     {
         public ulong tick;
-        public NormalizedFloat timeScale;
+        public float timeScale;
 
         public override string ToString()
         {
