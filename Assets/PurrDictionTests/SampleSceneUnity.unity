@@ -961,10 +961,10 @@ GameObject:
   m_Component:
   - component: {fileID: 1793795276}
   - component: {fileID: 1793795278}
-  - component: {fileID: 1793795277}
   - component: {fileID: 1793795280}
   - component: {fileID: 1793795281}
   - component: {fileID: 1793795282}
+  - component: {fileID: 1793795283}
   m_Layer: 0
   m_Name: PurrNet
   m_TagString: Untagged
@@ -987,23 +987,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1793795277
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1793795275}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fc64ff707d914a64e95f2ac0bf554c09, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _serverPort: 5000
-  _maxConnections: 100
-  _address: 127.0.0.1
-  _timeoutInSeconds: 5
-  _pollEventsInUpdate: 1
 --- !u!114 &1793795278
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1021,7 +1004,7 @@ MonoBehaviour:
   _startClientFlags: 7
   _cookieScope: 1
   _dontDestroyOnLoad: 1
-  _transport: {fileID: 1793795277}
+  _transport: {fileID: 1793795283}
   _networkPrefabs: {fileID: 11400000, guid: 2190589f99f9abe479a1c7890b05f51f, type: 2}
   _networkAssets: {fileID: 0}
   _networkRules: {fileID: 11400000, guid: d8799083b96579a42b8b2d03e4ceae98, type: 2}
@@ -1059,6 +1042,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _serverPort: 5001
+  _forceIpv4: 0
   _maxConnections: 100
   _address: 127.0.0.1
   _query: 
@@ -1084,6 +1068,23 @@ MonoBehaviour:
   _roomName: dwdfefsfesfes
   _region: brazil
   _host: br.purrlay.riten.dev
+  _pollEventsInUpdate: 0
+--- !u!114 &1793795283
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1793795275}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc64ff707d914a64e95f2ac0bf554c09, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _serverPort: 5000
+  _maxConnections: 100
+  _address: 127.0.0.1
+  _timeoutInSeconds: 5
   _pollEventsInUpdate: 0
 --- !u!1 &1997087625
 GameObject:

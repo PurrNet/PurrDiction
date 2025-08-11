@@ -36,9 +36,20 @@ namespace PurrNet.Prediction
             TryToPopulateHierarchy(false, out _clientHierarchy);
 
             if (_serverHierarchy != null)
-            {
                 _networkId = SpawnAllIdentitiesOnServer();
-                predictionManager.onObserverAdded += OnObserverAdded;
+        }
+
+        public void ClientRequestedToBeObserver(PlayerID player)
+        {
+            if (!predictionManager.IsObserver(player)) return;
+
+            for (int i = 0; i < _identitiesToSpawn.Length; i++)
+            {
+                var identity = _identitiesToSpawn[i];
+                if (!identity)
+                    continue;
+
+                _serverHierarchy.ManualAddObserver(identity, player);
             }
         }
 
@@ -66,18 +77,6 @@ namespace PurrNet.Prediction
             {
                 networkId = _networkId
             };
-        }
-
-        private void OnObserverAdded(PlayerID player)
-        {
-            for (int i = 0; i < _identitiesToSpawn.Length; i++)
-            {
-                var identity = _identitiesToSpawn[i];
-                if (identity == null)
-                    continue;
-
-                _serverHierarchy.ManualAddObserver(identity, player);
-            }
         }
 
         private void OnObserverRemoved(PlayerID player)
@@ -115,14 +114,16 @@ namespace PurrNet.Prediction
             for (int i = 0; i < _identitiesToSpawn.Length; i++)
             {
                 var identity = _identitiesToSpawn[i];
+
                 if (!identity)
                     continue;
 
                 var reservedId = _serverHierarchy.ReserveNetworkID();
                 firstId ??= reservedId;
                 _serverHierarchy.ManualEarlySpawn(identity, reservedId);
-                foreach (var observer in predictionManager.observers)
-                    _serverHierarchy.ManualAddObserver(identity, observer);
+
+                if (predictionManager.localPlayer.HasValue)
+                    _serverHierarchy.ManualAddObserver(identity, predictionManager.localPlayer.Value);
 
                 if (owner.HasValue && networkManager.TryGetModule(true, out GlobalOwnershipModule module))
                     module.GiveOwnership(identity, owner.Value, false, silent: true, isSpawner: true);
@@ -164,12 +165,14 @@ namespace PurrNet.Prediction
             for (int i = 0; i < _identitiesToSpawn.Length; i++)
             {
                 var identity = _identitiesToSpawn[i];
-                if (identity == null)
+                if (!identity)
                     continue;
 
                 _clientHierarchy.ManualEarlySpawn(identity, new NetworkID(firstId, (ulong)i));
                 _finalizeNextFrame = Time.frameCount;
             }
+
+            predictionManager.ClientRequestedToBeObserver(id);
 
             _areSpawned = true;
         }

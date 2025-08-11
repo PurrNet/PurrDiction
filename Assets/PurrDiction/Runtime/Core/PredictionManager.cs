@@ -64,6 +64,13 @@ namespace PurrNet.Prediction
             InitPooling();
         }
 
+        [ServerRpc(requireOwnership: false)]
+        public void ClientRequestedToBeObserver(PredictedComponentID component, RPCInfo info = default)
+        {
+            if (component.TryGetIdentity<PredictedIdentitySpawner>(this, out var pidSpawner))
+                pidSpawner.ClientRequestedToBeObserver(info.sender);
+        }
+
         private static GameObject _poolParent;
 
         private void InitPooling()
