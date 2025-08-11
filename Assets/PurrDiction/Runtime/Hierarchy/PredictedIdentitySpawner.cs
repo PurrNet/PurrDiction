@@ -35,7 +35,7 @@ namespace PurrNet.Prediction
             TryToPopulateHierarchy(true, out _serverHierarchy);
             TryToPopulateHierarchy(false, out _clientHierarchy);
 
-            if (_serverHierarchy != null)
+            if (_serverHierarchy != null && isServer)
                 _networkId = SpawnAllIdentitiesOnServer();
         }
 
