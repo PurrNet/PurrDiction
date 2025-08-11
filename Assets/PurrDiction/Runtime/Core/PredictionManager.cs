@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using JetBrains.Annotations;
 using PurrNet.Logging;
 using PurrNet.Modules;
@@ -65,10 +66,11 @@ namespace PurrNet.Prediction
         }
 
         [ServerRpc(requireOwnership: false)]
-        public void ClientRequestedToBeObserver(PredictedComponentID component, RPCInfo info = default)
+        public Task ClientRequestedToBeObserver(PredictedComponentID component, RPCInfo info = default)
         {
             if (component.TryGetIdentity<PredictedIdentitySpawner>(this, out var pidSpawner))
                 pidSpawner.ClientRequestedToBeObserver(info.sender);
+            return Task.CompletedTask;
         }
 
         private static GameObject _poolParent;

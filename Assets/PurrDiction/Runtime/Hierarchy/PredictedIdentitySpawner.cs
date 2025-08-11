@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using PurrNet.Modules;
 using UnityEngine;
 
@@ -167,12 +168,22 @@ namespace PurrNet.Prediction
 
         private int? _finalizeNextFrame;
 
+        private Task _spawnTask;
+
+        public override void ResetState()
+        {
+            base.ResetState();
+            _areSpawned = false;
+            _finalizeNextFrame = null;
+            _spawnTask = null;
+        }
+
         protected override void Simulate(ref PredictedIdentitySpawnerState state, float delta)
         {
             if (_clientHierarchy == null)
                 return;
 
-            if (_finalizeNextFrame.HasValue && Time.frameCount > _finalizeNextFrame.Value)
+            if (_finalizeNextFrame.HasValue && Time.frameCount > _finalizeNextFrame.Value && (_spawnTask == null || _spawnTask.IsCompleted))
             {
                 _finalizeNextFrame = null;
 
@@ -202,8 +213,7 @@ namespace PurrNet.Prediction
                 _finalizeNextFrame = Time.frameCount;
             }
 
-            predictionManager.ClientRequestedToBeObserver(id);
-
+            _spawnTask = predictionManager.ClientRequestedToBeObserver(id);
             _areSpawned = true;
         }
     }
