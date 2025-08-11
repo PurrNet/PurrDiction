@@ -1,3 +1,4 @@
+using System;
 using PurrNet.Modules;
 using UnityEngine;
 
@@ -106,11 +107,8 @@ namespace PurrNet.Prediction
             }
         }
 
-        private NetworkID? SpawnAllIdentitiesOnServer()
+        private void ForAll(Action<NetworkIdentity> action)
         {
-            var networkManager = predictionManager.networkManager;
-            NetworkID? firstId = null;
-
             for (int i = 0; i < _identitiesToSpawn.Length; i++)
             {
                 var identity = _identitiesToSpawn[i];
@@ -118,21 +116,53 @@ namespace PurrNet.Prediction
                 if (!identity)
                     continue;
 
+                action(identity);
+            }
+        }
+
+        private NetworkID? SpawnAllIdentitiesOnServer()
+        {
+            NetworkID? firstId = null;
+
+            for (int i = 0; i < _identitiesToSpawn.Length; i++)
+            {
+                var identity = _identitiesToSpawn[i];
+                if (!identity)
+                    continue;
+
                 var reservedId = _serverHierarchy.ReserveNetworkID();
                 firstId ??= reservedId;
                 _serverHierarchy.ManualEarlySpawn(identity, reservedId);
-
-                if (predictionManager.localPlayer.HasValue)
-                    _serverHierarchy.ManualAddObserver(identity, predictionManager.localPlayer.Value);
-
-                if (owner.HasValue && networkManager.TryGetModule(true, out GlobalOwnershipModule module))
-                    module.GiveOwnership(identity, owner.Value, false, silent: true, isSpawner: true);
-
-                _serverHierarchy.ManualFinalizeSpawn(identity);
             }
 
+            if (predictionManager.localPlayer.HasValue)
+                ForAll(AddLocalPlayerAsObserver);
+
+            if (owner.HasValue)
+                ForAll(GiveOwnershipToOwner);
+
+            ForAll(FinalizeSpawn);
+
             _areSpawned = true;
+
             return firstId;
+
+        }
+
+        void AddLocalPlayerAsObserver(NetworkIdentity identity)
+        {
+            _serverHierarchy.ManualAddObserver(identity, predictionManager.localPlayer!.Value);
+        }
+
+        void GiveOwnershipToOwner(NetworkIdentity identity)
+        {
+            if (predictionManager.networkManager.TryGetModule(true, out GlobalOwnershipModule module))
+                module.GiveOwnership(identity, owner!.Value, false, silent: true, isSpawner: true);
+        }
+
+        void FinalizeSpawn(NetworkIdentity identity)
+        {
+            _serverHierarchy.ManualFinalizeSpawn(identity);
         }
 
         private int? _finalizeNextFrame;
