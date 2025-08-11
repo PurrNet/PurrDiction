@@ -6,6 +6,17 @@ namespace PurrNet.Prediction
 {
     public class PredictedTime : PredictedIdentity<PredictedTimeState>
     {
+        public float timeScale
+        {
+            get => currentState.timeScale;
+            set
+            {
+                ref var state = ref currentState;
+                state.timeScale = value;
+                Time.timeScale = value;
+            }
+        }
+
         public ulong tick => currentState.tick;
 
         public float time => tick * predictionManager.tickDelta;

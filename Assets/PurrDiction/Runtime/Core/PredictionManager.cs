@@ -472,8 +472,13 @@ namespace PurrNet.Prediction
                 WriteInitialFrameToOthers();
             }
 
+            float delta = this.tickDelta;
+
+            if (time)
+                delta *= time.timeScale;
+
             for (var i = 0; i < _systems.Count; i++)
-                _systems[i].SimulateTick(localTick, tickDelta);
+                _systems[i].SimulateTick(localTick, delta);
 
             DoPhysicsPass();
 
@@ -484,7 +489,7 @@ namespace PurrNet.Prediction
             }
 
             for (var i = 0; i < _systems.Count; i++)
-                _systems[i].PostSimulate(localTick, tickDelta);
+                _systems[i].PostSimulate(localTick, delta);
 
             if (cachedIsServer)
                  FinalizeTickOnServer(cachedIsClient);
@@ -673,19 +678,22 @@ namespace PurrNet.Prediction
         private void DoPhysicsPass()
         {
             isInPhysicsPass = true;
+            var delta = tickDelta;
+            if (time)
+                delta *= time.timeScale;
 
             if ((_physicsProvider & PredictionPhysicsProvider.UnityPhysics2D) != 0)
             {
                 var physicsScene = gameObject.scene.GetPhysicsScene2D();
                 if (physicsScene.IsValid())
-                    physicsScene.Simulate(tickDelta);
+                    physicsScene.Simulate(delta);
             }
 
             if ((_physicsProvider & PredictionPhysicsProvider.UnityPhysics3D) != 0)
             {
                 var physicsScene = gameObject.scene.GetPhysicsScene();
                 if (physicsScene.IsValid())
-                    physicsScene.Simulate(tickDelta);
+                    physicsScene.Simulate(delta);
             }
 
             isInPhysicsPass = false;
@@ -815,18 +823,21 @@ namespace PurrNet.Prediction
 
         private void ReplayToLatestTick(ulong verifiedTick)
         {
+            var delta = tickDelta;
+            if (time)
+                delta *= time.timeScale;
             isSimulating = true;
             for (ulong simTick = verifiedTick; simTick < localTick; simTick++)
             {
                 localTickInContext = simTick;
 
                 for (var j = 0; j < _systems.Count; j++)
-                    _systems[j].SimulateTick(simTick, tickDelta);
+                    _systems[j].SimulateTick(simTick, delta);
 
                 DoPhysicsPass();
 
                 for (var i = 0; i < _systems.Count; i++)
-                    _systems[i].PostSimulate(simTick, tickDelta);
+                    _systems[i].PostSimulate(simTick, delta);
 
                 var count = _systems.Count;
                 for (var j = 0; j < count; j++)
@@ -838,14 +849,18 @@ namespace PurrNet.Prediction
 
         private void SimulateFrame(ulong verifiedTick)
         {
+            var delta = tickDelta;
+            if (time)
+                delta *= time.timeScale;
+
             isSimulating = true;
             for (var j = 0; j < _systems.Count; j++)
-                _systems[j].SimulateTick(verifiedTick, tickDelta);
+                _systems[j].SimulateTick(verifiedTick, delta);
 
             DoPhysicsPass();
 
             for (var i = 0; i < _systems.Count; i++)
-                _systems[i].PostSimulate(verifiedTick, tickDelta);
+                _systems[i].PostSimulate(verifiedTick, delta);
 
             var count = _systems.Count;
             for (var j = 0; j < count; j++)
@@ -964,7 +979,7 @@ namespace PurrNet.Prediction
             int count = _systems.Count;
 
             for (var i = 0; i < count; i++)
-                _systems[i].UpdateView(Time.deltaTime);
+                _systems[i].UpdateView(Time.unscaledDeltaTime);
         }
 
         public bool TryGetPrefab(int pid, out GameObject prefab)
