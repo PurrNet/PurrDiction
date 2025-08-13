@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using PurrNet.Modules;
 using PurrNet.Packing;
+using PurrNet.Prediction.Profiler;
 using PurrNet.Utils;
 using UnityEngine;
 
@@ -153,6 +154,8 @@ namespace PurrNet.Prediction
 
         internal override void WriteInput(ulong localTick, PlayerID receiver, BitPacker input, DeltaModule deltaModule, bool reliable)
         {
+            int pos = input.positionInBits;
+
             if (_inputHistory.TryGet(localTick, out var savedInput))
             {
                 Packer<bool>.Write(input, true);
@@ -165,10 +168,14 @@ namespace PurrNet.Prediction
             {
                 Packer<bool>.Write(input, false);
             }
+
+            TickBandwidthProfiler.OnWroteInput(myType, input.positionInBits - pos, this);
         }
 
         internal override void ReadInput(ulong tick, PlayerID sender, BitPacker packer, DeltaModule deltaModule, bool reliable)
         {
+            var pos = packer.positionInBits;
+
             if (Packer<bool>.Read(packer))
             {
                 INPUT input = default;
@@ -178,6 +185,8 @@ namespace PurrNet.Prediction
                 _inputHistory.Write(tick, input);
             }
             else _inputHistory.Remove(tick);
+
+            TickBandwidthProfiler.OnReadInput(myType, packer.positionInBits - pos, this);
         }
 
         private readonly Queue<INPUT> _queuedInput = new ();
@@ -191,6 +200,7 @@ namespace PurrNet.Prediction
 
         internal override void QueueInput(BitPacker packer, PlayerID sender, DeltaModule deltaModule, bool reliable)
         {
+            int pos = packer.positionInBits;
             if (Packer<bool>.Read(packer))
             {
                 INPUT input = default;
@@ -204,6 +214,7 @@ namespace PurrNet.Prediction
                 _queuedInput.Clear();
                 _queuedInput.Enqueue(sanitizedInput);
             }
+            TickBandwidthProfiler.OnReadInput(myType, packer.positionInBits - pos, this);
         }
     }
 }

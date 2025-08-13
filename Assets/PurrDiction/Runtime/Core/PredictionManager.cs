@@ -6,6 +6,7 @@ using PurrNet.Logging;
 using PurrNet.Modules;
 using PurrNet.Packing;
 using PurrNet.Pooling;
+using PurrNet.Prediction.Profiler;
 using PurrNet.Transports;
 using PurrNet.Utils;
 using UnityEngine;
@@ -773,6 +774,7 @@ namespace PurrNet.Prediction
             {
                 if (isClient)
                     UpdateInterpolation(false);
+                TickBandwidthProfiler.MarkEndOfTick();
                 return;
             }
 
@@ -814,6 +816,8 @@ namespace PurrNet.Prediction
 
             isReplaying = false;
             isSimulating = false;
+
+            TickBandwidthProfiler.MarkEndOfTick();
         }
 
         private void UpdateInterpolation(bool accumulateError)

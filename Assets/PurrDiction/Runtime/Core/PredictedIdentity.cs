@@ -138,7 +138,7 @@ namespace PurrNet.Prediction
 
         internal abstract void GetLatestUnityState();
 
-        internal abstract void WriteCurrentState(PlayerID receiver, BitPacker packer, DeltaModule deltaModule);
+        internal abstract bool WriteCurrentState(PlayerID receiver, BitPacker packer, DeltaModule deltaModule);
 
         internal abstract void WriteInput(ulong localTick, PlayerID receiver, BitPacker input, DeltaModule deltaModule, bool reliable);
 

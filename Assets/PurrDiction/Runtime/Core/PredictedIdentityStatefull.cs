@@ -1,7 +1,9 @@
-﻿using JetBrains.Annotations;
+﻿using System;
+using JetBrains.Annotations;
 using PurrNet.Logging;
 using PurrNet.Modules;
 using PurrNet.Packing;
+using PurrNet.Prediction.Profiler;
 using PurrNet.Utils;
 using UnityEngine;
 
@@ -66,8 +68,11 @@ namespace PurrNet.Prediction
             get => ref fullPredictedState.state;
         }
 
+        protected Type myType;
+
         internal override void Setup(NetworkManager manager, PredictionManager world, PredictedComponentID id, PlayerID? owner)
         {
+            myType = GetType();
             hierarchy = world.hierarchy;
 
             if (!isFreshSpawn)
@@ -163,10 +168,13 @@ namespace PurrNet.Prediction
 
         private DeltaKey<PredictedIdentityState> internalKey => new (id);
 
-        internal override void WriteCurrentState(PlayerID target, BitPacker packer, DeltaModule deltaModule)
+        internal override bool WriteCurrentState(PlayerID target, BitPacker packer, DeltaModule deltaModule)
         {
+            int pos = packer.positionInBits;
             deltaModule.WriteReliable(packer, target, internalKey, fullPredictedState.prediction);
-            WriteDeltaState(target, packer, deltaModule);
+            var result = WriteDeltaState(target, packer, deltaModule);
+            TickBandwidthProfiler.OnWroteState(myType, packer.positionInBits - pos, this);
+            return result;
         }
 
         protected virtual bool WriteDeltaState(PlayerID target, BitPacker packer, DeltaModule deltaModule)
@@ -177,11 +185,15 @@ namespace PurrNet.Prediction
         [UsedImplicitly]
         internal override void ReadState(ulong tick, BitPacker packer, DeltaModule deltaModule)
         {
+            int pos = packer.positionInBits;
+
             STATE state = default;
             PredictedIdentityState prediction = default;
 
             deltaModule.ReadReliable(packer, internalKey, ref prediction);
             ReadDeltaState(packer, deltaModule, ref state);
+
+            TickBandwidthProfiler.OnReadState(myType, packer.positionInBits - pos, this);
 
             _stateHistory.Write(tick, new FULL_STATE<STATE>
             {

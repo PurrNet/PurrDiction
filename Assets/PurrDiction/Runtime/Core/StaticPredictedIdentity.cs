@@ -37,8 +37,9 @@ namespace PurrNet.Prediction
         {
         }
 
-        internal override void WriteCurrentState(PlayerID receiver, BitPacker packer, DeltaModule deltaModule)
+        internal override bool WriteCurrentState(PlayerID receiver, BitPacker packer, DeltaModule deltaModule)
         {
+            return false;
         }
 
         internal override void WriteInput(ulong localTick, PlayerID receiver, BitPacker input, DeltaModule deltaModule, bool reliable)

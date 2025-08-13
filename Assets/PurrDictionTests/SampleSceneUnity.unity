@@ -1010,7 +1010,7 @@ MonoBehaviour:
   _networkRules: {fileID: 11400000, guid: d8799083b96579a42b8b2d03e4ceae98, type: 2}
   _visibilityRules: {fileID: 11400000, guid: 8f014a5bd8dc68646a2a3c0b18c5bbd8, type: 2}
   _authenticator: {fileID: 0}
-  _tickRate: 20
+  _tickRate: 60
   _patchLingeringProcessBug: 0
 --- !u!114 &1793795280
 MonoBehaviour:
@@ -1026,7 +1026,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   checkInterval: 0.33
   placement: 1
-  _displayType: 3
+  _displayType: -1
   fontSize: 13
   textColor: {r: 1, g: 1, b: 1, a: 1}
 --- !u!114 &1793795281
