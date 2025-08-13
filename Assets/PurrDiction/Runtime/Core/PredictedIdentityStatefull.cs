@@ -9,6 +9,21 @@ using UnityEngine;
 
 namespace PurrNet.Prediction
 {
+    public readonly struct DeltaKey<T, S> : IStableHashable
+    {
+        private readonly PredictedComponentID id;
+
+        public DeltaKey(PredictedComponentID id)
+        {
+            this.id = id;
+        }
+
+        public uint GetStableHash()
+        {
+            return Hasher<T>.stableHash ^ Hasher<S>.stableHash ^ id.componentId.value ^ id.objectId.instanceId.value;
+        }
+    }
+
     public readonly struct DeltaKey<T> : IStableHashable
     {
         private readonly PredictedComponentID id;
@@ -166,7 +181,7 @@ namespace PurrNet.Prediction
 
         protected DeltaKey<STATE> stateKey => new (id);
 
-        private DeltaKey<PredictedIdentityState> internalKey => new (id);
+        private DeltaKey<PredictedIdentityState, STATE> internalKey => new (id);
 
         internal override bool WriteCurrentState(PlayerID target, BitPacker packer, DeltaModule deltaModule)
         {

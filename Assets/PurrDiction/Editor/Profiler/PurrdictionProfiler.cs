@@ -38,6 +38,8 @@ namespace PurrNet.Prediction.Editor
         private bool _showReadInputs = true;
 
         private string _searchText = string.Empty;
+		private bool _groupByParentType = true;
+		private bool _sortByBitsDescending = true;
 
         private static readonly Color ColorWroteStates = new Color(0.30f, 0.80f, 0.35f, 1f);
         private static readonly Color ColorReadStates = new Color(0.25f, 0.55f, 0.90f, 1f);
@@ -271,6 +273,13 @@ namespace PurrNet.Prediction.Editor
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("Details", EditorStyles.boldLabel);
 
+			// View options
+			EditorGUILayout.BeginHorizontal();
+			_groupByParentType = GUILayout.Toggle(_groupByParentType, "Group by Parent", GUILayout.Width(140));
+			_sortByBitsDescending = GUILayout.Toggle(_sortByBitsDescending, "Sort by bits (desc)", GUILayout.Width(160));
+			GUILayout.FlexibleSpace();
+			EditorGUILayout.EndHorizontal();
+
             if (_selectedSampleIndex < 0 || _selectedSampleIndex >= _samples.Count)
             {
                 EditorGUILayout.HelpBox("Select a sample in the graph to see details.", MessageType.Info);
@@ -313,67 +322,175 @@ namespace PurrNet.Prediction.Editor
             return currentState && list.Count > 0;
         }
 
-        private void DrawPackingList(DisposableList<PackingInfo> list)
+		private void DrawPackingList(DisposableList<PackingInfo> list)
         {
-            const float BitsColWidth = 70f;
-            const float ReferenceColWidth = 240f;
-            const float PingColWidth = 44f;
-            float rowHeight = EditorGUIUtility.singleLineHeight + 4f;
+			const float BitsColWidth = 70f;
+			const float ReferenceColWidth = 240f;
+			const float PingColWidth = 44f;
+			float rowHeight = EditorGUIUtility.singleLineHeight + 4f;
 
-            var headerRect = EditorGUILayout.GetControlRect(false, rowHeight);
-            EditorGUI.DrawRect(headerRect, new Color(0.18f, 0.18f, 0.18f, 1f));
-            EditorGUI.DrawRect(new Rect(headerRect.x, headerRect.yMax - 1f, headerRect.width, 1f), new Color(0f, 0f, 0f, 0.35f));
+			// Prepare filtered items
+			var filtered = new List<PackingInfo>(Mathf.Max(16, list.Count));
+			for (var i = 0; i < list.Count; i++)
+			{
+				var info = list[i];
+				if (!string.IsNullOrEmpty(_searchText))
+				{
+					var typeName = info.parent != null ? info.parent.Name : "<null>";
+					var refName = info.reference ? info.reference.name : string.Empty;
+					if (!typeName.Contains(_searchText, StringComparison.OrdinalIgnoreCase) &&
+						!refName.Contains(_searchText, StringComparison.OrdinalIgnoreCase))
+						continue;
+				}
+				filtered.Add(info);
+			}
 
-            float parentColWidth = Mathf.Max(80f, headerRect.width - BitsColWidth - ReferenceColWidth - PingColWidth);
-            float x = headerRect.x;
-            GUI.Label(new Rect(x + 6f, headerRect.y + 2f, BitsColWidth - 8f, rowHeight - 4f), "Bits", EditorStyles.boldLabel);
-            x += BitsColWidth;
-            GUI.Label(new Rect(x + 6f, headerRect.y + 2f, parentColWidth - 8f, rowHeight - 4f), "Parent", EditorStyles.boldLabel);
-            x = headerRect.x + headerRect.width - (ReferenceColWidth + PingColWidth);
-            GUI.Label(new Rect(x + 6f, headerRect.y + 2f, ReferenceColWidth - 8f, rowHeight - 4f), "Reference", EditorStyles.boldLabel);
+			if (!_groupByParentType)
+			{
+				// Flat list with optional sorting
+				if (_sortByBitsDescending)
+					filtered.Sort((a, b) => b.bitCount.CompareTo(a.bitCount));
 
-            int visibleRowIndex = 0;
-            for (var i = 0; i < list.Count; i++)
-            {
-                var info = list[i];
+				var headerRect = EditorGUILayout.GetControlRect(false, rowHeight);
+				EditorGUI.DrawRect(headerRect, new Color(0.18f, 0.18f, 0.18f, 1f));
+				EditorGUI.DrawRect(new Rect(headerRect.x, headerRect.yMax - 1f, headerRect.width, 1f), new Color(0f, 0f, 0f, 0.35f));
 
-                if (!string.IsNullOrEmpty(_searchText))
-                {
-                    var typeName = info.parent != null ? info.parent.Name : "<null>";
-                    var refName = info.reference ? info.reference.name : string.Empty;
-                    if (!typeName.Contains(_searchText, StringComparison.OrdinalIgnoreCase) &&
-                        !refName.Contains(_searchText, StringComparison.OrdinalIgnoreCase))
-                        continue;
-                }
+				float parentColWidth = Mathf.Max(80f, headerRect.width - BitsColWidth - ReferenceColWidth - PingColWidth);
+				float x = headerRect.x;
+				GUI.Label(new Rect(x + 6f, headerRect.y + 2f, BitsColWidth - 8f, rowHeight - 4f), "Bits", EditorStyles.boldLabel);
+				x += BitsColWidth;
+				GUI.Label(new Rect(x + 6f, headerRect.y + 2f, parentColWidth - 8f, rowHeight - 4f), "Parent", EditorStyles.boldLabel);
+				x = headerRect.x + headerRect.width - (ReferenceColWidth + PingColWidth);
+				GUI.Label(new Rect(x + 6f, headerRect.y + 2f, ReferenceColWidth - 8f, rowHeight - 4f), "Reference", EditorStyles.boldLabel);
 
-                var rowRect = EditorGUILayout.GetControlRect(false, rowHeight);
-                if ((visibleRowIndex & 1) == 0)
-                    EditorGUI.DrawRect(rowRect, new Color(1f, 1f, 1f, 0.035f));
+				int visibleRowIndex = 0;
+				for (var i = 0; i < filtered.Count; i++)
+				{
+					var info = filtered[i];
 
-                float rowParentWidth = Mathf.Max(80f, rowRect.width - BitsColWidth - ReferenceColWidth - PingColWidth);
-                float xBits = rowRect.x;
-                float xParent = xBits + BitsColWidth;
-                float xRef = rowRect.x + rowRect.width - (ReferenceColWidth + PingColWidth);
+					var rowRect = EditorGUILayout.GetControlRect(false, rowHeight);
+					if ((visibleRowIndex & 1) == 0)
+						EditorGUI.DrawRect(rowRect, new Color(1f, 1f, 1f, 0.035f));
 
-                EditorGUI.DrawRect(new Rect(xParent, rowRect.y, 1f, rowHeight), new Color(0f, 0f, 0f, 0.2f));
-                EditorGUI.DrawRect(new Rect(xRef, rowRect.y, 1f, rowHeight), new Color(0f, 0f, 0f, 0.2f));
+					float rowParentWidth = Mathf.Max(80f, rowRect.width - BitsColWidth - ReferenceColWidth - PingColWidth);
+					float xBits = rowRect.x;
+					float xParent = xBits + BitsColWidth;
+					float xRef = rowRect.x + rowRect.width - (ReferenceColWidth + PingColWidth);
 
-                GUI.Label(new Rect(xBits + 6f, rowRect.y + 2f, BitsColWidth - 8f, rowHeight - 4f), info.bitCount.ToString());
-                GUI.Label(new Rect(xParent + 6f, rowRect.y + 2f, rowParentWidth - 8f, rowHeight - 4f), info.parent != null ? info.parent.Name : "<null>");
+					EditorGUI.DrawRect(new Rect(xParent, rowRect.y, 1f, rowHeight), new Color(0f, 0f, 0f, 0.2f));
+					EditorGUI.DrawRect(new Rect(xRef, rowRect.y, 1f, rowHeight), new Color(0f, 0f, 0f, 0.2f));
 
-                EditorGUI.BeginDisabledGroup(true);
-                var obj = info.reference;
-                EditorGUI.ObjectField(new Rect(xRef + 6f, rowRect.y + 2f, ReferenceColWidth - 8f, rowHeight - 4f), obj, typeof(UnityEngine.Object), true);
-                EditorGUI.EndDisabledGroup();
+					GUI.Label(new Rect(xBits + 6f, rowRect.y + 2f, BitsColWidth - 8f, rowHeight - 4f), info.bitCount.ToString());
+					GUI.Label(new Rect(xParent + 6f, rowRect.y + 2f, rowParentWidth - 8f, rowHeight - 4f), info.parent != null ? info.parent.Name : "<null>");
 
-                if (obj)
-                {
-                    if (GUI.Button(new Rect(rowRect.x + rowRect.width - PingColWidth + 2f, rowRect.y + 2f, PingColWidth - 4f, rowHeight - 4f), "Ping"))
-                        EditorGUIUtility.PingObject(obj);
-                }
+					EditorGUI.BeginDisabledGroup(true);
+					var obj = info.reference;
+					EditorGUI.ObjectField(new Rect(xRef + 6f, rowRect.y + 2f, ReferenceColWidth - 8f, rowHeight - 4f), obj, typeof(UnityEngine.Object), true);
+					EditorGUI.EndDisabledGroup();
 
-                visibleRowIndex++;
-            }
-        }
+					if (obj)
+					{
+						if (GUI.Button(new Rect(rowRect.x + rowRect.width - PingColWidth + 2f, rowRect.y + 2f, PingColWidth - 4f, rowHeight - 4f), "Ping"))
+							EditorGUIUtility.PingObject(obj);
+					}
+
+					visibleRowIndex++;
+				}
+				return;
+			}
+
+			// Grouped by parent type
+			var groups = new List<GroupRow>(16);
+			for (var i = 0; i < filtered.Count; i++)
+			{
+				var info = filtered[i];
+				string key = info.parent != null ? info.parent.Name : "<null>";
+				int foundIndex = -1;
+				for (var g = 0; g < groups.Count; g++)
+					if (groups[g].key == key) { foundIndex = g; break; }
+				if (foundIndex == -1)
+				{
+					var gr = new GroupRow { key = key, totalBits = 0 };
+					gr.items = new List<PackingInfo>(8);
+					groups.Add(gr);
+					foundIndex = groups.Count - 1;
+				}
+				groups[foundIndex].items.Add(info);
+				var group = groups[foundIndex];
+				group.totalBits += info.bitCount;
+				groups[foundIndex] = group;
+			}
+
+			if (_sortByBitsDescending)
+				groups.Sort((a, b) => b.totalBits.CompareTo(a.totalBits));
+
+			for (var g = 0; g < groups.Count; g++)
+			{
+				var group = groups[g];
+				var groupKey = "Group/" + group.key;
+				var foldRect = EditorGUILayout.GetControlRect(false, EditorGUIUtility.singleLineHeight + 6f);
+				EditorGUI.DrawRect(foldRect, new Color(0.16f, 0.16f, 0.16f, 1f));
+				var state = _foldoutStates.GetValueOrDefault(groupKey, true);
+				state = EditorGUI.Foldout(new Rect(foldRect.x + 4f, foldRect.y + 2f, foldRect.width - 8f, foldRect.height - 4f), state, group.key + $"  (Count: {group.items.Count}, Bits: {group.totalBits})", true);
+				_foldoutStates[groupKey] = state;
+				if (!state)
+					continue;
+
+				// Header inside group
+				var headerRect = EditorGUILayout.GetControlRect(false, rowHeight);
+				EditorGUI.DrawRect(headerRect, new Color(0.18f, 0.18f, 0.18f, 1f));
+				EditorGUI.DrawRect(new Rect(headerRect.x, headerRect.yMax - 1f, headerRect.width, 1f), new Color(0f, 0f, 0f, 0.35f));
+				float parentColWidth = Mathf.Max(80f, headerRect.width - BitsColWidth - ReferenceColWidth - PingColWidth);
+				float x = headerRect.x;
+				GUI.Label(new Rect(x + 6f, headerRect.y + 2f, BitsColWidth - 8f, rowHeight - 4f), "Bits", EditorStyles.boldLabel);
+				x += BitsColWidth;
+				GUI.Label(new Rect(x + 6f, headerRect.y + 2f, parentColWidth - 8f, rowHeight - 4f), "Parent", EditorStyles.boldLabel);
+				x = headerRect.x + headerRect.width - (ReferenceColWidth + PingColWidth);
+				GUI.Label(new Rect(x + 6f, headerRect.y + 2f, ReferenceColWidth - 8f, rowHeight - 4f), "Reference", EditorStyles.boldLabel);
+
+				if (_sortByBitsDescending)
+					group.items.Sort((a, b) => b.bitCount.CompareTo(a.bitCount));
+
+				int visibleRowIndex = 0;
+				for (var i = 0; i < group.items.Count; i++)
+				{
+					var info = group.items[i];
+					var rowRect = EditorGUILayout.GetControlRect(false, rowHeight);
+					if ((visibleRowIndex & 1) == 0)
+						EditorGUI.DrawRect(rowRect, new Color(1f, 1f, 1f, 0.035f));
+
+					float rowParentWidth = Mathf.Max(80f, rowRect.width - BitsColWidth - ReferenceColWidth - PingColWidth);
+					float xBits = rowRect.x;
+					float xParent = xBits + BitsColWidth;
+					float xRef = rowRect.x + rowRect.width - (ReferenceColWidth + PingColWidth);
+
+					EditorGUI.DrawRect(new Rect(xParent, rowRect.y, 1f, rowHeight), new Color(0f, 0f, 0f, 0.2f));
+					EditorGUI.DrawRect(new Rect(xRef, rowRect.y, 1f, rowHeight), new Color(0f, 0f, 0f, 0.2f));
+
+					GUI.Label(new Rect(xBits + 6f, rowRect.y + 2f, BitsColWidth - 8f, rowHeight - 4f), info.bitCount.ToString());
+					GUI.Label(new Rect(xParent + 6f, rowRect.y + 2f, rowParentWidth - 8f, rowHeight - 4f), info.parent != null ? info.parent.Name : "<null>");
+
+					EditorGUI.BeginDisabledGroup(true);
+					var obj = info.reference;
+					EditorGUI.ObjectField(new Rect(xRef + 6f, rowRect.y + 2f, ReferenceColWidth - 8f, rowHeight - 4f), obj, typeof(UnityEngine.Object), true);
+					EditorGUI.EndDisabledGroup();
+
+					if (obj)
+					{
+						if (GUI.Button(new Rect(rowRect.x + rowRect.width - PingColWidth + 2f, rowRect.y + 2f, PingColWidth - 4f, rowHeight - 4f), "Ping"))
+							EditorGUIUtility.PingObject(obj);
+					}
+
+					visibleRowIndex++;
+				}
+			}
+		}
+
+		private struct GroupRow
+		{
+			public string key;
+			public int totalBits;
+			public List<PackingInfo> items;
+		}
     }
 }
