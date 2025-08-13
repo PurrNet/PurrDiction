@@ -139,7 +139,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _graphics: {fileID: 6680935653974138748}
-  _floatAccuracy: 0
+  _floatAccuracy: 1
   _interpolationSettings: {fileID: 11400000, guid: 4a8aa8e44e23cfd4a8d4387ef3f36173, type: 2}
   _characterControllerPatch: 1
 --- !u!114 &2756729784649837662
@@ -155,8 +155,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _rigidbody: {fileID: 3826029466696574374}
-  _floatAccuracy: 0
-  _eventMask: -1
+  _floatAccuracy: 1
+  _eventMask: 0
   _ignoreTriggerOnTrigger: 0
 --- !u!114 &1085109774632596692
 MonoBehaviour:

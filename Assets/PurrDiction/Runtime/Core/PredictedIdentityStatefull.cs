@@ -186,10 +186,17 @@ namespace PurrNet.Prediction
         internal override bool WriteCurrentState(PlayerID target, BitPacker packer, DeltaModule deltaModule)
         {
             int pos = packer.positionInBits;
-            deltaModule.WriteReliable(packer, target, internalKey, fullPredictedState.prediction);
-            var result = WriteDeltaState(target, packer, deltaModule);
+            int flagPos = packer.AdvanceBits(1);
+
+            bool changed = deltaModule.WriteReliable(packer, target, internalKey, fullPredictedState.prediction);
+            changed = WriteDeltaState(target, packer, deltaModule) || changed;
+
+            packer.WriteAt(flagPos, changed);
+            if (!changed)
+                packer.SetBitPosition(flagPos + 1);
+
             TickBandwidthProfiler.OnWroteState(myType, packer.positionInBits - pos, this);
-            return result;
+            return changed;
         }
 
         protected virtual bool WriteDeltaState(PlayerID target, BitPacker packer, DeltaModule deltaModule)
@@ -202,19 +209,40 @@ namespace PurrNet.Prediction
         {
             int pos = packer.positionInBits;
 
-            STATE state = default;
-            PredictedIdentityState prediction = default;
+            bool changed = Packer<bool>.Read(packer);
+            if (changed)
+            {
+                STATE state = default;
+                PredictedIdentityState prediction = default;
 
-            deltaModule.ReadReliable(packer, internalKey, ref prediction);
-            ReadDeltaState(packer, deltaModule, ref state);
+                deltaModule.ReadReliable(packer, internalKey, ref prediction);
+                ReadDeltaState(packer, deltaModule, ref state);
+
+                _stateHistory.Write(tick, new FULL_STATE<STATE>
+                {
+                    state = state,
+                    prediction = prediction
+                });
+            }
+            else
+            {
+                packer.SetBitPosition(pos);
+
+                STATE state = default;
+                PredictedIdentityState prediction = default;
+
+                deltaModule.ReadReliable(packer, internalKey, ref prediction);
+                packer.SetBitPosition(pos);
+                ReadDeltaState(packer, deltaModule, ref state);
+
+                _stateHistory.Write(tick, new FULL_STATE<STATE>
+                {
+                    state = state,
+                    prediction = prediction
+                });
+            }
 
             TickBandwidthProfiler.OnReadState(myType, packer.positionInBits - pos, this);
-
-            _stateHistory.Write(tick, new FULL_STATE<STATE>
-            {
-                state = state,
-                prediction = prediction
-            });
         }
 
         protected virtual void ReadDeltaState(BitPacker packer, DeltaModule deltaModule, ref STATE state)
