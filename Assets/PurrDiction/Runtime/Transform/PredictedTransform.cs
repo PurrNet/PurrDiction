@@ -13,7 +13,11 @@ namespace PurrNet.Prediction
         [SerializeField, PurrLock] private Transform _graphics;
         [SerializeField, PurrLock] private FloatAccuracy _floatAccuracy = FloatAccuracy.Medium;
         [SerializeField] private TransformInterpolationSettings _interpolationSettings;
+        [Tooltip("You might want graphics to be unparented due to this gameobject being actively disabled/enabled during reconciles.")]
+        [SerializeField] private bool _unparentGraphics;
         [SerializeField] private bool _characterControllerPatch = true;
+
+        private Transform _originalGraphicsParent;
 
         public Transform graphics => _graphics;
 
@@ -161,6 +165,28 @@ namespace PurrNet.Prediction
             _viewState = null;
             _oldPrediction = default;
             _teleportNextFrame = true;
+        }
+
+        protected override void LateAwake()
+        {
+            if (_hasView && _unparentGraphics)
+            {
+                _originalGraphicsParent = _graphics.parent;
+                _graphics.SetParent(null);
+            }
+        }
+
+        protected override void OnAddedToPool()
+        {
+            if (_hasView && _unparentGraphics)
+                _graphics.SetParent(_originalGraphicsParent);
+        }
+
+        protected override void OnDestroy()
+        {
+            base.OnDestroy();
+            if (_hasView && _unparentGraphics && _graphics)
+                Destroy(_graphics.gameObject);
         }
 
         private void LateUpdate()
