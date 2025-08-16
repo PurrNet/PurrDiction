@@ -1,0 +1,33 @@
+{
+    "name": "PurrDiction.Editor",
+    "rootNamespace": "PurrNet.Prediction.Editor",
+    "references": [
+        "GUID:4ecd904f72132b747bbe9d8dc699df89",
+        "GUID:25b66764e5eb9a64dafc43ec782fe09b",
+        "GUID:20ea01ee0cb7096449afb3ff5adbd92f",
+        "GUID:635334121cbb93e42a0ade5df8702ec4",
+        "GUID:6e20f757a1bae164fa42750dd2b27dcb",
+        "GUID:f51ebe6a0ceec4240a699833d6309b23",
+        "GUID:e851236b9ac2b9b4eaaa99506366edea"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [
+        "Newtonsoft.Json.dll",
+        "Sirenix.OdinInspector.Editor.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "com.codewriter.triinspector",
+            "expression": "",
+            "define": "TRI_INSPECTOR_PACKAGE"
+        }
+    ],
+    "noEngineReferences": false
+}

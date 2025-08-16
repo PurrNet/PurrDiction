@@ -1,7 +1,8 @@
 using System.Collections.Generic;
-using FixMath.NET;
-using PurrNet.Logging;
+using PurrNet.Modules;
 using PurrNet.Packing;
+using PurrNet.Prediction.Profiler;
+using PurrNet.Utils;
 using UnityEngine;
 
 namespace PurrNet.Prediction
@@ -10,115 +11,210 @@ namespace PurrNet.Prediction
         where STATE : struct, IPredictedData<STATE>
         where INPUT : struct, IPredictedData
     {
-        [SerializeField] private bool _extrapolateInput = true;
-        
+        [Header("Predicted Input")]
+        [SerializeField] protected float _repeatInputFactor = 0.8f;
+        [SerializeField] protected bool _extrapolateInput = true;
+
+        public override bool hasInput => true;
+
         private History<INPUT> _inputHistory;
 
-        protected abstract INPUT GetInput();
-        
-        private INPUT _lastInput;
-        
-        public PredictedHierarchy hierarchy { get; private set; }
+        public INPUT currentInput => _currentInput;
+        private INPUT _currentInput;
 
-        public override void Setup(NetworkManager manager, PredictionManager world)
+        public override string ToString()
         {
-            if (!isFreshSpawn)
-                return;
-            
-            base.Setup(manager, world);
+            return $"State:\n{fullPredictedState.state}";
+        }
 
-            hierarchy = world.hierarchy;
+        public override string GetExtraString()
+        {
+            return $"Input:\n{_lastInput}";
+        }
+
+        protected virtual void GetFinalInput(ref INPUT input) {}
+
+        protected virtual void UpdateInput(ref INPUT input) { }
+
+        private INPUT _lastInput;
+        private INPUT _nextInput;
+
+        internal override void Setup(NetworkManager manager, PredictionManager world, PredictedComponentID id, PlayerID? owner)
+        {
+            base.Setup(manager, world, id, owner);
+
             _inputHistory = new History<INPUT>(world.tickRate * 5);
         }
-        
-        internal override void EvaluateAndRegisterLocalInput(ulong localTick)
-        {
-            _lastInput = GetInput();
-            _inputHistory.Write(localTick, _lastInput);
-        }
-        
-        internal override void SimulateTick(ulong tick, Fix64 delta)
+
+        internal override void SimulateTick(ulong tick, float delta)
         {
             if (IsOwner())
             {
                 if (!_inputHistory.TryGet(tick, out var input))
-                {
-                    Simulate(GetInput(), ref fullPredictedState.state, delta);
-                    PurrLogger.LogError("No local input found for tick" + tick + " using current input but this is likely a bug");
-                }
-                else Simulate(input, ref fullPredictedState.state, delta);
+                    PreSimulate(GetDefaultInput(), ref fullPredictedState.state, delta);
+                else PreSimulate(input, ref fullPredictedState.state, delta);
             }
             else
             {
                 switch (_extrapolateInput)
                 {
-                    case true when _inputHistory.TryGetClosest(tick, out var extrainput):
-                        Simulate(extrainput, ref fullPredictedState.state, delta);
+                    case true when _inputHistory.TryGetClosest(tick, out var extrainput, out var distanceInTicks):
+                        if (distanceInTicks > 0)
+                            ModifyExtrapolatedInput(ref extrainput);
+                        uint maxInputs = (uint)Mathf.CeilToInt(_repeatInputFactor * 10 / (delta * 60));
+                        if (distanceInTicks <= maxInputs)
+                            PreSimulate(extrainput, ref fullPredictedState.state, delta);
+                        else PreSimulate(GetDefaultInput(), ref fullPredictedState.state, delta);
                         break;
                     case false when _inputHistory.TryGet(tick, out var input):
-                        Simulate(input, ref fullPredictedState.state, delta);
+                        PreSimulate(input, ref fullPredictedState.state, delta);
                         break;
                     default:
-                        Simulate(null, ref fullPredictedState.state, delta);
+                        PreSimulate(GetDefaultInput(), ref fullPredictedState.state, delta);
                         break;
                 }
             }
         }
 
-        internal override void SimulateLocal(Fix64 delta)
+        /// <summary>
+        /// Modify the extrapolated input before it is used to simulate the state.
+        /// </summary>
+        protected virtual void ModifyExtrapolatedInput(ref INPUT input) { }
+
+        internal override void PrepareInput(bool isServer, bool isLocal, ulong tick)
         {
-            Simulate(_lastInput, ref fullPredictedState.state, delta);
-        }
-        
-        internal override void SimulateRemote(ulong tick, Fix64 delta)
-        {
-            if (_queuedInputs.Count == 0)
+            if (isLocal)
             {
-                if (_inputHistory.TryGetClosest(tick, out var input))
-                     Simulate(input, ref fullPredictedState.state, delta);
-                else Simulate(_lastInput, ref fullPredictedState.state, delta);
-                
-                return;
+                GetFinalInput(ref _nextInput);
+                SanitizeInput(ref _nextInput);
+                _lastInput = _nextInput;
+                _inputHistory.Write(tick, _nextInput);
+                _nextInput = GetDefaultInput();
+            }
+            else if (isServer)
+            {
+                if (_queuedInput.Count <= 0)
+                {
+                    _lastInput = GetDefaultInput();
+                    _inputHistory.Write(tick, _lastInput);
+                    return;
+                }
+
+                var input = _queuedInput.Dequeue();
+                SanitizeInput(ref input);
+                _lastInput = input;
+                _inputHistory.Write(tick, input);
+            }
+        }
+
+        protected virtual void Update()
+        {
+            if(isController)
+                UpdateInput(ref _nextInput);
+        }
+
+        internal virtual void SimulateRemote(ulong tick, float delta)
+        {
+            if (_inputHistory.TryGet(tick, out var input))
+                PreSimulate(input, ref fullPredictedState.state, delta);
+            else PreSimulate(GetDefaultInput(), ref fullPredictedState.state, delta);
+        }
+
+        protected virtual INPUT GetDefaultInput() => default;
+
+        private void PreSimulate(INPUT input, ref STATE state, float delta)
+        {
+            _currentInput = input;
+            Simulate(input, ref state, delta);
+        }
+
+        protected abstract void Simulate(INPUT input, ref STATE state, float delta);
+
+        protected override void Simulate(ref STATE state, float delta)
+        {
+            PreSimulate(_lastInput, ref state, delta);
+        }
+
+        readonly struct DeltaKey : IStableHashable
+        {
+            private readonly PredictedComponentID id;
+
+            public DeltaKey(PredictedComponentID id)
+            {
+                this.id = id;
             }
 
-            var dequeuedInput = _queuedInputs.Dequeue();
-            _inputHistory.Write(tick, dequeuedInput);
-            Simulate(dequeuedInput, ref fullPredictedState.state, delta);
+            public uint GetStableHash()
+            {
+                return (uint)id.GetHashCode() ^ Hasher<INPUT>.stableHash;
+            }
         }
 
-        protected abstract void Simulate(INPUT? input, ref STATE state, Fix64 delta);
-        
-        protected override void Simulate(Fix64 delta, ref STATE state)
+        DeltaKey key => new DeltaKey(id);
+
+        internal override void WriteInput(ulong localTick, PlayerID receiver, BitPacker input, DeltaModule deltaModule, bool reliable)
         {
-            Simulate(_lastInput, ref state, delta);
+            int pos = input.positionInBits;
+
+            if (_inputHistory.TryGet(localTick, out var savedInput))
+            {
+                Packer<bool>.Write(input, true);
+
+                if (reliable)
+                     deltaModule.WriteReliable(input, receiver, key, savedInput);
+                else deltaModule.Write(input, receiver, key, savedInput);
+            }
+            else
+            {
+                Packer<bool>.Write(input, false);
+            }
+
+            TickBandwidthProfiler.OnWroteInput(myType, input.positionInBits - pos, this);
         }
 
-        public override void WriteInput(ulong localTick, BitPacker input)
+        internal override void ReadInput(ulong tick, PlayerID sender, BitPacker packer, DeltaModule deltaModule, bool reliable)
         {
-            if (_inputHistory.TryGetClosest(localTick, out var savedInput))
-                 Packer<INPUT>.Write(input, savedInput);
-            else Packer<INPUT>.Write(input, _lastInput);
-        }
-        
-        public override void ReadInput(ulong tick, BitPacker packer)
-        {
-            INPUT input = default;
-            Packer<INPUT>.Read(packer, ref input);
-            _inputHistory.Write(tick, input);
-        }
-        
-        readonly Queue<INPUT> _queuedInputs = new();
+            var pos = packer.positionInBits;
 
-        public override void QueueInput(BitPacker packer)
-        {
-            INPUT input = default;
-            Packer<INPUT>.Read(packer, ref input);
-            _queuedInputs.Enqueue(input);
+            if (Packer<bool>.Read(packer))
+            {
+                INPUT input = default;
+                if (reliable)
+                    deltaModule.ReadReliable(packer, key, ref input);
+                else deltaModule.Read(packer, key, sender, ref input);
+                _inputHistory.Write(tick, input);
+            }
+            else _inputHistory.Remove(tick);
+
+            TickBandwidthProfiler.OnReadInput(myType, packer.positionInBits - pos, this);
         }
 
-        public override void ClearInput()
+        private readonly Queue<INPUT> _queuedInput = new ();
+
+        /// <summary>
+        /// Sanitize the input before using it.
+        /// Use this to clamp values or prevent invalid input.
+        /// </summary>
+        /// <param name="input"></param>
+        protected virtual void SanitizeInput(ref INPUT input) { }
+
+        internal override void QueueInput(BitPacker packer, PlayerID sender, DeltaModule deltaModule, bool reliable)
         {
-            _queuedInputs.Clear();
+            int pos = packer.positionInBits;
+            if (Packer<bool>.Read(packer))
+            {
+                INPUT input = default;
+
+                if (reliable)
+                     deltaModule.ReadReliable(packer, key, ref input);
+                else deltaModule.Read(packer, key, sender, ref input);
+
+                var sanitizedInput = input;
+                SanitizeInput(ref sanitizedInput);
+                _queuedInput.Clear();
+                _queuedInput.Enqueue(sanitizedInput);
+            }
+            TickBandwidthProfiler.OnReadInput(myType, packer.positionInBits - pos, this);
         }
     }
 }

@@ -1,0 +1,22 @@
+{
+    "name": "Unity.Purrdiction.Codegen",
+    "rootNamespace": "Purrdiction.Codegen",
+    "references": [
+        "GUID:4ecd904f72132b747bbe9d8dc699df89",
+        "GUID:e909c8f97969c754fad1d4efc08cd558",
+        "GUID:6e20f757a1bae164fa42750dd2b27dcb"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "Mono.Cecil.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

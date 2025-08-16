@@ -1,0 +1,23 @@
+{
+    "name": "PurrNet.Prediction.Prebuilt",
+    "rootNamespace": "PurrNet.Prediction.Prebuilt",
+    "references": [
+        "GUID:4ecd904f72132b747bbe9d8dc699df89",
+        "GUID:6e20f757a1bae164fa42750dd2b27dcb",
+        "GUID:20ea01ee0cb7096449afb3ff5adbd92f",
+        "GUID:25b66764e5eb9a64dafc43ec782fe09b",
+        "GUID:75469ad4d38634e559750d17036d5f7c",
+        "GUID:635334121cbb93e42a0ade5df8702ec4",
+        "GUID:cdf336453b0d25b47a81a50284f7d46f",
+        "GUID:428face486f54474c97d1ac23ff7e15b"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

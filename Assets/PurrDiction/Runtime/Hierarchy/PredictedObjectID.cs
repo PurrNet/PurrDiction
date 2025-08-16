@@ -1,15 +1,38 @@
 ﻿using System;
 using PurrNet.Packing;
+using UnityEngine;
 
 namespace PurrNet.Prediction
 {
     public readonly struct PredictedObjectID : IPackedAuto, IEquatable<PredictedObjectID>
     {
-        public readonly int instanceId;
-        
-        public PredictedObjectID(int instanceId)
+        public readonly PackedUInt instanceId;
+
+        public PredictedObjectID(uint instanceId)
         {
             this.instanceId = instanceId;
+        }
+
+        public GameObject GetGameObject(PredictionManager manager)
+        {
+            return manager.hierarchy.GetGameObject(this);
+        }
+
+        public bool TryGetGameObject(PredictionManager manager, out GameObject gameObject)
+        {
+            return manager.hierarchy.TryGetGameObject(this, out gameObject);
+        }
+
+        public bool TryGetComponent<T>(PredictionManager manager, out T component) where T : Component
+        {
+            return manager.hierarchy.TryGetComponent(this, out component);
+        }
+
+        public T GetComponent<T>(PredictionManager manager) where T : Component
+        {
+            if (manager.hierarchy.TryGetComponent<T>(this, out var result))
+                return result;
+            return null;
         }
 
         public bool Equals(PredictedObjectID other)
@@ -24,7 +47,12 @@ namespace PurrNet.Prediction
 
         public override int GetHashCode()
         {
-            return instanceId;
+            return (int)instanceId.value;
+        }
+
+        public override string ToString()
+        {
+            return $"{instanceId.value}";
         }
     }
 }

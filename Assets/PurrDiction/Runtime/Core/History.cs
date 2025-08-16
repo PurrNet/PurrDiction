@@ -1,8 +1,9 @@
+using System;
 using System.Collections.Generic;
 
 namespace PurrNet.Prediction
 {
-    public sealed class History<T> where T : struct, IOptionalDispose
+    public sealed class History<T> where T : struct, IDisposable
     {
         struct Entry
         {
@@ -16,7 +17,7 @@ namespace PurrNet.Prediction
         readonly int m_maxCount;
 
         readonly int m_limitToCut;
-        
+
         /// <summary>
         /// Access values directly by index
         /// </summary>
@@ -27,7 +28,7 @@ namespace PurrNet.Prediction
             {
                 if (index < 0 || index >= m_data.Count)
                 {
-                    throw new System.IndexOutOfRangeException($"Index {index} is out of range. Only from 0 to {m_data.Count - 1} is valid.");
+                    throw new IndexOutOfRangeException($"Index {index} is out of range. Only from 0 to {m_data.Count - 1} is valid.");
                 }
                 return m_data[index].Data;
             }
@@ -80,7 +81,7 @@ namespace PurrNet.Prediction
 
             if (m_maxCount > 0)
             {
-                m_limitToCut = System.Math.Max(m_maxCount + 10, m_maxCount + m_maxCount / 2);
+                m_limitToCut = Math.Max(m_maxCount + 10, m_maxCount + m_maxCount / 2);
                 m_data = new List<Entry>(m_maxCount);
             }
             else
@@ -127,10 +128,10 @@ namespace PurrNet.Prediction
 
             // Lets trim to the desired max values
             int toRemove = m_data.Count - m_maxCount;
-            
+
             for (int i = 0; i < toRemove; i++)
                 m_data[i].Data.Dispose();
-            
+
             m_data.RemoveRange(0, toRemove);
         }
 
@@ -145,7 +146,7 @@ namespace PurrNet.Prediction
             {
                 index += 1;
             }
-            
+
             for (int i = 0; i < index; i++)
                 m_data[i].Data.Dispose();
 
@@ -163,11 +164,18 @@ namespace PurrNet.Prediction
             {
                 index += 1;
             }
-            
+
             for (int i = index; i < m_data.Count; i++)
                 m_data[i].Data.Dispose();
 
             m_data.RemoveRange(index, m_data.Count - index);
+        }
+
+        public void Clear()
+        {
+            for (int i = 0; i < m_data.Count; i++)
+                m_data[i].Data.Dispose();
+            m_data.Clear();
         }
 
         /// <summary>
@@ -189,7 +197,7 @@ namespace PurrNet.Prediction
 
             return found;
         }
-        
+
         public T ReadOrDefault(ulong tick)
         {
             T result = default;
@@ -201,12 +209,12 @@ namespace PurrNet.Prediction
 
             return result;
         }
-        
+
         public bool TryGet(ulong tick, out T result)
         {
             return Read(tick, out result);
         }
-        
+
         public bool TryGetClosest(ulong tick, out T result)
         {
             result = default;
@@ -245,13 +253,71 @@ namespace PurrNet.Prediction
             return true;
         }
 
+        public bool TryGetClosest(ulong tick, out T result, out ulong tickDifference)
+        {
+            result = default;
+
+            if (m_data.Count == 0)
+            {
+                tickDifference = 0;
+                return false;
+            }
+
+            if (Find(tick, out var index))
+            {
+                result = this[index];
+                tickDifference = 0;
+                return true;
+            }
+
+            if (index == 0)
+            {
+                result = this[index];
+                var resultTick = m_data[index].Tick;
+                if (resultTick > tick)
+                     tickDifference = resultTick - tick;
+                else tickDifference = tick - resultTick;
+                return true;
+            }
+
+            if (index == m_data.Count)
+            {
+                result = this[index - 1];
+                var resultTick = m_data[index - 1].Tick;
+                if (resultTick > tick)
+                     tickDifference = resultTick - tick;
+                else tickDifference = tick - resultTick;
+                return true;
+            }
+
+            var diff1 = tick - m_data[index - 1].Tick;
+            var diff2 = m_data[index].Tick - tick;
+
+            if (diff1 < diff2)
+            {
+                result = this[index - 1];
+                var resultTick = m_data[index - 1].Tick;
+                if (resultTick > tick)
+                     tickDifference = resultTick - tick;
+                else tickDifference = tick - resultTick;
+                return true;
+            }
+
+            result = this[index];
+            var resultTick2 = m_data[index].Tick;
+            if (resultTick2 > tick)
+                 tickDifference = resultTick2 - tick;
+            else tickDifference = tick - resultTick2;
+            return true;
+        }
+
         /// <summary>
         /// Does a binary search on the internal entries.
         /// </summary>
         /// <param name="tick">The tick you are looking for.</param>
         /// <param name="result">The index that is either your result or the closest index, this can change when Writing new data.</param>
         /// <returns>Returns if a match was found or not.</returns>
-        public bool Find(ulong tick, out int result)  
+        public bool Find(ulong tick, out int result)
         {
             int min = 0;
             int max = m_data.Count - 1;
@@ -270,7 +336,7 @@ namespace PurrNet.Prediction
                 {
                     max = mid - 1;
                 }
-                else  
+                else
                 {
                     min = mid + 1;
                 }
@@ -278,14 +344,23 @@ namespace PurrNet.Prediction
 
             result = min;
             return false;
-        }  
-    
+        }
+
         /// <summary>
         /// Throw any cached data at the garbage collector
         /// </summary>
         public void TrimExcessMemory()
         {
             m_data.TrimExcess();
+        }
+
+        public void Remove(ulong tick)
+        {
+            if (Find(tick, out var index))
+            {
+                m_data[index].Data.Dispose();
+                m_data.RemoveAt(index);
+            }
         }
     }
 }

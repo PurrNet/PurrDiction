@@ -1,6 +1,3 @@
-using FixMath.NET;
-using JetBrains.Annotations;
-using PurrNet.Logging;
 using PurrNet.Modules;
 using PurrNet.Packing;
 using UnityEngine;
@@ -9,28 +6,100 @@ namespace PurrNet.Prediction
 {
     public abstract class PredictedIdentity : MonoBehaviour
     {
-        [SerializeField] protected int _maxInterpolationBuffer = 2;
-        [SerializeField] protected bool _updateView = true;
-        
+        public virtual string GetExtraString()
+        {
+            return string.Empty;
+        }
+
         public PredictionManager predictionManager { get; protected set; }
 
+        /// <summary>
+        /// Represents the identifier of the owner associated with this object.
+        /// Used to track ownership, enabling control over inputs.
+        /// </summary>
         public PlayerID? owner;
-        
+
+        /// <summary>
+        /// The unique identifier for this object.
+        /// Can be used to identify the object across the network.
+        /// </summary>
+        public PredictedComponentID id;
+
         internal bool isFreshSpawn = true;
 
-        public abstract void Setup(NetworkManager manager, PredictionManager world);
+        public virtual bool hasInput => false;
+
+        internal virtual bool isEventHandler => false;
+
+        [UsedByIL]
+        public bool IsSimulating()
+        {
+            return predictionManager.isSimulating;
+        }
+
+        public virtual void ResetState()
+        {
+            isServer = false;
+            isFreshSpawn = true;
+            owner = null;
+            id = default;
+            OnRemovedFromPool();
+        }
+
+        protected virtual void OnRemovedFromPool() {}
+
+        protected virtual void OnAddedToPool() {}
+
+        /// <summary>
+        /// Invoked immediately after the object is fully initialized and fresh spawned.
+        /// </summary>
+        protected virtual void LateAwake() {}
+
+        /// <summary>
+        /// Invoked when the object is being despawned and cleaned up.
+        /// Allows for any necessary teardown or resource release to be handled.
+        /// </summary>
+        protected virtual void Destroyed() {}
+
+        internal void TriggerDestroyedEvent()
+        {
+            Destroyed();
+        }
+
+        public bool isServer { get; private set; }
+
+        internal virtual void Setup(NetworkManager manager, PredictionManager world, PredictedComponentID id, PlayerID? owner)
+        {
+            isServer = manager.isServer;
+            this.owner = owner;
+            this.id = id;
+
+            if (!isFreshSpawn)
+                return;
+
+            isFreshSpawn = false;
+            predictionManager = world;
+
+            LateAwake();
+        }
 
         protected virtual void OnDestroy()
         {
+            Destroyed();
+
             if (predictionManager)
                 predictionManager.UnregisterInstance(this);
         }
-        
+
+        public bool isOwner => IsOwner();
+
+        public bool isController => owner.HasValue ? owner == predictionManager.localPlayer : isServer;
+
         public bool IsOwner()
         {
             if (!predictionManager)
                 return false;
-            
+
             return owner == predictionManager.localPlayer;
         }
 
@@ -38,7 +107,7 @@ namespace PurrNet.Prediction
         {
             return owner == player;
         }
-        
+
         public bool IsOwner(PlayerID? player)
         {
             return owner == player;
@@ -51,247 +120,53 @@ namespace PurrNet.Prediction
             return asServer;
         }
 
-        internal abstract void EvaluateAndRegisterLocalInput(ulong localTick);
-        
-        internal abstract void SimulateTick(ulong tick, Fix64 delta);
-        
-        internal abstract void SimulateLocal(Fix64 delta);
+        internal abstract void SimulateTick(ulong tick, float delta);
 
-        internal abstract void SimulateRemote(ulong tick, Fix64 delta);
-        
+        public virtual void PostSimulate(ulong tick, float delta) {}
+
+        internal abstract void PrepareInput(bool isServer, bool isLocal, ulong tick);
+
         internal abstract void SaveStateInHistory(ulong tick);
 
         internal abstract void Rollback(ulong tick);
 
-        public abstract void UpdateRollbackInterpolationState(Fix64 delta, bool accumulateError);
+        public abstract void UpdateRollbackInterpolationState(float delta, bool accumulateError);
 
-        internal abstract void ResetInterpolation();
-        
+        public abstract void ResetInterpolation();
+
         internal abstract void UpdateView(float deltaTime);
 
         internal abstract void GetLatestUnityState();
-        
-        public abstract void WriteLatestState(BitPacker packer);
 
-        public abstract void WriteInput(ulong localTick, BitPacker input);
+        internal abstract bool WriteCurrentState(PlayerID receiver, BitPacker packer, DeltaModule deltaModule);
 
-        public abstract void ReadState(ulong tick, BitPacker packer);
-        
-        public abstract void ReadInput(ulong tick, BitPacker packer);
-        
-        public abstract void QueueInput(BitPacker packer);
+        internal abstract void WriteInput(ulong localTick, PlayerID receiver, BitPacker input, DeltaModule deltaModule, bool reliable);
 
-        public abstract void ClearInput();
-    }
-    
-    public abstract class PredictedIdentity<STATE> : PredictedIdentity where STATE : struct, IPredictedData<STATE>
-    {
-        internal struct FULL_STATE : IOptionalDispose
+        internal abstract void ReadState(ulong tick, BitPacker packer, DeltaModule deltaModule);
+
+        internal abstract void ReadInput(ulong tick, PlayerID sender, BitPacker packer, DeltaModule deltaModule, bool reliable);
+
+        internal abstract void QueueInput(BitPacker packer, PlayerID sender, DeltaModule deltaModule, bool reliable);
+
+        public GameObject GetRoot()
         {
-            public STATE state;
-            public PredictedIdentityState prediction;
+            // get the farthest root with a predicted identity
+            var current = transform;
 
-            public FULL_STATE DeepCopy()
+            while (current.parent != null)
             {
-                using var packer = BitPackerPool.Get();
-                
-                Packer<STATE>.Write(packer, state);
-                Packer<PredictedIdentityState>.Write(packer, prediction);
-                
-                packer.ResetPositionAndMode(true);
-                
-                var data = new FULL_STATE();
-                
-                Packer<STATE>.Read(packer, ref data.state);
-                Packer<PredictedIdentityState>.Read(packer, ref data.prediction);
-                
-                return data;
-            }
-            
-            public void Dispose()
-            {
-                state.Dispose();
+                if (current.parent.GetComponent<PredictedIdentity>() == null)
+                    break;
+
+                current = current.parent;
             }
 
-            public override string ToString()
-            {
-                return $"{{state: {state}, prediction: {prediction}}}";
-            }
-        }
-        
-        private Interpolated<FULL_STATE> _interpolatedState;
-        private History<FULL_STATE> _stateHistory;
-        
-        protected TickManager tickModule { get; private set; }
-
-        internal override void ResetInterpolation()
-        {
-            _interpolatedState.Teleport(fullPredictedState);
+            return current.gameObject;
         }
 
-        private FULL_STATE FULLInterpolate(FULL_STATE from, FULL_STATE to, float t)
+        internal void TriggerOnPooledEvent()
         {
-            var state = Interpolate(from.state, to.state, t);
-            return new FULL_STATE
-            {
-                state = state,
-                prediction = from.prediction
-            };
-        }
-        
-        internal FULL_STATE fullPredictedState;
-        
-        public STATE currentState => fullPredictedState.state; 
-        
-        public override void Setup(NetworkManager manager, PredictionManager world)
-        {
-            if (!isFreshSpawn)
-                return;
-            
-            isFreshSpawn = false;
-            
-            owner = null;
-            predictionManager = world;
-            tickModule = manager.tickModule;
-            
-            if (tickModule == null)
-                return;
-            
-            var initialState = GetInitialState();
-            fullPredictedState.state = initialState;
-            GetLatestUnityState();
-
-            var copy = fullPredictedState.DeepCopy();
-            
-            _interpolatedState = new Interpolated<FULL_STATE>(FULLInterpolate, (float)world.tickDelta, copy, _maxInterpolationBuffer);
-            _stateHistory = new History<FULL_STATE>(world.tickRate * 5);
-            _stateHistory.Write(0, copy);
-        }
-
-        /// <summary>
-        /// Called when the object is first created.
-        /// Future updates will come only through Simulate.
-        /// </summary>
-        /// <returns>The initial state of the object.</returns>
-        protected virtual void GetUnityState(ref STATE state) {}
-
-        internal override void GetLatestUnityState()
-        {
-            fullPredictedState.prediction.owner = owner;
-            GetUnityState(ref fullPredictedState.state);
-        }
-
-        internal override void EvaluateAndRegisterLocalInput(ulong localTick) { }
-
-        internal override void SimulateTick(ulong tick, Fix64 delta) => Simulate(delta, ref fullPredictedState.state);
-
-        internal override void SimulateLocal(Fix64 delta) => Simulate(delta, ref fullPredictedState.state);
-
-        internal override void SimulateRemote(ulong tick, Fix64 delta) => Simulate(delta, ref fullPredictedState.state);
-
-        internal override void SaveStateInHistory(ulong tick)
-        {
-            _stateHistory.Write(tick, fullPredictedState.DeepCopy());
-        }
-        
-        FULL_STATE? _viewState;
-        
-        public override void UpdateRollbackInterpolationState(Fix64 delta, bool accumulateError)
-        {
-            if (!_updateView)
-                return;
-            
-            _viewState?.Dispose();
-            var copy = fullPredictedState.DeepCopy();
-            ModifyRollbackViewState(ref copy.state, delta, accumulateError);
-            _viewState = copy;
-        }
-
-        protected virtual void ModifyRollbackViewState(ref STATE state, Fix64 delta, bool accumulateError) { }
-        
-        protected virtual STATE GetInitialState() => default;
-
-        protected virtual void Simulate(Fix64 delta, ref STATE state) {}
-
-        internal override void Rollback(ulong tick)
-        {
-            if (!_stateHistory.Read(tick, out var state))
-            {
-                PurrLogger.LogError($"Failed to rollback to tick {tick}, state not found.");
-                return;
-            }
-            
-            fullPredictedState.Dispose();
-            fullPredictedState = state.DeepCopy();
-            
-            owner = fullPredictedState.prediction.owner;
-            SetUnityState(fullPredictedState.state);
-        }
-        
-        protected virtual void SetUnityState(STATE state) {}
-
-        public virtual void WriteState(ulong tick, BitPacker packer)
-        {
-            if (!_stateHistory.Read(tick, out var state))
-            {
-                PurrLogger.LogError($"Failed to write state at tick {tick}");
-                return;
-            }
-            
-            Packer<STATE>.Write(packer, state.state);
-            Packer<PredictedIdentityState>.Write(packer, state.prediction);
-        }
-
-        public override void WriteLatestState(BitPacker packer)
-        {
-            Packer<STATE>.Write(packer, fullPredictedState.state);
-            Packer<PredictedIdentityState>.Write(packer, fullPredictedState.prediction);
-        }
-
-        [UsedImplicitly]
-        public override void ReadState(ulong tick, BitPacker packer)
-        {
-            STATE state = default;
-            PredictedIdentityState prediction = default;
-            Packer<STATE>.Read(packer, ref state);
-            Packer<PredictedIdentityState>.Read(packer, ref prediction);
-            
-            _stateHistory.Write(tick, new FULL_STATE
-            {
-                state = state,
-                prediction = prediction
-            });
-        }
-
-        public override void WriteInput(ulong localTick, BitPacker input) { }
-
-        public override void ReadInput(ulong tick, BitPacker packer) { }
-
-        public override void QueueInput(BitPacker packer) { }
-
-        public override void ClearInput() { }
-        
-        internal override void UpdateView(float deltaTime)
-        {
-            if (!_updateView)
-                return;
-            
-            if (_interpolatedState == null)
-                return;
-
-            if (_viewState.HasValue)
-                _interpolatedState.Add(_viewState.Value);
-
-            UpdateView(_interpolatedState.Advance(deltaTime).state, _stateHistory.Count > 0 ? _stateHistory[^1].state : null);
-        }
-        
-        protected virtual void UpdateView(STATE interpolatedState, STATE? verified) {}
-        
-        protected virtual STATE Interpolate(STATE from, STATE to, float t)
-        {
-            var offset = to.Add(to, from.Negate(from));
-            var scaled = offset.Scale(offset, t);
-            return from.Add(from, scaled);
+            OnAddedToPool();
         }
     }
 }
