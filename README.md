@@ -1,7 +1,5 @@
 ## Install 
 
 ```bash
-https://github.com/PurrNet/PurrDiction.git?path=/Assets/PurrDiction#dev
+https://github.com/PurrNet/PurrDiction.git?path=/Assets/PurrDiction#release
 ```
-
-In early access
