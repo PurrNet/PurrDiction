@@ -14,5 +14,8 @@
         "networking",
         "multiplayer",
         "prediction"
-    ]
+    ],
+    "dependencies": {
+        "com.unity.nuget.mono-cecil": "1.11.4"
+    }
 }
