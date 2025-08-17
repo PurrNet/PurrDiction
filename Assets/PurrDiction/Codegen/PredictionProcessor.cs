@@ -52,7 +52,7 @@ namespace Purrdiction.Codegen
                 for (var m = 0; m < assemblyDefinition.Modules.Count; m++)
                 {
                     var module = assemblyDefinition.Modules[m];
-                    var types = GetAllTypes(module);
+                    using var types = GetAllTypes(module);
 
                     for (var t = 0; t < types.Count; t++)
                     {
