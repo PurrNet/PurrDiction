@@ -80,6 +80,12 @@ namespace PurrNet.Prediction
             _defaultKinematic = _rigidbody.isKinematic;
         }
 
+        public override void OnPreSetup()
+        {
+            _rigidbody.linearVelocity = default;
+            _rigidbody.angularVelocity = default;
+        }
+
         protected override void LateAwake()
         {
             if (predictionManager.physics3d == null)
