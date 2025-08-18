@@ -81,17 +81,8 @@ namespace PurrNet.Prediction
 
                 if (_folder == null || string.IsNullOrEmpty(AssetDatabase.GetAssetPath(_folder)))
                 {
-                    EditorUtility.DisplayProgressBar("Getting Network Prefabs", "No folder found...", 0f);
-                    if (_autoGenerate && _newPrefabs.Count > 0)
-                    {
-                        _newPrefabs.Clear();
-                        EditorUtility.SetDirty(this);
-                        AssetDatabase.SaveAssets();
-                    }
-
-                    EditorUtility.ClearProgressBar();
-                    _generating = false;
-                    return;
+                    EditorUtility.DisplayProgressBar("Getting Network Prefabs", "No folder found, defaulting to Assets/", 0f);
+                    _folder = AssetDatabase.LoadAssetAtPath<Object>("Assets");
                 }
 
                 EditorUtility.DisplayProgressBar("Getting Network Prefabs", "Found folder...", 0f);

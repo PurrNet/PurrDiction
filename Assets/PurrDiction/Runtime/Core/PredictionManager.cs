@@ -252,6 +252,7 @@ namespace PurrNet.Prediction
 
                 if (!_systems.Contains(component))
                 {
+                    component.OnPreSetup();
                     if (reset)
                         component.ResetState();
                     RegisterInstance(component, objectID, i, owner);

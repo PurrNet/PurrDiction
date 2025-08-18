@@ -37,6 +37,8 @@ namespace PurrNet.Prediction
             return predictionManager.isSimulating;
         }
 
+        public virtual void OnPreSetup() {  }
+
         public virtual void ResetState()
         {
             isServer = false;

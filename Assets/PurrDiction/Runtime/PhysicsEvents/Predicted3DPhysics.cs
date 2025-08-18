@@ -73,24 +73,25 @@ namespace PurrNet.Prediction
 
         public override void PostSimulate(ulong tick, float delta)
         {
-            int count = currentState.events.Count;
+            ref var state = ref currentState;
 
             if (predictionManager.isVerifiedAndReplaying)
             {
-                for (var i = 0; i < count; i++)
+                for (var i = 0; i < state.events.Count; i++)
                 {
-                    var ev = currentState.events[i];
+                    var ev = state.events[i];
                     TriggerEvent(predictionManager, ev);
                     ev.Dispose();
                 }
             }
             else
             {
+                int count = state.events.Count;
                 for (var i = 0; i < count; i++)
-                    currentState.events[i].Dispose();
+                    state.events[i].Dispose();
             }
 
-            currentState.events.Clear();
+            state.events.Clear();
         }
 
         private static void TriggerEvent(PredictionManager predictionManager, PhysicsEvent ev)
