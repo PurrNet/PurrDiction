@@ -28,6 +28,12 @@ namespace PurrNet.Prediction
             _rigidbody = GetComponent<Rigidbody2D>();
         }
 
+        public override void OnPreSetup()
+        {
+            _rigidbody.linearVelocity = default;
+            _rigidbody.angularVelocity = default;
+        }
+
         protected override void LateAwake()
         {
             if (predictionManager.physics2d == null)
