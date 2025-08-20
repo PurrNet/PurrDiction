@@ -24,11 +24,6 @@ namespace PurrNet.Prediction
     [AddComponentMenu("PurrDiction/Prediction Manager")]
     public class PredictionManager : NetworkIdentity
     {
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterAssembliesLoaded)]
-        static void Initialize() => _instances.Clear();
-
-        static readonly Dictionary<int, PredictionManager> _instances = new ();
-
         [SerializeField] private PredictionPhysicsProvider _physicsProvider;
         [SerializeField] private UpdateViewMode _updateViewMode = UpdateViewMode.Update;
         [SerializeField, PurrLock] private BuiltInSystems _builtInSystems =
@@ -47,17 +42,10 @@ namespace PurrNet.Prediction
         readonly List<PredictedIdentity> _queue = new ();
         readonly List<PredictedIdentity> _systems = new ();
 
-        public static bool TryGetInstance(int sceneHandle, out PredictionManager world)
-        {
-            return _instances.TryGetValue(sceneHandle, out world);
-        }
-
         GameObjectPoolCollection _pools;
 
         private void Awake()
         {
-            _instances[gameObject.scene.handle] = this;
-
             if ((_physicsProvider & PredictionPhysicsProvider.UnityPhysics2D) != 0)
                 Physics2D.simulationMode = SimulationMode2D.Script;
             if ((_physicsProvider & PredictionPhysicsProvider.UnityPhysics3D) != 0)
