@@ -6,6 +6,21 @@ namespace PurrNet.Prediction
 {
     public static class SceneObjectsModule
     {
+#if PURRSCENE_OBJECT_FILTERS
+        [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void Init()
+		{
+            PurrNet.Modules.SceneObjectsModule.onFilterSceneObjects -= Filter;
+            PurrNet.Modules.SceneObjectsModule.onFilterSceneObjects += Filter;
+		}
+
+		static bool Filter(UnityEngine.GameObject root)
+		{
+            bool hasAPredictedIdentity = root.GetComponentInChildren<PredictedIdentity>(true);
+            return !hasAPredictedIdentity;
+		}
+#endif
+
         private static readonly List<PredictedIdentity> _sceneIdentities = new List<PredictedIdentity>();
 
         public static void GetScenePredictedIdentities(Scene scene, List<PredictedIdentity> pids)
