@@ -88,7 +88,7 @@ namespace PurrNet.Prediction
 
         protected override void LateAwake()
         {
-            if (predictionManager.physics3d == null)
+            if (!predictionManager.physics3d)
                 _eventMask = PhysicsEventMask.None;
         }
 
@@ -129,6 +129,7 @@ namespace PurrNet.Prediction
                     state.linearVelocity = compressedState.linearVelocity;
                     state.angularVelocity = compressedState.angularVelocity;
                     state.isKinematic = compressedState.isKinematic;
+                    state.isSleeping = compressedState.isSleeping;
                     break;
                 }
                 case FloatAccuracy.Low:
@@ -140,6 +141,7 @@ namespace PurrNet.Prediction
                     state.linearVelocity = halfState.linearVelocity;
                     state.angularVelocity = halfState.angularVelocity;
                     state.isKinematic = halfState.isKinematic;
+                    state.isSleeping = halfState.isSleeping;
                     break;
                 }
                 default: throw new ArgumentOutOfRangeException();
