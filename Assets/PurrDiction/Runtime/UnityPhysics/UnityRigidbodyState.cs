@@ -8,10 +8,11 @@ namespace PurrNet.Prediction
         public Vector3 linearVelocity;
         public Vector3 angularVelocity;
         public bool isKinematic;
+        public bool isSleeping;
 
         public override string ToString()
         {
-            return $"LinearVelocity: {linearVelocity}\nAngularVelocity: {angularVelocity}\nIsKinematic: {isKinematic}";
+            return $"LinearVelocity: {linearVelocity}\nAngularVelocity: {angularVelocity}\nIsKinematic: {isKinematic}\nIsSleeping: {isSleeping}";
         }
 
         public void Dispose() { }

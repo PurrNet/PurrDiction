@@ -263,7 +263,8 @@ namespace PurrNet.Prediction
             {
                 linearVelocity = _rigidbody.linearVelocity,
                 angularVelocity = _rigidbody.angularVelocity,
-                isKinematic = _rigidbody.isKinematic
+                isKinematic = _rigidbody.isKinematic,
+                isSleeping = _rigidbody.IsSleeping()
             };
         }
 
@@ -272,6 +273,7 @@ namespace PurrNet.Prediction
             state.isKinematic = _rigidbody.isKinematic;
             state.linearVelocity = _rigidbody.linearVelocity;
             state.angularVelocity = _rigidbody.angularVelocity;
+            state.isSleeping = _rigidbody.IsSleeping();
         }
 
         protected override void SetUnityState(UnityRigidbodyState state)
@@ -282,6 +284,13 @@ namespace PurrNet.Prediction
             {
                 _rigidbody.linearVelocity = state.linearVelocity;
                 _rigidbody.angularVelocity = state.angularVelocity;
+            }
+
+            if (_rigidbody.IsSleeping() != state.isSleeping)
+            {
+                if (state.isSleeping)
+                     _rigidbody.Sleep();
+                else _rigidbody.WakeUp();
             }
         }
 
