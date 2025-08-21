@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
-using PurrNet.Modules;
 using UnityEngine.SceneManagement;
+using PurrNet.Modules;
 
 namespace PurrNet.Prediction
 {
@@ -14,9 +14,14 @@ namespace PurrNet.Prediction
             PurrNet.Modules.SceneObjectsModule.onFilterSceneObjects += Filter;
 		}
 
-		static bool Filter(UnityEngine.GameObject root)
-		{
-            bool hasAPredictedIdentity = root.GetComponentInChildren<PredictedIdentity>(true);
+		static bool Filter(NetworkIdentity component)
+        {
+            if (component.GetType() == typeof(PredictionManager))
+                return true;
+
+            if (component.TryGetComponent(out PredictedIdentity _))
+                return false;
+            bool hasAPredictedIdentity = component.GetComponentInParent<PredictedIdentity>(true);
             return !hasAPredictedIdentity;
 		}
 #endif
