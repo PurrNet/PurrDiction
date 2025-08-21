@@ -49,6 +49,7 @@ namespace PurrNet.Prediction
 
         GameObjectPoolCollection _pools;
 
+        [UsedImplicitly]
         public static bool TryGetInstance(int sceneHandle, out PredictionManager world)
         {
             return _instances.TryGetValue(sceneHandle, out world);
