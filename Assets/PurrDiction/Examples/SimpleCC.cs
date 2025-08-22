@@ -33,10 +33,17 @@ namespace PurrNet.Prediction.Tests
 
             _controller.rotation = Quaternion.Euler(0, state.rotation, 0);
 
+#if UNITY_6000
             var vel = _controller.linearVelocity;
             vel.x = moveVector.x;
             vel.z = moveVector.z;
             _controller.linearVelocity = vel;
+#else
+            var vel = _controller.velocity;
+            vel.x = moveVector.x;
+            vel.z = moveVector.z;
+            _controller.velocity = vel;
+#endif
 
             if (input.jump)
                 Shoot();
@@ -47,7 +54,11 @@ namespace PurrNet.Prediction.Tests
             var pos = transform.position + transform.forward;
             var projectileId = hierarchy.Create(_projectile, pos, transform.rotation);
             var projectileRb = hierarchy.GetComponent<Rigidbody>(projectileId);
+#if UNITY_6000
             projectileRb.linearVelocity = transform.forward * 10;
+#else
+            projectileRb.velocity = transform.forward * 10;
+#endif
         }
 
         protected override void GetFinalInput(ref SimpleWASDInput input)
