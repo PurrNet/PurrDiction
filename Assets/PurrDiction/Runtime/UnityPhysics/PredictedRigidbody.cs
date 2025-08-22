@@ -92,6 +92,9 @@ namespace PurrNet.Prediction
 
         public override void OnPreSetup()
         {
+            if (_rigidbody.isKinematic)
+                return;
+
             linearVelocity = default;
             angularVelocity = default;
         }
