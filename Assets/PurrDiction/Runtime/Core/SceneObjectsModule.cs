@@ -6,7 +6,7 @@ namespace PurrNet.Prediction
 {
     public static class SceneObjectsModule
     {
-/*#if PURRSCENE_OBJECT_FILTERS
+#if PURRSCENE_OBJECT_FILTERS
         [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.SubsystemRegistration)]
         static void Init()
 		{
@@ -24,7 +24,7 @@ namespace PurrNet.Prediction
             bool hasAPredictedIdentity = component.GetComponentInParent<PredictedIdentity>(true);
             return !hasAPredictedIdentity;
 		}
-#endif*/
+#endif
 
         private static readonly List<PredictedIdentity> _sceneIdentities = new List<PredictedIdentity>();
 
