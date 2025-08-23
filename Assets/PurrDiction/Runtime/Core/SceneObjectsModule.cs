@@ -1,32 +1,45 @@
 ﻿using System.Collections.Generic;
 using UnityEngine.SceneManagement;
 using PurrNet.Modules;
+using PurrNet.Pooling;
+using UnityEngine;
 
 namespace PurrNet.Prediction
 {
     public static class SceneObjectsModule
     {
-/*#if PURRSCENE_OBJECT_FILTERS
-        [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.SubsystemRegistration)]
-        static void Init()
-		{
-            PurrNet.Modules.SceneObjectsModule.onFilterSceneObjects -= Filter;
-            PurrNet.Modules.SceneObjectsModule.onFilterSceneObjects += Filter;
-		}
-
-		static bool Filter(NetworkIdentity component)
-        {
-            if (component.GetType() == typeof(PredictionManager))
-                return true;
-
-            if (component.TryGetComponent(out PredictedIdentity _))
-                return false;
-            bool hasAPredictedIdentity = component.GetComponentInParent<PredictedIdentity>(true);
-            return !hasAPredictedIdentity;
-		}
-#endif*/
-
         private static readonly List<PredictedIdentity> _sceneIdentities = new List<PredictedIdentity>();
+
+#if PURRSCENE_OBJECT_FILTERS
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        static void Init()
+        {
+            PurrNet.Modules.SceneObjectsModule.onPreSceneLoad -= FilterNetworkIdentities;
+            PurrNet.Modules.SceneObjectsModule.onPreSceneLoad += FilterNetworkIdentities;
+        }
+
+        static void FilterNetworkIdentities(Scene scene)
+        {
+            var identities = ListPool<PredictedIdentity>.Instantiate();
+            GetScenePredictedIdentities(scene, identities);
+
+            using var roots = DisposableHashSet<GameObject>.Create();
+
+            for (var i = 0; i < identities.Count; i++)
+                roots.Add(identities[i].GetRoot());
+
+            ListPool<PredictedIdentity>.Destroy(identities);
+
+            foreach (var root in roots)
+            {
+                using var children = DisposableList<NetworkIdentity>.Create();
+                root.GetComponentsInChildren(true, children.list);
+
+                for (var i = 0; i < children.Count; i++)
+                    children[i].skipSceneAutoSpawning = true;
+            }
+        }
+#endif
 
         public static void GetScenePredictedIdentities(Scene scene, List<PredictedIdentity> pids)
         {
@@ -34,8 +47,9 @@ namespace PurrNet.Prediction
 
             PurrSceneInfo sceneInfo = null;
 
-            foreach (var rootObject in rootGameObjects)
+            for (var i = 0; i < rootGameObjects.Length; i++)
             {
+                var rootObject = rootGameObjects[i];
                 if (rootObject.TryGetComponent<PurrSceneInfo>(out var si))
                 {
                     sceneInfo = si;
@@ -46,8 +60,9 @@ namespace PurrNet.Prediction
             if (sceneInfo)
                 rootGameObjects = sceneInfo.rootGameObjects.ToArray();
 
-            foreach (var rootObject in rootGameObjects)
+            for (var i = 0; i < rootGameObjects.Length; i++)
             {
+                var rootObject = rootGameObjects[i];
                 if (!rootObject || rootObject.scene.handle != scene.handle) continue;
 
                 rootObject.gameObject.GetComponentsInChildren(true, _sceneIdentities);
