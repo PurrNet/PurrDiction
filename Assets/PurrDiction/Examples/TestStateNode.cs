@@ -1,3 +1,4 @@
+using PurrNet.Logging;
 using PurrNet.Prediction;
 using PurrNet.Prediction.StateMachine;
 using PurrNet.Prediction.Tests;
@@ -20,11 +21,15 @@ namespace PurrDiction.Examples
         {
 
             if (input.jump)
+            {
                 Shoot();
+                Shoot();
+            }
         }
 
         private void Shoot()
         {
+            PurrLogger.Log("Shot " + transform.position, this);
             var pos = transform.position + transform.forward;
             var projectileId = hierarchy.Create(_projectile, pos, transform.rotation);
             var projectileRb = hierarchy.GetComponent<Rigidbody>(projectileId);
@@ -33,6 +38,12 @@ namespace PurrDiction.Examples
 #else
             projectileRb.velocity = transform.forward * 10;
 #endif
+        }
+
+        protected override void ModifyExtrapolatedInput(ref SimpleWASDInput input)
+        {
+            input.jump = false;
+            input.dash = false;
         }
 
         protected override void GetFinalInput(ref SimpleWASDInput input)

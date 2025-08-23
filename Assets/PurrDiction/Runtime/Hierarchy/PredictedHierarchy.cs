@@ -40,6 +40,8 @@ namespace PurrNet.Prediction
         protected override void SetUnityState(PredictedHierarchyState state)
         {
             var currentActions = _spawnedPrefabs.Count;
+            using var spawnedPrefabsCopy = DisposableList<InstanceDetails>.Create(state.spawnedPrefabs.Count);
+            spawnedPrefabsCopy.AddRange(state.spawnedPrefabs);
             var stateActions = state.spawnedPrefabs.Count;
 
             var min = Mathf.Min(currentActions, stateActions);
@@ -49,7 +51,7 @@ namespace PurrNet.Prediction
             for (; i < min; i++)
             {
                 var current = _spawnedPrefabs[i];
-                var target = state.spawnedPrefabs[i];
+                var target = spawnedPrefabsCopy[i];
 
                 if (!current.Equals(target))
                     break;
@@ -77,7 +79,7 @@ namespace PurrNet.Prediction
             // we need to redo the rest of the actions
             for (var j = i; j < stateActions; j++)
             {
-                var details = state.spawnedPrefabs[j];
+                var details = spawnedPrefabsCopy[j];
                 var pid = details.prefabId;
                 var instanceId = details.instanceId;
 
@@ -90,8 +92,8 @@ namespace PurrNet.Prediction
 
             _nextInstanceId = state.nextInstanceId;
 
-            if (_spawnedPrefabs.Count != state.spawnedPrefabs.Count)
-                PurrLogger.LogError($"Mismatch: Action count {_spawnedPrefabs.Count} != {state.spawnedPrefabs.Count}");
+            if (_spawnedPrefabs.Count != spawnedPrefabsCopy.Count)
+                PurrLogger.LogError($"Mismatch: Action count {_spawnedPrefabs.Count} != {spawnedPrefabsCopy.Count}");
         }
 
         public PredictedObjectID? Create(int prefabId, PlayerID? owner = null)
