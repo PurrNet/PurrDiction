@@ -45,8 +45,8 @@ namespace PurrNet.Prediction.Tests
             _controller.velocity = vel;
 #endif
 
-            if (input.jump)
-                Shoot();
+            /*if (input.jump)
+                Shoot();*/
         }
 
         private void Shoot()
