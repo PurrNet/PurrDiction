@@ -36,7 +36,11 @@ namespace PurrNet.Prediction
                 root.GetComponentsInChildren(true, children.list);
 
                 for (var i = 0; i < children.Count; i++)
+                {
+                    if (children[i].GetType() == typeof(PredictionManager))
+                        continue;
                     children[i].skipSceneAutoSpawning = true;
+                }
             }
         }
 #endif
