@@ -974,7 +974,7 @@ MonoBehaviour:
   _startServerFlags: 9
   _startClientFlags: 7
   _cookieScope: 1
-  _dontDestroyOnLoad: 1
+  _dontDestroyOnLoad: 0
   _transport: {fileID: 1793795283}
   _networkPrefabs: {fileID: 11400000, guid: 2190589f99f9abe479a1c7890b05f51f, type: 2}
   _networkAssets: {fileID: 0}

@@ -10,10 +10,13 @@ namespace PurrNet.Prediction
     {
         private static readonly List<PredictedIdentity> _sceneIdentities = new List<PredictedIdentity>();
 
+        private static readonly Dictionary<Scene, List<PredictedIdentity>> _cache = new ();
+
 #if PURRSCENE_OBJECT_FILTERS
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void Init()
         {
+            _cache.Clear();
             PurrNet.Modules.SceneObjectsModule.onPreSceneLoad -= FilterNetworkIdentities;
             PurrNet.Modules.SceneObjectsModule.onPreSceneLoad += FilterNetworkIdentities;
         }
@@ -47,6 +50,19 @@ namespace PurrNet.Prediction
 
         public static void GetScenePredictedIdentities(Scene scene, List<PredictedIdentity> pids)
         {
+            if (_cache.TryGetValue(scene, out var cached))
+            {
+                for (var i = 0; i < cached.Count; i++)
+                {
+                    var p = cached[i];
+                    if (p)
+                        pids.Add(p);
+                }
+
+                return;
+            }
+
+            var result = new List<PredictedIdentity>();
             var rootGameObjects = scene.GetRootGameObjects();
 
             PurrSceneInfo sceneInfo = null;
@@ -74,8 +90,11 @@ namespace PurrNet.Prediction
                 if (_sceneIdentities.Count == 0) continue;
 
                 rootObject.gameObject.MakeSureAwakeIsCalled();
-                pids.AddRange(_sceneIdentities);
+                result.AddRange(_sceneIdentities);
             }
+
+            pids.AddRange(result);
+            _cache[scene] = result;
         }
     }
 }
