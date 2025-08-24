@@ -27,6 +27,11 @@ namespace PurrNet.Prediction
             onInvoke -= action;
         }
 
+        public void RemoveAllListeners()
+        {
+            onInvoke = null;
+        }
+
         public void Invoke()
         {
             if (_isServer)
