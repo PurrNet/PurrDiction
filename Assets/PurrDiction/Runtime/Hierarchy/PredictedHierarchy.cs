@@ -213,7 +213,7 @@ namespace PurrNet.Prediction
             if (pool.Put(details, go, predictionManager.localTick))
             {
                 go.SetActive(false);
-                predictionManager.UnregisterInstance(go);
+                predictionManager.UnregisterInstance(go, false);
             }
             else
             {
@@ -380,7 +380,7 @@ namespace PurrNet.Prediction
 
                 if (_isSceneObject.Contains(instance.instanceId))
                 {
-                    predictionManager.UnregisterInstance(go);
+                    predictionManager.UnregisterInstance(go, true);
                     continue;
                 }
 

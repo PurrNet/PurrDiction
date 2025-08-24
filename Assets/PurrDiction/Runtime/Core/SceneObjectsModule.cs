@@ -13,7 +13,7 @@ namespace PurrNet.Prediction
         private static readonly Dictionary<Scene, List<PredictedIdentity>> _cache = new ();
 
 #if PURRSCENE_OBJECT_FILTERS
-        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         static void Init()
         {
             _cache.Clear();

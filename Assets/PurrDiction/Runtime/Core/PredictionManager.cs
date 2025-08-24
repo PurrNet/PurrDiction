@@ -208,6 +208,7 @@ namespace PurrNet.Prediction
             {
                 _tickManager.onPreTick -= OnPreTick;
                 _tickManager.onPostTick -= OnPostTick;
+                _tickManager = null;
             }
 
             CleanupAllSystems();
@@ -263,7 +264,7 @@ namespace PurrNet.Prediction
             ListPool<PredictedIdentity>.Destroy(components);
         }
 
-        public void UnregisterInstance(GameObject go)
+        public void UnregisterInstance(GameObject go, bool reset)
         {
             if (!go)
                 return;
@@ -274,7 +275,11 @@ namespace PurrNet.Prediction
             for (var i = 0; i < components.Count; i++)
             {
                 if (components[i].hideFlags != HideFlags.NotEditable)
+                {
+                    if (reset)
+                        components[i].ResetState();
                     UnregisterInstance(components[i]);
+                }
             }
 
             ListPool<PredictedIdentity>.Destroy(components);

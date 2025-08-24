@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using PurrNet.Logging;
-using PurrNet.Modules;
 using UnityEngine;
 
 namespace PurrNet.Prediction
@@ -18,6 +17,9 @@ namespace PurrNet.Prediction
 
         protected override void LateAwake()
         {
+            _currentSpawnPoint = 0;
+            _players.Clear();
+
             if (predictionManager.players != null)
             {
                 predictionManager.players.onPlayerAdded += OnPlayerLoadedScene;
@@ -65,17 +67,11 @@ namespace PurrNet.Prediction
 
         private void OnPlayerLoadedScene(PlayerID player)
         {
+            PurrLogger.Log($"Player {player} loaded scene.", this);
             if (!enabled)
                 return;
 
-            var main = NetworkManager.main;
-
             if (_players.ContainsKey(player))
-                return;
-
-            bool isDestroyOnDisconnectEnabled = main.networkRules.ShouldDespawnOnOwnerDisconnect();
-            if (!isDestroyOnDisconnectEnabled && main.TryGetModule(out GlobalOwnershipModule ownership, true) &&
-                ownership.PlayerOwnsSomething(player))
                 return;
 
             PredictedObjectID? newPlayer;

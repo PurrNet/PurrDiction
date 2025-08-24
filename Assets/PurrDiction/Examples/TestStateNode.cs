@@ -1,4 +1,3 @@
-using PurrNet.Logging;
 using PurrNet.Prediction;
 using PurrNet.Prediction.StateMachine;
 using PurrNet.Prediction.Tests;
@@ -29,7 +28,6 @@ namespace PurrDiction.Examples
 
         private void Shoot()
         {
-            PurrLogger.Log("Shot " + transform.position, this);
             var pos = transform.position + transform.forward;
             var projectileId = hierarchy.Create(_projectile, pos, transform.rotation);
             var projectileRb = hierarchy.GetComponent<Rigidbody>(projectileId);
