@@ -67,7 +67,6 @@ namespace PurrNet.Prediction
 
         private void OnPlayerLoadedScene(PlayerID player)
         {
-            PurrLogger.Log($"Player {player} loaded scene.", this);
             if (!enabled)
                 return;
 
