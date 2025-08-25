@@ -566,6 +566,7 @@ MonoBehaviour:
   _builtInSystems: -1
   _predictedPrefabs: {fileID: 11400000, guid: 3bc69f3464f686748883b06b540e96d4, type: 2}
   _inputQueueSettings:
+    extrapolateForMissing: 1
     minInputs: 1
     maxInputs: 4
 --- !u!4 &1558659896
@@ -633,7 +634,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _stopPlayingOnDisconnect: 0
   _startServerFlags: 9
-  _startClientFlags: 7
+  _startClientFlags: 6
   _cookieScope: 1
   _dontDestroyOnLoad: 0
   _transport: {fileID: 1793795283}

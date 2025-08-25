@@ -9,7 +9,7 @@ namespace PurrNet.Prediction
         {
         }
 
-        internal override void PrepareInput(bool isServer, bool isLocal, ulong tick)
+        internal override void PrepareInput(bool isServer, bool isLocal, ulong tick, bool extrapolate)
         {
         }
 

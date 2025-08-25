@@ -126,7 +126,7 @@ namespace PurrNet.Prediction
 
         public virtual void PostSimulate(ulong tick, float delta) {}
 
-        internal abstract void PrepareInput(bool isServer, bool isLocal, ulong tick);
+        internal abstract void PrepareInput(bool isServer, bool isLocal, ulong tick, bool extrapolate);
 
         internal abstract void SaveStateInHistory(ulong tick);
 

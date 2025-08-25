@@ -16,6 +16,7 @@ namespace PurrNet.Prediction
     [Serializable]
     public struct InputQueueSettings
     {
+        public bool extrapolateForMissing;
         public int minInputs;
         public int maxInputs;
     }
@@ -40,6 +41,7 @@ namespace PurrNet.Prediction
         [SerializeField] private PredictedPrefabs _predictedPrefabs;
         [SerializeField] private InputQueueSettings _inputQueueSettings = new()
         {
+            extrapolateForMissing = true,
             minInputs = 1,
             maxInputs = 4
         };
@@ -473,7 +475,7 @@ namespace PurrNet.Prediction
             {
                 var system = _systems[i];
                 bool controller = system.IsOwner(myPlayer, cachedIsServer);
-                system.PrepareInput(cachedIsServer, controller, localTick);
+                system.PrepareInput(cachedIsServer, controller, localTick, _inputQueueSettings.extrapolateForMissing);
             }
 
             if (cachedIsServer && hasClients)
