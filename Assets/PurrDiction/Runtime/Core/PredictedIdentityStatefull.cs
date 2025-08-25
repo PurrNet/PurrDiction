@@ -262,6 +262,8 @@ namespace PurrNet.Prediction
 
         internal override void UpdateView(float deltaTime)
         {
+            base.UpdateView(deltaTime);
+
             if (_interpolatedState == null)
                 return;
 

@@ -33,10 +33,6 @@ namespace PurrNet.Prediction
         {
         }
 
-        internal override void UpdateView(float deltaTime)
-        {
-        }
-
         internal override void GetLatestUnityState()
         {
         }

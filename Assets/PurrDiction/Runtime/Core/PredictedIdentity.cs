@@ -136,7 +136,18 @@ namespace PurrNet.Prediction
 
         public abstract void ResetInterpolation();
 
-        internal abstract void UpdateView(float deltaTime);
+        private PlayerID? _lastOwner;
+
+        public virtual void OnViewOwnerChanged(PlayerID? oldOwner, PlayerID? newOwner) { }
+
+        internal virtual void UpdateView(float deltaTime)
+        {
+            if (owner != _lastOwner)
+            {
+                OnViewOwnerChanged(_lastOwner, owner);
+                _lastOwner = owner;
+            }
+        }
 
         internal abstract void GetLatestUnityState();
 
