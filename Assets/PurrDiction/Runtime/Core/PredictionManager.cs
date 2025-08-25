@@ -197,7 +197,6 @@ namespace PurrNet.Prediction
 
         protected override void OnSpawned()
         {
-            PurrLogger.Log($"onPreTick += OnPreTick");
             _tickManager = networkManager.tickModule;
             _tickManager.onPreTick += OnPreTick;
             _tickManager.onPostTick += OnPostTick;
@@ -207,7 +206,6 @@ namespace PurrNet.Prediction
         {
             if (_tickManager != null)
             {
-            PurrLogger.Log($"onPreTick -= OnPreTick");
                 _tickManager.onPreTick -= OnPreTick;
                 _tickManager.onPostTick -= OnPostTick;
                 _tickManager = null;
