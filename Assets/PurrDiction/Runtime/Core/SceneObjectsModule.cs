@@ -17,34 +17,15 @@ namespace PurrNet.Prediction
         static void Init()
         {
             _cache.Clear();
-            PurrNet.Modules.SceneObjectsModule.onPreSceneLoad -= FilterNetworkIdentities;
-            PurrNet.Modules.SceneObjectsModule.onPreSceneLoad += FilterNetworkIdentities;
+            PurrNet.Modules.SceneObjectsModule.onPreSceneLoad -= CacheScene;
+            PurrNet.Modules.SceneObjectsModule.onPreSceneLoad += CacheScene;
         }
 
-        static void FilterNetworkIdentities(Scene scene)
+        static void CacheScene(Scene scene)
         {
             var identities = ListPool<PredictedIdentity>.Instantiate();
             GetScenePredictedIdentities(scene, identities);
-
-            using var roots = DisposableHashSet<GameObject>.Create();
-
-            for (var i = 0; i < identities.Count; i++)
-                roots.Add(identities[i].GetRoot());
-
             ListPool<PredictedIdentity>.Destroy(identities);
-
-            foreach (var root in roots)
-            {
-                using var children = DisposableList<NetworkIdentity>.Create();
-                root.GetComponentsInChildren(true, children.list);
-
-                for (var i = 0; i < children.Count; i++)
-                {
-                    if (children[i].GetType() == typeof(PredictionManager))
-                        continue;
-                    children[i].skipSceneAutoSpawning = true;
-                }
-            }
         }
 #endif
 
