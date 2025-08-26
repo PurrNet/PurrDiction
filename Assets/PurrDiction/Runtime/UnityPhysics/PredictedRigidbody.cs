@@ -49,6 +49,18 @@ namespace PurrNet.Prediction
         public event OnTriggerDelegate onTriggerExit;
         public event OnTriggerDelegate onTriggerStay;
 
+        public Vector3 position
+        {
+            get => _rigidbody.position;
+            set => _rigidbody.position = value;
+        }
+        
+        public Quaternion rotation
+        {
+            get => _rigidbody.rotation;
+            set => _rigidbody.rotation = value;
+        }
+        
         public Vector3 linearVelocity
         {
 #if UNITY_6000
