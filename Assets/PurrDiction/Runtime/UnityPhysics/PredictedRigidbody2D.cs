@@ -158,6 +158,18 @@ namespace PurrNet.Prediction
             onCollisionStay?.Invoke(other, evContacts);
         }
 
+        public Vector2 position
+        {
+            get => _rigidbody.position;
+            set => _rigidbody.position = value;
+        }
+
+        public float rotation
+        {
+            get => _rigidbody.rotation;
+            set => _rigidbody.rotation = value;
+        }
+
         public Vector2 linearVelocity
         {
 #if UNITY_6000
