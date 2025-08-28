@@ -115,6 +115,7 @@ namespace PurrNet.Prediction
         public PredictedObjectID? Create(int prefabId, Vector3 position, Quaternion rotation, PlayerID? owner = null)
         {
             var instanceId = new PredictedObjectID(_nextInstanceId);
+            _nextInstanceId++;
             var key = new InstanceDetails(prefabId, instanceId, position, rotation);
 
             GameObject go;
@@ -142,7 +143,6 @@ namespace PurrNet.Prediction
             _instanceMap.Add(instanceId, go);
             _goToId.Add(go, instanceId);
             _spawnedPrefabs.Add(key);
-            _nextInstanceId++;
 
             if (!predictionManager.isSimulating)
             {
