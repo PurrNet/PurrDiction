@@ -340,20 +340,28 @@ namespace PurrNet.Prediction
             if (!go)
                 return;
 
-            if (!_goToId.TryGetValue(go, out var poid))
+            if (go.TryGetComponent<PredictedGameObject>(out var pgo))
             {
-                if (go.TryGetComponent<PredictedGameObject>(out var pgo))
-                {
-                    pgo.SetActive(false);
-                    return;
-                }
-
-                PurrLogger.LogError($"PredictedObjectID for GameObject `{go.name}` not found.\n" +
-                                    $"Delete the root GameObject or add a `PredictedObjectSeparator` to this GameObject.", this);
+                pgo.SetActive(false);
                 return;
             }
 
-            currentState.toDelete.Add(poid);
+            // look for all nested objects and delete them as well
+            ReccursiveDel(go.transform);
+        }
+
+        private void ReccursiveDel(Transform trs)
+        {
+            int children = trs.childCount;
+
+            for (int i = 0; i < children; i++)
+            {
+                var child = trs.GetChild(i);
+                ReccursiveDel(child);
+            }
+
+            if (_goToId.TryGetValue(trs.gameObject, out var poid))
+                currentState.toDelete.Add(poid);
         }
 
         public void Delete(PredictedIdentity pid)
@@ -364,10 +372,8 @@ namespace PurrNet.Prediction
 
         public void Delete(PredictedObjectID? id)
         {
-            if (!id.HasValue)
-                return;
-
-            currentState.toDelete.Add(id.Value);
+            if (id.TryGetGameObject(predictionManager, out var go))
+                Delete(go);
         }
 
         public void Cleanup()
