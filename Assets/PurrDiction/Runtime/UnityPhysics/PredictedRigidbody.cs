@@ -25,14 +25,14 @@ namespace PurrNet.Prediction
         Low = 2
     }
 
+    public delegate void OnCollisionDelegate(GameObject other, PhysicsCollision physicsEvent);
+    public delegate void OnTriggerDelegate(GameObject other);
+
     [RequireComponent(typeof(Rigidbody))]
     [RequireComponent(typeof(PredictedTransform))]
     [AddComponentMenu("PurrDiction/Unity Rigidbody/Predicted Rigidbody")]
-    public class PredictedRigidbody : PredictedIdentity<UnityRigidbodyState>
+    public class PredictedRigidbody : PredictedIdentity<UnityRigidbodyState>, IPredictedPhysicsCallbacks
     {
-        public delegate void OnCollisionDelegate(GameObject other, PhysicsCollision physicsEvent);
-        public delegate void OnTriggerDelegate(GameObject other);
-
         [SerializeField, PurrLock] private Rigidbody _rigidbody;
         [SerializeField, PurrLock] private FloatAccuracy _floatAccuracy = FloatAccuracy.Medium;
         [SerializeField, PurrLock] private PhysicsEventMask _eventMask = (PhysicsEventMask)0x3F;
@@ -54,13 +54,13 @@ namespace PurrNet.Prediction
             get => _rigidbody.position;
             set => _rigidbody.position = value;
         }
-        
+
         public Quaternion rotation
         {
             get => _rigidbody.rotation;
             set => _rigidbody.rotation = value;
         }
-        
+
         public Vector3 linearVelocity
         {
 #if UNITY_6000

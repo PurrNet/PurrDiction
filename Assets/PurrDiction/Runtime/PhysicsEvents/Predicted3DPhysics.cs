@@ -96,7 +96,7 @@ namespace PurrNet.Prediction
 
         private static void TriggerEvent(PredictionManager predictionManager, PhysicsEvent ev)
         {
-            if (ev.me.TryGetIdentity<PredictedRigidbody>(predictionManager, out var me))
+            if (ev.me.TryGetIdentity<IPredictedPhysicsCallbacks>(predictionManager, out var me))
             {
                 var otherGo = ev.other.GetGameObject(predictionManager);
                 if (ev.isTrigger)
@@ -134,7 +134,7 @@ namespace PurrNet.Prediction
             }
         }
 
-        public void RegisterEvent(PhysicsEventType type, PredictedRigidbody caller, Collision other)
+        public void RegisterEvent(PhysicsEventType type, PredictedIdentity caller, Collision other)
         {
             if (PredictionManager.TryGetClosestPredictedID(other.gameObject, out var otherId))
             {
@@ -163,7 +163,7 @@ namespace PurrNet.Prediction
             }
         }
 
-        public void RegisterEvent(PhysicsEventType type, PredictedRigidbody caller, Collider other)
+        public void RegisterEvent(PhysicsEventType type, PredictedIdentity caller, Collider other)
         {
             if (PredictionManager.TryGetClosestPredictedID(other.gameObject, out var otherId))
             {

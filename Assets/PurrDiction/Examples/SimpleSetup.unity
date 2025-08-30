@@ -714,7 +714,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fc64ff707d914a64e95f2ac0bf554c09, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _serverPort: 5000
+  _serverPort: 6969
   _maxConnections: 100
   _address: 127.0.0.1
   _timeoutInSeconds: 5
