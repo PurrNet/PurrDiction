@@ -82,9 +82,6 @@ namespace PurrNet.Prediction.StateMachine
             base.Simulate(ref state, delta);
             if (_states.Count == 0) return;
 
-            if (state.stateIndex > -1 && _states[state.stateIndex] != null)
-                _states[state.stateIndex].StateSimulate(delta);
-
             if (state.wantedState > -1)
             {
 #if UNITY_EDITOR
@@ -92,16 +89,22 @@ namespace PurrNet.Prediction.StateMachine
                 _nextStateNode = _states[(state.wantedState + 1) % _states.Count];
                 _currentStateNode = _states[state.wantedState];
 #endif
+
+                var index = state.wantedState;
+                state.wantedState = -1;
+                
                 if (state.stateIndex > -1)
                     _states[state.stateIndex].Exit();
 
-                state.stateIndex = state.wantedState;
+                state.stateIndex = index;
                 _states[state.stateIndex].Enter();
-                state.wantedState = -1;
                 state.transition++;
             }
-        }
 
+            if (state.stateIndex > -1 && _states[state.stateIndex] != null)
+                _states[state.stateIndex].StateSimulate(delta);
+        }
+        
         protected override SMState GetInitialState()
         {
             var state = new SMState()
