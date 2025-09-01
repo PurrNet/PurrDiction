@@ -49,26 +49,30 @@ namespace PurrNet.Prediction.StateMachine
             }
         }
 
+        private uint _prevViewTransition;
+        private uint _prevVerifiedViewTransition;
         protected override void UpdateView(SMState viewState, SMState? verified)
         {
             if (verified.HasValue)
             {
-                if(verified.Value.stateIndex != _previousVerifiedViewStateIndex)
+                if (verified.Value.stateIndex != _previousVerifiedViewStateIndex || verified.Value.transition != _prevVerifiedViewTransition)
                 {
-                    if(_previousVerifiedViewStateIndex > -1 && _states[_previousVerifiedViewStateIndex] != null)
+                    if (_previousVerifiedViewStateIndex > -1 && _states[_previousVerifiedViewStateIndex] != null)
                         _states[_previousVerifiedViewStateIndex].ViewExit(true);
                     _previousVerifiedViewStateIndex = verified.Value.stateIndex;
-                    if(_previousVerifiedViewStateIndex > -1 && _states[_previousVerifiedViewStateIndex] != null)
+                    _prevVerifiedViewTransition = verified.Value.transition;
+                    if (_previousVerifiedViewStateIndex > -1 && _states[_previousVerifiedViewStateIndex] != null)
                         _states[_previousVerifiedViewStateIndex].ViewEnter(true);
                 }
             }
 
-            if(viewState.stateIndex != _previousViewStateIndex)
+            if (viewState.stateIndex != _previousViewStateIndex || viewState.transition != _prevViewTransition)
             {
-                if(_previousViewStateIndex > -1 && _states[_previousViewStateIndex] != null)
+                if (_previousViewStateIndex > -1 && _states[_previousViewStateIndex] != null)
                     _states[_previousViewStateIndex].ViewExit(false);
                 _previousViewStateIndex = viewState.stateIndex;
-                if(_previousViewStateIndex > -1 && _states[_previousViewStateIndex] != null)
+                _prevViewTransition = viewState.transition;
+                if (_previousViewStateIndex > -1 && _states[_previousViewStateIndex] != null)
                     _states[_previousViewStateIndex].ViewEnter(false);
             }
         }
@@ -79,24 +83,23 @@ namespace PurrNet.Prediction.StateMachine
 
             if (_states.Count <= 0 || state.wantedState <= -1)
                 return;
-
+            
             if (state.stateIndex > -1 && _states[state.stateIndex] != null)
-            {
                 _states[state.stateIndex].StateSimulate(delta);
-            }
-
-            if(state.wantedState != state.stateIndex)
-            {
-#if UNITY_EDITOR
-                _previousStateNode = _currentStateNode;
-                _nextStateNode = _states[(state.wantedState + 1) % _states.Count];
-                _currentStateNode = _states[state.wantedState];
-#endif
-                if(state.stateIndex > -1)
-                    _states[state.stateIndex].Exit();
-                state.stateIndex = state.wantedState;
-                _states[state.stateIndex].Enter();
-            }
+            
+            #if UNITY_EDITOR
+            _previousStateNode = _currentStateNode;
+            _nextStateNode = _states[(state.wantedState + 1) % _states.Count];
+            _currentStateNode = _states[state.wantedState];
+            #endif
+            
+            if (state.stateIndex > -1)
+                _states[state.stateIndex].Exit();
+            
+            state.stateIndex = state.wantedState;
+            _states[state.stateIndex].Enter();
+            state.wantedState = -1;
+            state.transition++;
         }
 
         protected override SMState GetInitialState()
@@ -156,6 +159,7 @@ namespace PurrNet.Prediction.StateMachine
         {
             public int wantedState;
             public int stateIndex;
+            public uint transition;
 
             public void Dispose() { }
         }
