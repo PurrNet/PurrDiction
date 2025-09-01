@@ -80,26 +80,26 @@ namespace PurrNet.Prediction.StateMachine
         protected override void Simulate(ref SMState state, float delta)
         {
             base.Simulate(ref state, delta);
+            if (_states.Count == 0) return;
 
-            if (_states.Count <= 0 || state.wantedState <= -1)
-                return;
-            
             if (state.stateIndex > -1 && _states[state.stateIndex] != null)
                 _states[state.stateIndex].StateSimulate(delta);
-            
-            #if UNITY_EDITOR
-            _previousStateNode = _currentStateNode;
-            _nextStateNode = _states[(state.wantedState + 1) % _states.Count];
-            _currentStateNode = _states[state.wantedState];
-            #endif
-            
-            if (state.stateIndex > -1)
-                _states[state.stateIndex].Exit();
-            
-            state.stateIndex = state.wantedState;
-            _states[state.stateIndex].Enter();
-            state.wantedState = -1;
-            state.transition++;
+
+            if (state.wantedState > -1)
+            {
+#if UNITY_EDITOR
+                _previousStateNode = _currentStateNode;
+                _nextStateNode = _states[(state.wantedState + 1) % _states.Count];
+                _currentStateNode = _states[state.wantedState];
+#endif
+                if (state.stateIndex > -1)
+                    _states[state.stateIndex].Exit();
+
+                state.stateIndex = state.wantedState;
+                _states[state.stateIndex].Enter();
+                state.wantedState = -1;
+                state.transition++;
+            }
         }
 
         protected override SMState GetInitialState()
