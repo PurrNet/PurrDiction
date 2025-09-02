@@ -25,14 +25,14 @@ namespace PurrNet.Prediction
         Low = 2
     }
 
+    public delegate void OnCollisionDelegate(GameObject other, PhysicsCollision physicsEvent);
+    public delegate void OnTriggerDelegate(GameObject other);
+
     [RequireComponent(typeof(Rigidbody))]
     [RequireComponent(typeof(PredictedTransform))]
     [AddComponentMenu("PurrDiction/Unity Rigidbody/Predicted Rigidbody")]
-    public class PredictedRigidbody : PredictedIdentity<UnityRigidbodyState>
+    public class PredictedRigidbody : PredictedIdentity<UnityRigidbodyState>, IPredictedPhysicsCallbacks
     {
-        public delegate void OnCollisionDelegate(GameObject other, PhysicsCollision physicsEvent);
-        public delegate void OnTriggerDelegate(GameObject other);
-
         [SerializeField, PurrLock] private Rigidbody _rigidbody;
         [SerializeField, PurrLock] private FloatAccuracy _floatAccuracy = FloatAccuracy.Medium;
         [SerializeField, PurrLock] private PhysicsEventMask _eventMask = (PhysicsEventMask)0x3F;
@@ -49,16 +49,38 @@ namespace PurrNet.Prediction
         public event OnTriggerDelegate onTriggerExit;
         public event OnTriggerDelegate onTriggerStay;
 
+        public Vector3 position
+        {
+            get => _rigidbody.position;
+            set => _rigidbody.position = value;
+        }
+
+        public Quaternion rotation
+        {
+            get => _rigidbody.rotation;
+            set => _rigidbody.rotation = value;
+        }
+
         public Vector3 linearVelocity
         {
+#if UNITY_6000
             get => _rigidbody.linearVelocity;
             set => _rigidbody.linearVelocity = value;
+#else
+            get => _rigidbody.velocity;
+            set => _rigidbody.velocity = value;
+#endif
         }
 
         public Vector3 velocity
         {
+#if UNITY_6000
             get => _rigidbody.linearVelocity;
             set => _rigidbody.linearVelocity = value;
+#else
+            get => _rigidbody.velocity;
+            set => _rigidbody.velocity = value;
+#endif
         }
 
         public Vector3 angularVelocity
@@ -82,13 +104,16 @@ namespace PurrNet.Prediction
 
         public override void OnPreSetup()
         {
-            _rigidbody.linearVelocity = default;
-            _rigidbody.angularVelocity = default;
+            if (_rigidbody.isKinematic)
+                return;
+
+            linearVelocity = default;
+            angularVelocity = default;
         }
 
         protected override void LateAwake()
         {
-            if (predictionManager.physics3d == null)
+            if (!predictionManager.physics3d)
                 _eventMask = PhysicsEventMask.None;
         }
 
@@ -129,6 +154,7 @@ namespace PurrNet.Prediction
                     state.linearVelocity = compressedState.linearVelocity;
                     state.angularVelocity = compressedState.angularVelocity;
                     state.isKinematic = compressedState.isKinematic;
+                    state.isSleeping = compressedState.isSleeping;
                     break;
                 }
                 case FloatAccuracy.Low:
@@ -140,6 +166,7 @@ namespace PurrNet.Prediction
                     state.linearVelocity = halfState.linearVelocity;
                     state.angularVelocity = halfState.angularVelocity;
                     state.isKinematic = halfState.isKinematic;
+                    state.isSleeping = halfState.isSleeping;
                     break;
                 }
                 default: throw new ArgumentOutOfRangeException();
@@ -153,7 +180,7 @@ namespace PurrNet.Prediction
         /// <param name="mode">Type of force to apply.</param>
         public void AddForce(Vector3 force, ForceMode mode = ForceMode.Force)
         {
-            _rigidbody.linearVelocity += mode switch
+            linearVelocity += mode switch
             {
                 ForceMode.Force => force / _rigidbody.mass * predictionManager.tickDelta,
                 ForceMode.Acceleration => force * predictionManager.tickDelta,
@@ -261,27 +288,36 @@ namespace PurrNet.Prediction
         {
             return new UnityRigidbodyState
             {
-                linearVelocity = _rigidbody.linearVelocity,
-                angularVelocity = _rigidbody.angularVelocity,
-                isKinematic = _rigidbody.isKinematic
+                linearVelocity = linearVelocity,
+                angularVelocity = angularVelocity,
+                isKinematic = isKinematic,
+                isSleeping = _rigidbody.IsSleeping()
             };
         }
 
         protected override void GetUnityState(ref UnityRigidbodyState state)
         {
-            state.isKinematic = _rigidbody.isKinematic;
-            state.linearVelocity = _rigidbody.linearVelocity;
-            state.angularVelocity = _rigidbody.angularVelocity;
+            state.isKinematic = isKinematic;
+            state.linearVelocity = linearVelocity;
+            state.angularVelocity = angularVelocity;
+            state.isSleeping = _rigidbody.IsSleeping();
         }
 
         protected override void SetUnityState(UnityRigidbodyState state)
         {
-            _rigidbody.isKinematic = state.isKinematic;
+            isKinematic = state.isKinematic;
 
             if (!state.isKinematic)
             {
-                _rigidbody.linearVelocity = state.linearVelocity;
-                _rigidbody.angularVelocity = state.angularVelocity;
+                linearVelocity = state.linearVelocity;
+                angularVelocity = state.angularVelocity;
+            }
+
+            if (_rigidbody.IsSleeping() != state.isSleeping)
+            {
+                if (state.isSleeping)
+                     _rigidbody.Sleep();
+                else _rigidbody.WakeUp();
             }
         }
 

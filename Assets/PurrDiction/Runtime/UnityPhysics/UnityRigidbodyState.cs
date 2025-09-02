@@ -8,10 +8,11 @@ namespace PurrNet.Prediction
         public Vector3 linearVelocity;
         public Vector3 angularVelocity;
         public bool isKinematic;
+        public bool isSleeping;
 
         public override string ToString()
         {
-            return $"LinearVelocity: {linearVelocity}\nAngularVelocity: {angularVelocity}\nIsKinematic: {isKinematic}";
+            return $"LinearVelocity: {linearVelocity}\nAngularVelocity: {angularVelocity}\nIsKinematic: {isKinematic}\nIsSleeping: {isSleeping}";
         }
 
         public void Dispose() { }
@@ -22,6 +23,7 @@ namespace PurrNet.Prediction
         public CompressedVector3 linearVelocity;
         public CompressedVector3 angularVelocity;
         public bool isKinematic;
+        public bool isSleeping;
 
         public UnityRigidbodyCompressedState(UnityRigidbodyState state)
         {
@@ -38,11 +40,12 @@ namespace PurrNet.Prediction
             );
 
             isKinematic = state.isKinematic;
+			isSleeping = state.isSleeping;
         }
 
         public override string ToString()
         {
-            return $"UnityRigidbodyCompressedState LinearVelocity: {linearVelocity}\nAngularVelocity: {angularVelocity}\nIsKinematic: {isKinematic}";
+            return $"MediumState LinearVelocity: {linearVelocity}\nAngularVelocity: {angularVelocity}\nIsKinematic: {isKinematic}\nIsSleeping: {isSleeping}";
         }
     }
 
@@ -51,17 +54,19 @@ namespace PurrNet.Prediction
         public HalfVector3 linearVelocity;
         public HalfVector3 angularVelocity;
         public bool isKinematic;
+        public bool isSleeping;
 
         public UnityRigidbodyHalfState(UnityRigidbodyState state)
         {
             linearVelocity = state.linearVelocity;
             angularVelocity = state.angularVelocity;
             isKinematic = state.isKinematic;
+			isSleeping = state.isSleeping;
         }
 
         public override string ToString()
         {
-            return $"UnityRigidbodyHalfState LinearVelocity: {(Vector3)linearVelocity}\nAngularVelocity: {(Vector3)angularVelocity}\nIsKinematic: {isKinematic}";
+            return $"HalfState LinearVelocity: {(Vector3)linearVelocity}\nAngularVelocity: {(Vector3)angularVelocity}\nIsKinematic: {isKinematic}\nIsSleeping: {isSleeping}";
         }
     }
 }

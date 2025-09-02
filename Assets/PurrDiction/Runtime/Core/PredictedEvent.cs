@@ -6,7 +6,6 @@ namespace PurrNet.Prediction
     {
         private readonly PredictionManager _world;
         private readonly PredictedIdentity _identity;
-        private readonly bool _isServer;
 
         private event Action onInvoke;
 
@@ -14,7 +13,6 @@ namespace PurrNet.Prediction
         {
             _world = world;
             _identity = identity;
-            _isServer = world.isServer;
         }
 
         public void AddListener(Action action)
@@ -27,9 +25,14 @@ namespace PurrNet.Prediction
             onInvoke -= action;
         }
 
+        public void RemoveAllListeners()
+        {
+            onInvoke = null;
+        }
+
         public void Invoke()
         {
-            if (_isServer)
+            if (_world.cachedIsServer)
             {
                 onInvoke?.Invoke();
                 return;
@@ -78,6 +81,12 @@ namespace PurrNet.Prediction
 
         public void Invoke(T value)
         {
+            if (_world.cachedIsServer)
+            {
+                onInvoke?.Invoke(value);
+                return;
+            }
+
             bool isOwner = _identity.IsOwner();
 
             if (isOwner)

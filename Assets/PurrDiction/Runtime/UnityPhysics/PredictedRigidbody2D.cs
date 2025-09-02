@@ -30,8 +30,8 @@ namespace PurrNet.Prediction
 
         public override void OnPreSetup()
         {
-            _rigidbody.linearVelocity = default;
-            _rigidbody.angularVelocity = default;
+            linearVelocity = default;
+            angularVelocity = default;
         }
 
         protected override void LateAwake()
@@ -45,24 +45,30 @@ namespace PurrNet.Prediction
         {
             return new UnityRigidbody2DState
             {
-                linearVelocity = _rigidbody.linearVelocity,
-                angularVelocity = _rigidbody.angularVelocity,
-                linearDamping = _rigidbody.linearDamping
+                linearVelocity = linearVelocity,
+                angularVelocity = angularVelocity,
+#if UNITY_6000
+                linearDamping = _rigidbody.linearDamping,
+#endif
             };
         }
 
         protected override void GetUnityState(ref UnityRigidbody2DState state)
         {
-            state.linearVelocity = _rigidbody.linearVelocity;
-            state.angularVelocity = _rigidbody.angularVelocity;
+            state.linearVelocity = linearVelocity;
+            state.angularVelocity = angularVelocity;
+#if UNITY_6000
             state.linearDamping = _rigidbody.linearDamping;
+#endif
         }
 
         protected override void SetUnityState(UnityRigidbody2DState state)
         {
-            _rigidbody.linearVelocity = state.linearVelocity;
-            _rigidbody.angularVelocity = state.angularVelocity;
+            linearVelocity = state.linearVelocity;
+            angularVelocity = state.angularVelocity;
+#if UNITY_6000
             _rigidbody.linearDamping = state.linearDamping;
+#endif
         }
 
         private void OnCollisionEnter2D(Collision2D other)
@@ -152,16 +158,38 @@ namespace PurrNet.Prediction
             onCollisionStay?.Invoke(other, evContacts);
         }
 
+        public Vector2 position
+        {
+            get => _rigidbody.position;
+            set => _rigidbody.position = value;
+        }
+
+        public float rotation
+        {
+            get => _rigidbody.rotation;
+            set => _rigidbody.rotation = value;
+        }
+
         public Vector2 linearVelocity
         {
+#if UNITY_6000
             get => _rigidbody.linearVelocity;
             set => _rigidbody.linearVelocity = value;
+#else
+            get => _rigidbody.velocity;
+            set => _rigidbody.velocity = value;
+#endif
         }
 
         public Vector2 velocity
         {
+#if UNITY_6000
             get => _rigidbody.linearVelocity;
             set => _rigidbody.linearVelocity = value;
+#else
+            get => _rigidbody.velocity;
+            set => _rigidbody.velocity = value;
+#endif
         }
 
         public float angularVelocity
@@ -177,7 +205,7 @@ namespace PurrNet.Prediction
         /// <param name="mode">Type of force to apply.</param>
         public void AddForce(Vector2 force, ForceMode2D mode = ForceMode2D.Force)
         {
-            _rigidbody.linearVelocity += mode switch
+            linearVelocity += mode switch
             {
                 ForceMode2D.Force => force / _rigidbody.mass * predictionManager.tickDelta,
                 ForceMode2D.Impulse => force / _rigidbody.mass,
@@ -192,7 +220,7 @@ namespace PurrNet.Prediction
         /// <param name="mode">Type of torque to apply.</param>
         public void AddTorque(float torque, ForceMode2D mode = ForceMode2D.Force)
         {
-            _rigidbody.angularVelocity += mode switch
+            angularVelocity += mode switch
             {
                 ForceMode2D.Force => torque / _rigidbody.mass * predictionManager.tickDelta,
                 ForceMode2D.Impulse => torque / _rigidbody.mass,

@@ -9,7 +9,7 @@ namespace PurrNet.Prediction
         {
         }
 
-        internal override void PrepareInput(bool isServer, bool isLocal, ulong tick)
+        internal override void PrepareInput(bool isServer, bool isLocal, ulong tick, bool extrapolate)
         {
         }
 
@@ -26,10 +26,6 @@ namespace PurrNet.Prediction
         }
 
         public override void ResetInterpolation()
-        {
-        }
-
-        internal override void UpdateView(float deltaTime)
         {
         }
 

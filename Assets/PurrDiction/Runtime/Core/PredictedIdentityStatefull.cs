@@ -64,7 +64,7 @@ namespace PurrNet.Prediction
             ResetInterpolation();
         }
 
-        internal override void PrepareInput(bool isServer, bool isLocal, ulong tick) { }
+        internal override void PrepareInput(bool isServer, bool isLocal, ulong tick, bool extrapolate) { }
 
         private FULL_STATE<STATE> FULLInterpolate(FULL_STATE<STATE> from, FULL_STATE<STATE> to, float t)
         {
@@ -262,6 +262,8 @@ namespace PurrNet.Prediction
 
         internal override void UpdateView(float deltaTime)
         {
+            base.UpdateView(deltaTime);
+
             if (_interpolatedState == null)
                 return;
 

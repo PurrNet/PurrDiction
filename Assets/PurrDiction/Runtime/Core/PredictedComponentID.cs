@@ -38,13 +38,13 @@ namespace PurrNet.Prediction
             return identity != null;
         }
 
-        public bool TryGetIdentity<T>(PredictionManager manager, out T identity) where T : PredictedIdentity
+        public bool TryGetIdentity<T>(PredictionManager manager, out T identity)
         {
             var id = manager.GetIdentity(this);
 
             if (!id || id is not T predictedIdentity)
             {
-                identity = null;
+                identity = default;
                 return false;
             }
 

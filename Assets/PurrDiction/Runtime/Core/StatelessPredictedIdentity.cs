@@ -9,11 +9,7 @@ namespace PurrNet.Prediction
 
         internal override void SimulateTick(ulong tick, float delta) => Simulate(delta);
 
-        internal override void PrepareInput(bool isServer, bool isLocal, ulong tick)
-        {
-        }
-
-        internal virtual void SimulateRemote(ulong tick, float delta)
+        internal override void PrepareInput(bool isServer, bool isLocal, ulong tick, bool extrapolate)
         {
         }
 
@@ -30,10 +26,6 @@ namespace PurrNet.Prediction
         }
 
         public override void ResetInterpolation()
-        {
-        }
-
-        internal override void UpdateView(float deltaTime)
         {
         }
 

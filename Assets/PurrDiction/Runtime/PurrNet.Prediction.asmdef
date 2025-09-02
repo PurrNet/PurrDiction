@@ -17,6 +17,12 @@
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "dev.purrnet.purrnet",
+            "expression": "1.15.0-beta.3",
+            "define": "PURRSCENE_OBJECT_FILTERS"
+        }
+    ],
     "noEngineReferences": false
 }

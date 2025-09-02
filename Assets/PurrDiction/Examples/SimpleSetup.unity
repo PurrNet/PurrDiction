@@ -566,6 +566,7 @@ MonoBehaviour:
   _builtInSystems: -1
   _predictedPrefabs: {fileID: 11400000, guid: 3bc69f3464f686748883b06b540e96d4, type: 2}
   _inputQueueSettings:
+    extrapolateForMissing: 1
     minInputs: 1
     maxInputs: 4
 --- !u!4 &1558659896
@@ -633,9 +634,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _stopPlayingOnDisconnect: 0
   _startServerFlags: 9
-  _startClientFlags: 7
+  _startClientFlags: 6
   _cookieScope: 1
-  _dontDestroyOnLoad: 1
+  _dontDestroyOnLoad: 0
   _transport: {fileID: 1793795283}
   _networkPrefabs: {fileID: 11400000, guid: 2190589f99f9abe479a1c7890b05f51f, type: 2}
   _networkAssets: {fileID: 0}
@@ -713,7 +714,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fc64ff707d914a64e95f2ac0bf554c09, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _serverPort: 5000
+  _serverPort: 6969
   _maxConnections: 100
   _address: 127.0.0.1
   _timeoutInSeconds: 5

@@ -40,6 +40,8 @@ namespace PurrNet.Prediction
         protected override void SetUnityState(PredictedHierarchyState state)
         {
             var currentActions = _spawnedPrefabs.Count;
+            using var spawnedPrefabsCopy = DisposableList<InstanceDetails>.Create(state.spawnedPrefabs.Count);
+            spawnedPrefabsCopy.AddRange(state.spawnedPrefabs);
             var stateActions = state.spawnedPrefabs.Count;
 
             var min = Mathf.Min(currentActions, stateActions);
@@ -49,7 +51,7 @@ namespace PurrNet.Prediction
             for (; i < min; i++)
             {
                 var current = _spawnedPrefabs[i];
-                var target = state.spawnedPrefabs[i];
+                var target = spawnedPrefabsCopy[i];
 
                 if (!current.Equals(target))
                     break;
@@ -77,7 +79,7 @@ namespace PurrNet.Prediction
             // we need to redo the rest of the actions
             for (var j = i; j < stateActions; j++)
             {
-                var details = state.spawnedPrefabs[j];
+                var details = spawnedPrefabsCopy[j];
                 var pid = details.prefabId;
                 var instanceId = details.instanceId;
 
@@ -90,8 +92,8 @@ namespace PurrNet.Prediction
 
             _nextInstanceId = state.nextInstanceId;
 
-            if (_spawnedPrefabs.Count != state.spawnedPrefabs.Count)
-                PurrLogger.LogError($"Mismatch: Action count {_spawnedPrefabs.Count} != {state.spawnedPrefabs.Count}");
+            if (_spawnedPrefabs.Count != spawnedPrefabsCopy.Count)
+                PurrLogger.LogError($"Mismatch: Action count {_spawnedPrefabs.Count} != {spawnedPrefabsCopy.Count}");
         }
 
         public PredictedObjectID? Create(int prefabId, PlayerID? owner = null)
@@ -113,6 +115,7 @@ namespace PurrNet.Prediction
         public PredictedObjectID? Create(int prefabId, Vector3 position, Quaternion rotation, PlayerID? owner = null)
         {
             var instanceId = new PredictedObjectID(_nextInstanceId);
+            _nextInstanceId++;
             var key = new InstanceDetails(prefabId, instanceId, position, rotation);
 
             GameObject go;
@@ -140,7 +143,6 @@ namespace PurrNet.Prediction
             _instanceMap.Add(instanceId, go);
             _goToId.Add(go, instanceId);
             _spawnedPrefabs.Add(key);
-            _nextInstanceId++;
 
             if (!predictionManager.isSimulating)
             {
@@ -211,7 +213,7 @@ namespace PurrNet.Prediction
             if (pool.Put(details, go, predictionManager.localTick))
             {
                 go.SetActive(false);
-                predictionManager.UnregisterInstance(go);
+                predictionManager.UnregisterInstance(go, false);
             }
             else
             {
@@ -338,20 +340,28 @@ namespace PurrNet.Prediction
             if (!go)
                 return;
 
-            if (!_goToId.TryGetValue(go, out var poid))
+            if (go.TryGetComponent<PredictedGameObject>(out var pgo))
             {
-                if (go.TryGetComponent<PredictedGameObject>(out var pgo))
-                {
-                    pgo.SetActive(false);
-                    return;
-                }
-
-                PurrLogger.LogError($"PredictedObjectID for GameObject `{go.name}` not found.\n" +
-                                    $"Delete the root GameObject or add a `PredictedObjectSeparator` to this GameObject.", this);
+                pgo.SetActive(false);
                 return;
             }
 
-            currentState.toDelete.Add(poid);
+            // look for all nested objects and delete them as well
+            ReccursiveDel(go.transform);
+        }
+
+        private void ReccursiveDel(Transform trs)
+        {
+            int children = trs.childCount;
+
+            for (int i = 0; i < children; i++)
+            {
+                var child = trs.GetChild(i);
+                ReccursiveDel(child);
+            }
+
+            if (_goToId.TryGetValue(trs.gameObject, out var poid))
+                currentState.toDelete.Add(poid);
         }
 
         public void Delete(PredictedIdentity pid)
@@ -362,10 +372,8 @@ namespace PurrNet.Prediction
 
         public void Delete(PredictedObjectID? id)
         {
-            if (!id.HasValue)
-                return;
-
-            currentState.toDelete.Add(id.Value);
+            if (id.TryGetGameObject(predictionManager, out var go))
+                Delete(go);
         }
 
         public void Cleanup()
@@ -378,7 +386,7 @@ namespace PurrNet.Prediction
 
                 if (_isSceneObject.Contains(instance.instanceId))
                 {
-                    predictionManager.UnregisterInstance(go);
+                    predictionManager.UnregisterInstance(go, true);
                     continue;
                 }
 

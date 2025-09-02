@@ -81,7 +81,7 @@ namespace PurrNet.Prediction
         /// </summary>
         protected virtual void ModifyExtrapolatedInput(ref INPUT input) { }
 
-        internal override void PrepareInput(bool isServer, bool isLocal, ulong tick)
+        internal override void PrepareInput(bool isServer, bool isLocal, ulong tick, bool extrapolate)
         {
             if (isLocal)
             {
@@ -95,7 +95,8 @@ namespace PurrNet.Prediction
             {
                 if (_queuedInput.Count <= 0)
                 {
-                    _lastInput = GetDefaultInput();
+                    if (!extrapolate)
+                        _lastInput = GetDefaultInput();
                     _inputHistory.Write(tick, _lastInput);
                     return;
                 }

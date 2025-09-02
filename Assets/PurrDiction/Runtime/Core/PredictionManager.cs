@@ -16,6 +16,7 @@ namespace PurrNet.Prediction
     [Serializable]
     public struct InputQueueSettings
     {
+        public bool extrapolateForMissing;
         public int minInputs;
         public int maxInputs;
     }
@@ -40,6 +41,7 @@ namespace PurrNet.Prediction
         [SerializeField] private PredictedPrefabs _predictedPrefabs;
         [SerializeField] private InputQueueSettings _inputQueueSettings = new()
         {
+            extrapolateForMissing = true,
             minInputs = 1,
             maxInputs = 4
         };
@@ -47,12 +49,13 @@ namespace PurrNet.Prediction
         readonly List<PredictedIdentity> _queue = new ();
         readonly List<PredictedIdentity> _systems = new ();
 
+        GameObjectPoolCollection _pools;
+
+        [UsedImplicitly]
         public static bool TryGetInstance(int sceneHandle, out PredictionManager world)
         {
             return _instances.TryGetValue(sceneHandle, out world);
         }
-
-        GameObjectPoolCollection _pools;
 
         private void Awake()
         {
@@ -207,6 +210,7 @@ namespace PurrNet.Prediction
             {
                 _tickManager.onPreTick -= OnPreTick;
                 _tickManager.onPostTick -= OnPostTick;
+                _tickManager = null;
             }
 
             CleanupAllSystems();
@@ -262,7 +266,7 @@ namespace PurrNet.Prediction
             ListPool<PredictedIdentity>.Destroy(components);
         }
 
-        public void UnregisterInstance(GameObject go)
+        public void UnregisterInstance(GameObject go, bool reset)
         {
             if (!go)
                 return;
@@ -273,7 +277,11 @@ namespace PurrNet.Prediction
             for (var i = 0; i < components.Count; i++)
             {
                 if (components[i].hideFlags != HideFlags.NotEditable)
+                {
+                    if (reset)
+                        components[i].ResetState();
                     UnregisterInstance(components[i]);
+                }
             }
 
             ListPool<PredictedIdentity>.Destroy(components);
@@ -467,7 +475,7 @@ namespace PurrNet.Prediction
             {
                 var system = _systems[i];
                 bool controller = system.IsOwner(myPlayer, cachedIsServer);
-                system.PrepareInput(cachedIsServer, controller, localTick);
+                system.PrepareInput(cachedIsServer, controller, localTick, _inputQueueSettings.extrapolateForMissing);
             }
 
             if (cachedIsServer && hasClients)
