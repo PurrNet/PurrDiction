@@ -34,6 +34,31 @@ namespace PurrNet.Prediction
             angularVelocity = default;
         }
 
+        public void MovePosition(Vector2 position)
+        {
+            _rigidbody.MovePosition(position);
+        }
+
+        public void MoveRotation(Quaternion rotation)
+        {
+            _rigidbody.MoveRotation(rotation);
+        }
+
+        public void MoveRotation(float angle)
+        {
+            _rigidbody.MoveRotation(angle);
+        }
+
+        public void MovePositionAndRotation(Vector2 position, Quaternion rotation)
+        {
+            _rigidbody.MovePositionAndRotation(position, rotation);
+        }
+
+        public void MovePositionAndRotation(Vector2 position, float angle)
+        {
+            _rigidbody.MovePositionAndRotation(position, angle);
+        }
+
         protected override void LateAwake()
         {
             if (predictionManager.physics2d == null)

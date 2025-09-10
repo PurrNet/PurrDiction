@@ -396,6 +396,22 @@ namespace PurrNet.Prediction
             predictionManager.physics3d.RegisterEvent(PhysicsEventType.Stay, this, other);
         }
 
+        public void MovePosition(Vector3 position)
+        {
+            _rigidbody.MovePosition(position);
+        }
+
+        public void MoveRotation(Quaternion rotation)
+        {
+            _rigidbody.MoveRotation(rotation);
+        }
+
+        public void Move(Vector3 position, Quaternion rotation)
+        {
+            _rigidbody.Move(position, rotation);
+        }
+
+
         public void RaiseTriggerEnter(GameObject other)
         {
             onTriggerEnter?.Invoke(other);
