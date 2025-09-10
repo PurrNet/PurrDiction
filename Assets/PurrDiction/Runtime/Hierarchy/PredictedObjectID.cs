@@ -23,16 +23,16 @@ namespace PurrNet.Prediction
             return manager.hierarchy.TryGetGameObject(this, out gameObject);
         }
 
-        public bool TryGetComponent<T>(PredictionManager manager, out T component) where T : Component
+        public bool TryGetComponent<T>(PredictionManager manager, out T component)
         {
             return manager.hierarchy.TryGetComponent(this, out component);
         }
 
-        public T GetComponent<T>(PredictionManager manager) where T : Component
+        public T GetComponent<T>(PredictionManager manager)
         {
             if (manager.hierarchy.TryGetComponent<T>(this, out var result))
                 return result;
-            return null;
+            return default;
         }
 
         public bool Equals(PredictedObjectID other)

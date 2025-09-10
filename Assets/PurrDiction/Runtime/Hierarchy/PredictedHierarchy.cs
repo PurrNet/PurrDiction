@@ -268,26 +268,28 @@ namespace PurrNet.Prediction
             return _instanceMap.GetValueOrDefault(id.Value);
         }
 
-        public T GetComponent<T>(PredictedObjectID? id) where T : Component
+        public T GetComponent<T>(PredictedObjectID? id)
         {
             if (!id.HasValue)
-                return null;
+                return default;
 
             return GetComponent<T>(id.Value);
         }
 
-        public T GetComponent<T>(PredictedObjectID id) where T : Component
+        public T GetComponent<T>(PredictedObjectID id)
         {
-            return _instanceMap.GetValueOrDefault(id)?.GetComponent<T>();
+            var go = _instanceMap.GetValueOrDefault(id);
+            if (!go) return default;
+            return go.GetComponent<T>();
         }
 
-        public bool TryGetComponent<T>(PredictedObjectID id, out T go) where T : Component
+        public bool TryGetComponent<T>(PredictedObjectID id, out T go)
         {
             go = GetComponent<T>(id);
             return go != null;
         }
 
-        public bool TryGetComponent<T>(PredictedObjectID? id, out T go) where T : Component
+        public bool TryGetComponent<T>(PredictedObjectID? id, out T go)
         {
             go = GetComponent<T>(id);
             return go != null;
