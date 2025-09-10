@@ -12,10 +12,17 @@ namespace PurrNet.Prediction
         public static void Read(BitPacker stream, ref StatelessHeSaid value) { }
 
         [UsedByIL]
-        public static bool WriteDelta(BitPacker stream, StatelessHeSaid oldValue, StatelessHeSaid value) => false;
+        public static bool WriteDelta(BitPacker stream, StatelessHeSaid oldValue, StatelessHeSaid value)
+        {
+            Packer<bool>.Write(stream, false);
+            return false;
+        }
 
         [UsedByIL]
-        public static void ReadDelta(BitPacker stream, StatelessHeSaid oldValue, ref StatelessHeSaid value) { }
+        public static void ReadDelta(BitPacker stream, StatelessHeSaid oldValue, ref StatelessHeSaid value)
+        {
+            stream.AdvanceBits(1);
+        }
     }
 
     public struct StatelessHeSaid : IPredictedData<StatelessHeSaid>
