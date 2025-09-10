@@ -137,7 +137,11 @@ namespace PurrNet.Prediction
             GetUnityState(ref fullPredictedState.state);
         }
 
-        internal override void SimulateTick(ulong tick, float delta) => Simulate(ref fullPredictedState.state, delta);
+        internal override void SimulateTick(ulong tick, float delta)
+            => Simulate(ref fullPredictedState.state, delta);
+
+        internal override void LateSimulateTick(ulong tick, float delta)
+            => LateSimulate(ref fullPredictedState.state, delta);
 
         internal override void SaveStateInHistory(ulong tick)
         {
@@ -160,6 +164,8 @@ namespace PurrNet.Prediction
         protected virtual STATE GetInitialState() => default;
 
         protected virtual void Simulate(ref STATE state, float delta) {}
+
+        protected virtual void LateSimulate(ref STATE state, float delta) {}
 
         internal override void Rollback(ulong tick)
         {

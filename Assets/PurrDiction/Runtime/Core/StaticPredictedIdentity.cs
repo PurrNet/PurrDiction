@@ -9,6 +9,10 @@ namespace PurrNet.Prediction
         {
         }
 
+        internal override void LateSimulateTick(ulong tick, float delta)
+        {
+        }
+
         internal override void PrepareInput(bool isServer, bool isLocal, ulong tick, bool extrapolate)
         {
         }

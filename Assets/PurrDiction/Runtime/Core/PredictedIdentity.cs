@@ -124,6 +124,8 @@ namespace PurrNet.Prediction
 
         internal abstract void SimulateTick(ulong tick, float delta);
 
+        internal abstract void LateSimulateTick(ulong tick, float delta);
+
         public virtual void PostSimulate(ulong tick, float delta) {}
 
         internal abstract void PrepareInput(bool isServer, bool isLocal, ulong tick, bool extrapolate);

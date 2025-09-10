@@ -18,7 +18,6 @@ namespace PurrDiction.Examples
 
         protected override void Simulate(SimpleWASDInput input, ref State state, float delta)
         {
-
             if (input.jump)
             {
                 Shoot();

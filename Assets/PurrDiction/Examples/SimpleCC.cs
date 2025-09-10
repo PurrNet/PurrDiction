@@ -23,7 +23,7 @@ namespace PurrNet.Prediction.Tests
             input.dash = false;
         }
 
-        protected override void Simulate(SimpleWASDInput input, ref SimpleCCState state, float delta)
+        protected override void LateSimulate(SimpleWASDInput input, ref SimpleCCState state, float delta)
         {
             var move = new Vector3(input.horizontal, 0, input.vertical);
             var moveVector = move * _speed;
@@ -46,6 +46,32 @@ namespace PurrNet.Prediction.Tests
 #endif
 
             /*if (input.jump)
+                Shoot();*/
+        }
+
+        protected override void Simulate(SimpleWASDInput input, ref SimpleCCState state, float delta)
+        {/*
+            var move = new Vector3(input.horizontal, 0, input.vertical);
+            var moveVector = move * _speed;
+
+            if (move != Vector3.zero)
+                state.rotation = Mathf.Atan2(move.x, move.z) * Mathf.Rad2Deg;
+
+            _controller.rotation = Quaternion.Euler(0, state.rotation, 0);
+
+#if UNITY_6000
+            var vel = _controller.linearVelocity;
+            vel.x = moveVector.x;
+            vel.z = moveVector.z;
+            _controller.linearVelocity = vel;
+#else
+            var vel = _controller.velocity;
+            vel.x = moveVector.x;
+            vel.z = moveVector.z;
+            _controller.velocity = vel;
+#endif
+
+            if (input.jump)
                 Shoot();*/
         }
 

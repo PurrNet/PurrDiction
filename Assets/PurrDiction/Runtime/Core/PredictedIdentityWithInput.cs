@@ -76,6 +76,13 @@ namespace PurrNet.Prediction
             }
         }
 
+        protected virtual void LateSimulate(INPUT input, ref STATE state, float delta) {}
+
+        internal override void LateSimulateTick(ulong tick, float delta)
+        {
+            LateSimulate(_currentInput, ref fullPredictedState.state, delta);
+        }
+
         /// <summary>
         /// Modify the extrapolated input before it is used to simulate the state.
         /// </summary>
@@ -112,13 +119,6 @@ namespace PurrNet.Prediction
         {
             if(isController)
                 UpdateInput(ref _nextInput);
-        }
-
-        internal virtual void SimulateRemote(ulong tick, float delta)
-        {
-            if (_inputHistory.TryGet(tick, out var input))
-                PreSimulate(input, ref fullPredictedState.state, delta);
-            else PreSimulate(GetDefaultInput(), ref fullPredictedState.state, delta);
         }
 
         protected virtual INPUT GetDefaultInput() => default;
