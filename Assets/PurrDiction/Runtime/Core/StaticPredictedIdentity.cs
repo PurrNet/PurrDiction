@@ -9,7 +9,7 @@ namespace PurrNet.Prediction
         {
         }
 
-        internal override void LateSimulateTick(ulong tick, float delta)
+        internal override void LateSimulateTick(float delta)
         {
         }
 

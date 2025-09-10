@@ -48,6 +48,12 @@ namespace PurrNet.Prediction
 
         internal override void SimulateTick(ulong tick, float delta)
         {
+            if (!fullPredictedState.prediction.wasOnSimulationStartCalled)
+            {
+                SimulationStart();
+                fullPredictedState.prediction.wasOnSimulationStartCalled = true;
+            }
+
             if (IsOwner())
             {
                 if (!_inputHistory.TryGet(tick, out var input))
@@ -78,7 +84,7 @@ namespace PurrNet.Prediction
 
         protected virtual void LateSimulate(INPUT input, ref STATE state, float delta) {}
 
-        internal override void LateSimulateTick(ulong tick, float delta)
+        internal override void LateSimulateTick(float delta)
         {
             LateSimulate(_currentInput, ref fullPredictedState.state, delta);
         }

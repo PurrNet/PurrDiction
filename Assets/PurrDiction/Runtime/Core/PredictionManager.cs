@@ -495,7 +495,7 @@ namespace PurrNet.Prediction
                 _systems[i].SimulateTick(localTick, delta);
 
             for (var i = 0; i < _systems.Count; i++)
-                _systems[i].LateSimulateTick(localTick, delta);
+                _systems[i].LateSimulateTick(delta);
 
             DoPhysicsPass();
 
@@ -855,7 +855,7 @@ namespace PurrNet.Prediction
                     _systems[j].SimulateTick(simTick, delta);
 
                 for (var j = 0; j < _systems.Count; j++)
-                    _systems[j].LateSimulateTick(simTick, delta);
+                    _systems[j].LateSimulateTick(delta);
 
                 DoPhysicsPass();
 
@@ -877,11 +877,12 @@ namespace PurrNet.Prediction
                 delta *= time.timeScale;
 
             isSimulating = true;
+
             for (var j = 0; j < _systems.Count; j++)
                 _systems[j].SimulateTick(verifiedTick, delta);
 
             for (var j = 0; j < _systems.Count; j++)
-                _systems[j].LateSimulateTick(verifiedTick, delta);
+                _systems[j].LateSimulateTick(delta);
 
             DoPhysicsPass();
 

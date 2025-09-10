@@ -124,7 +124,7 @@ namespace PurrNet.Prediction
 
         internal abstract void SimulateTick(ulong tick, float delta);
 
-        internal abstract void LateSimulateTick(ulong tick, float delta);
+        internal abstract void LateSimulateTick(float delta);
 
         public virtual void PostSimulate(ulong tick, float delta) {}
 
@@ -140,6 +140,10 @@ namespace PurrNet.Prediction
 
         private PlayerID? _lastOwner;
 
+        /// <summary>
+        /// Called once when owner changes
+        /// This is meant to be used for view/visuals only and not part of the simulation
+        /// </summary>
         public virtual void OnViewOwnerChanged(PlayerID? oldOwner, PlayerID? newOwner) { }
 
         internal virtual void UpdateView(float deltaTime)
