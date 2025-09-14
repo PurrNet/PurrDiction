@@ -10,20 +10,22 @@ namespace PurrNet.Prediction
         public readonly PredictedObjectID instanceId;
         public readonly Vector3 spawnPosition;
         public readonly Quaternion spawnRotation;
+        public readonly PlayerID? owner;
 
-        public InstanceDetails(int prefabId, PredictedObjectID instanceId, Vector3 spawnPosition, Quaternion spawnRotation)
+        public InstanceDetails(int prefabId, PredictedObjectID instanceId, Vector3 spawnPosition, Quaternion spawnRotation, PlayerID? owner)
         {
             this.prefabId = prefabId;
             this.instanceId = instanceId;
             this.spawnPosition = spawnPosition;
             this.spawnRotation = spawnRotation;
+            this.owner = owner;
         }
 
         public bool Equals(InstanceDetails other)
         {
             return prefabId == other.prefabId && instanceId.Equals(other.instanceId) &&
                    spawnPosition.Equals(other.spawnPosition) &&
-                   spawnRotation.Equals(other.spawnRotation);
+                   spawnRotation.Equals(other.spawnRotation) && owner == other.owner;
         }
 
         public override bool Equals(object obj)
@@ -33,12 +35,12 @@ namespace PurrNet.Prediction
 
         public override int GetHashCode()
         {
-            return HashCode.Combine(prefabId, instanceId, spawnPosition, spawnRotation);
+            return HashCode.Combine(prefabId, instanceId, spawnPosition, spawnRotation, owner);
         }
 
         public override string ToString()
         {
-            return $"PrefabId: {prefabId}\nInstanceId: {instanceId}\nSpawnPosition: {spawnPosition}\nSpawnRotation: {spawnRotation}";
+            return $"PrefabId: {prefabId}\nInstanceId: {instanceId}\nSpawnPosition: {spawnPosition}\nSpawnRotation: {spawnRotation}\nOwner: {owner}";
         }
     }
 }

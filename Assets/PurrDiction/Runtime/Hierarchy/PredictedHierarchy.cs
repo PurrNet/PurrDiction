@@ -85,7 +85,7 @@ namespace PurrNet.Prediction
 
                 _nextInstanceId = instanceId.instanceId;
 
-                var goId = Create(pid, details.spawnPosition, details.spawnRotation);
+                var goId = Create(pid, details.spawnPosition, details.spawnRotation, details.owner);
                 if (!goId.HasValue)
                     PurrLogger.LogError($"Mismatch: Failed to create prefab {pid}");
             }
@@ -116,7 +116,7 @@ namespace PurrNet.Prediction
         {
             var instanceId = new PredictedObjectID(_nextInstanceId);
             _nextInstanceId++;
-            var key = new InstanceDetails(prefabId, instanceId, position, rotation);
+            var key = new InstanceDetails(prefabId, instanceId, position, rotation, owner);
 
             GameObject go;
 
@@ -224,7 +224,7 @@ namespace PurrNet.Prediction
         internal void RegisterSceneObject(GameObject root, int pid)
         {
             var instanceId = new PredictedObjectID(_nextInstanceId);
-            var key = new InstanceDetails(pid, instanceId, root.transform.position, root.transform.rotation);
+            var key = new InstanceDetails(pid, instanceId, root.transform.position, root.transform.rotation, null);
 
             _isSceneObject.Add(instanceId);
             _instanceMap.Add(instanceId, root);
