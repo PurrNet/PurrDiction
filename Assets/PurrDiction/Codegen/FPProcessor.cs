@@ -102,7 +102,7 @@ namespace Purrdiction.Codegen
 
                         switch (methodDef.Name)
                         {
-                            case "op_Implicit" when methodDef.Parameters.Count == 1 && methodDef.Parameters[0].ParameterType.FullName == "System.Single":
+                            case "op_Implicit" when methodDef.Parameters.Count == 1 && CheckParam(methodDef, 0):
                             {
                                 var res = ConvertToConstFP(is64, ilProcessor, instructions[j - 1], messages);
                                 if (res == null) continue;
@@ -110,7 +110,7 @@ namespace Purrdiction.Codegen
                                 ilProcessor.Replace(instruction, fromRaw);
                                 break;
                             }
-                            case "op_Addition" when methodDef.Parameters.Count == 2 && methodDef.Parameters[1].ParameterType.FullName == "System.Single":
+                            case "op_Addition" when methodDef.Parameters.Count == 2 && CheckParam(methodDef, 1):
                             {
                                 var fp = ConvertToConstFP(is64, ilProcessor, instructions[j - 1], messages);
                                 if (fp == null) continue;
@@ -120,7 +120,7 @@ namespace Purrdiction.Codegen
                                 ilProcessor.Replace(instruction, toRaw);
                                 break;
                             }
-                            case "op_Addition" when methodDef.Parameters.Count == 2 && methodDef.Parameters[0].ParameterType.FullName == "System.Single":
+                            case "op_Addition" when methodDef.Parameters.Count == 2 && CheckParam(methodDef, 0):
                             {
                                 var fp = ConvertToConstFP(is64, ilProcessor, instructions[j - 2], messages);
                                 if (fp == null) continue;
@@ -130,7 +130,7 @@ namespace Purrdiction.Codegen
                                 ilProcessor.Replace(instruction, toRaw);
                                 break;
                             }
-                            case "op_Subtraction" when methodDef.Parameters.Count == 2 && methodDef.Parameters[1].ParameterType.FullName == "System.Single":
+                            case "op_Subtraction" when methodDef.Parameters.Count == 2 && CheckParam(methodDef, 1):
                             {
                                 var fp = ConvertToConstFP(is64, ilProcessor, instructions[j - 1], messages);
                                 if (fp == null) continue;
@@ -140,7 +140,7 @@ namespace Purrdiction.Codegen
                                 ilProcessor.Replace(instruction, toRaw);
                                 break;
                             }
-                            case "op_Subtraction" when methodDef.Parameters.Count == 2 && methodDef.Parameters[0].ParameterType.FullName == "System.Single":
+                            case "op_Subtraction" when methodDef.Parameters.Count == 2 && CheckParam(methodDef, 0):
                             {
                                 var fp = ConvertToConstFP(is64, ilProcessor, instructions[j - 2], messages);
                                 if (fp == null) continue;
@@ -150,7 +150,7 @@ namespace Purrdiction.Codegen
                                 ilProcessor.Replace(instruction, toRaw);
                                 break;
                             }
-                            case "op_Multiply" when methodDef.Parameters.Count == 2 && methodDef.Parameters[1].ParameterType.FullName == "System.Single":
+                            case "op_Multiply" when methodDef.Parameters.Count == 2 && CheckParam(methodDef, 1):
                             {
                                 var fp = ConvertToConstFP(is64, ilProcessor, instructions[j - 1], messages);
                                 if (fp == null) continue;
@@ -160,7 +160,7 @@ namespace Purrdiction.Codegen
                                 ilProcessor.Replace(instruction, toRaw);
                                 break;
                             }
-                            case "op_Multiply" when methodDef.Parameters.Count == 2 && methodDef.Parameters[0].ParameterType.FullName == "System.Single":
+                            case "op_Multiply" when methodDef.Parameters.Count == 2 && CheckParam(methodDef, 0):
                             {
                                 var fp = ConvertToConstFP(is64, ilProcessor, instructions[j - 2], messages);
                                 if (fp == null) continue;
@@ -170,7 +170,7 @@ namespace Purrdiction.Codegen
                                 ilProcessor.Replace(instruction, toRaw);
                                 break;
                             }
-                            case "op_Division" when methodDef.Parameters.Count == 2 && methodDef.Parameters[1].ParameterType.FullName == "System.Single":
+                            case "op_Division" when methodDef.Parameters.Count == 2 && CheckParam(methodDef, 1):
                             {
                                 var fp = ConvertToConstFP(is64, ilProcessor, instructions[j - 1], messages);
                                 if (fp == null) continue;
@@ -180,7 +180,7 @@ namespace Purrdiction.Codegen
                                 ilProcessor.Replace(instruction, toRaw);
                                 break;
                             }
-                            case "op_Division" when methodDef.Parameters.Count == 2 && methodDef.Parameters[0].ParameterType.FullName == "System.Single":
+                            case "op_Division" when methodDef.Parameters.Count == 2 && CheckParam(methodDef, 0):
                             {
                                 var fp = ConvertToConstFP(is64, ilProcessor, instructions[j - 2], messages);
                                 if (fp == null) continue;
@@ -190,7 +190,7 @@ namespace Purrdiction.Codegen
                                 ilProcessor.Replace(instruction, toRaw);
                                 break;
                             }
-                            case "op_Modulus" when methodDef.Parameters.Count == 2 && methodDef.Parameters[1].ParameterType.FullName == "System.Single":
+                            case "op_Modulus" when methodDef.Parameters.Count == 2 && CheckParam(methodDef, 1):
                             {
                                 var fp = ConvertToConstFP(is64, ilProcessor, instructions[j - 1], messages);
                                 if (fp == null) continue;
@@ -200,7 +200,7 @@ namespace Purrdiction.Codegen
                                 ilProcessor.Replace(instruction, toRaw);
                                 break;
                             }
-                            case "op_Modulus" when methodDef.Parameters.Count == 2 && methodDef.Parameters[0].ParameterType.FullName == "System.Single":
+                            case "op_Modulus" when methodDef.Parameters.Count == 2 && CheckParam(methodDef, 0):
                             {
                                 var fp = ConvertToConstFP(is64, ilProcessor, instructions[j - 2], messages);
                                 if (fp == null) continue;
@@ -222,6 +222,12 @@ namespace Purrdiction.Codegen
                     MessageData = $"Unhandled exception {e.Message}\n{e.StackTrace}",
                 });
             }
+        }
+
+        private static bool CheckParam(MethodDefinition methodDef, int idx)
+        {
+            var cmp = methodDef.Parameters[idx].ParameterType.FullName;
+            return cmp is "System.Single" or "System.Double";
         }
 
         public static void Error(ICollection<DiagnosticMessage> messages, string message, Instruction instruction, MethodDefinition method)
