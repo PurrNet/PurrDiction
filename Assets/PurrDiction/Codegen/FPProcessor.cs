@@ -11,6 +11,7 @@ namespace Purrdiction.Codegen
     public static class FPProcessor
     {
         static readonly string FP_FullName = typeof(FP).FullName;
+        static readonly string FP64_FullName = typeof(FP64).FullName;
 
         static MethodDefinition GetMethodWithParams(this TypeDefinition type, string name, params Type[] types)
         {
@@ -49,13 +50,21 @@ namespace Purrdiction.Codegen
                 if (!type.HasMethods)
                     return;
 
-                var fpType = module.GetTypeDefinition<FP>();
-                var fromRawInt = fpType.GetMethod("FromRaw").Import(module);
-                var opAdditionFp_Fp = fpType.GetMethodWithParams("op_Addition", typeof(FP), typeof(FP)).Import(module);
-                var opSubstractionFp_Fp = fpType.GetMethodWithParams("op_Subtraction", typeof(FP), typeof(FP)).Import(module);
-                var opMultiplyFp_Fp = fpType.GetMethodWithParams("op_Multiply", typeof(FP), typeof(FP)).Import(module);
-                var opDivisionFp_Fp = fpType.GetMethodWithParams("op_Division", typeof(FP), typeof(FP)).Import(module);
-                var opModulusFp_Fp = fpType.GetMethodWithParams("op_Modulus", typeof(FP), typeof(FP)).Import(module);
+                var fp32Type = module.GetTypeDefinition<FP>();
+                var fromRawInt = fp32Type.GetMethod("FromRaw").Import(module);
+                var opAdditionFp_Fp = fp32Type.GetMethodWithParams("op_Addition", typeof(FP), typeof(FP)).Import(module);
+                var opSubstractionFp_Fp = fp32Type.GetMethodWithParams("op_Subtraction", typeof(FP), typeof(FP)).Import(module);
+                var opMultiplyFp_Fp = fp32Type.GetMethodWithParams("op_Multiply", typeof(FP), typeof(FP)).Import(module);
+                var opDivisionFp_Fp = fp32Type.GetMethodWithParams("op_Division", typeof(FP), typeof(FP)).Import(module);
+                var opModulusFp_Fp = fp32Type.GetMethodWithParams("op_Modulus", typeof(FP), typeof(FP)).Import(module);
+
+                var fp64Type = module.GetTypeDefinition<FP64>();
+                var fromRawLong = fp64Type.GetMethod("FromRaw").Import(module);
+                var opAdditionFp64_Fp64 = fp64Type.GetMethodWithParams("op_Addition", typeof(FP64), typeof(FP64)).Import(module);
+                var opSubstractionFp64_Fp64 = fp64Type.GetMethodWithParams("op_Subtraction", typeof(FP64), typeof(FP64)).Import(module);
+                var opMultiplyFp64_Fp64 = fp64Type.GetMethodWithParams("op_Multiply", typeof(FP64), typeof(FP64)).Import(module);
+                var opDivisionFp64_Fp64 = fp64Type.GetMethodWithParams("op_Division", typeof(FP64), typeof(FP64)).Import(module);
+                var opModulusFp64_Fp64 = fp64Type.GetMethodWithParams("op_Modulus", typeof(FP64), typeof(FP64)).Import(module);
 
                 for (var i = 0; i < type.Methods.Count; i++)
                 {
@@ -84,106 +93,120 @@ namespace Purrdiction.Codegen
                         if (!methodDef.IsStatic)
                             continue;
 
-                        if (methodDef.DeclaringType.FullName != FP_FullName)
+                        if (methodDef.DeclaringType.FullName != FP_FullName ||
+                            methodDef.DeclaringType.FullName != FP64_FullName)
                             continue;
+
+                        bool is64 = methodDef.DeclaringType.FullName == FP64_FullName;
+                        var fromRawOp = is64 ? fromRawLong : fromRawInt;
 
                         switch (methodDef.Name)
                         {
                             case "op_Implicit" when methodDef.Parameters.Count == 1 && methodDef.Parameters[0].ParameterType.FullName == "System.Single":
                             {
-                                var res = ConvertToConstFP(ilProcessor, instructions[j - 1], messages);
+                                var res = ConvertToConstFP(is64, ilProcessor, instructions[j - 1], messages);
                                 if (res == null) continue;
-                                var fromRaw = ilProcessor.Create(OpCodes.Call, fromRawInt);
+                                var fromRaw = ilProcessor.Create(OpCodes.Call, fromRawOp);
                                 ilProcessor.Replace(instruction, fromRaw);
                                 break;
                             }
                             case "op_Addition" when methodDef.Parameters.Count == 2 && methodDef.Parameters[1].ParameterType.FullName == "System.Single":
                             {
-                                var fp = ConvertToConstFP(ilProcessor, instructions[j - 1], messages);
+                                var fp = ConvertToConstFP(is64, ilProcessor, instructions[j - 1], messages);
                                 if (fp == null) continue;
-                                var toRaw = ilProcessor.Create(OpCodes.Call, opAdditionFp_Fp);
-                                ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawInt));
+                                var addOp = is64 ? opAdditionFp64_Fp64 : opAdditionFp_Fp;
+                                var toRaw = ilProcessor.Create(OpCodes.Call, addOp);
+                                ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawOp));
                                 ilProcessor.Replace(instruction, toRaw);
                                 break;
                             }
                             case "op_Addition" when methodDef.Parameters.Count == 2 && methodDef.Parameters[0].ParameterType.FullName == "System.Single":
                             {
-                                var fp = ConvertToConstFP(ilProcessor, instructions[j - 2], messages);
+                                var fp = ConvertToConstFP(is64, ilProcessor, instructions[j - 2], messages);
                                 if (fp == null) continue;
-                                var toRaw = ilProcessor.Create(OpCodes.Call, opAdditionFp_Fp);
-                                ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawInt));
+                                var addOp = is64 ? opAdditionFp64_Fp64 : opAdditionFp_Fp;
+                                var toRaw = ilProcessor.Create(OpCodes.Call, addOp);
+                                ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawOp));
                                 ilProcessor.Replace(instruction, toRaw);
                                 break;
                             }
                             case "op_Subtraction" when methodDef.Parameters.Count == 2 && methodDef.Parameters[1].ParameterType.FullName == "System.Single":
                             {
-                                var fp = ConvertToConstFP(ilProcessor, instructions[j - 1], messages);
+                                var fp = ConvertToConstFP(is64, ilProcessor, instructions[j - 1], messages);
                                 if (fp == null) continue;
-                                var toRaw = ilProcessor.Create(OpCodes.Call, opSubstractionFp_Fp);
-                                ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawInt));
+                                var subOp = is64 ? opSubstractionFp64_Fp64 : opSubstractionFp_Fp;
+                                var toRaw = ilProcessor.Create(OpCodes.Call, subOp);
+                                ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawOp));
                                 ilProcessor.Replace(instruction, toRaw);
                                 break;
                             }
                             case "op_Subtraction" when methodDef.Parameters.Count == 2 && methodDef.Parameters[0].ParameterType.FullName == "System.Single":
                             {
-                                var fp = ConvertToConstFP(ilProcessor, instructions[j - 2], messages);
+                                var fp = ConvertToConstFP(is64, ilProcessor, instructions[j - 2], messages);
                                 if (fp == null) continue;
-                                var toRaw = ilProcessor.Create(OpCodes.Call, opSubstractionFp_Fp);
-                                ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawInt));
+                                var subOp = is64 ? opSubstractionFp64_Fp64 : opSubstractionFp_Fp;
+                                var toRaw = ilProcessor.Create(OpCodes.Call, subOp);
+                                ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawOp));
                                 ilProcessor.Replace(instruction, toRaw);
                                 break;
                             }
                             case "op_Multiply" when methodDef.Parameters.Count == 2 && methodDef.Parameters[1].ParameterType.FullName == "System.Single":
                             {
-                                var fp = ConvertToConstFP(ilProcessor, instructions[j - 1], messages);
+                                var fp = ConvertToConstFP(is64, ilProcessor, instructions[j - 1], messages);
                                 if (fp == null) continue;
-                                var toRaw = ilProcessor.Create(OpCodes.Call, opMultiplyFp_Fp);
-                                ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawInt));
+                                var multpyOp = is64 ? opMultiplyFp64_Fp64 : opMultiplyFp_Fp;
+                                var toRaw = ilProcessor.Create(OpCodes.Call, multpyOp);
+                                ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawOp));
                                 ilProcessor.Replace(instruction, toRaw);
                                 break;
                             }
                             case "op_Multiply" when methodDef.Parameters.Count == 2 && methodDef.Parameters[0].ParameterType.FullName == "System.Single":
                             {
-                                var fp = ConvertToConstFP(ilProcessor, instructions[j - 2], messages);
+                                var fp = ConvertToConstFP(is64, ilProcessor, instructions[j - 2], messages);
                                 if (fp == null) continue;
-                                var toRaw = ilProcessor.Create(OpCodes.Call, opMultiplyFp_Fp);
-                                ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawInt));
+                                var multpyOp = is64 ? opMultiplyFp64_Fp64 : opMultiplyFp_Fp;
+                                var toRaw = ilProcessor.Create(OpCodes.Call, multpyOp);
+                                ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawOp));
                                 ilProcessor.Replace(instruction, toRaw);
                                 break;
                             }
                             case "op_Division" when methodDef.Parameters.Count == 2 && methodDef.Parameters[1].ParameterType.FullName == "System.Single":
                             {
-                                var fp = ConvertToConstFP(ilProcessor, instructions[j - 1], messages);
+                                var fp = ConvertToConstFP(is64, ilProcessor, instructions[j - 1], messages);
                                 if (fp == null) continue;
-                                var toRaw = ilProcessor.Create(OpCodes.Call, opDivisionFp_Fp);
-                                ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawInt));
+                                var divOp = is64 ? opDivisionFp64_Fp64 : opDivisionFp_Fp;
+                                var toRaw = ilProcessor.Create(OpCodes.Call, divOp);
+                                ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawOp));
                                 ilProcessor.Replace(instruction, toRaw);
                                 break;
                             }
                             case "op_Division" when methodDef.Parameters.Count == 2 && methodDef.Parameters[0].ParameterType.FullName == "System.Single":
                             {
-                                var fp = ConvertToConstFP(ilProcessor, instructions[j - 2], messages);
+                                var fp = ConvertToConstFP(is64, ilProcessor, instructions[j - 2], messages);
                                 if (fp == null) continue;
-                                var toRaw = ilProcessor.Create(OpCodes.Call, opDivisionFp_Fp);
-                                ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawInt));
+                                var divOp = is64 ? opDivisionFp64_Fp64 : opDivisionFp_Fp;
+                                var toRaw = ilProcessor.Create(OpCodes.Call, divOp);
+                                ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawOp));
                                 ilProcessor.Replace(instruction, toRaw);
                                 break;
                             }
                             case "op_Modulus" when methodDef.Parameters.Count == 2 && methodDef.Parameters[1].ParameterType.FullName == "System.Single":
                             {
-                                var fp = ConvertToConstFP(ilProcessor, instructions[j - 1], messages);
+                                var fp = ConvertToConstFP(is64, ilProcessor, instructions[j - 1], messages);
                                 if (fp == null) continue;
-                                var toRaw = ilProcessor.Create(OpCodes.Call, opModulusFp_Fp);
-                                ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawInt));
+                                var modOp = is64 ? opModulusFp64_Fp64 : opModulusFp_Fp;
+                                var toRaw = ilProcessor.Create(OpCodes.Call, modOp);
+                                ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawOp));
                                 ilProcessor.Replace(instruction, toRaw);
                                 break;
                             }
                             case "op_Modulus" when methodDef.Parameters.Count == 2 && methodDef.Parameters[0].ParameterType.FullName == "System.Single":
                             {
-                                var fp = ConvertToConstFP(ilProcessor, instructions[j - 2], messages);
+                                var fp = ConvertToConstFP(is64, ilProcessor, instructions[j - 2], messages);
                                 if (fp == null) continue;
-                                var toRaw = ilProcessor.Create(OpCodes.Call, opModulusFp_Fp);
-                                ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawInt));
+                                var modOp = is64 ? opModulusFp64_Fp64 : opModulusFp_Fp;
+                                var toRaw = ilProcessor.Create(OpCodes.Call, modOp);
+                                ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawOp));
                                 ilProcessor.Replace(instruction, toRaw);
                                 break;
                             }
@@ -246,14 +269,25 @@ namespace Purrdiction.Codegen
             }
         }
 
-        private static Instruction ConvertToConstFP(ILProcessor processor, Instruction instruction, List<DiagnosticMessage> messages)
+        private static Instruction ConvertToConstFP(bool is64, ILProcessor processor, Instruction instruction, List<DiagnosticMessage> messages)
         {
             switch (instruction.OpCode.Code)
             {
+                case Code.Ldc_R8:
+                {
+                    double value = (double)instruction.Operand;
+                    var constFp =
+                        is64 ? processor.Create(OpCodes.Ldc_R8, FP64Math.FromDouble(value))
+                            : processor.Create(OpCodes.Ldc_I4, FPMath.FromDouble(value));
+                    processor.Replace(instruction, constFp);
+                    return constFp;
+                }
                 case Code.Ldc_R4:
                 {
                     float value = (float)instruction.Operand;
-                    var constFp = processor.Create(OpCodes.Ldc_I4, FPMath.FromFloat(value));
+                    var constFp =
+                        is64 ? processor.Create(OpCodes.Ldc_R8, FP64Math.FromDouble(value))
+                            : processor.Create(OpCodes.Ldc_I4, FPMath.FromDouble(value));
                     processor.Replace(instruction, constFp);
                     return constFp;
                 }
