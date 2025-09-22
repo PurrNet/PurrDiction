@@ -11,21 +11,28 @@ namespace PurrNet.Prediction
         public Vector3 normal;
         public float separation;
 
+#if UNITY_PHYSICS_3D
         public PhysicsContactPoint(ContactPoint contact)
         {
             point = contact.point;
             normal = contact.normal;
             separation = contact.separation;
         }
+#endif
     }
 
     public struct PhysicsCollision : IDisposable
     {
+#if UNITY_PHYSICS_3D
         public DisposableList<PhysicsContactPoint> contacts;
         public Vector3 impulse;
         public Vector3 relativeVelocity;
 
         public void Dispose() => contacts.Dispose();
+#else
+        public void Dispose() {}
+
+#endif
     }
 
     public struct PhysicsEvent : IPackedAuto, IDisposable
@@ -67,10 +74,13 @@ namespace PurrNet.Prediction
         {
             return new PredictedPhysicsData
             {
+#if UNITY_PHYSICS_3D
                 events = DisposableList<PhysicsEvent>.Create(16)
+#endif
             };
         }
 
+#if UNITY_PHYSICS_3D
         public override void PostSimulate(ulong tick, float delta)
         {
             ref var state = ref currentState;
@@ -190,5 +200,6 @@ namespace PurrNet.Prediction
         {
             return from;
         }
+#endif
     }
 }

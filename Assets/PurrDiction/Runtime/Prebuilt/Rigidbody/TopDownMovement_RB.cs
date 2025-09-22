@@ -10,8 +10,10 @@ namespace PurrNet.Prediction.Prebuilt
     [AddComponentMenu("PurrDiction/Prebuilt/Rigidbody/Top Down Movement")]
     public class TopDownMovement_RB : PredictedIdentity<TopDownMovement_RB.Input, TopDownMovement_RB.State>
     {
+#if UNITY_PHYSICS_3D
         [FormerlySerializedAs("rigidbody")]
         [SerializeField] private Rigidbody _rigidbody;
+#endif
         [SerializeField] private float maxSpeed = 5;
         [SerializeField] private float acceleration = 30;
         private Camera _camera;
@@ -23,6 +25,7 @@ namespace PurrNet.Prediction.Prebuilt
                 Debug.LogError($"Failed to get camera tagget as main camera!", this);
         }
 
+#if UNITY_PHYSICS_3D
         private void Reset()
         {
             if(!TryGetComponent(out _rigidbody))
@@ -33,6 +36,7 @@ namespace PurrNet.Prediction.Prebuilt
             // ReSharper disable once BitwiseOperatorOnEnumWithoutFlags
             _rigidbody.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
         }
+#endif
 
         protected override void GetFinalInput(ref Input input)
         {
@@ -44,6 +48,7 @@ namespace PurrNet.Prediction.Prebuilt
 
         protected override void Simulate(Input input, ref State state, float delta)
         {
+#if UNITY_PHYSICS_3D
             var movement = input.moveDirection;
             movement.Normalize();
             var floatMovement = movement;
@@ -65,6 +70,7 @@ namespace PurrNet.Prediction.Prebuilt
             }
 
             _rigidbody.rotation = Quaternion.Euler(0, state.rotation, 0);
+#endif
         }
 
         private Vector3 GetCameraRelativeMovement(Vector2 inputDirection)

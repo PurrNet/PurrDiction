@@ -61,11 +61,14 @@ namespace PurrNet.Prediction
         {
             _instances[gameObject.scene.handle] = this;
 
+#if UNITY_PHYSICS_2D
             if ((_physicsProvider & PredictionPhysicsProvider.UnityPhysics2D) != 0)
                 Physics2D.simulationMode = SimulationMode2D.Script;
+#endif
+#if UNITY_PHYSICS_3D
             if ((_physicsProvider & PredictionPhysicsProvider.UnityPhysics3D) != 0)
                 Physics.simulationMode = SimulationMode.Script;
-
+#endif
             InitPooling();
         }
 
@@ -695,23 +698,27 @@ namespace PurrNet.Prediction
         private void DoPhysicsPass()
         {
             isInPhysicsPass = true;
+            // ReSharper disable once NotAccessedVariable
             var delta = tickDelta;
             if (time)
                 delta *= time.timeScale;
 
+#if UNITY_PHYSICS_2D
             if ((_physicsProvider & PredictionPhysicsProvider.UnityPhysics2D) != 0)
             {
                 var physicsScene = gameObject.scene.GetPhysicsScene2D();
                 if (physicsScene.IsValid())
                     physicsScene.Simulate(delta);
             }
-
+#endif
+#if UNITY_PHYSICS_3D
             if ((_physicsProvider & PredictionPhysicsProvider.UnityPhysics3D) != 0)
             {
                 var physicsScene = gameObject.scene.GetPhysicsScene();
                 if (physicsScene.IsValid())
                     physicsScene.Simulate(delta);
             }
+#endif
 
             isInPhysicsPass = false;
         }
@@ -773,11 +780,14 @@ namespace PurrNet.Prediction
 
         private void SyncTransforms()
         {
+#if UNITY_PHYSICS_2D
             if ((_physicsProvider & PredictionPhysicsProvider.UnityPhysics2D) != 0)
                 Physics2D.SyncTransforms();
-
+#endif
+#if UNITY_PHYSICS_3D
             if ((_physicsProvider & PredictionPhysicsProvider.UnityPhysics3D) != 0)
                 Physics.SyncTransforms();
+#endif
         }
 
         private ulong _lastVerifiedTick = 1;
@@ -1043,25 +1053,32 @@ namespace PurrNet.Prediction
 
         public static void ProperlySetPosAndRot(Transform transform, Vector3 position, Quaternion rotation)
         {
+#if UNITY_PHYSICS_2D
             if (transform.TryGetComponent(out Rigidbody2D rb2d))
             {
                 rb2d.position = position;
                 rb2d.rotation = rotation.eulerAngles.z;
                 transform.SetPositionAndRotation(position, rotation);
+                return;
             }
-            else if  (transform.TryGetComponent(out Rigidbody rb))
+#endif
+#if UNITY_PHYSICS_3D
+            if  (transform.TryGetComponent(out Rigidbody rb))
             {
                 rb.position = position;
                 rb.rotation = rotation;
                 transform.SetPositionAndRotation(position, rotation);
+                return;
             }
             else if (transform.TryGetComponent(out CharacterController ctrler) && ctrler.enabled)
             {
                 ctrler.enabled = false;
                 transform.SetPositionAndRotation(position, rotation);
                 ctrler.enabled = true;
+                return;
             }
-            else transform.SetPositionAndRotation(position, rotation);
+#endif
+            transform.SetPositionAndRotation(position, rotation);
         }
 
         internal GameObject InternalCreate(GameObject prefab, Vector3 position, Quaternion rotation, PredictedObjectID objectId, PlayerID? owner)

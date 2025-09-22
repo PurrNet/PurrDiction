@@ -4,11 +4,14 @@ using UnityEngine;
 
 namespace PurrNet.Prediction
 {
+#if UNITY_PHYSICS_2D
     [RequireComponent(typeof(Rigidbody2D))]
+#endif
     [RequireComponent(typeof(PredictedTransform))]
     [AddComponentMenu("PurrDiction/Unity Rigidbody/Predicted Rigidbody 2D")]
     public class PredictedRigidbody2D : PredictedIdentity<UnityRigidbody2DState>
     {
+#if UNITY_PHYSICS_2D
         public delegate void OnCollisionDelegate(GameObject other, DisposableList<Physics2DContactPoint> evContacts);
         public delegate void OnTriggerDelegate(GameObject other);
 
@@ -313,5 +316,6 @@ namespace PurrNet.Prediction
             // Apply force
             AddForceAtPosition(direction * force, _rigidbody.position, mode);
         }
+#endif
     }
 }

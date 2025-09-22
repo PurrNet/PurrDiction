@@ -27,6 +27,7 @@ namespace PurrDiction.Examples
 
         private void Shoot()
         {
+#if UNITY_PHYSICS_3D
             var pos = transform.position + transform.forward;
             var projectileId = hierarchy.Create(_projectile, pos, transform.rotation);
             var projectileRb = hierarchy.GetComponent<Rigidbody>(projectileId);
@@ -34,6 +35,7 @@ namespace PurrDiction.Examples
             projectileRb.linearVelocity = transform.forward * 10;
 #else
             projectileRb.velocity = transform.forward * 10;
+#endif
 #endif
         }
 

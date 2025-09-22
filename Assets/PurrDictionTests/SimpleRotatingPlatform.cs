@@ -31,6 +31,7 @@ namespace PurrNet.Prediction.Tests
             _renderer.material.color = Random.ColorHSV();
         }
 
+#if UNITY_PHYSICS_3D
         protected override void LateAwake()
         {
             _predictedRigidbody.onCollisionEnter += OnUnityCollisionEnter;
@@ -42,6 +43,7 @@ namespace PurrNet.Prediction.Tests
             _predictedRigidbody.onCollisionEnter -= OnUnityCollisionEnter;
             _predictedRigidbody.onTriggerEnter -= OnUnityTriggerEnter;
         }
+#endif
 
         protected override void Simulate(ref State data, float delta)
         {

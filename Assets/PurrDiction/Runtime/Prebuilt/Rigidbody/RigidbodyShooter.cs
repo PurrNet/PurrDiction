@@ -1,4 +1,3 @@
-using PurrNet.Logging;
 using UnityEngine;
 
 namespace PurrNet.Prediction.Prebuilt
@@ -38,6 +37,7 @@ namespace PurrNet.Prediction.Prebuilt
 
         private void Shoot()
         {
+#if UNITY_PHYSICS_3D
             if (!projectile)
                 return;
 
@@ -48,7 +48,8 @@ namespace PurrNet.Prediction.Prebuilt
             if(projectileRb)
                 projectileRb.linearVelocity = transform.forward * projectileInitialVelocity;
             else
-                PurrLogger.LogError($"Failed to get Rigidbody component from projectile ({projectile.gameObject.name})", projectile);
+                PurrNet.Logging.PurrLogger.LogError($"Failed to get Rigidbody component from projectile ({projectile.gameObject.name})", projectile);
+#endif
         }
 
 #if UNITY_EDITOR

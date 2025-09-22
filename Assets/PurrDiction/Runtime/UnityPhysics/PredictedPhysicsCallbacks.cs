@@ -27,6 +27,8 @@ namespace PurrNet.Prediction
 
         public void RaiseCollisionStay(GameObject other, PhysicsCollision evContacts) => onCollisionStay?.Invoke(other, evContacts);
 
+#if UNITY_PHYSICS_3D
+
         private void OnCollisionEnter(Collision other)
         {
             if (!_eventMask.HasFlag(PhysicsEventMask.CollisionEnter))
@@ -92,5 +94,6 @@ namespace PurrNet.Prediction
 
             predictionManager.physics3d.RegisterEvent(PhysicsEventType.Stay, this, other);
         }
+#endif
     }
 }

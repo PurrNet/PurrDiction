@@ -8,8 +8,10 @@ namespace PurrNet.Prediction.Prebuilt
     public class RigidbodyJump : PredictedIdentity<RigidbodyJump.JumpInput, RigidbodyJump.JumpData>
     {
         [SerializeField] private KeyCode jumpKey = KeyCode.Space;
+#if UNITY_PHYSICS_3D
         [FormerlySerializedAs("rigidbody")]
         [SerializeField] private Rigidbody _rigidbody;
+#endif
         [SerializeField] private float jumpCooldown = 0.5f;
         [SerializeField] private float jumpForce = 10;
         [SerializeField] private UpDirection upOrientation;
@@ -29,11 +31,13 @@ namespace PurrNet.Prediction.Prebuilt
         [SerializeField] private bool drawGizmos = true;
 #endif
 
+#if UNITY_PHYSICS_3D
         private void Reset()
         {
             if(!TryGetComponent(out _rigidbody))
                 _rigidbody = gameObject.AddComponent<Rigidbody>();
         }
+#endif
 
         protected override void Simulate(JumpInput input, ref JumpData state, float delta)
         {
@@ -42,8 +46,10 @@ namespace PurrNet.Prediction.Prebuilt
             if (!isGrounded)
             {
                 state.timeInAir += delta;
+#if UNITY_PHYSICS_3D
                 if(_rigidbody.linearVelocity.magnitude < maxFallSpeed)
                     _rigidbody.AddForce(Vector3.down * (state.timeInAir * gravityAirTimeMultiplier), ForceMode.Acceleration);
+#endif
             }
             else
             {
@@ -52,6 +58,7 @@ namespace PurrNet.Prediction.Prebuilt
 
             state.timeSinceJump += delta;
 
+#if UNITY_PHYSICS_3D
             if (input.jump && state.timeSinceJump >= jumpCooldown && isGrounded)
             {
                 state.timeSinceJump = 0;
@@ -65,17 +72,22 @@ namespace PurrNet.Prediction.Prebuilt
                         break;
                 }
             }
+#endif
         }
 
+#if UNITY_PHYSICS_3D
         private static readonly Collider[] GroundCheckResults = new Collider[5];
+#endif
         private bool IsGrounded()
         {
+#if UNITY_PHYSICS_3D
             var hits = Physics.OverlapSphereNonAlloc(transform.TransformPoint(groundCheckOffset), groundCheckRadius, GroundCheckResults, groundLayer);
             for (int i = 0; i < hits; i++)
             {
                 if(GroundCheckResults[i].gameObject != gameObject)
                     return true;
             }
+#endif
             return false;
         }
 
