@@ -48,6 +48,7 @@ namespace PurrNet.Prediction
 
         readonly List<PredictedIdentity> _queue = new ();
         readonly List<PredictedIdentity> _systems = new ();
+        private int _systemsCount;
 
         GameObjectPoolCollection _pools;
 
@@ -224,7 +225,7 @@ namespace PurrNet.Prediction
             if (hierarchy)
                 hierarchy.Cleanup();
 
-            for (var i = _systems.Count - 1; i >= 0; i--)
+            for (var i = _systemsCount - 1; i >= 0; i--)
             {
                 if (_systems[i])
                     Destroy(_systems[i]);
@@ -233,6 +234,7 @@ namespace PurrNet.Prediction
             _instanceMap.Clear();
             _queue.Clear();
             _systems.Clear();
+            _systemsCount = 0;
             _nextSystemId = 0;
             _deltas.Clear();
         }
@@ -334,12 +336,14 @@ namespace PurrNet.Prediction
             system.Setup(networkManager, this, pid, owner);
 
             _systems.Add(system);
+            ++_systemsCount;
         }
 
         public void UnregisterInstance(PredictedIdentity predictedIdentity)
         {
             _instanceMap.Remove(predictedIdentity.id);
             _systems.Remove(predictedIdentity);
+            --_systemsCount;
         }
 
 
@@ -393,7 +397,7 @@ namespace PurrNet.Prediction
 
         private void WriteFullFrame(BitPacker packer, PlayerID target)
         {
-            int count = _systems.Count;
+            int count = _systemsCount;
             Packer<PackedInt>.Write(packer, count);
 
             for (var i = 0; i < count; i++)
@@ -470,7 +474,7 @@ namespace PurrNet.Prediction
             if (cachedIsServer)
                 isVerified = true;
 
-            var scount = _systems.Count;
+            var scount = _systemsCount;
             bool hasClients = _clientTicks.Count > 0;
 
             if (cachedIsServer && hasClients)
@@ -494,10 +498,10 @@ namespace PurrNet.Prediction
             if (time)
                 delta *= time.timeScale;
 
-            for (var i = 0; i < _systems.Count; i++)
+            for (var i = 0; i < _systemsCount; i++)
                 _systems[i].SimulateTick(localTick, delta);
 
-            for (var i = 0; i < _systems.Count; i++)
+            for (var i = 0; i < _systemsCount; i++)
                 _systems[i].LateSimulateTick(delta);
 
             DoPhysicsPass();
@@ -508,7 +512,7 @@ namespace PurrNet.Prediction
                 SendFrameToOthers();
             }
 
-            for (var i = 0; i < _systems.Count; i++)
+            for (var i = 0; i < _systemsCount; i++)
                 _systems[i].PostSimulate(localTick, delta);
 
             if (cachedIsServer)
@@ -542,7 +546,7 @@ namespace PurrNet.Prediction
 
             using var frame = BitPackerPool.Get();
             uint writtenCount = 0;
-            for (var systemIdx = 0; systemIdx < _systems.Count; systemIdx++)
+            for (var systemIdx = 0; systemIdx < _systemsCount; systemIdx++)
             {
                 var system = _systems[systemIdx];
                 system.GetLatestUnityState();
@@ -561,7 +565,7 @@ namespace PurrNet.Prediction
 
         private void FinalizeTickOnServer(bool cachedIsClient)
         {
-            var count = _systems.Count;
+            var count = _systemsCount;
             if (cachedIsClient)
             {
                 for (var systemIdx = 0; systemIdx < count; systemIdx++)
@@ -592,7 +596,7 @@ namespace PurrNet.Prediction
 
         private void WriteInitialFrameToOthers()
         {
-            var count = _systems.Count;
+            var count = _systemsCount;
             var fCount = _clientFrames.Count;
 
             for (var j = 0; j < fCount; j++)
@@ -618,7 +622,7 @@ namespace PurrNet.Prediction
         private void WriteEventHandles()
         {
             var fCount = _clientFrames.Count;
-            int count = _systems.Count;
+            int count = _systemsCount;
 
             for (var i = 0; i < count; i++)
             {
@@ -846,7 +850,7 @@ namespace PurrNet.Prediction
 
         private void UpdateInterpolation(bool accumulateError)
         {
-            var scount = _systems.Count;
+            var scount = _systemsCount;
             for (var j = 0; j < scount; j++)
                 _systems[j].UpdateRollbackInterpolationState(tickDelta, accumulateError);
         }
@@ -861,18 +865,18 @@ namespace PurrNet.Prediction
             {
                 localTickInContext = simTick;
 
-                for (var j = 0; j < _systems.Count; j++)
+                for (var j = 0; j < _systemsCount; j++)
                     _systems[j].SimulateTick(simTick, delta);
 
-                for (var j = 0; j < _systems.Count; j++)
+                for (var j = 0; j < _systemsCount; j++)
                     _systems[j].LateSimulateTick(delta);
 
                 DoPhysicsPass();
 
-                for (var i = 0; i < _systems.Count; i++)
+                for (var i = 0; i < _systemsCount; i++)
                     _systems[i].PostSimulate(simTick, delta);
 
-                var count = _systems.Count;
+                var count = _systemsCount;
                 for (var j = 0; j < count; j++)
                     _systems[j].GetLatestUnityState();
             }
@@ -888,18 +892,18 @@ namespace PurrNet.Prediction
 
             isSimulating = true;
 
-            for (var j = 0; j < _systems.Count; j++)
+            for (var j = 0; j < _systemsCount; j++)
                 _systems[j].SimulateTick(verifiedTick, delta);
 
-            for (var j = 0; j < _systems.Count; j++)
+            for (var j = 0; j < _systemsCount; j++)
                 _systems[j].LateSimulateTick(delta);
 
             DoPhysicsPass();
 
-            for (var i = 0; i < _systems.Count; i++)
+            for (var i = 0; i < _systemsCount; i++)
                 _systems[i].PostSimulate(verifiedTick, delta);
 
-            var count = _systems.Count;
+            var count = _systemsCount;
             for (var j = 0; j < count; j++)
                 _systems[j].GetLatestUnityState();
             isSimulating = false;
@@ -1013,7 +1017,7 @@ namespace PurrNet.Prediction
 
         private void UpdateView()
         {
-            int count = _systems.Count;
+            int count = _systemsCount;
 
             for (var i = 0; i < count; i++)
                 _systems[i].UpdateView(Time.unscaledDeltaTime);
