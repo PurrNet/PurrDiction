@@ -566,7 +566,7 @@ MonoBehaviour:
   _builtInSystems: -1
   _predictedPrefabs: {fileID: 11400000, guid: 3bc69f3464f686748883b06b540e96d4, type: 2}
   _inputQueueSettings:
-    extrapolateForMissing: 1
+    extrapolateForMissing: 0
     minInputs: 1
     maxInputs: 4
 --- !u!4 &1558659896

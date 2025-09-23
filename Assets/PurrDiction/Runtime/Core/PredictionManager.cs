@@ -58,6 +58,13 @@ namespace PurrNet.Prediction
             return _instances.TryGetValue(sceneHandle, out world);
         }
 
+        [ContextMenu("Debug/Print all systems")]
+        public void PrintAllSystems()
+        {
+            foreach (var system in _systems)
+                Debug.Log(system, system);
+        }
+
         private void Awake()
         {
             _instances[gameObject.scene.handle] = this;
@@ -342,10 +349,9 @@ namespace PurrNet.Prediction
         public void UnregisterInstance(PredictedIdentity predictedIdentity)
         {
             _instanceMap.Remove(predictedIdentity.id);
-            _systems.Remove(predictedIdentity);
-            --_systemsCount;
+            if (_systems.Remove(predictedIdentity))
+                --_systemsCount;
         }
-
 
         protected override void OnObserverRemoved(PlayerID player)
         {
@@ -650,8 +656,7 @@ namespace PurrNet.Prediction
                 }
 
                 var deltaLen = packer.ToByteData().length;
-
-                // SendFrameToRemote(player, tick, new BitPackerWithLength(deltaLen, packer));
+                SendFrameToRemote(player, tick, new BitPackerWithLength(deltaLen, packer));
             }
         }
 
@@ -792,12 +797,6 @@ namespace PurrNet.Prediction
 
         private void OnPostTick()
         {
-            if (isClient)
-                UpdateInterpolation(false);
-            TickBandwidthProfiler.MarkEndOfTick();
-
-                return;
-
             if (_deltas.Count == 0)
             {
                 if (isClient)
@@ -1105,21 +1104,23 @@ namespace PurrNet.Prediction
 
         internal void InternalDelete(PackedInt prefabId, GameObject instance)
         {
-            if (!_predictedPrefabs)
+            int pid = prefabId;
+
+            if (!_predictedPrefabs || pid < 0 || pid >= _predictedPrefabs.prefabs.Count)
             {
                 UnityProxy.DestroyImmediateDirectly(instance);
                 return;
             }
 
-            if (prefabId < 0 || prefabId >= _predictedPrefabs.prefabs.Count)
+            var prefabsInfo = _predictedPrefabs.prefabs[pid];
+
+            if (!prefabsInfo.pooling.usePooling)
             {
                 UnityProxy.DestroyImmediateDirectly(instance);
                 return;
             }
 
-            var prefab = _predictedPrefabs.prefabs[prefabId].prefab;
-
-            if (_pools.TryGetPool(prefab, out var pool))
+            if (_pools.TryGetPool(prefabsInfo.prefab, out var pool))
             {
                 UnregisterPooledInstance(instance);
                 pool.Delete(instance);
