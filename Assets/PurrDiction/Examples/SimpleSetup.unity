@@ -594,7 +594,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1793795276}
   - component: {fileID: 1793795278}
-  - component: {fileID: 1793795280}
   - component: {fileID: 1793795281}
   - component: {fileID: 1793795283}
   m_Layer: 0
@@ -632,8 +631,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _stopPlayingOnDisconnect: 0
-  _startServerFlags: 9
-  _startClientFlags: 7
+  _startServerFlags: 0
+  _startClientFlags: 0
   _cookieScope: 1
   _dontDestroyOnLoad: 0
   _transport: {fileID: 1793795283}
@@ -644,23 +643,6 @@ MonoBehaviour:
   _authenticator: {fileID: 0}
   _tickRate: 30
   _patchLingeringProcessBug: 0
---- !u!114 &1793795280
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1793795275}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ef882a0e84c58df4885b0e1e59320b49, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  checkInterval: 0.33
-  placement: 1
-  _displayType: -1
-  fontSize: 13
-  textColor: {r: 1, g: 1, b: 1, a: 1}
 --- !u!114 &1793795281
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -759,6 +741,7 @@ GameObject:
   - component: {fileID: 1997087628}
   - component: {fileID: 1997087627}
   - component: {fileID: 1997087630}
+  - component: {fileID: 1997087631}
   m_Layer: 0
   m_Name: Plane
   m_TagString: Untagged
@@ -855,6 +838,18 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 10, y: 0.1, z: 10}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &1997087631
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1997087625}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4be683947de3f9344822c4d1006961e1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

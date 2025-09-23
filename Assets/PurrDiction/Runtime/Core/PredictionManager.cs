@@ -397,10 +397,9 @@ namespace PurrNet.Prediction
 
         private void WriteFullFrame(BitPacker packer, PlayerID target)
         {
-            int count = _systemsCount;
-            Packer<PackedInt>.Write(packer, count);
+            Packer<PackedInt>.Write(packer, _systemsCount);
 
-            for (var i = 0; i < count; i++)
+            for (var i = 0; i < _systemsCount; i++)
             {
                 if (_systems[i].isEventHandler)
                     continue;
@@ -409,10 +408,10 @@ namespace PurrNet.Prediction
             }
 
 
-            for (var i = 0; i < count; i++)
+            for (var i = 0; i < _systemsCount; i++)
                 _systems[i].WriteInput(localTick, target, packer, _deltaModuleState, true);
 
-            for (var i = 0; i < count; i++)
+            for (var i = 0; i < _systemsCount; i++)
             {
                 if (!_systems[i].isEventHandler)
                     continue;
@@ -474,13 +473,12 @@ namespace PurrNet.Prediction
             if (cachedIsServer)
                 isVerified = true;
 
-            var scount = _systemsCount;
             bool hasClients = _clientTicks.Count > 0;
 
             if (cachedIsServer && hasClients)
                 PrepareInputs();
 
-            for (var i = 0; i < scount; i++)
+            for (var i = 0; i < _systemsCount; i++)
             {
                 var system = _systems[i];
                 bool controller = system.IsOwner(myPlayer, cachedIsServer);
@@ -565,10 +563,9 @@ namespace PurrNet.Prediction
 
         private void FinalizeTickOnServer(bool cachedIsClient)
         {
-            var count = _systemsCount;
             if (cachedIsClient)
             {
-                for (var systemIdx = 0; systemIdx < count; systemIdx++)
+                for (var systemIdx = 0; systemIdx < _systemsCount; systemIdx++)
                 {
                     _systems[systemIdx].GetLatestUnityState();
                     _systems[systemIdx].UpdateRollbackInterpolationState(tickDelta, false);
@@ -577,7 +574,7 @@ namespace PurrNet.Prediction
             }
             else
             {
-                for (var systemIdx = 0; systemIdx < count; systemIdx++)
+                for (var systemIdx = 0; systemIdx < _systemsCount; systemIdx++)
                 {
                     _systems[systemIdx].GetLatestUnityState();
                     _systems[systemIdx].SaveStateInHistory(localTick);
@@ -596,7 +593,6 @@ namespace PurrNet.Prediction
 
         private void WriteInitialFrameToOthers()
         {
-            var count = _systemsCount;
             var fCount = _clientFrames.Count;
 
             for (var j = 0; j < fCount; j++)
@@ -604,17 +600,16 @@ namespace PurrNet.Prediction
                 var frame = _clientFrames[j].packer;
                 var player = _clientFrames[j].player;
 
+                Packer<PackedInt>.Write(frame, _systemsCount);
 
-                Packer<PackedInt>.Write(frame, count);
-
-                for (var i = 0; i < count; i++)
+                for (var i = 0; i < _systemsCount; i++)
                 {
                     if (_systems[i].isEventHandler)
                         continue;
                     _systems[i].WriteCurrentState(player, frame, _deltaModuleState);
                 }
 
-                for (var i = 0; i < count; i++)
+                for (var i = 0; i < _systemsCount; i++)
                     _systems[i].WriteInput(localTick, player, frame, _deltaModuleState, true);
             }
         }
@@ -622,9 +617,8 @@ namespace PurrNet.Prediction
         private void WriteEventHandles()
         {
             var fCount = _clientFrames.Count;
-            int count = _systemsCount;
 
-            for (var i = 0; i < count; i++)
+            for (var i = 0; i < _systemsCount; i++)
             {
                 if (!_systems[i].isEventHandler)
                     continue;
@@ -657,7 +651,7 @@ namespace PurrNet.Prediction
 
                 var deltaLen = packer.ToByteData().length;
 
-                SendFrameToRemote(player, tick, new BitPackerWithLength(deltaLen, packer));
+                // SendFrameToRemote(player, tick, new BitPackerWithLength(deltaLen, packer));
             }
         }
 
@@ -798,6 +792,12 @@ namespace PurrNet.Prediction
 
         private void OnPostTick()
         {
+            if (isClient)
+                UpdateInterpolation(false);
+            TickBandwidthProfiler.MarkEndOfTick();
+
+                return;
+
             if (_deltas.Count == 0)
             {
                 if (isClient)
@@ -850,8 +850,7 @@ namespace PurrNet.Prediction
 
         private void UpdateInterpolation(bool accumulateError)
         {
-            var scount = _systemsCount;
-            for (var j = 0; j < scount; j++)
+            for (var j = 0; j < _systemsCount; j++)
                 _systems[j].UpdateRollbackInterpolationState(tickDelta, accumulateError);
         }
 
@@ -1017,10 +1016,9 @@ namespace PurrNet.Prediction
 
         private void UpdateView()
         {
-            int count = _systemsCount;
-
-            for (var i = 0; i < count; i++)
-                _systems[i].UpdateView(Time.unscaledDeltaTime);
+            var dt = Time.unscaledDeltaTime;
+            for (var i = 0; i < _systemsCount; i++)
+                _systems[i].UpdateView(dt);
         }
 
         public bool TryGetPrefab(int pid, out GameObject prefab)
@@ -1074,7 +1072,8 @@ namespace PurrNet.Prediction
                 transform.SetPositionAndRotation(position, rotation);
                 return;
             }
-            else if (transform.TryGetComponent(out CharacterController ctrler) && ctrler.enabled)
+
+            if (transform.TryGetComponent(out CharacterController ctrler) && ctrler.enabled)
             {
                 ctrler.enabled = false;
                 transform.SetPositionAndRotation(position, rotation);
