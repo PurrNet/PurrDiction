@@ -40,7 +40,7 @@ namespace PurrNet.Prediction
 
         public override string ToString()
         {
-            return $"PrefabId: {prefabId}\nInstanceId: {instanceId}\nSpawnPosition: {spawnPosition}\nSpawnRotation: {spawnRotation}\nOwner: {owner}";
+            return $"PrefabId: {prefabId}, InstanceId: {instanceId}, Owner: {owner}\n";
         }
     }
 }

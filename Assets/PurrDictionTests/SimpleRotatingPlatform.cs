@@ -60,9 +60,7 @@ namespace PurrNet.Prediction.Tests
 
         private void OnUnityCollisionEnter(GameObject other, PhysicsCollision collision)
         {
-            var copy = currentState;
-            copy.collisionCount += 1;
-            currentState = copy;
+            currentState.collisionCount += 1;
         }
     }
 }

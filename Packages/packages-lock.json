@@ -92,7 +92,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.multiplayer.playmode": {
-      "version": "1.3.3",
+      "version": "1.4.0-pre.2",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -261,14 +261,14 @@
       "hash": "610157ad762084380380148ba8ce14e266a6da97"
     },
     "dev.purrnet.purrnet": {
-      "version": "1.16.0-beta.13",
+      "version": "https://github.com/PurrNet/PurrNet.git?path=/Assets/PurrNet#dev",
       "depth": 0,
-      "source": "registry",
+      "source": "git",
       "dependencies": {
         "com.unity.nuget.mono-cecil": "1.11.4",
         "com.unity.nuget.newtonsoft-json": "3.2.1"
       },
-      "url": "https://package.openupm.com"
+      "hash": "9db1c3fd1689001de698791d5a54366141a0baf6"
     },
     "com.unity.modules.accessibility": {
       "version": "1.0.0",

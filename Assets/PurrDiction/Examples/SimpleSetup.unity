@@ -631,11 +631,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _stopPlayingOnDisconnect: 0
-  _startServerFlags: 0
-  _startClientFlags: 0
+  _startServerFlags: 1
+  _startClientFlags: 3
   _cookieScope: 1
   _dontDestroyOnLoad: 0
-  _transport: {fileID: 1793795283}
+  _transport: {fileID: 1793795281}
   _networkPrefabs: {fileID: 11400000, guid: 2190589f99f9abe479a1c7890b05f51f, type: 2}
   _networkAssets: {fileID: 0}
   _networkRules: {fileID: 11400000, guid: d8799083b96579a42b8b2d03e4ceae98, type: 2}
@@ -678,7 +678,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fc64ff707d914a64e95f2ac0bf554c09, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _serverPort: 6969
+  _serverPort: 8800
   _maxConnections: 100
   _address: 127.0.0.1
   _timeoutInSeconds: 5
