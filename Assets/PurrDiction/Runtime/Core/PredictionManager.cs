@@ -342,7 +342,21 @@ namespace PurrNet.Prediction
             _instanceMap[pid] = system;
             system.Setup(networkManager, this, pid, owner);
 
-            _systems.Add(system);
+            // i want to insert based on objectid first, then componet id such that I can guarantee that the order of the components is preserved
+            var myObjId = pid.objectId.instanceId.value;
+            int posToInsert = _systemsCount;
+
+            for (int i = 0; i < _systemsCount; i++)
+            {
+                var curObjId = _systems[i].id.objectId.instanceId.value;
+                if (curObjId > myObjId || curObjId == myObjId && _systems[i].id.componentId.value > pid.componentId.value)
+                {
+                    posToInsert = i;
+                    break;
+                }
+            }
+
+            _systems.Insert(posToInsert, system);
             ++_systemsCount;
         }
 

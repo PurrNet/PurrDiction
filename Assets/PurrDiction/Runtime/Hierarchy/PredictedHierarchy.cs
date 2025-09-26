@@ -109,69 +109,6 @@ namespace PurrNet.Prediction
 
             Apply(_spawnedPrefabs, actions);
             _nextInstanceId = state.nextInstanceId;
-
-            /*if (actions.Count > 0)
-            {
-                Debug.Log($"Actions: {actions}");
-                Debug.Log(state.spawnedPrefabs);
-                Debug.Log(DisposableList<InstanceDetails>.Create(_spawnedPrefabs).ToString());
-            }
-
-            var min = Mathf.Min(currentActions, stateActions);
-
-            int i = 0;
-
-            for (; i < min; i++)
-            {
-                var current = _spawnedPrefabs[i];
-                var target = spawnedPrefabsCopy[i];
-
-                if (!current.Equals(target))
-                    break;
-            }
-
-            // we match up to i, so we need to undo the rest of the actions
-            int countToUndo = currentActions - i;
-
-            if (countToUndo > 0)
-            {
-                for (var j = i; j < currentActions; ++j)
-                {
-                    var details = _spawnedPrefabs[j];
-                    if (_instanceMap.Remove(details.instanceId, out var instance) && instance)
-                    {
-                        _goToId.Remove(instance);
-                        Delete(details, instance, true);
-                    }
-                }
-
-                // clear the undone actions
-                _spawnedPrefabs.RemoveRange(i, countToUndo);
-            }
-
-            // we need to redo the rest of the actions
-            for (var j = i; j < stateActions; j++)
-            {
-                var details = spawnedPrefabsCopy[j];
-                var pid = details.prefabId;
-                var instanceId = details.instanceId;
-
-                _nextInstanceId = instanceId.instanceId;
-
-                var goId = Create(pid, details.spawnPosition, details.spawnRotation, details.owner);
-                if (!goId.HasValue)
-                    PurrLogger.LogError($"Mismatch: Failed to create prefab {pid}");
-            }*/
-
-            using var copyOfCurrent = DisposableList<InstanceDetails>.Create(_spawnedPrefabs);
-
-            if (!Packer.AreEqual(copyOfCurrent, state.spawnedPrefabs))
-            {
-                Debug.LogError($"Mismatch:\nMine:{copyOfCurrent}\nShould be:{state.spawnedPrefabs}");
-            }
-
-            if (_spawnedPrefabs.Count != state.spawnedPrefabs.Count)
-                PurrLogger.LogError($"Mismatch: Action count {_spawnedPrefabs.Count} != {state.spawnedPrefabs.Count}");
         }
 
         public PredictedObjectID? Create(int prefabId, PlayerID? owner = null)
