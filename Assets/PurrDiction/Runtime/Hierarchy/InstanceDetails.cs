@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using PurrNet.Packing;
 using UnityEngine;
 
@@ -21,6 +22,16 @@ namespace PurrNet.Prediction
             this.owner = owner;
         }
 
+        static bool Vector3CloseEnough(Vector3 a, Vector3 b)
+        {
+            return Vector3.Distance(a, b) < 0.0001f;
+        }
+
+        static bool QuaternionCloseEnough(Quaternion a, Quaternion b)
+        {
+            return Quaternion.Angle(a, b) < 0.0001f;
+        }
+
         public bool Equals(InstanceDetails other)
         {
             return prefabId == other.prefabId && instanceId.Equals(other.instanceId) &&
@@ -40,7 +51,7 @@ namespace PurrNet.Prediction
 
         public override string ToString()
         {
-            return $"PrefabId: {prefabId}, InstanceId: {instanceId}, Owner: {owner}\n";
+            return $"id: {instanceId}, {spawnPosition} | {spawnRotation}\n";
         }
     }
 }
