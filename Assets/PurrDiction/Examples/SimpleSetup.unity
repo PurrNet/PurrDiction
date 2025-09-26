@@ -596,6 +596,7 @@ GameObject:
   - component: {fileID: 1793795278}
   - component: {fileID: 1793795281}
   - component: {fileID: 1793795283}
+  - component: {fileID: 1793795284}
   m_Layer: 0
   m_Name: PurrNet
   m_TagString: Untagged
@@ -683,6 +684,24 @@ MonoBehaviour:
   _address: 127.0.0.1
   _timeoutInSeconds: 5
   _pollEventsInUpdate: 0
+--- !u!114 &1793795284
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1793795275}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ef882a0e84c58df4885b0e1e59320b49, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  checkInterval: 0.33
+  placement: 1
+  _displayType: 3
+  _displayTarget: 6
+  fontSize: 13
+  textColor: {r: 1, g: 1, b: 1, a: 1}
 --- !u!1 &1839018144
 GameObject:
   m_ObjectHideFlags: 0

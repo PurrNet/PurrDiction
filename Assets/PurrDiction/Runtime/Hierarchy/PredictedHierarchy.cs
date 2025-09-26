@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using PurrNet.Logging;
+using PurrNet.Packing;
 using PurrNet.Pooling;
 using UnityEngine;
 
@@ -37,63 +38,77 @@ namespace PurrNet.Prediction
             state.nextInstanceId = _nextInstanceId;
         }
 
-        protected override void SetUnityState(PredictedHierarchyState state)
+        void Apply(List<InstanceDetails> list, DisposableList<DiffOp<InstanceDetails>> ops)
         {
-            var currentActions = _spawnedPrefabs.Count;
-            using var spawnedPrefabsCopy = DisposableList<InstanceDetails>.Create(state.spawnedPrefabs.Count);
-            spawnedPrefabsCopy.AddRange(state.spawnedPrefabs);
-            var stateActions = state.spawnedPrefabs.Count;
+            int opsCount = ops.Count;
 
-            var min = Mathf.Min(currentActions, stateActions);
-
-            int i = 0;
-
-            for (; i < min; i++)
+            for (int i = opsCount - 1; i >= 0; i--)
             {
-                var current = _spawnedPrefabs[i];
-                var target = spawnedPrefabsCopy[i];
-
-                if (!current.Equals(target))
-                    break;
+                var op = ops[i];
+                if (op.type == OperationType.Delete)
+                {
+                    for (int j = op.index; j < op.index + op.length; j++)
+                    {
+                        var details = list[j];
+                        if (_instanceMap.Remove(details.instanceId, out var instance) && instance)
+                        {
+                            _goToId.Remove(instance);
+                            Delete(details, instance, true);
+                        }
+                    }
+                    list.RemoveRange(op.index, op.length);
+                }
             }
 
-            // we match up to i, so we need to undo the rest of the actions
-            int countToUndo = currentActions - i;
-
-            if (countToUndo > 0)
+            for (int i = 0; i < opsCount; i++)
             {
-                for (var j = i; j < currentActions; ++j)
+                var op = ops[i];
+                if (op is { type: OperationType.Insert, values: { isDisposed: false } })
                 {
-                    var details = _spawnedPrefabs[j];
-                    if (_instanceMap.Remove(details.instanceId, out var instance) && instance)
+                    for (var j = 0; j < op.values.Count; j++)
                     {
-                        _goToId.Remove(instance);
-                        Delete(details, instance, true);
+                        int insertIndex = op.index + j;
+
+                        var details = op.values[j];
+                        var pid = details.prefabId;
+                        var instanceId = details.instanceId;
+
+                        _nextInstanceId = instanceId.instanceId;
+
+                        var goId = CreateInserted(insertIndex, pid, details.spawnPosition, details.spawnRotation, details.owner);
+                        if (!goId.HasValue)
+                            PurrLogger.LogError($"Mismatch: Failed to create prefab {pid}");
                     }
                 }
-
-                // clear the undone actions
-                _spawnedPrefabs.RemoveRange(i, countToUndo);
             }
 
-            // we need to redo the rest of the actions
-            for (var j = i; j < stateActions; j++)
+            for (int i = 0; i < opsCount; i++)
             {
-                var details = spawnedPrefabsCopy[j];
-                var pid = details.prefabId;
-                var instanceId = details.instanceId;
+                var op = ops[i];
+                if (op is { type: OperationType.Add, values: { isDisposed: false } })
+                {
+                    for (var j = 0; j < op.values.Count; j++)
+                    {
+                        var details = op.values[j];
+                        var pid = details.prefabId;
+                        var instanceId = details.instanceId;
 
-                _nextInstanceId = instanceId.instanceId;
+                        _nextInstanceId = instanceId.instanceId;
 
-                var goId = Create(pid, details.spawnPosition, details.spawnRotation, details.owner);
-                if (!goId.HasValue)
-                    PurrLogger.LogError($"Mismatch: Failed to create prefab {pid}");
+                        var goId = Create(pid, details.spawnPosition, details.spawnRotation, details.owner);
+                        if (!goId.HasValue)
+                            PurrLogger.LogError($"Mismatch: Failed to create prefab {pid}");
+                    }
+                }
             }
+        }
 
+        protected override void SetUnityState(PredictedHierarchyState state)
+        {
+            var actions = MyersDiff.Diff(_spawnedPrefabs, state.spawnedPrefabs);
+
+            Apply(_spawnedPrefabs, actions);
             _nextInstanceId = state.nextInstanceId;
-
-            if (_spawnedPrefabs.Count != spawnedPrefabsCopy.Count)
-                PurrLogger.LogError($"Mismatch: Action count {_spawnedPrefabs.Count} != {spawnedPrefabsCopy.Count}");
         }
 
         public PredictedObjectID? Create(int prefabId, PlayerID? owner = null)
@@ -112,7 +127,7 @@ namespace PurrNet.Prediction
             return Create(pid, position, rotation, owner);
         }
 
-        public PredictedObjectID? Create(int prefabId, Vector3 position, Quaternion rotation, PlayerID? owner = null)
+        PredictedObjectID? CreateInserted(int index, int prefabId, Vector3 position, Quaternion rotation, PlayerID? owner = null)
         {
             var instanceId = new PredictedObjectID(_nextInstanceId);
             _nextInstanceId++;
@@ -142,7 +157,7 @@ namespace PurrNet.Prediction
 
             _instanceMap.Add(instanceId, go);
             _goToId.Add(go, instanceId);
-            _spawnedPrefabs.Add(key);
+            _spawnedPrefabs.Insert(index, key);
 
             if (!predictionManager.isSimulating)
             {
@@ -151,6 +166,11 @@ namespace PurrNet.Prediction
             }
 
             return instanceId;
+        }
+
+        public PredictedObjectID? Create(int prefabId, Vector3 position, Quaternion rotation, PlayerID? owner = null)
+        {
+            return CreateInserted(_spawnedPrefabs.Count, prefabId, position, rotation, owner);
         }
 
         readonly Dictionary<int, PredictedTickPool> _prefabToPool = new ();
