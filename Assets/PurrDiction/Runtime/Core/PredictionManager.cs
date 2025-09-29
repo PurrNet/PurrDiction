@@ -808,6 +808,8 @@ namespace PurrNet.Prediction
         }
 
         private ulong _lastVerifiedTick = 1;
+        public event Action onStartingToRollback;
+        public event Action onRollbackFinished;
 
         private void OnPostTick()
         {
@@ -819,6 +821,7 @@ namespace PurrNet.Prediction
                 return;
             }
 
+            onStartingToRollback?.Invoke();
             UpdateInterpolation(false);
 
             isSimulating = true;
@@ -859,6 +862,7 @@ namespace PurrNet.Prediction
             isSimulating = false;
 
             TickBandwidthProfiler.MarkEndOfTick();
+            onRollbackFinished?.Invoke();
         }
 
         private void UpdateInterpolation(bool accumulateError)

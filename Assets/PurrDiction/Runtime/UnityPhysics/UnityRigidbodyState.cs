@@ -15,6 +15,19 @@ namespace PurrNet.Prediction
             return $"LinearVelocity: {linearVelocity}\nAngularVelocity: {angularVelocity}\nIsKinematic: {isKinematic}\nIsSleeping: {isSleeping}";
         }
 
+#if UNITY_PHYSICS_3D
+        public UnityRigidbodyState(Rigidbody rigidbody)
+        {
+#if UNITY_6000
+            linearVelocity = rigidbody.linearVelocity;
+#else
+            linearVelocity = rigidbody.velocity;
+#endif
+            angularVelocity = rigidbody.angularVelocity;
+            isKinematic = rigidbody.isKinematic;
+            isSleeping = rigidbody.IsSleeping();
+        }
+#endif
         public void Dispose() { }
     }
 
