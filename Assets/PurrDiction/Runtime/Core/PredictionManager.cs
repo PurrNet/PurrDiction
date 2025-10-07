@@ -485,7 +485,7 @@ namespace PurrNet.Prediction
         {
             localTickInContext = localTick;
 
-            var myPlayer = localPlayer ?? default;
+            var myPlayer = isSpawned ? localPlayer ?? default : default;
             cachedIsServer = isServer;
             var cachedIsClient = isClient;
 
