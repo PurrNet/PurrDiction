@@ -35,9 +35,9 @@ namespace PurrNet.Prediction
         public PredictedTransformCompressedState(PredictedTransformState state)
         {
             unityPosition = new CompressedVector3(
-                new CompressedFloat(state.unityPosition.x).Round(),
-                new CompressedFloat(state.unityPosition.y).Round(),
-                new CompressedFloat(state.unityPosition.z).Round()
+                new CompressedFloat(state.unityPosition.x),
+                new CompressedFloat(state.unityPosition.y),
+                new CompressedFloat(state.unityPosition.z)
             );
             unityRotation = new PackedQuaternion(state.unityRotation);
         }

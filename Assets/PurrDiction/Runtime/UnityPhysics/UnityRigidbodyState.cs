@@ -41,15 +41,15 @@ namespace PurrNet.Prediction
         public UnityRigidbodyCompressedState(UnityRigidbodyState state)
         {
             linearVelocity = new CompressedVector3(
-                new CompressedFloat(state.linearVelocity.x).Round(),
-                new CompressedFloat(state.linearVelocity.y).Round(),
-                new CompressedFloat(state.linearVelocity.z).Round()
+                new CompressedFloat(state.linearVelocity.x),
+                new CompressedFloat(state.linearVelocity.y),
+                new CompressedFloat(state.linearVelocity.z)
             );
 
             angularVelocity = new CompressedVector3(
-                new CompressedFloat(state.angularVelocity.x).Round(),
-                new CompressedFloat(state.angularVelocity.y).Round(),
-                new CompressedFloat(state.angularVelocity.z).Round()
+                new CompressedFloat(state.angularVelocity.x),
+                new CompressedFloat(state.angularVelocity.y),
+                new CompressedFloat(state.angularVelocity.z)
             );
 
             isKinematic = state.isKinematic;
