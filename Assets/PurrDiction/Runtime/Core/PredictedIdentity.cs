@@ -107,10 +107,9 @@ namespace PurrNet.Prediction
 
         public bool IsOwner()
         {
-            if (!predictionManager)
-                return false;
-
-            return owner == predictionManager.localPlayer;
+            if (predictionManager && predictionManager.isSpawned && owner == predictionManager.localPlayer)
+                return true;
+            return false;
         }
 
         public bool IsOwner(PlayerID player)
