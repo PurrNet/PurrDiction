@@ -40,65 +40,69 @@ namespace PurrNet.Prediction
 
         void Apply(List<InstanceDetails> list, DisposableList<DiffOp<InstanceDetails>> ops)
         {
-            int opsCount = ops.Count;
-
-            for (int i = opsCount - 1; i >= 0; i--)
+            int offset = 0;
+            int count = ops.Count;
+            for (var i = 0; i < count; i++)
             {
                 var op = ops[i];
-                if (op.type == OperationType.Delete)
+                switch (op.type)
                 {
-                    for (int j = op.index; j < op.index + op.length; j++)
-                    {
-                        var details = list[j];
-                        if (_instanceMap.Remove(details.instanceId, out var instance) && instance)
+                    case OperationType.Add:
+                        for (var j = 0; j < op.values.Count; j++)
                         {
-                            _goToId.Remove(instance);
-                            Delete(details, instance, true);
+                            var details = op.values[j];
+                            var pid = details.prefabId;
+                            var instanceId = details.instanceId;
+
+                            _nextInstanceId = instanceId.instanceId;
+
+                            var goId = Create(pid, details.spawnPosition, details.spawnRotation, details.owner);
+                            if (!goId.HasValue)
+                                PurrLogger.LogError($"Mismatch: Failed to create prefab {pid}");
                         }
-                    }
-                    list.RemoveRange(op.index, op.length);
-                }
-            }
-
-            for (int i = 0; i < opsCount; i++)
-            {
-                var op = ops[i];
-                if (op is { type: OperationType.Insert, values: { isDisposed: false } })
-                {
-                    for (var j = 0; j < op.values.Count; j++)
+                        offset += op.values.Count;
+                        break;
+                    case OperationType.Insert:
                     {
-                        int insertIndex = op.index + j;
+                        int start = op.index + offset;
+                        for (var j = 0; j < op.values.Count; j++)
+                        {
+                            int insertIndex = start + j;
 
-                        var details = op.values[j];
-                        var pid = details.prefabId;
-                        var instanceId = details.instanceId;
+                            var details = op.values[j];
+                            var pid = details.prefabId;
+                            var instanceId = details.instanceId;
 
-                        _nextInstanceId = instanceId.instanceId;
+                            _nextInstanceId = instanceId.instanceId;
 
-                        var goId = CreateInserted(insertIndex, pid, details.spawnPosition, details.spawnRotation, details.owner);
-                        if (!goId.HasValue)
-                            PurrLogger.LogError($"Mismatch: Failed to create prefab {pid}");
+                            var goId = CreateInserted(insertIndex, pid, details.spawnPosition, details.spawnRotation,
+                                details.owner);
+                            if (!goId.HasValue)
+                                PurrLogger.LogError($"Mismatch: Failed to create prefab {pid}");
+                        }
+                        offset += op.values.Count;
+                        break;
                     }
-                }
-            }
-
-            for (int i = 0; i < opsCount; i++)
-            {
-                var op = ops[i];
-                if (op is { type: OperationType.Add, values: { isDisposed: false } })
-                {
-                    for (var j = 0; j < op.values.Count; j++)
+                    case OperationType.Delete:
                     {
-                        var details = op.values[j];
-                        var pid = details.prefabId;
-                        var instanceId = details.instanceId;
+                        int start = op.index + offset;
+                        for (int j = start; j < start + op.length; j++)
+                        {
+                            var details = list[j];
+                            if (_instanceMap.Remove(details.instanceId, out var instance) && instance)
+                            {
+                                _goToId.Remove(instance);
+                                Delete(details, instance, true);
+                            }
+                        }
 
-                        _nextInstanceId = instanceId.instanceId;
-
-                        var goId = Create(pid, details.spawnPosition, details.spawnRotation, details.owner);
-                        if (!goId.HasValue)
-                            PurrLogger.LogError($"Mismatch: Failed to create prefab {pid}");
+                        list.RemoveRange(start, op.length);
+                        offset -= op.length;
+                        break;
                     }
+                    case OperationType.End:
+                    default:
+                        break;
                 }
             }
         }
