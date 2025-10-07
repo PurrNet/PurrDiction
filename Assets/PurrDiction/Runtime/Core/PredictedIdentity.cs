@@ -95,7 +95,15 @@ namespace PurrNet.Prediction
 
         public bool isOwner => IsOwner();
 
-        public bool isController => owner.HasValue ? owner == predictionManager.localPlayer : isServer;
+        public bool isController
+        {
+            get
+            {
+                if (owner.HasValue && predictionManager.isSpawned)
+                    return owner == predictionManager.localPlayer;
+                return predictionManager.cachedIsServer;
+            }
+        }
 
         public bool IsOwner()
         {
