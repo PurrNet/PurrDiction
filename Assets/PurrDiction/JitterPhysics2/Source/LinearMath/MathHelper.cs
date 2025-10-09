@@ -221,14 +221,14 @@ namespace Jitter2.LinearMath
         /// <param name="epsilonSq">A threshold value below which the squared magnitude of the vector
         /// is considered to be zero or close to zero.</param>
         /// <returns>True if the vector is close to zero; otherwise, false.</returns>
-        public static bool CloseToZero(in JVector v, Real epsilonSq /*= (Real)1e-16*/)
+        public static bool CloseToZero(in JVector v, Real epsilonSq /*= (Real)1e-8*/)
         {
             return v.LengthSquared() < epsilonSq;
         }
 
         public static bool CloseToZero(in JVector v)
         {
-            return v.LengthSquared() < 1e-16;
+            return v.LengthSquared() < 1e-8;
         }
     }
 }

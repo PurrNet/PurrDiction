@@ -64,7 +64,7 @@ namespace Jitter2.Collision.Shapes
             {
                 var n = (p3 - p1) % (p2 - p1);
 
-                if (n.LengthSquared() > 1e-16)
+                if (n.LengthSquared() > 1e-8)
                 {
                     hullCollection.Add(new JTriangle(p1, p2, p3));
                 }

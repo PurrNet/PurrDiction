@@ -7,7 +7,7 @@
 using System;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-
+using UnityEngine;
 using Real = PurrNet.Prediction.FP64;
 using MathR = PurrNet.Prediction.FP64Math;
 
@@ -390,7 +390,7 @@ namespace Jitter2.LinearMath
         /// <param name="epsilonSquared">Cut-off for <c>‖value‖²</c>; default is <c>1 × 10⁻¹⁶</c>.</param>
         /// <returns>Unit vector or zero.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static JVector NormalizeSafe(in JVector value, Real epsilonSquared /*= (Real)1e-16*/)
+        public static JVector NormalizeSafe(in JVector value, Real epsilonSquared /*= (Real)1e-8*/)
         {
             var len2 = value.X * value.X + value.Y * value.Y + value.Z * value.Z;
             if (len2 < epsilonSquared) return JVector.Zero;
@@ -536,53 +536,6 @@ namespace Jitter2.LinearMath
                 2 => Z,
                 _ => throw new IndexOutOfRangeException()
             };
-        }
-
-        public static JVector LessThan(JVector vectorMax, JVector vectorMin)
-        {
-            var x = vectorMax.X < vectorMin.X ? Real.All : Real.None;
-            var y = vectorMax.Y < vectorMin.Y ? Real.All : Real.None;
-            var z = vectorMax.Z < vectorMin.Z ? Real.All : Real.None;
-            return new JVector(x, y, z);
-        }
-
-        public static JVector GreaterThan(JVector vectorMax, JVector vectorMin)
-        {
-            var x = vectorMax.X > vectorMin.X ? Real.All : Real.None;
-            var y = vectorMax.Y > vectorMin.Y ? Real.All : Real.None;
-            var z = vectorMax.Z > vectorMin.Z ? Real.All : Real.None;
-            return new JVector(x, y, z);
-        }
-
-        public static JVector GreaterThanOrEqual(JVector vectorMax, JVector vectorMin)
-        {
-            var x = vectorMax.X >= vectorMin.X ? Real.All : Real.None;
-            var y = vectorMax.Y >= vectorMin.Y ? Real.All : Real.None;
-            var z = vectorMax.Z >= vectorMin.Z ? Real.All : Real.None;
-            return new JVector(x, y, z);
-        }
-
-        public static JVector LessThanOrEqual(JVector vectorMax, JVector vectorMin)
-        {
-            var x = vectorMax.X <= vectorMin.X ? Real.All : Real.None;
-            var y = vectorMax.Y <= vectorMin.Y ? Real.All : Real.None;
-            var z = vectorMax.Z <= vectorMin.Z ? Real.All : Real.None;
-            return new JVector(x, y, z);
-        }
-
-        public static bool EqualsAll(JVector a, JVector b)
-        {
-            return a.X == b.X && a.Y == b.Y && a.Z == b.Z;
-        }
-
-        public static JVector BitwiseOr(JVector vectorMax, JVector vectorMin)
-        {
-            return new JVector(vectorMax.X | vectorMin.X, vectorMax.Y | vectorMin.Y, vectorMax.Z | vectorMin.Z);
-        }
-
-        public static JVector BitwiseAnd(JVector a, JVector b)
-        {
-            return new JVector(a.X & b.X, a.Y & b.Y, a.Z & b.Z);
         }
     }
 }

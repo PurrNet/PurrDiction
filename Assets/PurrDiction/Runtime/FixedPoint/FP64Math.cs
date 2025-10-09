@@ -127,6 +127,12 @@ namespace PurrNet.Prediction
             return (int)((v + (One - 1)) >> Shift);
         }
 
+        [MethodImpl(FPUtils.AggressiveInlining)]
+        public static int FloorToInt(FP64 v)
+        {
+            return FloorToInt(v.rawValue);
+        }
+
         /// <summary>
         /// Converts a fixed-point value into an integer by rounding it down to nearest integer.
         /// </summary>
@@ -179,6 +185,7 @@ namespace PurrNet.Prediction
         }
 #endif
 
+        [MethodImpl(FPUtils.AggressiveInlining)]
         public static FP64 Abs(FP64 x)
         {
             return FP64.FromRaw(Abs(x.rawValue));

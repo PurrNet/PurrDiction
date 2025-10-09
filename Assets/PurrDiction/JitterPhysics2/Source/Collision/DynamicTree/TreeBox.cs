@@ -10,7 +10,6 @@ using System.Runtime.InteropServices;
 using Jitter2.LinearMath;
 
 using Real = PurrNet.Prediction.FP64;
-using Vector = Jitter2.LinearMath.JVector;
 
 namespace Jitter2.Collision
 {
@@ -25,31 +24,23 @@ namespace Jitter2.Collision
     /// </remarks>
     /// <seealso cref="JBoundingBox"/>
     /// <seealso cref="JVector"/>
-    [StructLayout(LayoutKind.Explicit, Size = 8*Real.SIZE_OF)]
     public struct TreeBox : IEquatable<TreeBox>
     {
-        public static readonly Real Epsilon = 1e-12;
+        public static readonly Real Epsilon = 1e-8;
 
-        [FieldOffset(0 * Real.SIZE_OF)] public JVector Min;
-        [FieldOffset(3 * Real.SIZE_OF)] public Real MinW;
-
-        [FieldOffset(4 * Real.SIZE_OF)] public JVector Max;
-        [FieldOffset(7 * Real.SIZE_OF)] public Real MaxW;
+        public JVector Min;
+        public JVector Max;
 
         public TreeBox(in JVector min, in JVector max)
         {
             this.Min = min;
             this.Max = max;
-            this.MinW = 0;
-            this.MaxW = 0;
         }
 
         public TreeBox(in JBoundingBox box)
         {
             this.Min = box.Min;
             this.Max = box.Max;
-            this.MinW = 0;
-            this.MaxW = 0;
         }
 
         public readonly JBoundingBox AsJBoundingBox() => new(Min, Max);
@@ -174,13 +165,13 @@ namespace Jitter2.Collision
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static Real MergedSurface(in TreeBox first, in TreeBox second)
         {
-            var vMin = Vector.Min(first.Min, second.Min);
-            var vMax = Vector.Max(first.Max, second.Max);
-            var extent = Vector.Subtract(vMax, vMin);
+            var vMin = JVector.Min(first.Min, second.Min);
+            var vMax = JVector.Max(first.Max, second.Max);
+            var extent = JVector.Subtract(vMax, vMin);
 
-            var ex = extent.GetElement(0);
-            var ey = extent.GetElement(1);
-            var ez = extent.GetElement(2);
+            var ex = extent.X;
+            var ey = extent.Y;
+            var ez = extent.Z;
 
             return 2.0 * (ex * ey + ex * ez + ey * ez);
         }
@@ -188,40 +179,31 @@ namespace Jitter2.Collision
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool Encompasses(in TreeBox outer, in TreeBox inner)
         {
-            var leMin = Vector.LessThanOrEqual(outer.Min, inner.Min);
-            var geMax = Vector.GreaterThanOrEqual(outer.Max, inner.Max);
-
-            var mask = Vector.BitwiseAnd(leMin, geMax);
-            return Vector.EqualsAll(mask, Vector.Create(-1));
+            return outer.Min.X <= inner.Min.X &&
+                   outer.Min.Y <= inner.Min.Y &&
+                   outer.Min.Z <= inner.Min.Z &&
+                   outer.Max.X >= inner.Max.X &&
+                   outer.Max.Y >= inner.Max.Y &&
+                   outer.Max.Z >= inner.Max.Z;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool NotDisjoint(in TreeBox first, in TreeBox second)
+        public static bool NotDisjoint(in TreeBox a, in TreeBox b)
         {
-            var geMin = Vector.GreaterThanOrEqual(first.Max, second.Min);
-            var leMax = Vector.LessThanOrEqual(first.Min, second.Max);
-            var mask = Vector.BitwiseAnd(geMin, leMax);
-            return Vector.EqualsAll(mask, Vector.Create(-1));
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static bool Disjoint(in TreeBox first, in TreeBox second)
-        {
-            // If first.Max < second.Min OR first.Min > second.Max on any axis,
-            // the two boxes cannot overlap.
-            var ltMin = Vector.LessThan(first.Max, second.Min);
-            var gtMax = Vector.GreaterThan(first.Min, second.Max);
-
-            var mask = Vector.BitwiseOr(ltMin, gtMax);
-            return !Vector.EqualsAll(mask, Vector.Create(0));
+            return a.Max.X >= b.Min.X &&
+                   a.Min.X <= b.Max.X &&
+                   a.Max.Y >= b.Min.Y &&
+                   a.Min.Y <= b.Max.Y &&
+                   a.Max.Z >= b.Min.Z &&
+                   a.Min.Z <= b.Max.Z;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void CreateMerged(in TreeBox first, in TreeBox second, out TreeBox result)
         {
             Unsafe.SkipInit(out result);
-            result.Min = Vector.Min(first.Min, second.Min);
-            result.Max = Vector.Max(first.Max, second.Max);
+            result.Min = JVector.Min(first.Min, second.Min);
+            result.Max = JVector.Max(first.Max, second.Max);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -244,7 +226,7 @@ namespace Jitter2.Collision
 
         public readonly override int GetHashCode()
         {
-            return HashCode.Combine(Min, MinW, Max, MaxW);
+            return HashCode.Combine(Min, Max);
         }
 
         public static bool operator ==(TreeBox left, TreeBox right)

@@ -1,4 +1,3 @@
-using System;
 using Jitter2;
 using Jitter2.Collision.Shapes;
 using Jitter2.Dynamics;
@@ -10,7 +9,9 @@ namespace PurrNet.Jitter2
 {
     public class TestJitter : MonoBehaviour
     {
-        [SerializeField] private int _boxes = 20;
+        [SerializeField] private bool _multiThreaded;
+        [SerializeField] private int _Xboxes = 20;
+        [SerializeField] private int _Yboxes = 20;
 
         private World _world;
         private RigidBody _plane;
@@ -18,19 +19,23 @@ namespace PurrNet.Jitter2
         private void Awake()
         {
             _world = new World();
-            _world.SubstepCount = 4;
+            // _world.SubstepCount = 4;
 
             _plane = _world.CreateRigidBody();
-            _plane.AddShape(new BoxShape(10, 1, 10));
+            _plane.AddShape(new BoxShape(100, 1, 100));
             _plane.Position = new JVector(0, -0.5, 0);
             _plane.IsStatic = true;
 
-            for(FP64 i = 0; i < _boxes; i++)
+            for(FP64 x = 0; x < _Xboxes; x++)
             {
-                var body = _world.CreateRigidBody();
-                body.AddShape(new BoxShape(1));
-                body.Position = new JVector(0, i + 5, 0);
+                for(FP64 y = 0; y < _Yboxes; y++)
+                {
+                    var body = _world.CreateRigidBody();
+                    body.AddShape(new BoxShape(1));
+                    body.Position = new JVector(x * 2 - _Xboxes / 2, y * 2 + 5, 0);
+                }
             }
+            _world.DynamicTree.Optimize(_Xboxes);
         }
 
         static Matrix4x4 GetMatrix(RigidBody body)
@@ -48,7 +53,7 @@ namespace PurrNet.Jitter2
 
         private void FixedUpdate()
         {
-            _world.Step(1.0f / 30.0f, false);
+            _world.Step(1.0f / 60.0f, _multiThreaded);
         }
 
         private void OnDrawGizmos()
@@ -57,7 +62,8 @@ namespace PurrNet.Jitter2
 
             foreach (var body in _world.RigidBodies)
             {
-                if (body == _plane || body == _world.NullBody) continue;
+                if (body == _world.NullBody) continue;
+
                 var matrix = GetMatrix(body);
                 Gizmos.matrix = matrix;
                 Gizmos.DrawCube(Vector3.zero, Vector3.one);

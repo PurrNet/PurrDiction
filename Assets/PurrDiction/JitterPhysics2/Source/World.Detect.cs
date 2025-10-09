@@ -67,13 +67,8 @@ namespace Jitter2
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private void Detect(IDynamicTreeProxy proxyA, IDynamicTreeProxy proxyB)
         {
-            if (BroadPhaseFilter != null)
-            {
-                if (!BroadPhaseFilter.Filter(proxyA, proxyB))
-                {
-                    return;
-                }
-            }
+            if (BroadPhaseFilter?.Filter(proxyA, proxyB) == false)
+                return;
 
             if (proxyA is not RigidBodyShape sA || proxyB is not RigidBodyShape sB)
             {
@@ -84,13 +79,6 @@ namespace Jitter2
             {
                 (sA, sB) = (sB, sA);
             }
-
-            Debug.Assert(sA.RigidBody != sB.RigidBody);
-            Debug.Assert(sA.RigidBody.World == this);
-            Debug.Assert(sB.RigidBody.World == this);
-
-            Debug.Assert(sA.RigidBody != null);
-            Debug.Assert(sB.RigidBody != null);
 
             if (!sA.RigidBody.Data.IsActive && !sB.RigidBody.Data.IsActive) return;
             if (sA.RigidBody.Data.IsStatic && sB.RigidBody.Data.IsStatic) return;
@@ -105,7 +93,8 @@ namespace Jitter2
 
             if (!colliding)
             {
-                if (!speculative) return;
+                if (!speculative)
+                    return;
 
                 JVector dv = sB.RigidBody.Velocity - sA.RigidBody.Velocity;
 

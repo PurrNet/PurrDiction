@@ -13,6 +13,7 @@ using Jitter2.LinearMath;
 using Jitter2.Parallelization;
 
 using Real = PurrNet.Prediction.FP64;
+using MathR = PurrNet.Prediction.FP64Math;
 
 namespace Jitter2.Collision
 {
@@ -92,7 +93,10 @@ namespace Jitter2.Collision
         private readonly Action<Parallel.Batch> scanForMovedProxies;
         private readonly Action<Parallel.Batch> scanForOverlaps;
 
-        private SimpleRandom random;
+        private SimpleRandom random = new SimpleRandom
+        {
+            seed = 56458956489
+        };
         private readonly Func<Real> rndFunc;
 
         /// <summary>
@@ -143,6 +147,7 @@ namespace Jitter2.Collision
             for (int e = batch.Start; e < batch.End; e++)
             {
                 var node = potentialPairs.Slots[e];
+
                 if (node.ID == 0) continue;
 
                 var proxyA = Nodes[node.ID1].Proxy;
@@ -502,9 +507,19 @@ namespace Jitter2.Collision
             Optimize(rndFunc, sweeps, chance, incremental);
         }
 
+        public void Optimize(int sweeps)
+        {
+            Optimize(rndFunc, sweeps, 0.01, false);
+        }
+
         public void Optimize()
         {
             Optimize(rndFunc, 100, 0.01, false);
+        }
+
+        public Real NextRandom()
+        {
+            return rndFunc();
         }
 
         /// <inheritdoc cref="Optimize(int, Real, bool)" />
@@ -536,8 +551,8 @@ namespace Jitter2.Collision
 
                 for (int i = n - 1; i > 0; i--)
                 {
-                    Real scaledValue = getNextRandom() * (i + 1);
-                    int j = (int)scaledValue;
+                    var rnd = getNextRandom();
+                    var j = MathR.FloorToInt(rnd * (i + 1));
                     (tempList[i], tempList[j]) = (tempList[j], tempList[i]);
                 }
 
@@ -595,10 +610,44 @@ namespace Jitter2.Collision
 
         private void OverlapCheckAdd(int index, int node)
         {
+            Span<int> stack = stackalloc int[128]; // fallback, or use pooled List<int>
+            int top = 0;
+            stack[top++] = index;
+
+            while (top > 0)
+            {
+                int i = stack[--top];
+                ref var current = ref Nodes[i];
+
+                if (current.IsLeaf)
+                {
+                    if (i == node) continue;
+                    if (!Filter(Nodes[node].Proxy!, current.Proxy!)) continue;
+                    potentialPairs.ConcurrentAdd(new PairHashSet.Pair(i, node));
+                    continue;
+                }
+
+                int c1 = current.Left;
+                int c2 = current.Right;
+
+                if (TreeBox.NotDisjoint(Nodes[c1].ExpandedBox, Nodes[node].ExpandedBox))
+                    stack[top++] = c1;
+
+                if (TreeBox.NotDisjoint(Nodes[c2].ExpandedBox, Nodes[node].ExpandedBox))
+                    stack[top++] = c2;
+            }
+        }
+
+        /*private void OverlapCheckAdd(int index, int node)
+        {
             if (Nodes[index].IsLeaf)
             {
-                if (node == index) return;
-                if (!Filter(Nodes[node].Proxy!, Nodes[index].Proxy!)) return;
+                if (node == index)
+                    return;
+
+                if (!Filter(Nodes[node].Proxy!, Nodes[index].Proxy!))
+                    return;
+
                 potentialPairs.ConcurrentAdd(new PairHashSet.Pair(index, node));
             }
             else
@@ -612,7 +661,7 @@ namespace Jitter2.Collision
                 if (TreeBox.NotDisjoint(Nodes[child2].ExpandedBox, Nodes[node].ExpandedBox))
                     OverlapCheckAdd(child2, node);
             }
-        }
+        }*/
 
         private void OverlapCheckRemove(int index, int node)
         {

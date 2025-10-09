@@ -508,9 +508,9 @@ namespace Jitter2.LinearMath
         /// </summary>
         public readonly override string ToString()
         {
-            return $"M11={M11:F6}, M12={M12:F6}, M13={M13:F6}, " +
-                   $"M21={M21:F6}, M22={M22:F6}, M23={M23:F6}, " +
-                   $"M31={M31:F6}, M32={M32:F6}, M33={M33:F6}";
+            return $"M11={M11}, M12={M12}, M13={M13}, " +
+                   $"M21={M21}, M22={M22}, M23={M23}, " +
+                   $"M31={M31}, M32={M32}, M33={M33}";
         }
 
         public readonly override bool Equals(object obj)

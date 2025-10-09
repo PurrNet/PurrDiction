@@ -161,5 +161,10 @@ namespace PurrNet.Prediction
         {
             return idet.rawValue != FP64Math.Zero;
         }
+
+        public static FP64 FromFloat(float value)
+        {
+            return FromRaw(FP64Math.FromFloat(value));
+        }
     }
 }

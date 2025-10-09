@@ -148,7 +148,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 414b6fe0a504f6648815bb8efe075961, type: 3}
   m_Name: 
   m_EditorClassIdentifier: PurrNet.JitterPhysics2::PurrNet.Jitter2.TestJitter
-  _boxes: 20
+  _multiThreaded: 0
+  _Xboxes: 4
+  _Yboxes: 100
 --- !u!4 &91250393
 Transform:
   m_ObjectHideFlags: 0

@@ -21,7 +21,7 @@ namespace Jitter2.Collision
     /// </summary>
     public static class NarrowPhase
     {
-        private static readonly Real NumericEpsilon = 1e-16;
+        private static readonly Real NumericEpsilon = 1e-8;
         private static readonly Real collideEpsilon = 1e-5;
 
         private struct MprEpaSolver
@@ -147,7 +147,7 @@ namespace Jitter2.Collision
                 if (JVector.Dot(v1.V, normal) <= 0.0) return false;
                 JVector.Cross(v1.V, v0.V, out normal);
 
-                Real sphericalEpsilon = 1e-12;
+                Real sphericalEpsilon = 1e-6;
                 if (normal.LengthSquared() < sphericalEpsilon)
                 {
                     // The origin, v0 and v1 form a line. Most probably

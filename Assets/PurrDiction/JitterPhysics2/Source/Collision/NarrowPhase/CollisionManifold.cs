@@ -9,7 +9,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Jitter2.Collision.Shapes;
 using Jitter2.LinearMath;
-
+using UnityEngine;
 using Real = PurrNet.Prediction.FP64;
 
 namespace Jitter2.Collision

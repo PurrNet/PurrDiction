@@ -20,7 +20,7 @@ namespace Jitter2.Collision.Shapes
 
         public sealed override JVector Velocity => RigidBody?.Velocity ?? JVector.Zero;
 
-        public sealed override void UpdateWorldBoundingBox(Real dt/* = (Real)0.0*/)
+        public sealed override void UpdateWorldBoundingBox(Real dt)
         {
             JBoundingBox box;
 

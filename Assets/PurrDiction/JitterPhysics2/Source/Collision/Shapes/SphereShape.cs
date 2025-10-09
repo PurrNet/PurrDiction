@@ -6,7 +6,7 @@
 
 using System;
 using Jitter2.LinearMath;
-
+using UnityEngine;
 using Real = PurrNet.Prediction.FP64;
 using MathR = PurrNet.Prediction.FP64Math;
 

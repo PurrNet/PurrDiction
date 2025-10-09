@@ -56,7 +56,7 @@ namespace Jitter2.Collision
             }
         }
 
-        private static readonly Real NumericEpsilon = 1e-16;
+        private static readonly Real NumericEpsilon = 1e-8;
 
         // (*) Euler-characteristic: V (vertices) - E (edges) + F (faces) = 2
         // We have triangles T instead of faces: F = T
