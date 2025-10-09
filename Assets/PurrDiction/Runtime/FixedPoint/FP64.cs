@@ -1,13 +1,20 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
-using PurrNet.Packing;
 
 namespace PurrNet.Prediction
 {
     [Serializable]
-    public struct FP64 : IPackedAuto, IEquatable<FP64>
+    public struct FP64 : IEquatable<FP64>
     {
+        public const int SIZE_OF = 8;
+
         public long rawValue;
+
+        public static readonly FP64 MinValue = FromRaw(FP64Math.MinValue);
+        public static readonly FP64 MaxValue = FromRaw(FP64Math.MaxValue);
+        public static readonly FP64 PI = FromRaw(13493037705L);
+        public static readonly FP64 All = FromRaw(0xFFFFFFFF_FFFFFFFF);
+        public static readonly FP64 None = FromRaw(0);
 
         public double ToDouble() => FP64Math.ToDouble(rawValue);
 
@@ -15,13 +22,31 @@ namespace PurrNet.Prediction
 
         public float ToFloat() => FP64Math.ToFloat(rawValue);
 
+
         [MethodImpl(FPUtils.AggressiveInlining)]
         public static FP64 FromRaw(long value) => new() { rawValue = value };
 
         [MethodImpl(FPUtils.AggressiveInlining)]
+        public static FP64 FromRaw(ulong value) => new() { rawValue = (long)value };
+
+        [MethodImpl(FPUtils.AggressiveInlining)]
         public static implicit operator FP64(int value) => FromRaw(FP64Math.FromInt(value));
 
+        [MethodImpl(FPUtils.AggressiveInlining)]
+        public static implicit operator FP64(uint value) => FromRaw(FP64Math.FromInt((int)value));
+
+        [MethodImpl(FPUtils.AggressiveInlining)]
+        public static implicit operator FP64(long value) => FromRaw(FP64Math.FromInt((int)value));
+
+        [MethodImpl(FPUtils.AggressiveInlining)]
+        public static implicit operator FP64(ulong value) => FromRaw(FP64Math.FromInt((int)value));
+
         public static implicit operator FP64(float value) => throw new NotImplementedException();
+
+        public static implicit operator FP64(double value) => throw new NotImplementedException();
+
+        [MethodImpl(FPUtils.AggressiveInlining)]
+        public static explicit operator int(FP64 value) => value.ToInt();
 
         [MethodImpl(FPUtils.AggressiveInlining)]
         public static implicit operator bool(FP64 value) => value.rawValue != FP64Math.Zero;
@@ -112,6 +137,9 @@ namespace PurrNet.Prediction
         public static bool operator <=(FP64 a, FP64 b) => a.rawValue <= b.rawValue;
         public static bool operator >=(FP64 a, FP64 b) => a.rawValue >= b.rawValue;
 
+        public static FP64 operator |(FP64 a, FP64 b) => FromRaw(a.rawValue | b.rawValue);
+        public static FP64 operator &(FP64 a, FP64 b) => FromRaw(a.rawValue & b.rawValue);
+
         public override string ToString() => FP64Math.ToString(rawValue);
 
         public bool Equals(FP64 other)
@@ -127,6 +155,11 @@ namespace PurrNet.Prediction
         public override int GetHashCode()
         {
             return (int)(rawValue ^ rawValue >> 32);
+        }
+
+        public static bool IsNormal(FP64 idet)
+        {
+            return idet.rawValue != FP64Math.Zero;
         }
     }
 }
