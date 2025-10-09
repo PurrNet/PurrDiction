@@ -1,0 +1,164 @@
+/*
+ * Jitter2 Physics Library
+ * (c) Thorben Linneweber and contributors
+ * SPDX-License-Identifier: MIT
+ */
+
+using System;
+using Jitter2.LinearMath;
+
+using Real = PurrNet.Prediction.FP64;
+using MathR = PurrNet.Prediction.FP64Math;
+
+namespace Jitter2.Collision.Shapes
+{
+    /// <summary>
+    /// Represents a cone shape.
+    /// </summary>
+    public class ConeShape : RigidBodyShape
+    {
+        private Real radius;
+        private Real height;
+
+        /// <summary>
+        /// Gets or sets the radius of the cone at its base.
+        /// </summary>
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// Thrown when radius is less than or equal to zero.
+        /// </exception>
+        public Real Radius
+        {
+            get => radius;
+            set
+            {
+                if (radius <= 0)
+                    throw new ArgumentOutOfRangeException(nameof(value), "Radius must be greater than zero.");
+                radius = value;
+                UpdateWorldBoundingBox();
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets the height of the cone.
+        /// </summary>
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// Thrown when <paramref name="value"/> is less than or equal to zero.
+        /// </exception>
+        public Real Height
+        {
+            get => height;
+            set
+            {
+                if (value <= 0)
+                    throw new ArgumentOutOfRangeException(nameof(value), "Height must be greater than zero.");
+                height = value;
+                UpdateWorldBoundingBox();
+            }
+        }
+
+        /// <summary>
+        /// Initializes a new instance of the ConeShape class with specified radius and height. The symmetry axis of the cone is aligned along the Y-axis.
+        /// </summary>
+        /// <param name="radius">The radius of the cone at its base.</param>
+        /// <param name="height">The height of the cone.</param>
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// Thrown when <paramref name="radius"/> or <paramref name="height"/> is less than or equal to zero.
+        /// </exception>
+        public ConeShape(Real radius, Real height)
+        {
+            if (radius <= 0)
+                throw new ArgumentOutOfRangeException(nameof(radius), "Radius must be greater than zero.");
+            if (height <= 0)
+                throw new ArgumentOutOfRangeException(nameof(height), "Height must be greater than zero.");
+
+            this.radius = radius;
+            this.height = height;
+            UpdateWorldBoundingBox();
+        }
+
+        public override void SupportMap(in JVector direction, out JVector result)
+        {
+            Real zeroEpsilon = 1e-12;
+            // cone = disk + point
+
+            // The center of mass is at 0.25 height.
+            JVector baseDir = new JVector(direction.X, 0.0, direction.Z);
+            baseDir = JVector.NormalizeSafe(baseDir, zeroEpsilon) * radius;
+
+            baseDir.Y = -(Real)0.25 * height;
+
+            // disk support point vs. (0, 0.75 * height, 0)
+            if (JVector.Dot(direction, baseDir) >= direction.Y * 0.75 * height)
+            {
+                result = baseDir;
+            }
+            else
+            {
+                result = new JVector(0, 0.75 * height, 0);
+            }
+        }
+
+        public override void GetCenter(out JVector point)
+        {
+            point = JVector.Zero;
+        }
+
+        public override void CalculateBoundingBox(in JQuaternion orientation, in JVector position, out JBoundingBox box)
+        {
+            Real zeroEpsilon = 1e-12;
+
+            JVector upa = orientation.GetBasisY();
+
+            Real xx = upa.X * upa.X;
+            Real yy = upa.Y * upa.Y;
+            Real zz = upa.Z * upa.Z;
+
+            Real l1 = yy + zz;
+            Real l2 = xx + zz;
+            Real l3 = xx + yy;
+
+            Real xext = 0, yext = 0, zext = 0;
+
+            if (l1 > zeroEpsilon)
+            {
+                Real sl = 1.0 / MathR.Sqrt(l1);
+                xext = (yy + zz) * sl * radius;
+            }
+
+            if (l2 > zeroEpsilon)
+            {
+                Real sl = 1.0 / MathR.Sqrt(l2);
+                yext = (xx + zz) * sl * radius;
+            }
+
+            if (l3 > zeroEpsilon)
+            {
+                Real sl = 1.0 / MathR.Sqrt(l3);
+                zext = (xx + yy) * sl * radius;
+            }
+
+            JVector p1 = -(Real)0.25 * height * upa;
+            JVector p2 = +(Real)0.75 * height * upa;
+
+            box.Min = p1 - new JVector(xext, yext, zext);
+            box.Max = p1 + new JVector(xext, yext, zext);
+
+            JBoundingBox.AddPointInPlace(ref box, p2);
+
+            box.Min += position;
+            box.Max += position;
+        }
+
+        public override void CalculateMassInertia(out JMatrix inertia, out JVector com, out Real mass)
+        {
+            mass = 1.0 / 3.0 * Real.PI * radius * radius * height;
+
+            inertia = JMatrix.Identity;
+            inertia.M11 = mass * (3.0 / 20.0 * radius * radius + 3.0 / 80.0 * height * height);
+            inertia.M22 = 3.0 / 10.0 * mass * radius * radius;
+            inertia.M33 = mass * (3.0 / 20.0 * radius * radius + 3.0 / 80.0 * height * height);
+
+            com = JVector.Zero;
+        }
+    }
+}
