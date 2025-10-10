@@ -12,11 +12,13 @@ namespace PurrNet.Prediction
 
         private static readonly Dictionary<Scene, List<PredictedIdentity>> _cache = new ();
 
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        static void CleanupCache() => _cache.Clear();
+
 #if PURRSCENE_OBJECT_FILTERS
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         static void Init()
         {
-            _cache.Clear();
             PurrNet.Modules.SceneObjectsModule.onPreSceneLoad -= CacheScene;
             PurrNet.Modules.SceneObjectsModule.onPreSceneLoad += CacheScene;
         }
