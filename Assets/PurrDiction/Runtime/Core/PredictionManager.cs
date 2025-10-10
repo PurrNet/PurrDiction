@@ -150,20 +150,11 @@ namespace PurrNet.Prediction
             tickDelta = 1f / tickRate;
             _lastVerifiedTick = 0;
 
-            if (ShouldRegisterSystem(BuiltInSystems.Hierarchy))
-                hierarchy = RegisterSystem<PredictedHierarchy>();
-
-            if (ShouldRegisterSystem(BuiltInSystems.Players))
-                players = RegisterSystem<PredictedPlayers>();
-
-            if (ShouldRegisterSystem(BuiltInSystems.Physics3D))
-                physics3d = RegisterSystem<Predicted3DPhysics>();
-
-            if (ShouldRegisterSystem(BuiltInSystems.Physics2D))
-                physics2d = RegisterSystem<Predicted2DPhysics>();
-
-            if (ShouldRegisterSystem(BuiltInSystems.Time))
-                time = RegisterSystem<PredictedTime>();
+            hierarchy = ShouldRegisterSystem(BuiltInSystems.Hierarchy) ? RegisterSystem<PredictedHierarchy>() : null;
+            players = ShouldRegisterSystem(BuiltInSystems.Players) ? RegisterSystem<PredictedPlayers>() : null;
+            physics3d = ShouldRegisterSystem(BuiltInSystems.Physics3D) ? RegisterSystem<Predicted3DPhysics>() : null;
+            physics2d = ShouldRegisterSystem(BuiltInSystems.Physics2D) ? RegisterSystem<Predicted2DPhysics>() : null;
+            time = ShouldRegisterSystem(BuiltInSystems.Time) ? RegisterSystem<PredictedTime>() : null;
 
             var roots = HashSetPool<GameObject>.Instantiate();
             var pid = -1;
@@ -182,6 +173,8 @@ namespace PurrNet.Prediction
                     }
                 }
             }
+
+            HashSetPool<GameObject>.Destroy(roots);
 
             _queue.Clear();
 
