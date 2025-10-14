@@ -6,11 +6,11 @@ namespace PurrNet.Prediction
 {
     [Serializable]
     // ReSharper disable once PartialTypeWithSinglePart
-    public partial struct FP : IEquatable<FP>
+    public readonly partial struct FP : IEquatable<FP>
     {
         public const int SIZE_OF = 8;
 
-        public long rawValue;
+        public readonly long rawValue;
 
         public static readonly FP minValue = new FP(FPMath.MinValue);
         public static readonly FP maxValue = new FP(FPMath.MaxValue);
@@ -19,13 +19,13 @@ namespace PurrNet.Prediction
         public static readonly FP epsilon = new FP(1L << (FPMath.Shift - 1));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public double ToDouble() => FPMath.ToDouble(rawValue);
+        public readonly double ToDouble() => FPMath.ToDouble(rawValue);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public int ToInt() => FPMath.RoundToInt(rawValue);
+        public readonly int ToInt() => FPMath.RoundToInt(rawValue);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public float ToFloat() => FPMath.ToFloat(rawValue);
+        public readonly float ToFloat() => FPMath.ToFloat(rawValue);
 
         public FP(long rawValue) => this.rawValue = rawValue;
 
@@ -116,13 +116,13 @@ namespace PurrNet.Prediction
         public static FP operator /(float a, FP b) => throw new NotImplementedException();
 
         [MethodImpl(FPUtils.AggressiveInlining)]
-        public static FP operator %(FP a, FP b) => FPMath.Mod(a.rawValue, b.rawValue);
+        public static FP operator %(FP a, FP b) => FPMath.Mod(a, b);
 
         [MethodImpl(FPUtils.AggressiveInlining)]
-        public static FP operator %(FP a, int b) => FPMath.Mod(a.rawValue, FPMath.FromInt(b).rawValue);
+        public static FP operator %(FP a, int b) => FPMath.Mod(a, FPMath.FromInt(b));
 
         [MethodImpl(FPUtils.AggressiveInlining)]
-        public static FP operator %(int a, FP b) => FPMath.Mod(FPMath.FromInt(a).rawValue, b.rawValue);
+        public static FP operator %(int a, FP b) => FPMath.Mod(FPMath.FromInt(a), b);
         public static FP operator %(FP a, float b) => throw new NotImplementedException();
         public static FP operator %(float a, FP b) => throw new NotImplementedException();
 
@@ -160,7 +160,7 @@ namespace PurrNet.Prediction
             return obj is FP other && Equals(other);
         }
 
-        public override int GetHashCode()
+        public readonly override int GetHashCode()
         {
             return (int)(rawValue ^ rawValue >> 32);
         }
