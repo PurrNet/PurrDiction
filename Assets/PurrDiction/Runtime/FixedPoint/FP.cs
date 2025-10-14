@@ -19,13 +19,13 @@ namespace PurrNet.Prediction
         public static readonly FP epsilon = new FP(1L << (FPMath.Shift - 1));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly double ToDouble() => FPMath.ToDouble(rawValue);
+        public readonly double ToDouble() => FPMath.ToDouble(this);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly int ToInt() => FPMath.RoundToInt(rawValue);
+        public readonly int ToInt() => FPMath.RoundToInt(this);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly float ToFloat() => FPMath.ToFloat(rawValue);
+        public readonly float ToFloat() => FPMath.ToFloat(this);
 
         public FP(long rawValue) => this.rawValue = rawValue;
 
