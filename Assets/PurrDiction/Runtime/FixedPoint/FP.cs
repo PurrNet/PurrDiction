@@ -1,13 +1,18 @@
 using System;
 using System.Runtime.CompilerServices;
-using PurrNet.Packing;
 
 namespace PurrNet.Prediction
 {
     [Serializable]
-    public struct FP : IPackedAuto, IEquatable<FP>
+    public struct FP : IEquatable<FP>
     {
+        public const int SIZE_OF = 4;
+
         public int rawValue;
+
+        public static FP MinValue = FromRaw(FPMath.MinValue);
+
+        public static FP MaxValue = FromRaw(FPMath.MaxValue);
 
         public int ToInt() => FPMath.RoundToInt(rawValue);
 

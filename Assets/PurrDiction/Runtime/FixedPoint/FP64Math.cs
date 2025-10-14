@@ -51,7 +51,6 @@ import java.lang.Double;
  * Use up-to C# 3 features to keep the library compatible with older versions
  * of Unity.
  */
-using System;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
@@ -70,30 +69,27 @@ namespace PurrNet.Prediction
     public static class FP64Math
     {
 #endif
-        public const int Shift = 32;
-        public const long FractionMask = ( 1L << Shift ) - 1; // Space before 1L needed because of hacky C++ code generator
-        public const long IntegerMask = ~FractionMask;
+        const int Shift = 32;
+        const long FractionMask = ( 1L << Shift ) - 1; // Space before 1L needed because of hacky C++ code generator
+        const long IntegerMask = ~FractionMask;
 
         // Constants
-        public const long Zero = 0L;
-        public const long Neg1 = -1L << Shift;
-        public const long One = 1L << Shift;
-        public const long Two = 2L << Shift;
-        public const long Three = 3L << Shift;
-        public const long Four = 4L << Shift;
-        public const long Half = One >> 1;
-        public const long Pi = 13493037705L; //(long)(Math.PI * 65536.0) << 16;
-        public const long Pi2 = 26986075409L;
-        public const long PiHalf = 6746518852L;
-        public const long E = 11674931555L;
+        internal const long Zero = 0L;
+        internal const long Neg1 = -1L << Shift;
+        internal const long One = 1L << Shift;
+        const long Half = One >> 1;
+        internal const long PI = 13493037705L; //(long)(Math.PI * 65536.0) << 16;
+        const long PI2 = 26986075409L;
+        const long PIHALF = 6746518852L;
+        const long E = 11674931555L;
 
-        public const long MinValue = -9223372036854775808L;
-        public const long MaxValue = 9223372036854775807L;
+        internal const long MinValue = -9223372036854775808L;
+        internal const long MaxValue = 9223372036854775807L;
 
         // Private constants
-        private const long RCP_LN2      = 0x171547652L; // 1.0 / log(2.0) ~= 1.4426950408889634
-        private const long RCP_LOG2_E   = 2977044471L;  // 1.0 / log2(e) ~= 0.6931471805599453
-        private const int  RCP_HALF_PI  = 683565276; // 1.0 / (4.0 * 0.5 * Math.PI);  // the 4.0 factor converts directly to s2.30
+        const long RCP_LN2      = 0x171547652L; // 1.0 / log(2.0) ~= 1.4426950408889634
+        const long RCP_LOG2_E   = 2977044471L;  // 1.0 / log2(e) ~= 0.6931471805599453
+        const int  RCP_HALF_PI  = 683565276; // 1.0 / (4.0 * 0.5 * Math.PI);  // the 4.0 factor converts directly to s2.30
 
         /// <summary>
         /// Converts an integer to a fixed-point value.
@@ -131,6 +127,12 @@ namespace PurrNet.Prediction
             return (int)((v + (One - 1)) >> Shift);
         }
 
+        [MethodImpl(FPUtils.AggressiveInlining)]
+        public static int FloorToInt(FP64 v)
+        {
+            return FloorToInt(v.rawValue);
+        }
+
         /// <summary>
         /// Converts a fixed-point value into an integer by rounding it down to nearest integer.
         /// </summary>
@@ -155,7 +157,7 @@ namespace PurrNet.Prediction
         [MethodImpl(FPUtils.AggressiveInlining)]
         public static double ToDouble(long v)
         {
-            return (double)v * (1.0 / 4294967296.0);
+            return v * (1.0 / 4294967296.0);
         }
 
         /// <summary>
@@ -164,7 +166,7 @@ namespace PurrNet.Prediction
         [MethodImpl(FPUtils.AggressiveInlining)]
         public static float ToFloat(long v)
         {
-            return (float)v * (1.0f / 4294967296.0f);
+            return v * (1.0f / 4294967296.0f);
         }
 
         /// <summary>
@@ -182,6 +184,12 @@ namespace PurrNet.Prediction
             return ToDouble(v).ToString(CultureInfo.InvariantCulture);
         }
 #endif
+
+        [MethodImpl(FPUtils.AggressiveInlining)]
+        public static FP64 Abs(FP64 x)
+        {
+            return FP64.FromRaw(Abs(x.rawValue));
+        }
 
         /// <summary>
         /// Returns the absolute (positive) value of x.
@@ -239,6 +247,12 @@ namespace PurrNet.Prediction
             return x & FractionMask;
         }
 
+        [MethodImpl(FPUtils.AggressiveInlining)]
+        public static FP64 Min(FP64 a, FP64 b)
+        {
+            return FP64.FromRaw(Min(a.rawValue, b.rawValue));
+        }
+
         /// <summary>
         /// Returns the minimum of the two values.
         /// </summary>
@@ -246,6 +260,12 @@ namespace PurrNet.Prediction
         public static long Min(long a, long b)
         {
             return (a < b) ? a : b;
+        }
+
+        [MethodImpl(FPUtils.AggressiveInlining)]
+        public static FP64 Max(FP64 a, FP64 b)
+        {
+            return FP64.FromRaw(Max(a.rawValue, b.rawValue));
         }
 
         /// <summary>
@@ -257,6 +277,12 @@ namespace PurrNet.Prediction
             return (a > b) ? a : b;
         }
 
+        [MethodImpl(FPUtils.AggressiveInlining)]
+        public static FP64 Clamp(FP64 a, FP64 min, FP64 max)
+        {
+            return FP64.FromRaw(Clamp(a.rawValue, min.rawValue, max.rawValue));
+        }
+
         /// <summary>
         /// Returns the value clamped between min and max.
         /// </summary>
@@ -264,6 +290,12 @@ namespace PurrNet.Prediction
         public static long Clamp(long a, long min, long max)
         {
             return (a > max) ? max : (a < min) ? min : a;
+        }
+
+        [MethodImpl(FPUtils.AggressiveInlining)]
+        public static int Sign(FP64 x)
+        {
+            return Sign(x.rawValue);
         }
 
         /// <summary>
@@ -351,12 +383,12 @@ namespace PurrNet.Prediction
             return System.Numerics.BitOperations.LeadingZeroCount(x);
         #else
             int n = 0;
-            if (x <= 0x00000000FFFFFFFFL) { n = n + 32; x = x << 32; }
-            if (x <= 0x0000FFFFFFFFFFFFL) { n = n + 16; x = x << 16; }
-            if (x <= 0x00FFFFFFFFFFFFFFL) { n = n + 8; x = x << 8; }
-            if (x <= 0x0FFFFFFFFFFFFFFFL) { n = n + 4; x = x << 4; }
-            if (x <= 0x3FFFFFFFFFFFFFFFL) { n = n + 2; x = x << 2; }
-            if (x <= 0x7FFFFFFFFFFFFFFFL) { n = n + 1; }
+            if (x <= 0x00000000FFFFFFFFL) { n = 32; x <<= 32; }
+            if (x <= 0x0000FFFFFFFFFFFFL) { n += 16; x <<= 16; }
+            if (x <= 0x00FFFFFFFFFFFFFFL) { n += 8; x <<= 8; }
+            if (x <= 0x0FFFFFFFFFFFFFFFL) { n += 4; x <<= 4; }
+            if (x <= 0x3FFFFFFFFFFFFFFFL) { n += 2; x <<= 2; }
+            if (x <= 0x7FFFFFFFFFFFFFFFL) { n += 1; }
             if (x == 0) return 64;
             return n;
         #endif
@@ -450,7 +482,7 @@ namespace PurrNet.Prediction
 
             // Shift amount for norm
             int s = Nlz(v); // 0 <= s <= 63
-            v = v << s; // Normalize the divisor
+            v <<= s; // Normalize the divisor
             ulong vn1 = v >> 32; // Break the divisor into two 32-bit digits
             ulong vn0 = v & 0xffffffffL;
 
@@ -467,8 +499,8 @@ namespace PurrNet.Prediction
             {
                 if ((q1 >= b) || ((q1 * vn0) > (b * rhat + un1)))
                 {
-                    q1 = q1 - 1;
-                    rhat = rhat + vn1;
+                    q1 -= 1;
+                    rhat += vn1;
                 }
                 else break;
             } while (rhat < b);
@@ -482,8 +514,8 @@ namespace PurrNet.Prediction
             {
                 if ((q0 >= b) || ((q0 * vn0) > (b * rhat + un0)))
                 {
-                    q0 = q0 - 1;
-                    rhat = rhat + vn1;
+                    q0 -= 1;
+                    rhat += vn1;
                 }
                 else break;
             } while (rhat < b);
@@ -648,6 +680,11 @@ namespace PurrNet.Prediction
 #endif
         }
 
+        public static FP64 Sqrt(FP64 x)
+        {
+            return FP64.FromRaw(Sqrt(x.rawValue));
+        }
+
         public static long Sqrt(long x)
         {
             // Return 0 for all non-positive values.
@@ -670,7 +707,7 @@ namespace PurrNet.Prediction
 
             // Divide offset by 2 (to get sqrt), compute adjust value for odd exponents.
             int adjust = ((offset & 1) != 0) ? SQRT2 : ONE;
-            offset = offset >> 1;
+            offset >>= 1;
 
             // Apply exponent, convert back to s32.32.
             long yr = (long)FPUtils.Qmul30(adjust, y) << 2;
@@ -699,7 +736,7 @@ namespace PurrNet.Prediction
 
             // Divide offset by 2 (to get sqrt), compute adjust value for odd exponents.
             int adjust = ((offset & 1) != 0) ? SQRT2 : ONE;
-            offset = offset >> 1;
+            offset >>= 1;
 
             // Apply exponent, convert back to s32.32.
             long yr = (long)FPUtils.Qmul30(adjust, y) << 2;
@@ -728,7 +765,7 @@ namespace PurrNet.Prediction
 
             // Divide offset by 2 (to get sqrt), compute adjust value for odd exponents.
             int adjust = ((offset & 1) != 0) ? SQRT2 : ONE;
-            offset = offset >> 1;
+            offset >>= 1;
 
             // Apply exponent, convert back to s32.32.
             long yr = (long)FPUtils.Qmul30(adjust, y) << 2;
@@ -759,7 +796,7 @@ namespace PurrNet.Prediction
 
             // Divide offset by 2 (to get sqrt), compute adjust value for odd exponents.
             int adjust = ((offset & 1) != 0) ? HALF_SQRT2 : ONE;
-            offset = offset >> 1;
+            offset >>= 1;
 
             // Apply exponent, convert back to s32.32.
             long yr = (long)FPUtils.Qmul30(adjust, y) << 2;
@@ -790,7 +827,7 @@ namespace PurrNet.Prediction
 
             // Divide offset by 2 (to get sqrt), compute adjust value for odd exponents.
             int adjust = ((offset & 1) != 0) ? HALF_SQRT2 : ONE;
-            offset = offset >> 1;
+            offset >>= 1;
 
             // Apply exponent, convert back to s32.32.
             long yr = (long)FPUtils.Qmul30(adjust, y) << 2;
@@ -821,7 +858,7 @@ namespace PurrNet.Prediction
 
             // Divide offset by 2 (to get sqrt), compute adjust value for odd exponents.
             int adjust = ((offset & 1) != 0) ? HALF_SQRT2 : ONE;
-            offset = offset >> 1;
+            offset >>= 1;
 
             // Apply exponent, convert back to s32.32.
             long yr = (long)FPUtils.Qmul30(adjust, y) << 2;
@@ -1005,7 +1042,7 @@ namespace PurrNet.Prediction
             long y = (long)FPUtils.LogPoly5Lut8(n - ONE) << 2;
 
             // Combine integer and fractional parts (into s32.32).
-            return (long)offset * RCP_LOG2_E + y;
+            return offset * RCP_LOG2_E + y;
         }
 
         public static long LogFast(long x)
@@ -1025,7 +1062,7 @@ namespace PurrNet.Prediction
             long y = (long)FPUtils.LogPoly3Lut8(n - ONE) << 2;
 
             // Combine integer and fractional parts (into s32.32).
-            return (long)offset * RCP_LOG2_E + y;
+            return offset * RCP_LOG2_E + y;
         }
 
         public static long LogFastest(long x)
@@ -1045,7 +1082,7 @@ namespace PurrNet.Prediction
             long y = (long)FPUtils.LogPoly5(n - ONE) << 2;
 
             // Combine integer and fractional parts (into s32.32).
-            return (long)offset * RCP_LOG2_E + y;
+            return offset * RCP_LOG2_E + y;
         }
 
         public static long Log2(long x)
@@ -1240,6 +1277,12 @@ namespace PurrNet.Prediction
             return res;
         }
 
+        [MethodImpl(FPUtils.AggressiveInlining)]
+        public static FP64 Sin(FP64 x)
+        {
+            return FP64.FromRaw(Sin(x.rawValue));
+        }
+
         public static long Sin(long x)
         {
             // Map [0, 2pi] to [0, 4] (as s2.30).
@@ -1271,21 +1314,35 @@ namespace PurrNet.Prediction
         }
 
         [MethodImpl(FPUtils.AggressiveInlining)]
+        public static (FP64 sha, FP64 cha) SinCos(FP64 halfAngle)
+        {
+            var sin = FP64.FromRaw(Sin(halfAngle.rawValue));
+            var cos = FP64.FromRaw(Cos(halfAngle.rawValue));
+            return (sin, cos);
+        }
+
+        [MethodImpl(FPUtils.AggressiveInlining)]
+        public static FP64 Cos(FP64 x)
+        {
+            return FP64.FromRaw(Cos(x.rawValue));
+        }
+
+        [MethodImpl(FPUtils.AggressiveInlining)]
         public static long Cos(long x)
         {
-            return Sin(x + PiHalf);
+            return Sin(x + PIHALF);
         }
 
         [MethodImpl(FPUtils.AggressiveInlining)]
         public static long CosFast(long x)
         {
-            return SinFast(x + PiHalf);
+            return SinFast(x + PIHALF);
         }
 
         [MethodImpl(FPUtils.AggressiveInlining)]
         public static long CosFastest(long x)
         {
-            return SinFastest(x + PiHalf);
+            return SinFastest(x + PIHALF);
         }
 
         public static long Tan(long x)
@@ -1332,14 +1389,20 @@ namespace PurrNet.Prediction
             return FPUtils.Qmul30((int)(yr >> 2), oox);
         }
 
+        [MethodImpl(FPUtils.AggressiveInlining)]
+        public static FP64 Atan2(FP64 y, FP64 x)
+        {
+            return FP64.FromRaw(Atan2(y.rawValue, x.rawValue));
+        }
+
         public static long Atan2(long y, long x)
         {
             // See: https://www.dsprelated.com/showarticle/1052.php
 
             if (x == 0)
             {
-                if (y > 0) return PiHalf;
-                if (y < 0) return -PiHalf;
+                if (y > 0) return PIHALF;
+                if (y < 0) return -PIHALF;
 
                 FPUtils.InvalidArgument("Fixed64.Atan2", "y, x", y, x);
                 return 0;
@@ -1356,15 +1419,15 @@ namespace PurrNet.Prediction
                 int z = FPUtils.AtanPoly5Lut8(k);
                 long angle = negMask ^ ((long)z << 2);
                 if (x > 0) return angle;
-                if (y >= 0) return angle + Pi;
-                return angle - Pi;
+                if (y >= 0) return angle + PI;
+                return angle - PI;
             }
             else
             {
                 int k = Atan2Div(nx, ny);
                 int z = FPUtils.AtanPoly5Lut8(k);
                 long angle = negMask ^ ((long)z << 2);
-                return ((y > 0) ? PiHalf : -PiHalf) - angle;
+                return ((y > 0) ? PIHALF : -PIHALF) - angle;
             }
         }
 
@@ -1394,8 +1457,8 @@ namespace PurrNet.Prediction
 
             if (x == 0)
             {
-                if (y > 0) return PiHalf;
-                if (y < 0) return -PiHalf;
+                if (y > 0) return PIHALF;
+                if (y < 0) return -PIHALF;
 
                 FPUtils.InvalidArgument("Fixed64.Atan2Fast", "y, x", y, x);
                 return 0;
@@ -1412,15 +1475,15 @@ namespace PurrNet.Prediction
                 int z = FPUtils.AtanPoly3Lut8(k);
                 long angle = negMask ^ ((long)z << 2);
                 if (x > 0) return angle;
-                if (y >= 0) return angle + Pi;
-                return angle - Pi;
+                if (y >= 0) return angle + PI;
+                return angle - PI;
             }
             else
             {
                 int k = Atan2DivFast(nx, ny);
                 int z = FPUtils.AtanPoly3Lut8(k);
                 long angle = negMask ^ ((long)z << 2);
-                return ((y > 0) ? PiHalf : -PiHalf) - angle;
+                return ((y > 0) ? PIHALF : -PIHALF) - angle;
             }
         }
 
@@ -1450,8 +1513,8 @@ namespace PurrNet.Prediction
 
             if (x == 0)
             {
-                if (y > 0) return PiHalf;
-                if (y < 0) return -PiHalf;
+                if (y > 0) return PIHALF;
+                if (y < 0) return -PIHALF;
 
                 FPUtils.InvalidArgument("Fixed64.Atan2Fastest", "y, x", y, x);
                 return 0;
@@ -1468,16 +1531,22 @@ namespace PurrNet.Prediction
                 int res = FPUtils.AtanPoly4(z);
                 long angle = negMask ^ ((long)res << 2);
                 if (x > 0) return angle;
-                if (y >= 0) return angle + Pi;
-                return angle - Pi;
+                if (y >= 0) return angle + PI;
+                return angle - PI;
             }
             else
             {
                 int z = Atan2DivFastest(nx, ny);
                 int res = FPUtils.AtanPoly4(z);
                 long angle = negMask ^ ((long)res << 2);
-                return ((y > 0) ? PiHalf : -PiHalf) - angle;
+                return ((y > 0) ? PIHALF : -PIHALF) - angle;
             }
+        }
+
+        [MethodImpl(FPUtils.AggressiveInlining)]
+        public static FP64 Asin(FP64 x)
+        {
+            return FP64.FromRaw(Asin(x.rawValue));
         }
 
         public static long Asin(long x)
@@ -1514,6 +1583,11 @@ namespace PurrNet.Prediction
             }
 
             return Atan2Fastest(x, SqrtFastest(Mul(One + x, One - x)));
+        }
+
+        public static FP64 Acos(FP64 x)
+        {
+            return FP64.FromRaw(Acos(x.rawValue));
         }
 
         public static long Acos(long x)

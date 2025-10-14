@@ -10,9 +10,6 @@ namespace Purrdiction.Codegen
 {
     public static class FPProcessor
     {
-        static readonly string FP_FullName = typeof(FP).FullName;
-        static readonly string FP64_FullName = typeof(FP64).FullName;
-
         static MethodDefinition GetMethodWithParams(this TypeDefinition type, string name, params Type[] types)
         {
             for (var i = 0; i < type.Methods.Count; i++)
@@ -48,6 +45,12 @@ namespace Purrdiction.Codegen
             try
             {
                 if (!type.HasMethods)
+                    return;
+
+                if (type.FullName == typeof(FP).FullName ||
+                    type.FullName == typeof(FP64).FullName ||
+                    type.FullName == typeof(FPMath).FullName ||
+                    type.FullName == typeof(FP64Math).FullName)
                     return;
 
                 var fp32Type = module.GetTypeDefinition<FP>();
@@ -93,121 +96,200 @@ namespace Purrdiction.Codegen
                         if (!methodDef.IsStatic)
                             continue;
 
-                        if (methodDef.DeclaringType.FullName != FP_FullName ||
-                            methodDef.DeclaringType.FullName != FP64_FullName)
+                        if (methodDef.DeclaringType.FullName != fp32Type.FullName &&
+                            methodDef.DeclaringType.FullName != fp64Type.FullName)
                             continue;
 
-                        bool is64 = methodDef.DeclaringType.FullName == FP64_FullName;
+                        bool is64 = methodDef.DeclaringType.FullName == fp64Type.FullName;
                         var fromRawOp = is64 ? fromRawLong : fromRawInt;
-
                         switch (methodDef.Name)
                         {
-                            case "op_Implicit" when methodDef.Parameters.Count == 1 && CheckParam(methodDef, 0):
+                            case "op_Implicit" when methodDef.Parameters.Count == 1 && CheckParam(methodDef, 0, out bool isUsing64):
                             {
-                                var res = ConvertToConstFP(is64, ilProcessor, instructions[j - 1], messages);
-                                if (res == null) continue;
-                                var fromRaw = ilProcessor.Create(OpCodes.Call, fromRawOp);
-                                ilProcessor.Replace(instruction, fromRaw);
+                                try
+                                {
+                                    var res = ConvertToConstFP(is64, ilProcessor, instructions[j - 1], messages);
+                                    if (res == null) continue;
+                                    var fromRaw = ilProcessor.Create(OpCodes.Call, fromRawOp);
+                                    ilProcessor.Replace(instruction, fromRaw);
+                                }
+                                catch
+                                {
+                                    Error(messages, $"Failed to generate implicit fixed point magic. is64:{is64}, isTrying64:{isUsing64}", instruction, ilProcessor.Body.Method);
+                                }
                                 break;
                             }
                             case "op_Addition" when methodDef.Parameters.Count == 2 && CheckParam(methodDef, 1):
                             {
-                                var fp = ConvertToConstFP(is64, ilProcessor, instructions[j - 1], messages);
-                                if (fp == null) continue;
-                                var addOp = is64 ? opAdditionFp64_Fp64 : opAdditionFp_Fp;
-                                var toRaw = ilProcessor.Create(OpCodes.Call, addOp);
-                                ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawOp));
-                                ilProcessor.Replace(instruction, toRaw);
+                                try
+                                {
+                                    var fp = ConvertToConstFP(is64, ilProcessor, instructions[j - 1], messages);
+                                    if (fp == null) continue;
+                                    var addOp = is64 ? opAdditionFp64_Fp64 : opAdditionFp_Fp;
+                                    var toRaw = ilProcessor.Create(OpCodes.Call, addOp);
+                                    ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawOp));
+                                    ilProcessor.Replace(instruction, toRaw);
+                                }
+                                catch
+                                {
+                                    Error(messages, $"Failed to generate addition fixed point magic.", instruction, ilProcessor.Body.Method);
+                                }
+
                                 break;
                             }
                             case "op_Addition" when methodDef.Parameters.Count == 2 && CheckParam(methodDef, 0):
                             {
-                                var fp = ConvertToConstFP(is64, ilProcessor, instructions[j - 2], messages);
-                                if (fp == null) continue;
-                                var addOp = is64 ? opAdditionFp64_Fp64 : opAdditionFp_Fp;
-                                var toRaw = ilProcessor.Create(OpCodes.Call, addOp);
-                                ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawOp));
-                                ilProcessor.Replace(instruction, toRaw);
+                                try
+                                {
+                                    var fp = ConvertToConstFP(is64, ilProcessor, instructions[j - 2], messages);
+                                    if (fp == null) continue;
+                                    var addOp = is64 ? opAdditionFp64_Fp64 : opAdditionFp_Fp;
+                                    var toRaw = ilProcessor.Create(OpCodes.Call, addOp);
+                                    ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawOp));
+                                    ilProcessor.Replace(instruction, toRaw);
+                                }
+                                catch
+                                {
+                                    Error(messages, $"Failed to generate addition fixed point magic.", instruction, ilProcessor.Body.Method);
+                                }
+
                                 break;
                             }
                             case "op_Subtraction" when methodDef.Parameters.Count == 2 && CheckParam(methodDef, 1):
                             {
-                                var fp = ConvertToConstFP(is64, ilProcessor, instructions[j - 1], messages);
-                                if (fp == null) continue;
-                                var subOp = is64 ? opSubstractionFp64_Fp64 : opSubstractionFp_Fp;
-                                var toRaw = ilProcessor.Create(OpCodes.Call, subOp);
-                                ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawOp));
-                                ilProcessor.Replace(instruction, toRaw);
+                                try
+                                {
+                                    var fp = ConvertToConstFP(is64, ilProcessor, instructions[j - 1], messages);
+                                    if (fp == null) continue;
+                                    var subOp = is64 ? opSubstractionFp64_Fp64 : opSubstractionFp_Fp;
+                                    var toRaw = ilProcessor.Create(OpCodes.Call, subOp);
+                                    ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawOp));
+                                    ilProcessor.Replace(instruction, toRaw);
+                                }
+                                catch
+                                {
+                                    Error(messages, $"Failed to generate subtraction fixed point magic.", instruction, ilProcessor.Body.Method);
+                                }
+
                                 break;
                             }
                             case "op_Subtraction" when methodDef.Parameters.Count == 2 && CheckParam(methodDef, 0):
                             {
-                                var fp = ConvertToConstFP(is64, ilProcessor, instructions[j - 2], messages);
-                                if (fp == null) continue;
-                                var subOp = is64 ? opSubstractionFp64_Fp64 : opSubstractionFp_Fp;
-                                var toRaw = ilProcessor.Create(OpCodes.Call, subOp);
-                                ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawOp));
-                                ilProcessor.Replace(instruction, toRaw);
+                                try
+                                {
+                                    var fp = ConvertToConstFP(is64, ilProcessor, instructions[j - 2], messages);
+                                    if (fp == null) continue;
+                                    var subOp = is64 ? opSubstractionFp64_Fp64 : opSubstractionFp_Fp;
+                                    var toRaw = ilProcessor.Create(OpCodes.Call, subOp);
+                                    ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawOp));
+                                    ilProcessor.Replace(instruction, toRaw);
+                                }
+                                catch
+                                {
+                                    Error(messages, $"Failed to generate subtraction fixed point magic.", instruction, ilProcessor.Body.Method);
+                                }
                                 break;
                             }
                             case "op_Multiply" when methodDef.Parameters.Count == 2 && CheckParam(methodDef, 1):
                             {
-                                var fp = ConvertToConstFP(is64, ilProcessor, instructions[j - 1], messages);
-                                if (fp == null) continue;
-                                var multpyOp = is64 ? opMultiplyFp64_Fp64 : opMultiplyFp_Fp;
-                                var toRaw = ilProcessor.Create(OpCodes.Call, multpyOp);
-                                ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawOp));
-                                ilProcessor.Replace(instruction, toRaw);
+                                try
+                                {
+                                    var fp = ConvertToConstFP(is64, ilProcessor, instructions[j - 1], messages);
+                                    if (fp == null) continue;
+                                    var multpyOp = is64 ? opMultiplyFp64_Fp64 : opMultiplyFp_Fp;
+                                    var toRaw = ilProcessor.Create(OpCodes.Call, multpyOp);
+                                    ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawOp));
+                                    ilProcessor.Replace(instruction, toRaw);
+                                }
+                                catch
+                                {
+                                    Error(messages, $"Failed to generate multiplication fixed point magic.", instruction, ilProcessor.Body.Method);
+                                }
                                 break;
                             }
                             case "op_Multiply" when methodDef.Parameters.Count == 2 && CheckParam(methodDef, 0):
                             {
-                                var fp = ConvertToConstFP(is64, ilProcessor, instructions[j - 2], messages);
-                                if (fp == null) continue;
-                                var multpyOp = is64 ? opMultiplyFp64_Fp64 : opMultiplyFp_Fp;
-                                var toRaw = ilProcessor.Create(OpCodes.Call, multpyOp);
-                                ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawOp));
-                                ilProcessor.Replace(instruction, toRaw);
+                                try
+                                {
+                                    var fp = ConvertToConstFP(is64, ilProcessor, instructions[j - 2], messages);
+                                    if (fp == null) continue;
+                                    var multpyOp = is64 ? opMultiplyFp64_Fp64 : opMultiplyFp_Fp;
+                                    var toRaw = ilProcessor.Create(OpCodes.Call, multpyOp);
+                                    ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawOp));
+                                    ilProcessor.Replace(instruction, toRaw);
+                                }
+                                catch
+                                {
+                                    Error(messages, $"Failed to generate multiplication fixed point magic.", instruction, ilProcessor.Body.Method);
+                                }
                                 break;
                             }
                             case "op_Division" when methodDef.Parameters.Count == 2 && CheckParam(methodDef, 1):
                             {
-                                var fp = ConvertToConstFP(is64, ilProcessor, instructions[j - 1], messages);
-                                if (fp == null) continue;
-                                var divOp = is64 ? opDivisionFp64_Fp64 : opDivisionFp_Fp;
-                                var toRaw = ilProcessor.Create(OpCodes.Call, divOp);
-                                ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawOp));
-                                ilProcessor.Replace(instruction, toRaw);
+                                try
+                                {
+                                    var fp = ConvertToConstFP(is64, ilProcessor, instructions[j - 1], messages);
+                                    if (fp == null) continue;
+                                    var divOp = is64 ? opDivisionFp64_Fp64 : opDivisionFp_Fp;
+                                    var toRaw = ilProcessor.Create(OpCodes.Call, divOp);
+                                    ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawOp));
+                                    ilProcessor.Replace(instruction, toRaw);
+                                }
+                                catch
+                                {
+                                    Error(messages, $"Failed to generate division fixed point magic.", instruction, ilProcessor.Body.Method);
+                                }
                                 break;
                             }
                             case "op_Division" when methodDef.Parameters.Count == 2 && CheckParam(methodDef, 0):
                             {
-                                var fp = ConvertToConstFP(is64, ilProcessor, instructions[j - 2], messages);
-                                if (fp == null) continue;
-                                var divOp = is64 ? opDivisionFp64_Fp64 : opDivisionFp_Fp;
-                                var toRaw = ilProcessor.Create(OpCodes.Call, divOp);
-                                ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawOp));
-                                ilProcessor.Replace(instruction, toRaw);
+                                try
+                                {
+                                    var fp = ConvertToConstFP(is64, ilProcessor, instructions[j - 2], messages);
+                                    if (fp == null) continue;
+                                    var divOp = is64 ? opDivisionFp64_Fp64 : opDivisionFp_Fp;
+                                    var toRaw = ilProcessor.Create(OpCodes.Call, divOp);
+                                    ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawOp));
+                                    ilProcessor.Replace(instruction, toRaw);
+                                }
+                                catch
+                                {
+                                    Error(messages, $"Failed to generate division fixed point magic.", instruction, ilProcessor.Body.Method);
+                                }
                                 break;
                             }
                             case "op_Modulus" when methodDef.Parameters.Count == 2 && CheckParam(methodDef, 1):
                             {
-                                var fp = ConvertToConstFP(is64, ilProcessor, instructions[j - 1], messages);
-                                if (fp == null) continue;
-                                var modOp = is64 ? opModulusFp64_Fp64 : opModulusFp_Fp;
-                                var toRaw = ilProcessor.Create(OpCodes.Call, modOp);
-                                ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawOp));
-                                ilProcessor.Replace(instruction, toRaw);
+                                try
+                                {
+                                    var fp = ConvertToConstFP(is64, ilProcessor, instructions[j - 1], messages);
+                                    if (fp == null) continue;
+                                    var modOp = is64 ? opModulusFp64_Fp64 : opModulusFp_Fp;
+                                    var toRaw = ilProcessor.Create(OpCodes.Call, modOp);
+                                    ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawOp));
+                                    ilProcessor.Replace(instruction, toRaw);
+                                }
+                                catch
+                                {
+                                    Error(messages, $"Failed to generate modulus fixed point magic.", instruction, ilProcessor.Body.Method);
+                                }
                                 break;
                             }
                             case "op_Modulus" when methodDef.Parameters.Count == 2 && CheckParam(methodDef, 0):
                             {
-                                var fp = ConvertToConstFP(is64, ilProcessor, instructions[j - 2], messages);
-                                if (fp == null) continue;
-                                var modOp = is64 ? opModulusFp64_Fp64 : opModulusFp_Fp;
-                                var toRaw = ilProcessor.Create(OpCodes.Call, modOp);
-                                ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawOp));
-                                ilProcessor.Replace(instruction, toRaw);
+                                try
+                                {
+                                    var fp = ConvertToConstFP(is64, ilProcessor, instructions[j - 2], messages);
+                                    if (fp == null) continue;
+                                    var modOp = is64 ? opModulusFp64_Fp64 : opModulusFp_Fp;
+                                    var toRaw = ilProcessor.Create(OpCodes.Call, modOp);
+                                    ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawOp));
+                                    ilProcessor.Replace(instruction, toRaw);
+                                }
+                                catch
+                                {
+                                    Error(messages, $"Failed to generate modulus fixed point magic.", instruction, ilProcessor.Body.Method);
+                                }
                                 break;
                             }
                         }
@@ -229,6 +311,14 @@ namespace Purrdiction.Codegen
             var cmp = methodDef.Parameters[idx].ParameterType.FullName;
             return cmp is "System.Single" or "System.Double";
         }
+
+        private static bool CheckParam(MethodDefinition methodDef, int idx, out bool is64)
+        {
+            var cmp = methodDef.Parameters[idx].ParameterType.FullName;
+            is64 = cmp is "System.Double";
+            return is64 || cmp is "System.Single";
+        }
+
 
         public static void Error(ICollection<DiagnosticMessage> messages, string message, Instruction instruction, MethodDefinition method)
         {
@@ -283,7 +373,7 @@ namespace Purrdiction.Codegen
                 {
                     double value = (double)instruction.Operand;
                     var constFp =
-                        is64 ? processor.Create(OpCodes.Ldc_R8, FP64Math.FromDouble(value))
+                        is64 ? processor.Create(OpCodes.Ldc_I8, FP64Math.FromDouble(value))
                             : processor.Create(OpCodes.Ldc_I4, FPMath.FromDouble(value));
                     processor.Replace(instruction, constFp);
                     return constFp;
@@ -292,7 +382,7 @@ namespace Purrdiction.Codegen
                 {
                     float value = (float)instruction.Operand;
                     var constFp =
-                        is64 ? processor.Create(OpCodes.Ldc_R8, FP64Math.FromDouble(value))
+                        is64 ? processor.Create(OpCodes.Ldc_I8, FP64Math.FromDouble(value))
                             : processor.Create(OpCodes.Ldc_I4, FPMath.FromDouble(value));
                     processor.Replace(instruction, constFp);
                     return constFp;
