@@ -19,13 +19,13 @@ namespace PurrNet.Prediction
         public static readonly FP epsilon = new FP(1L << (FPMath.Shift - 1));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly double ToDouble() => FPMath.ToDouble(this);
+        public double ToDouble() => FPMath.ToDouble(this);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly int ToInt() => FPMath.RoundToInt(this);
+        public int ToInt() => FPMath.RoundToInt(this);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public readonly float ToFloat() => FPMath.ToFloat(this);
+        public float ToFloat() => FPMath.ToFloat(this);
 
         public FP(long rawValue) => this.rawValue = rawValue;
 
@@ -166,7 +166,7 @@ namespace PurrNet.Prediction
             return obj is FP other && Equals(other);
         }
 
-        public readonly override int GetHashCode()
+        public override int GetHashCode()
         {
             return (int)(rawValue ^ rawValue >> 32);
         }
