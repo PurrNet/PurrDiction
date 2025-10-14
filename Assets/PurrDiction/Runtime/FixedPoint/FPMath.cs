@@ -130,7 +130,7 @@ namespace PurrNet.Prediction
         /// </summary>
         public static string ToString(FP v)
         {
-            return ToDouble(v.rawValue).ToString(CultureInfo.InvariantCulture);
+            return ToDouble(v).ToString(CultureInfo.InvariantCulture);
         }
 
         [MethodImpl(FPUtils.AggressiveInlining)]

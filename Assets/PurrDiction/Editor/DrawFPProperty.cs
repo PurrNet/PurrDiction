@@ -12,9 +12,9 @@ namespace PurrNet.Prediction.Editor
         {
             rawValue = property.FindPropertyRelative("rawValue");
 
-            var value = FP.FromRaw(rawValue.intValue);
+            var value = FP.FromRaw(rawValue.longValue);
 
-            double representation = FPMath.ToDouble(rawValue.intValue);
+            double representation = FPMath.ToDouble(value);
             var newValue = EditorGUI.DelayedDoubleField(position, label, representation);
 
             GUI.skin.label.alignment = TextAnchor.MiddleRight;
