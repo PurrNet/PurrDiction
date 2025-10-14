@@ -186,7 +186,7 @@ namespace PurrNet.Prediction
         [UsedImplicitly]
         public static FP FromFloat(float value)
         {
-            return FPMath.FromFloat(value);
+            return FPMath.FromFloatUsingBits(value);
         }
     }
 }

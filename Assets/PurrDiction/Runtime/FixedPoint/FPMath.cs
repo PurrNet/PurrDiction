@@ -80,6 +80,38 @@ namespace PurrNet.Prediction
             return new FP((long)(v * 4294967296.0f));
         }
 
+        [MethodImpl(FPUtils.AggressiveInlining)]
+        public static unsafe FP FromFloatUsingBits(float v)
+        {
+            int bits = *(int*)&v;
+            int sign = bits >> 31;
+            int exp = (bits >> 23) & 0xFF;
+            int mantissa = bits & 0x7FFFFF;
+
+            switch (exp)
+            {
+                // Handle zero and denormals (too small for Q32.32)
+                case 0:
+                    return new FP(0);
+                // Handle infinity or NaN
+                case 0xFF:
+                    return new FP(sign != 0 ? long.MinValue : long.MaxValue);
+            }
+
+            // Normal case
+            int shift = exp - 118;
+
+            long value = shift switch
+            {
+                // Prevent overflow
+                > 40 => 0x7FFFFFFF00000000L,
+                >= 0 => ((1L << 23) | mantissa) << shift,
+                _ => ((1L << 23) | mantissa) >> -shift
+            };
+
+            return new FP(sign != 0 ? -value : value);
+        }
+
         /// <summary>
         /// Converts a fixed-point value into an integer by rounding it up to nearest integer.
         /// </summary>
