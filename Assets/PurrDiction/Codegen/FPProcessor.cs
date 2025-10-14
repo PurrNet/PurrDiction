@@ -95,7 +95,7 @@ namespace Purrdiction.Codegen
                             {
                                 try
                                 {
-                                    var res = ConvertToConstFP(ilProcessor, method.Body.Instructions[j - 1], messages);
+                                    var res = ConvertToConstFP(ilProcessor, method.Body.Instructions[j - 1], messages, replacementMap);
                                     if (res == null) continue;
                                     Replace(ilProcessor, instruction, ilProcessor.Create(OpCodes.Call, fromRawLong), replacementMap);
                                 }
@@ -109,7 +109,7 @@ namespace Purrdiction.Codegen
                             {
                                 try
                                 {
-                                    var fp = ConvertToConstFP(ilProcessor, method.Body.Instructions[j - 1], messages);
+                                    var fp = ConvertToConstFP(ilProcessor, method.Body.Instructions[j - 1], messages, replacementMap);
                                     if (fp == null) continue;
                                     var toRaw = ilProcessor.Create(OpCodes.Call, opAdditionFp64_Fp64);
                                     ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawLong));
@@ -126,7 +126,7 @@ namespace Purrdiction.Codegen
                             {
                                 try
                                 {
-                                    var fp = ConvertToConstFP(ilProcessor, method.Body.Instructions[j - 2], messages);
+                                    var fp = ConvertToConstFP(ilProcessor, method.Body.Instructions[j - 2], messages, replacementMap);
                                     if (fp == null) continue;
                                     var toRaw = ilProcessor.Create(OpCodes.Call, opAdditionFp64_Fp64);
                                     ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawLong));
@@ -143,7 +143,7 @@ namespace Purrdiction.Codegen
                             {
                                 try
                                 {
-                                    var fp = ConvertToConstFP(ilProcessor, method.Body.Instructions[j - 1], messages);
+                                    var fp = ConvertToConstFP(ilProcessor, method.Body.Instructions[j - 1], messages, replacementMap);
                                     if (fp == null) continue;
                                     var toRaw = ilProcessor.Create(OpCodes.Call, opSubstractionFp64_Fp64);
                                     ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawLong));
@@ -160,7 +160,7 @@ namespace Purrdiction.Codegen
                             {
                                 try
                                 {
-                                    var fp = ConvertToConstFP(ilProcessor, method.Body.Instructions[j - 2], messages);
+                                    var fp = ConvertToConstFP(ilProcessor, method.Body.Instructions[j - 2], messages, replacementMap);
                                     if (fp == null) continue;
                                     var toRaw = ilProcessor.Create(OpCodes.Call, opSubstractionFp64_Fp64);
                                     ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawLong));
@@ -176,7 +176,7 @@ namespace Purrdiction.Codegen
                             {
                                 try
                                 {
-                                    var fp = ConvertToConstFP(ilProcessor, method.Body.Instructions[j - 1], messages);
+                                    var fp = ConvertToConstFP(ilProcessor, method.Body.Instructions[j - 1], messages, replacementMap);
                                     if (fp == null) continue;
                                     var toRaw = ilProcessor.Create(OpCodes.Call, opMultiplyFp64_Fp64);
                                     ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawLong));
@@ -192,7 +192,7 @@ namespace Purrdiction.Codegen
                             {
                                 try
                                 {
-                                    var fp = ConvertToConstFP(ilProcessor, method.Body.Instructions[j - 2], messages);
+                                    var fp = ConvertToConstFP(ilProcessor, method.Body.Instructions[j - 2], messages, replacementMap);
                                     if (fp == null) continue;
                                     var toRaw = ilProcessor.Create(OpCodes.Call, opMultiplyFp64_Fp64);
                                     ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawLong));
@@ -208,7 +208,7 @@ namespace Purrdiction.Codegen
                             {
                                 try
                                 {
-                                    var fp = ConvertToConstFP(ilProcessor, method.Body.Instructions[j - 1], messages);
+                                    var fp = ConvertToConstFP(ilProcessor, method.Body.Instructions[j - 1], messages, replacementMap);
                                     if (fp == null) continue;
                                     var toRaw = ilProcessor.Create(OpCodes.Call, opDivisionFp64_Fp64);
                                     ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawLong));
@@ -224,7 +224,7 @@ namespace Purrdiction.Codegen
                             {
                                 try
                                 {
-                                    var fp = ConvertToConstFP(ilProcessor, method.Body.Instructions[j - 2], messages);
+                                    var fp = ConvertToConstFP(ilProcessor, method.Body.Instructions[j - 2], messages, replacementMap);
                                     if (fp == null) continue;
                                     var toRaw = ilProcessor.Create(OpCodes.Call, opDivisionFp64_Fp64);
                                     ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawLong));
@@ -240,7 +240,7 @@ namespace Purrdiction.Codegen
                             {
                                 try
                                 {
-                                    var fp = ConvertToConstFP(ilProcessor, method.Body.Instructions[j - 1], messages);
+                                    var fp = ConvertToConstFP(ilProcessor, method.Body.Instructions[j - 1], messages, replacementMap);
                                     if (fp == null) continue;
                                     var toRaw = ilProcessor.Create(OpCodes.Call, opModulusFp64_Fp64);
                                     ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawLong));
@@ -256,11 +256,10 @@ namespace Purrdiction.Codegen
                             {
                                 try
                                 {
-                                    var fp = ConvertToConstFP(ilProcessor, method.Body.Instructions[j - 2], messages);
+                                    var fp = ConvertToConstFP(ilProcessor, method.Body.Instructions[j - 2], messages, replacementMap);
                                     if (fp == null) continue;
-                                    var toRaw = ilProcessor.Create(OpCodes.Call, opModulusFp64_Fp64);
                                     ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawLong));
-                                    Replace(ilProcessor, instruction, toRaw, replacementMap);
+                                    Replace(ilProcessor, instruction, ilProcessor.Create(OpCodes.Call, opModulusFp64_Fp64), replacementMap);
                                 }
                                 catch
                                 {
@@ -284,6 +283,7 @@ namespace Purrdiction.Codegen
                                 if (replacementMap.TryGetValue(targets[j], out var newSwitchTarget))
                                     targets[j] = newSwitchTarget;
                             }
+                            inst.Operand = targets;
                         }
                     }
 
@@ -394,7 +394,7 @@ namespace Purrdiction.Codegen
             }
         }
 
-        private static Instruction ConvertToConstFP(ILProcessor processor, Instruction instruction, List<DiagnosticMessage> messages)
+        private static Instruction ConvertToConstFP(ILProcessor processor, Instruction instruction, List<DiagnosticMessage> messages, Dictionary<Instruction, Instruction> replacementMap)
         {
             switch (instruction.OpCode.Code)
             {
@@ -402,14 +402,14 @@ namespace Purrdiction.Codegen
                 {
                     double value = (double)instruction.Operand;
                     var constFp = processor.Create(OpCodes.Ldc_I8, FPMath.FromDouble(value));
-                    processor.Replace(instruction, constFp);
+                    Replace(processor, instruction, constFp, replacementMap);
                     return constFp;
                 }
                 case Code.Ldc_R4:
                 {
                     float value = (float)instruction.Operand;
                     var constFp = processor.Create(OpCodes.Ldc_I8, FPMath.FromDouble(value));
-                    processor.Replace(instruction, constFp);
+                    Replace(processor, instruction, constFp, replacementMap);
                     return constFp;
                 }
                 default:
