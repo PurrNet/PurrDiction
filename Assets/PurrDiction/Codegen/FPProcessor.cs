@@ -66,6 +66,7 @@ namespace Purrdiction.Codegen
                     if (method is not { HasBody: true })
                         continue;
 
+                    var replacementMap = new Dictionary<Instruction, Instruction>();
                     var ilProcessor = method.Body.GetILProcessor();
 
                     for (var j = 0; j < method.Body.Instructions.Count; j++)
@@ -96,7 +97,7 @@ namespace Purrdiction.Codegen
                                 {
                                     var res = ConvertToConstFP(ilProcessor, method.Body.Instructions[j - 1], messages);
                                     if (res == null) continue;
-                                    ilProcessor.Replace(instruction, ilProcessor.Create(OpCodes.Call, fromRawLong));
+                                    Replace(ilProcessor, instruction, ilProcessor.Create(OpCodes.Call, fromRawLong), replacementMap);
                                 }
                                 catch
                                 {
@@ -112,7 +113,7 @@ namespace Purrdiction.Codegen
                                     if (fp == null) continue;
                                     var toRaw = ilProcessor.Create(OpCodes.Call, opAdditionFp64_Fp64);
                                     ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawLong));
-                                    ilProcessor.Replace(instruction, toRaw);
+                                    Replace(ilProcessor, instruction, toRaw, replacementMap);
                                 }
                                 catch
                                 {
@@ -129,7 +130,7 @@ namespace Purrdiction.Codegen
                                     if (fp == null) continue;
                                     var toRaw = ilProcessor.Create(OpCodes.Call, opAdditionFp64_Fp64);
                                     ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawLong));
-                                    ilProcessor.Replace(instruction, toRaw);
+                                    Replace(ilProcessor, instruction, toRaw, replacementMap);
                                 }
                                 catch
                                 {
@@ -146,7 +147,7 @@ namespace Purrdiction.Codegen
                                     if (fp == null) continue;
                                     var toRaw = ilProcessor.Create(OpCodes.Call, opSubstractionFp64_Fp64);
                                     ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawLong));
-                                    ilProcessor.Replace(instruction, toRaw);
+                                    Replace(ilProcessor, instruction, toRaw, replacementMap);
                                 }
                                 catch
                                 {
@@ -163,7 +164,7 @@ namespace Purrdiction.Codegen
                                     if (fp == null) continue;
                                     var toRaw = ilProcessor.Create(OpCodes.Call, opSubstractionFp64_Fp64);
                                     ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawLong));
-                                    ilProcessor.Replace(instruction, toRaw);
+                                    Replace(ilProcessor, instruction, toRaw, replacementMap);
                                 }
                                 catch
                                 {
@@ -179,7 +180,7 @@ namespace Purrdiction.Codegen
                                     if (fp == null) continue;
                                     var toRaw = ilProcessor.Create(OpCodes.Call, opMultiplyFp64_Fp64);
                                     ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawLong));
-                                    ilProcessor.Replace(instruction, toRaw);
+                                    Replace(ilProcessor, instruction, toRaw, replacementMap);
                                 }
                                 catch
                                 {
@@ -195,7 +196,7 @@ namespace Purrdiction.Codegen
                                     if (fp == null) continue;
                                     var toRaw = ilProcessor.Create(OpCodes.Call, opMultiplyFp64_Fp64);
                                     ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawLong));
-                                    ilProcessor.Replace(instruction, toRaw);
+                                    Replace(ilProcessor, instruction, toRaw, replacementMap);
                                 }
                                 catch
                                 {
@@ -211,7 +212,7 @@ namespace Purrdiction.Codegen
                                     if (fp == null) continue;
                                     var toRaw = ilProcessor.Create(OpCodes.Call, opDivisionFp64_Fp64);
                                     ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawLong));
-                                    ilProcessor.Replace(instruction, toRaw);
+                                    Replace(ilProcessor, instruction, toRaw, replacementMap);
                                 }
                                 catch
                                 {
@@ -227,7 +228,7 @@ namespace Purrdiction.Codegen
                                     if (fp == null) continue;
                                     var toRaw = ilProcessor.Create(OpCodes.Call, opDivisionFp64_Fp64);
                                     ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawLong));
-                                    ilProcessor.Replace(instruction, toRaw);
+                                    Replace(ilProcessor, instruction, toRaw, replacementMap);
                                 }
                                 catch
                                 {
@@ -243,7 +244,7 @@ namespace Purrdiction.Codegen
                                     if (fp == null) continue;
                                     var toRaw = ilProcessor.Create(OpCodes.Call, opModulusFp64_Fp64);
                                     ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawLong));
-                                    ilProcessor.Replace(instruction, toRaw);
+                                    Replace(ilProcessor, instruction, toRaw, replacementMap);
                                 }
                                 catch
                                 {
@@ -259,13 +260,29 @@ namespace Purrdiction.Codegen
                                     if (fp == null) continue;
                                     var toRaw = ilProcessor.Create(OpCodes.Call, opModulusFp64_Fp64);
                                     ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawLong));
-                                    ilProcessor.Replace(instruction, toRaw);
+                                    Replace(ilProcessor, instruction, toRaw, replacementMap);
                                 }
                                 catch
                                 {
                                     Error(messages, $"Failed to generate modulus fixed point magic.", instruction, ilProcessor.Body.Method);
                                 }
                                 break;
+                            }
+                        }
+                    }
+
+                    foreach (var inst in method.Body.Instructions)
+                    {
+                        if (inst.Operand is Instruction target && replacementMap.TryGetValue(target, out var newTarget))
+                            inst.Operand = newTarget;
+
+                        // Handle switch statements
+                        if (inst.Operand is Instruction[] targets)
+                        {
+                            for (int j = 0; j < targets.Length; j++)
+                            {
+                                if (replacementMap.TryGetValue(targets[j], out var newSwitchTarget))
+                                    targets[j] = newSwitchTarget;
                             }
                         }
                     }
@@ -309,6 +326,12 @@ namespace Purrdiction.Codegen
             }
         }
 
+        static void Replace(ILProcessor processor, Instruction instruction, Instruction newInstruction, Dictionary<Instruction, Instruction> replacementMap)
+        {
+            replacementMap[instruction] = newInstruction;
+            processor.Replace(instruction, newInstruction);
+        }
+
         private static bool CheckParam(MethodDefinition methodDef, int idx)
         {
             var cmp = methodDef.Parameters[idx].ParameterType.FullName;
@@ -319,20 +342,31 @@ namespace Purrdiction.Codegen
         {
             if (method.DebugInformation.HasSequencePoints)
             {
-                var first = GetSequence(instruction, method);
-                string file = first.Document.Url;
-                if (!string.IsNullOrEmpty(file))
-                    file = '/' + file[file.IndexOf("Assets", StringComparison.Ordinal)..].Replace('\\', '/');
-                else file = string.Empty;
-
-                messages.Add(new DiagnosticMessage
+                try
                 {
-                    DiagnosticType = DiagnosticType.Error,
-                    MessageData = message,
-                    Column = first.StartColumn,
-                    Line = first.StartLine,
-                    File = file
-                });
+                    var first = GetSequence(instruction, method);
+                    string file = first.Document.Url;
+                    if (!string.IsNullOrEmpty(file))
+                        file = '/' + file[file.IndexOf("Assets", StringComparison.Ordinal)..].Replace('\\', '/');
+                    else file = string.Empty;
+
+                    messages.Add(new DiagnosticMessage
+                    {
+                        DiagnosticType = DiagnosticType.Error,
+                        MessageData = message,
+                        Column = first.StartColumn,
+                        Line = first.StartLine,
+                        File = file
+                    });
+                }
+                catch (Exception e)
+                {
+                    messages.Add(new DiagnosticMessage
+                    {
+                        DiagnosticType = DiagnosticType.Error,
+                        MessageData = $"[{method.DeclaringType.FullName}] {message}\n{e.StackTrace}"
+                    });
+                }
             }
             else
             {
