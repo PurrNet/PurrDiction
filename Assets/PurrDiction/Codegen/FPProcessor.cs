@@ -47,17 +47,17 @@ namespace Purrdiction.Codegen
                 if (!type.HasMethods)
                     return;
 
-                if (type.FullName == typeof(FP64).FullName ||
-                    type.FullName == typeof(FP64Math).FullName)
+                if (type.FullName == typeof(FP).FullName ||
+                    type.FullName == typeof(FPMath).FullName)
                     return;
 
-                var fp64Type = module.GetTypeDefinition<FP64>();
+                var fp64Type = module.GetTypeDefinition<FP>();
                 var fromRawLong = fp64Type.GetMethod("FromRaw").Import(module);
-                var opAdditionFp64_Fp64 = fp64Type.GetMethodWithParams("op_Addition", typeof(FP64), typeof(FP64)).Import(module);
-                var opSubstractionFp64_Fp64 = fp64Type.GetMethodWithParams("op_Subtraction", typeof(FP64), typeof(FP64)).Import(module);
-                var opMultiplyFp64_Fp64 = fp64Type.GetMethodWithParams("op_Multiply", typeof(FP64), typeof(FP64)).Import(module);
-                var opDivisionFp64_Fp64 = fp64Type.GetMethodWithParams("op_Division", typeof(FP64), typeof(FP64)).Import(module);
-                var opModulusFp64_Fp64 = fp64Type.GetMethodWithParams("op_Modulus", typeof(FP64), typeof(FP64)).Import(module);
+                var opAdditionFp64_Fp64 = fp64Type.GetMethodWithParams("op_Addition", typeof(FP), typeof(FP)).Import(module);
+                var opSubstractionFp64_Fp64 = fp64Type.GetMethodWithParams("op_Subtraction", typeof(FP), typeof(FP)).Import(module);
+                var opMultiplyFp64_Fp64 = fp64Type.GetMethodWithParams("op_Multiply", typeof(FP), typeof(FP)).Import(module);
+                var opDivisionFp64_Fp64 = fp64Type.GetMethodWithParams("op_Division", typeof(FP), typeof(FP)).Import(module);
+                var opModulusFp64_Fp64 = fp64Type.GetMethodWithParams("op_Modulus", typeof(FP), typeof(FP)).Import(module);
 
                 for (var i = 0; i < type.Methods.Count; i++)
                 {
@@ -341,14 +341,14 @@ namespace Purrdiction.Codegen
                 case Code.Ldc_R8:
                 {
                     double value = (double)instruction.Operand;
-                    var constFp = processor.Create(OpCodes.Ldc_I8, FP64Math.FromDouble(value));
+                    var constFp = processor.Create(OpCodes.Ldc_I8, FPMath.FromDouble(value));
                     processor.Replace(instruction, constFp);
                     return constFp;
                 }
                 case Code.Ldc_R4:
                 {
                     float value = (float)instruction.Operand;
-                    var constFp = processor.Create(OpCodes.Ldc_I8, FP64Math.FromDouble(value));
+                    var constFp = processor.Create(OpCodes.Ldc_I8, FPMath.FromDouble(value));
                     processor.Replace(instruction, constFp);
                     return constFp;
                 }

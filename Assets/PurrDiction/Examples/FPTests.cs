@@ -5,11 +5,11 @@ namespace PurrDiction.Examples
 {
     public struct FPVec3
     {
-        public FP64 x;
-        public FP64 y;
-        public FP64 z;
+        public FP x;
+        public FP y;
+        public FP z;
 
-        public FPVec3(FP64 x, FP64 y, FP64 z)
+        public FPVec3(FP x, FP y, FP z)
         {
             this.x = x;
             this.y = y;

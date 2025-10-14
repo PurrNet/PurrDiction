@@ -22,54 +22,18 @@
 // SOFTWARE.
 //
 
-// PREFIX
-#if CPP
-#elif JAVA
-package fixpointcs;
-
-import java.lang.Long;
-import java.lang.Double;
-#else // C#
-/* Coding style:
- *
- * In order to keep the transpiled C++/Java code working, here are some generic
- * coding guidelines.
- *
- * All 64bit constants should be of the form " -1234L" or " 0x1234L" (so start
- * with a whitespace and end with a capital L).
- *
- * All definitions should be in dependency order. That is, define functions
- * that are used later first. This is because C++ processes things in order,
- * where as in C# the definition order doesn't matter.
- *
- * Minimize the use of system libraries.
- *
- * There is a very limited preprocessor, which accepts "#if <LANG>",
- * "#elif <LANG>", "#else", as well as "#if !TRANSPILE" directives. No nested
- * directives are allowed.
- *
- * Use up-to C# 3 features to keep the library compatible with older versions
- * of Unity.
- */
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
-#endif
 
-#if !TRANSPILE
 namespace PurrNet.Prediction
 {
-#endif
-
-#if CPP
-#else
     /// <summary>
     /// Direct fixed point (signed 32.32) functions.
     /// </summary>
-    public static class FP64Math
+    public static class FPMath
     {
-#endif
-        const int Shift = 32;
+        public const int Shift = 32;
         const long FractionMask = ( 1L << Shift ) - 1; // Space before 1L needed because of hacky C++ code generator
         const long IntegerMask = ~FractionMask;
 
@@ -78,10 +42,8 @@ namespace PurrNet.Prediction
         internal const long Neg1 = -1L << Shift;
         internal const long One = 1L << Shift;
         const long Half = One >> 1;
-        internal const long PI = 13493037705L; //(long)(Math.PI * 65536.0) << 16;
-        const long PI2 = 26986075409L;
+        const long PI = 13493037705L; //(long)(Math.PI * 65536.0) << 16;
         const long PIHALF = 6746518852L;
-        const long E = 11674931555L;
 
         internal const long MinValue = -9223372036854775808L;
         internal const long MaxValue = 9223372036854775807L;
@@ -95,9 +57,9 @@ namespace PurrNet.Prediction
         /// Converts an integer to a fixed-point value.
         /// </summary>
         [MethodImpl(FPUtils.AggressiveInlining)]
-        public static long FromInt(int v)
+        public static FP FromInt(int v)
         {
-            return (long)v << Shift;
+            return new FP((long)v << Shift);
         }
 
         /// <summary>
@@ -113,82 +75,68 @@ namespace PurrNet.Prediction
         /// Converts a float to a fixed-point value.
         /// </summary>
         [MethodImpl(FPUtils.AggressiveInlining)]
-        public static long FromFloat(float v)
+        public static FP FromFloat(float v)
         {
-            return (long)(v * 4294967296.0f);
+            return new FP((long)(v * 4294967296.0f));
         }
 
         /// <summary>
         /// Converts a fixed-point value into an integer by rounding it up to nearest integer.
         /// </summary>
         [MethodImpl(FPUtils.AggressiveInlining)]
-        public static int CeilToInt(long v)
+        public static int CeilToInt(FP v)
         {
-            return (int)((v + (One - 1)) >> Shift);
-        }
-
-        [MethodImpl(FPUtils.AggressiveInlining)]
-        public static int FloorToInt(FP64 v)
-        {
-            return FloorToInt(v.rawValue);
+            return (int)((v.rawValue + (One - 1)) >> Shift);
         }
 
         /// <summary>
         /// Converts a fixed-point value into an integer by rounding it down to nearest integer.
         /// </summary>
         [MethodImpl(FPUtils.AggressiveInlining)]
-        public static int FloorToInt(long v)
+        public static int FloorToInt(FP v)
         {
-            return (int)(v >> Shift);
+            return (int)(v.rawValue >> Shift);
         }
 
         /// <summary>
         /// Converts a fixed-point value into an integer by rounding it to nearest integer.
         /// </summary>
         [MethodImpl(FPUtils.AggressiveInlining)]
-        public static int RoundToInt(long v)
+        public static int RoundToInt(FP v)
         {
-            return (int)((v + Half) >> Shift);
+            return (int)((v.rawValue + Half) >> Shift);
         }
 
         /// <summary>
         /// Converts a fixed-point value into a double.
         /// </summary>
         [MethodImpl(FPUtils.AggressiveInlining)]
-        public static double ToDouble(long v)
+        public static double ToDouble(FP v)
         {
-            return v * (1.0 / 4294967296.0);
+            return v.rawValue * (1.0 / 4294967296.0);
         }
 
         /// <summary>
         /// Converts a FP value into a float.
         /// </summary>
         [MethodImpl(FPUtils.AggressiveInlining)]
-        public static float ToFloat(long v)
+        public static float ToFloat(FP v)
         {
-            return v * (1.0f / 4294967296.0f);
+            return v.rawValue * (1.0f / 4294967296.0f);
         }
 
         /// <summary>
         /// Converts the value to a human readable string.
         /// </summary>
-#if CPP
-#elif JAVA
-        public static String ToString(long v)
+        public static string ToString(FP v)
         {
-            return Double.toString(ToDouble(v));
+            return ToDouble(v.rawValue).ToString(CultureInfo.InvariantCulture);
         }
-#else
-        public static string ToString(long v)
-        {
-            return ToDouble(v).ToString(CultureInfo.InvariantCulture);
-        }
-#endif
 
         [MethodImpl(FPUtils.AggressiveInlining)]
-        public static FP64 Abs(FP64 x)
+        public static FP Abs(FP x)
         {
-            return FP64.FromRaw(Abs(x.rawValue));
+            return new FP(Abs(x.rawValue));
         }
 
         /// <summary>
@@ -248,39 +196,39 @@ namespace PurrNet.Prediction
         }
 
         [MethodImpl(FPUtils.AggressiveInlining)]
-        public static FP64 Min(FP64 a, FP64 b)
+        public static FP Min(FP a, FP b)
         {
-            return FP64.FromRaw(Min(a.rawValue, b.rawValue));
+            return new FP(Min(a.rawValue, b.rawValue));
         }
 
         /// <summary>
         /// Returns the minimum of the two values.
         /// </summary>
         [MethodImpl(FPUtils.AggressiveInlining)]
-        public static long Min(long a, long b)
+        static long Min(long a, long b)
         {
             return (a < b) ? a : b;
         }
 
         [MethodImpl(FPUtils.AggressiveInlining)]
-        public static FP64 Max(FP64 a, FP64 b)
+        public static FP Max(FP a, FP b)
         {
-            return FP64.FromRaw(Max(a.rawValue, b.rawValue));
+            return new FP(Max(a.rawValue, b.rawValue));
         }
 
         /// <summary>
         /// Returns the maximum of the two values.
         /// </summary>
         [MethodImpl(FPUtils.AggressiveInlining)]
-        public static long Max(long a, long b)
+        static long Max(long a, long b)
         {
             return (a > b) ? a : b;
         }
 
         [MethodImpl(FPUtils.AggressiveInlining)]
-        public static FP64 Clamp(FP64 a, FP64 min, FP64 max)
+        public static FP Clamp(FP a, FP min, FP max)
         {
-            return FP64.FromRaw(Clamp(a.rawValue, min.rawValue, max.rawValue));
+            return new FP(Clamp(a.rawValue, min.rawValue, max.rawValue));
         }
 
         /// <summary>
@@ -293,7 +241,7 @@ namespace PurrNet.Prediction
         }
 
         [MethodImpl(FPUtils.AggressiveInlining)]
-        public static int Sign(FP64 x)
+        public static int Sign(FP x)
         {
             return Sign(x.rawValue);
         }
@@ -334,7 +282,7 @@ namespace PurrNet.Prediction
         /// Multiplies two FP values together.
         /// </summary>
         [MethodImpl(FPUtils.AggressiveInlining)]
-        public static long Mul(long a, long b)
+        internal static long Mul(long a, long b)
         {
             long ai = a >> Shift;
             long af = (a & FractionMask);
@@ -365,7 +313,16 @@ namespace PurrNet.Prediction
         /// Linearly interpolate from a to b by t.
         /// </summary>
         [MethodImpl(FPUtils.AggressiveInlining)]
-        public static long Lerp(long a, long b, long t)
+        public static FP Lerp(FP a, FP b, FP t)
+        {
+            return new FP(Lerp(a.rawValue, b.rawValue, t.rawValue));
+        }
+
+        /// <summary>
+        /// Linearly interpolate from a to b by t.
+        /// </summary>
+        [MethodImpl(FPUtils.AggressiveInlining)]
+        static long Lerp(long a, long b, long t)
         {
             return Mul(a, t) + Mul(b, One - t);
         }
@@ -587,10 +544,16 @@ namespace PurrNet.Prediction
             return FPUtils.ShiftRight(sign * y, offset);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static FP DivFastest(FP a, FP b)
+        {
+            return new FP(DivFastest(a.rawValue, b.rawValue));
+        }
+
         /// <summary>
         /// Calculates division approximation.
         /// </summary>
-        public static long DivFastest(long a, long b)
+        static long DivFastest(long a, long b)
         {
             if (b == MinValue || b == 0)
             {
@@ -619,15 +582,11 @@ namespace PurrNet.Prediction
         /// <summary>
         /// Divides two FP values and returns the modulus.
         /// </summary>
-        public static long Mod(long a, long b)
+        public static FP Mod(FP a, FP b)
         {
-            if (b == 0)
-            {
-                FPUtils.InvalidArgument("Fixed64.Mod", "b", b);
-                return 0;
-            }
-
-            return a % b;
+            if (b.rawValue == 0)
+                return FP.zero;
+            return new FP(a.rawValue % b.rawValue);
         }
 
         /// <summary>
@@ -680,20 +639,17 @@ namespace PurrNet.Prediction
 #endif
         }
 
-        public static FP64 Sqrt(FP64 x)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static FP Sqrt(FP x)
         {
-            return FP64.FromRaw(Sqrt(x.rawValue));
+            return new FP(Sqrt(x.rawValue));
         }
 
-        public static long Sqrt(long x)
+        static long Sqrt(long x)
         {
             // Return 0 for all non-positive values.
             if (x <= 0)
-            {
-                if (x < 0)
-                    FPUtils.InvalidArgument("Fixed64.Sqrt", "x", x);
                 return 0;
-            }
 
             // Constants (s2.30).
             const int ONE = (1 << 30);
@@ -702,7 +658,6 @@ namespace PurrNet.Prediction
             // Normalize input into [1.0, 2.0( range (as s2.30).
             int offset = 31 - Nlz((ulong)x);
             int n = (int)(((offset >= 0) ? (x >> offset) : (x << -offset)) >> 2);
-            Debug.Assert(n >= ONE);
             int y = FPUtils.SqrtPoly3Lut8(n - ONE);
 
             // Divide offset by 2 (to get sqrt), compute adjust value for odd exponents.
@@ -718,11 +673,7 @@ namespace PurrNet.Prediction
         {
             // Return 0 for all non-positive values.
             if (x <= 0)
-            {
-                if (x < 0)
-                    FPUtils.InvalidArgument("Fixed64.SqrtFast", "x", x);
                 return 0;
-            }
 
             // Constants (s2.30).
             const int ONE = (1 << 30);
@@ -1278,9 +1229,9 @@ namespace PurrNet.Prediction
         }
 
         [MethodImpl(FPUtils.AggressiveInlining)]
-        public static FP64 Sin(FP64 x)
+        public static FP Sin(FP x)
         {
-            return FP64.FromRaw(Sin(x.rawValue));
+            return new FP(Sin(x.rawValue));
         }
 
         public static long Sin(long x)
@@ -1314,17 +1265,17 @@ namespace PurrNet.Prediction
         }
 
         [MethodImpl(FPUtils.AggressiveInlining)]
-        public static (FP64 sha, FP64 cha) SinCos(FP64 halfAngle)
+        public static (FP sha, FP cha) SinCos(FP halfAngle)
         {
-            var sin = FP64.FromRaw(Sin(halfAngle.rawValue));
-            var cos = FP64.FromRaw(Cos(halfAngle.rawValue));
+            var sin = new FP(Sin(halfAngle.rawValue));
+            var cos = new FP(Cos(halfAngle.rawValue));
             return (sin, cos);
         }
 
         [MethodImpl(FPUtils.AggressiveInlining)]
-        public static FP64 Cos(FP64 x)
+        public static FP Cos(FP x)
         {
-            return FP64.FromRaw(Cos(x.rawValue));
+            return new FP(Cos(x.rawValue));
         }
 
         [MethodImpl(FPUtils.AggressiveInlining)]
@@ -1390,9 +1341,9 @@ namespace PurrNet.Prediction
         }
 
         [MethodImpl(FPUtils.AggressiveInlining)]
-        public static FP64 Atan2(FP64 y, FP64 x)
+        public static FP Atan2(FP y, FP x)
         {
-            return FP64.FromRaw(Atan2(y.rawValue, x.rawValue));
+            return new FP(Atan2(y.rawValue, x.rawValue));
         }
 
         public static long Atan2(long y, long x)
@@ -1544,9 +1495,9 @@ namespace PurrNet.Prediction
         }
 
         [MethodImpl(FPUtils.AggressiveInlining)]
-        public static FP64 Asin(FP64 x)
+        public static FP Asin(FP x)
         {
-            return FP64.FromRaw(Asin(x.rawValue));
+            return new FP(Asin(x.rawValue));
         }
 
         public static long Asin(long x)
@@ -1585,9 +1536,9 @@ namespace PurrNet.Prediction
             return Atan2Fastest(x, SqrtFastest(Mul(One + x, One - x)));
         }
 
-        public static FP64 Acos(FP64 x)
+        public static FP Acos(FP x)
         {
-            return FP64.FromRaw(Acos(x.rawValue));
+            return new FP(Acos(x.rawValue));
         }
 
         public static long Acos(long x)
