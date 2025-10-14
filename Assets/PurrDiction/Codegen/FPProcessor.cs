@@ -66,12 +66,11 @@ namespace Purrdiction.Codegen
                     if (method is not { HasBody: true })
                         continue;
 
-                    var instructions = method.Body.Instructions;
                     var ilProcessor = method.Body.GetILProcessor();
 
-                    for (var j = 0; j < instructions.Count; j++)
+                    for (var j = 0; j < method.Body.Instructions.Count; j++)
                     {
-                        var instruction = instructions[j];
+                        var instruction = method.Body.Instructions[j];
 
                         if (instruction.OpCode != OpCodes.Call)
                             continue;
@@ -95,7 +94,7 @@ namespace Purrdiction.Codegen
                             {
                                 try
                                 {
-                                    var res = ConvertToConstFP(ilProcessor, instructions[j - 1], messages);
+                                    var res = ConvertToConstFP(ilProcessor, method.Body.Instructions[j - 1], messages);
                                     if (res == null) continue;
                                     ilProcessor.Replace(instruction, ilProcessor.Create(OpCodes.Call, fromRawLong));
                                 }
@@ -109,7 +108,7 @@ namespace Purrdiction.Codegen
                             {
                                 try
                                 {
-                                    var fp = ConvertToConstFP(ilProcessor, instructions[j - 1], messages);
+                                    var fp = ConvertToConstFP(ilProcessor, method.Body.Instructions[j - 1], messages);
                                     if (fp == null) continue;
                                     var toRaw = ilProcessor.Create(OpCodes.Call, opAdditionFp64_Fp64);
                                     ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawLong));
@@ -126,7 +125,7 @@ namespace Purrdiction.Codegen
                             {
                                 try
                                 {
-                                    var fp = ConvertToConstFP(ilProcessor, instructions[j - 2], messages);
+                                    var fp = ConvertToConstFP(ilProcessor, method.Body.Instructions[j - 2], messages);
                                     if (fp == null) continue;
                                     var toRaw = ilProcessor.Create(OpCodes.Call, opAdditionFp64_Fp64);
                                     ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawLong));
@@ -143,7 +142,7 @@ namespace Purrdiction.Codegen
                             {
                                 try
                                 {
-                                    var fp = ConvertToConstFP(ilProcessor, instructions[j - 1], messages);
+                                    var fp = ConvertToConstFP(ilProcessor, method.Body.Instructions[j - 1], messages);
                                     if (fp == null) continue;
                                     var toRaw = ilProcessor.Create(OpCodes.Call, opSubstractionFp64_Fp64);
                                     ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawLong));
@@ -160,7 +159,7 @@ namespace Purrdiction.Codegen
                             {
                                 try
                                 {
-                                    var fp = ConvertToConstFP(ilProcessor, instructions[j - 2], messages);
+                                    var fp = ConvertToConstFP(ilProcessor, method.Body.Instructions[j - 2], messages);
                                     if (fp == null) continue;
                                     var toRaw = ilProcessor.Create(OpCodes.Call, opSubstractionFp64_Fp64);
                                     ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawLong));
@@ -176,7 +175,7 @@ namespace Purrdiction.Codegen
                             {
                                 try
                                 {
-                                    var fp = ConvertToConstFP(ilProcessor, instructions[j - 1], messages);
+                                    var fp = ConvertToConstFP(ilProcessor, method.Body.Instructions[j - 1], messages);
                                     if (fp == null) continue;
                                     var toRaw = ilProcessor.Create(OpCodes.Call, opMultiplyFp64_Fp64);
                                     ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawLong));
@@ -192,7 +191,7 @@ namespace Purrdiction.Codegen
                             {
                                 try
                                 {
-                                    var fp = ConvertToConstFP(ilProcessor, instructions[j - 2], messages);
+                                    var fp = ConvertToConstFP(ilProcessor, method.Body.Instructions[j - 2], messages);
                                     if (fp == null) continue;
                                     var toRaw = ilProcessor.Create(OpCodes.Call, opMultiplyFp64_Fp64);
                                     ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawLong));
@@ -208,7 +207,7 @@ namespace Purrdiction.Codegen
                             {
                                 try
                                 {
-                                    var fp = ConvertToConstFP(ilProcessor, instructions[j - 1], messages);
+                                    var fp = ConvertToConstFP(ilProcessor, method.Body.Instructions[j - 1], messages);
                                     if (fp == null) continue;
                                     var toRaw = ilProcessor.Create(OpCodes.Call, opDivisionFp64_Fp64);
                                     ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawLong));
@@ -224,7 +223,7 @@ namespace Purrdiction.Codegen
                             {
                                 try
                                 {
-                                    var fp = ConvertToConstFP(ilProcessor, instructions[j - 2], messages);
+                                    var fp = ConvertToConstFP(ilProcessor, method.Body.Instructions[j - 2], messages);
                                     if (fp == null) continue;
                                     var toRaw = ilProcessor.Create(OpCodes.Call, opDivisionFp64_Fp64);
                                     ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawLong));
@@ -240,7 +239,7 @@ namespace Purrdiction.Codegen
                             {
                                 try
                                 {
-                                    var fp = ConvertToConstFP(ilProcessor, instructions[j - 1], messages);
+                                    var fp = ConvertToConstFP(ilProcessor, method.Body.Instructions[j - 1], messages);
                                     if (fp == null) continue;
                                     var toRaw = ilProcessor.Create(OpCodes.Call, opModulusFp64_Fp64);
                                     ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawLong));
@@ -256,7 +255,7 @@ namespace Purrdiction.Codegen
                             {
                                 try
                                 {
-                                    var fp = ConvertToConstFP(ilProcessor, instructions[j - 2], messages);
+                                    var fp = ConvertToConstFP(ilProcessor, method.Body.Instructions[j - 2], messages);
                                     if (fp == null) continue;
                                     var toRaw = ilProcessor.Create(OpCodes.Call, opModulusFp64_Fp64);
                                     ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawLong));
@@ -267,6 +266,34 @@ namespace Purrdiction.Codegen
                                     Error(messages, $"Failed to generate modulus fixed point magic.", instruction, ilProcessor.Body.Method);
                                 }
                                 break;
+                            }
+                        }
+                    }
+
+                    // convert short branches that overflow, took me long to figure this one out
+                    foreach (var inst in method.Body.Instructions)
+                    {
+                        if (inst.Operand is Instruction target)
+                        {
+                            int delta = target.Offset - (inst.Offset + inst.GetSize());
+
+                            if (delta is <= -128 or >= 127)
+                            {
+                                // Overflow - convert to long form
+                                if (inst.OpCode == OpCodes.Br_S) inst.OpCode = OpCodes.Br;
+                                else if (inst.OpCode == OpCodes.Brfalse_S) inst.OpCode = OpCodes.Brfalse;
+                                else if (inst.OpCode == OpCodes.Brtrue_S) inst.OpCode = OpCodes.Brtrue;
+                                else if (inst.OpCode == OpCodes.Beq_S) inst.OpCode = OpCodes.Beq;
+                                else if (inst.OpCode == OpCodes.Bne_Un_S) inst.OpCode = OpCodes.Bne_Un;
+                                else if (inst.OpCode == OpCodes.Bge_S) inst.OpCode = OpCodes.Bge;
+                                else if (inst.OpCode == OpCodes.Bge_Un_S) inst.OpCode = OpCodes.Bge_Un;
+                                else if (inst.OpCode == OpCodes.Bgt_S) inst.OpCode = OpCodes.Bgt;
+                                else if (inst.OpCode == OpCodes.Bgt_Un_S) inst.OpCode = OpCodes.Bgt_Un;
+                                else if (inst.OpCode == OpCodes.Ble_S) inst.OpCode = OpCodes.Ble;
+                                else if (inst.OpCode == OpCodes.Ble_Un_S) inst.OpCode = OpCodes.Ble_Un;
+                                else if (inst.OpCode == OpCodes.Blt_S) inst.OpCode = OpCodes.Blt;
+                                else if (inst.OpCode == OpCodes.Blt_Un_S) inst.OpCode = OpCodes.Blt_Un;
+                                else if (inst.OpCode == OpCodes.Leave_S) inst.OpCode = OpCodes.Leave;
                             }
                         }
                     }
