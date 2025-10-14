@@ -29,8 +29,6 @@ namespace PurrNet.Prediction
 
         public FP(long rawValue) => this.rawValue = rawValue;
 
-        public FP(ulong rawValue) => this.rawValue = (long)rawValue;
-
         [MethodImpl(FPUtils.AggressiveInlining)]
         public static implicit operator FP(int value) => FPMath.FromInt(value);
 
@@ -150,7 +148,7 @@ namespace PurrNet.Prediction
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static FP operator &(FP a, FP b) => new FP(a.rawValue & b.rawValue);
 
-        public override string ToString() => FPMath.ToString(rawValue);
+        public override string ToString() => FPMath.ToString(this);
 
         public bool Equals(FP other)
         {
