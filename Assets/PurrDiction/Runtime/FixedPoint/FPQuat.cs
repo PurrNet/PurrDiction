@@ -1,4 +1,5 @@
 ﻿using System.Runtime.CompilerServices;
+using UnityEngine;
 
 namespace PurrNet.Prediction
 {
@@ -22,21 +23,21 @@ namespace PurrNet.Prediction
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public FPQuat(FPVec3 axis, FP angleRad)
+        public FPQuat(FPVec3 xyz, FP w)
         {
-            var half = angleRad * 0.5;
-            var s = FPMath.Sin(half);
-            var c = FPMath.Cos(half);
-            x = axis.x * s;
-            y = axis.y * s;
-            z = axis.z * s;
-            w = c;
+            x = xyz.x;
+            y = xyz.y;
+            z = xyz.z;
+            this.w = w;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static FPQuat FromAxisAngle(FPVec3 axis, FP angleRad)
         {
-            return new FPQuat(axis, angleRad);
+            var half = angleRad * 0.5;
+            var s = FPMath.Sin(half);
+            var c = FPMath.Cos(half);
+            return new FPQuat(axis.x * s, axis.y * s, axis.z * s, c);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -134,5 +135,17 @@ namespace PurrNet.Prediction
         }
 
         public override string ToString() => $"({x}, {y}, {z}, {w})";
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static FPQuat operator +(FPQuat a, FPQuat b)
+            => new FPQuat(a.x + b.x, a.y + b.y, a.z + b.z, a.w + b.w);
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static FPQuat operator -(FPQuat a, FPQuat b)
+            => new FPQuat(a.x - b.x, a.y - b.y, a.z - b.z, a.w - b.w);
+
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator Quaternion(FPQuat v) => new Quaternion(v.x.ToFloat(), v.y.ToFloat(), v.z.ToFloat(), v.w.ToFloat()).normalized;
     }
 }
