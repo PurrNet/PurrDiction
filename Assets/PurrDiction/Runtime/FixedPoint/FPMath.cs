@@ -493,7 +493,7 @@ namespace PurrNet.Prediction
         {
             if (b == MinValue || b == 0)
             {
-                FPUtils.InvalidArgument("Fixed64.Div", "b", b);
+                // FPUtils.InvalidArgument("Fixed64.Div", "b", b);
                 return 0;
             }
 
@@ -522,7 +522,7 @@ namespace PurrNet.Prediction
         {
             if (b == MinValue || b == 0)
             {
-                FPUtils.InvalidArgument("Fixed64.DivFast", "b", b);
+                // FPUtils.InvalidArgument("Fixed64.DivFast", "b", b);
                 return 0;
             }
 
@@ -557,7 +557,7 @@ namespace PurrNet.Prediction
         {
             if (b == MinValue || b == 0)
             {
-                FPUtils.InvalidArgument("Fixed64.DivFastest", "b", b);
+                // FPUtils.InvalidArgument("Fixed64.DivFastest", "b", b);
                 return 0;
             }
 
@@ -596,30 +596,8 @@ namespace PurrNet.Prediction
         {
             // Adapted from https://github.com/chmike/fpsqrt
             if (a <= 0)
-            {
-                if (a < 0)
-                    FPUtils.InvalidArgument("Fixed64.SqrtPrecise", "a", a);
                 return 0;
-            }
 
-#if JAVA
-            long r = a;
-            long b = 0x4000000000000000L;
-            long q = 0;
-            while (b > 0x40)
-            {
-                long t = q + b;
-                if (Long.compareUnsigned(r, t) >= 0)
-                {
-                    r -= t;
-                    q = t + b;
-                }
-                r <<= 1;
-                b >>= 1;
-            }
-            q >>>= 16;
-            return q;
-#else
             ulong r = (ulong)a;
             ulong b = 0x4000000000000000L;
             ulong q = 0L;
@@ -636,7 +614,6 @@ namespace PurrNet.Prediction
             }
             q >>= 16;
             return (long)q;
-#endif
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -699,8 +676,6 @@ namespace PurrNet.Prediction
             // Return 0 for all non-positive values.
             if (x <= 0)
             {
-                if (x < 0)
-                    FPUtils.InvalidArgument("Fixed64.SqrtFastest", "x", x);
                 return 0;
             }
 
@@ -731,7 +706,7 @@ namespace PurrNet.Prediction
             // Return 0 for invalid values
             if (x <= 0)
             {
-                FPUtils.InvalidArgument("Fixed64.RSqrt", "x", x);
+                // FPUtils.InvalidArgument("Fixed64.RSqrt", "x", x);
                 return 0;
             }
 
@@ -762,7 +737,7 @@ namespace PurrNet.Prediction
             // Return 0 for invalid values
             if (x <= 0)
             {
-                FPUtils.InvalidArgument("Fixed64.RSqrtFast", "x", x);
+                // FPUtils.InvalidArgument("Fixed64.RSqrtFast", "x", x);
                 return 0;
             }
 
@@ -793,7 +768,7 @@ namespace PurrNet.Prediction
             // Return 0 for invalid values
             if (x <= 0)
             {
-                FPUtils.InvalidArgument("Fixed64.RSqrtFastest", "x", x);
+                // FPUtils.InvalidArgument("Fixed64.RSqrtFastest", "x", x);
                 return 0;
             }
 
@@ -823,7 +798,7 @@ namespace PurrNet.Prediction
         {
             if (x == MinValue || x == 0)
             {
-                FPUtils.InvalidArgument("Fixed64.Rcp", "x", x);
+                // FPUtils.InvalidArgument("Fixed64.Rcp", "x", x);
                 return 0;
             }
 
@@ -852,7 +827,7 @@ namespace PurrNet.Prediction
         {
             if (x == MinValue || x == 0)
             {
-                FPUtils.InvalidArgument("Fixed64.RcpFast", "x", x);
+                // FPUtils.InvalidArgument("Fixed64.RcpFast", "x", x);
                 return 0;
             }
 
@@ -881,7 +856,7 @@ namespace PurrNet.Prediction
         {
             if (x == MinValue || x == 0)
             {
-                FPUtils.InvalidArgument("Fixed64.RcpFastest", "x", x);
+                // FPUtils.InvalidArgument("Fixed64.RcpFastest", "x", x);
                 return 0;
             }
 
@@ -981,7 +956,7 @@ namespace PurrNet.Prediction
             // Return 0 for invalid values
             if (x <= 0)
             {
-                FPUtils.InvalidArgument("Fixed64.Log", "x", x);
+                // FPUtils.InvalidArgument("Fixed64.Log", "x", x);
                 return 0;
             }
 
@@ -1001,7 +976,7 @@ namespace PurrNet.Prediction
             // Return 0 for invalid values
             if (x <= 0)
             {
-                FPUtils.InvalidArgument("Fixed64.LogFast", "x", x);
+                // FPUtils.InvalidArgument("Fixed64.LogFast", "x", x);
                 return 0;
             }
 
@@ -1021,7 +996,7 @@ namespace PurrNet.Prediction
             // Return 0 for invalid values
             if (x <= 0)
             {
-                FPUtils.InvalidArgument("Fixed64.LogFastest", "x", x);
+                // FPUtils.InvalidArgument("Fixed64.LogFastest", "x", x);
                 return 0;
             }
 
@@ -1041,7 +1016,7 @@ namespace PurrNet.Prediction
             // Return 0 for invalid values
             if (x <= 0)
             {
-                FPUtils.InvalidArgument("Fixed64.Log2", "x", x);
+                // FPUtils.InvalidArgument("Fixed64.Log2", "x", x);
                 return 0;
             }
 
@@ -1063,7 +1038,7 @@ namespace PurrNet.Prediction
             // Return 0 for invalid values
             if (x <= 0)
             {
-                FPUtils.InvalidArgument("Fixed64.Log2Fast", "x", x);
+                // FPUtils.InvalidArgument("Fixed64.Log2Fast", "x", x);
                 return 0;
             }
 
@@ -1085,7 +1060,7 @@ namespace PurrNet.Prediction
             // Return 0 for invalid values
             if (x <= 0)
             {
-                FPUtils.InvalidArgument("Fixed64.Log2Fastest", "x", x);
+                // FPUtils.InvalidArgument("Fixed64.Log2Fastest", "x", x);
                 return 0;
             }
 
@@ -1114,8 +1089,6 @@ namespace PurrNet.Prediction
             // Return 0 for invalid values
             if (x <= 0)
             {
-                if (x < 0)
-                    FPUtils.InvalidArgument("Fixed64.Pow", "x", x);
                 return 0;
             }
 
@@ -1133,11 +1106,7 @@ namespace PurrNet.Prediction
 
             // Return 0 for invalid values
             if (x <= 0)
-            {
-                if (x < 0)
-                    FPUtils.InvalidArgument("Fixed64.PowFast", "x", x);
                 return 0;
-            }
 
             return ExpFast(Mul(exponent, LogFast(x)));
         }
@@ -1153,11 +1122,7 @@ namespace PurrNet.Prediction
 
             // Return 0 for invalid values
             if (x <= 0)
-            {
-                if (x < 0)
-                    FPUtils.InvalidArgument("Fixed64.PowFastest", "x", x);
                 return 0;
-            }
 
             return ExpFastest(Mul(exponent, LogFastest(x)));
         }
@@ -1355,7 +1320,7 @@ namespace PurrNet.Prediction
                 if (y > 0) return PIHALF;
                 if (y < 0) return -PIHALF;
 
-                FPUtils.InvalidArgument("Fixed64.Atan2", "y, x", y, x);
+                // FPUtils.InvalidArgument("Fixed64.Atan2", "y, x", y, x);
                 return 0;
             }
 
@@ -1411,7 +1376,7 @@ namespace PurrNet.Prediction
                 if (y > 0) return PIHALF;
                 if (y < 0) return -PIHALF;
 
-                FPUtils.InvalidArgument("Fixed64.Atan2Fast", "y, x", y, x);
+                // FPUtils.InvalidArgument("Fixed64.Atan2Fast", "y, x", y, x);
                 return 0;
             }
 
@@ -1467,7 +1432,7 @@ namespace PurrNet.Prediction
                 if (y > 0) return PIHALF;
                 if (y < 0) return -PIHALF;
 
-                FPUtils.InvalidArgument("Fixed64.Atan2Fastest", "y, x", y, x);
+                // FPUtils.InvalidArgument("Fixed64.Atan2Fastest", "y, x", y, x);
                 return 0;
             }
 
@@ -1505,7 +1470,7 @@ namespace PurrNet.Prediction
             // Return 0 for invalid values
             if (x < -One || x > One)
             {
-                FPUtils.InvalidArgument("Fixed64.Asin", "x", x);
+                // FPUtils.InvalidArgument("Fixed64.Asin", "x", x);
                 return 0;
             }
 
@@ -1517,7 +1482,7 @@ namespace PurrNet.Prediction
             // Return 0 for invalid values
             if (x < -One || x > One)
             {
-                FPUtils.InvalidArgument("Fixed64.AsinFast", "x", x);
+                // FPUtils.InvalidArgument("Fixed64.AsinFast", "x", x);
                 return 0;
             }
 
@@ -1529,7 +1494,7 @@ namespace PurrNet.Prediction
             // Return 0 for invalid values
             if (x < -One || x > One)
             {
-                FPUtils.InvalidArgument("Fixed64.AsinFastest", "x", x);
+                // FPUtils.InvalidArgument("Fixed64.AsinFastest", "x", x);
                 return 0;
             }
 
@@ -1546,7 +1511,7 @@ namespace PurrNet.Prediction
             // Return 0 for invalid values
             if (x < -One || x > One)
             {
-                FPUtils.InvalidArgument("Fixed64.Acos", "x", x);
+                // FPUtils.InvalidArgument("Fixed64.Acos", "x", x);
                 return 0;
             }
 
@@ -1558,7 +1523,7 @@ namespace PurrNet.Prediction
             // Return 0 for invalid values
             if (x < -One || x > One)
             {
-                FPUtils.InvalidArgument("Fixed64.AcosFast", "x", x);
+                // FPUtils.InvalidArgument("Fixed64.AcosFast", "x", x);
                 return 0;
             }
 
@@ -1570,7 +1535,7 @@ namespace PurrNet.Prediction
             // Return 0 for invalid values
             if (x < -One || x > One)
             {
-                FPUtils.InvalidArgument("Fixed64.AcosFastest", "x", x);
+                // FPUtils.InvalidArgument("Fixed64.AcosFastest", "x", x);
                 return 0;
             }
 

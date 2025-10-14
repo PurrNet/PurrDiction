@@ -1,35 +1,3 @@
-//
-// FixPointCS
-//
-// Copyright(c) Jere Sanisalo, Petri Kero
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
-//
-
-// PREFIX
-#if CPP
-#elif JAVA
-package fixpointcs;
-
-import java.lang.Long;
-import java.lang.Double;
-#else // C#
 /* Coding style:
  *
  * In order to keep the transpiled C++/Java code working, here are some generic
@@ -51,109 +19,17 @@ import java.lang.Double;
  * Use up-to C# 3 features to keep the library compatible with older versions
  * of Unity.
  */
-using System;
 using System.Runtime.CompilerServices;
-using System.Diagnostics;
-#endif
 
-#if !TRANSPILE
 namespace PurrNet.Prediction
 {
-#endif
 
-#if CPP
-#else
     /// <summary>
     /// Utility functions for the fixed point library.
     /// </summary>
     public static class FPUtils
     {
-#endif
-
-#if CPP
-        // InvalidArgument function defined in the transpiler generated header
-#elif JAVA
-        // \todo implement custom handlers in Java
-
-        public static void InvalidArgument(String funcName, String argName, int argValue)
-        {
-            //throw new IllegalArgumentException(String.format("Argument %s for %s() is invalid: %d", argName, funcName, argValue));
-        }
-
-        public static void InvalidArgument(String funcName, String argName, int argValue1, int argValue2)
-        {
-            //throw new IllegalArgumentException(String.format("Argument %s for %s() is invalid: %d, %d", argName, funcName, argValue1, argValue2));
-        }
-
-        public static void InvalidArgument(String funcName, String argName, long argValue)
-        {
-            //throw new IllegalArgumentException(String.format("Argument %s for %s() is invalid: %d", argName, funcName, argValue));
-        }
-
-        public static void InvalidArgument(String funcName, String argName, long argValue1, long argValue2)
-        {
-            //throw new IllegalArgumentException(String.format("Argument %s for %s() is invalid: %d, %d", argName, funcName, argValue1, argValue2));
-        }
-#else
-        // Backwards compatible way to use MethodImplOptions.AggressiveInlining
         public const MethodImplOptions AggressiveInlining = (MethodImplOptions)256;
-
-        private static Action<string, string, int> InvalidArgumentHandler32 = (funcName, argName, argValue) => { };
-        private static Action<string, string, int, int> InvalidArgumentHandler32_32 = (funcName, argName, argValue1, argValue2) => { };
-        private static Action<string, string, long> InvalidArgumentHandler64 = (funcName, argName, argValue) => { };
-        private static Action<string, string, long, long> InvalidArgumentHandler64_64 = (funcName, argName, argValue1, argValue2) => { };
-
-        /// <summary>
-        /// Set invalid argument handlers individually to custom implementations.
-        /// </summary>
-        /// <param name="handler32">Handler for single s16.16 argument</param>
-        /// <param name="handler32_32">Handler for dual s16.16 arguments</param>
-        /// <param name="handler64">Handler for single s32.32 argument</param>
-        /// <param name="handler64_64">Handler for dual s32.32 arguments</param>
-        public static void SetInvalidArgumentHandler(
-            Action<string, string, int> handler32,
-            Action<string, string, int, int> handler32_32,
-            Action<string, string, long> handler64,
-            Action<string, string, long, long> handler64_64)
-        {
-            InvalidArgumentHandler32 = handler32;
-            InvalidArgumentHandler32_32 = handler32_32;
-            InvalidArgumentHandler64 = handler64;
-            InvalidArgumentHandler64_64 = handler64_64;
-        }
-
-        /// <summary>
-        /// Set invalid argument handlers to implementations which throw an <see cref="ArgumentException"/>.
-        /// </summary>
-        public static void SetThrowOnInvalidArgument()
-        {
-            SetInvalidArgumentHandler(
-                (funcName, argName, argValue) => throw new ArgumentException($"Invalid argument {funcName}(): {argValue}", argName),
-                (funcName, argName, argValue1, argValue2) => throw new ArgumentException($"Invalid arguments {funcName}(): {argValue1}, {argValue2}", argName),
-                (funcName, argName, argValue) => throw new ArgumentException($"Invalid argument {funcName}(): {argValue}", argName),
-                (funcName, argName, argValue1, argValue2) => throw new ArgumentException($"Invalid arguments {funcName}(): {argValue1}, {argValue2}", argName));
-        }
-
-        public static void InvalidArgument(string funcName, string argName, int argValue)
-        {
-            InvalidArgumentHandler32.Invoke(funcName, argName, argValue);
-        }
-
-        public static void InvalidArgument(string funcName, string argNames, int argValue1, int argValue2)
-        {
-            InvalidArgumentHandler32_32.Invoke(funcName, argNames, argValue1, argValue2);
-        }
-
-        public static void InvalidArgument(string funcName, string argName, long argValue)
-        {
-            InvalidArgumentHandler64.Invoke(funcName, argName, argValue);
-        }
-
-        public static void InvalidArgument(string funcName, string argNames, long argValue1, long argValue2)
-        {
-            InvalidArgumentHandler64_64.Invoke(funcName, argNames, argValue1, argValue2);
-        }
-#endif
 
         [MethodImpl(AggressiveInlining)]
         public static int Qmul29(int a, int b)
