@@ -97,8 +97,7 @@ namespace Purrdiction.Codegen
                                 {
                                     var res = ConvertToConstFP(ilProcessor, instructions[j - 1], messages);
                                     if (res == null) continue;
-                                    instruction.OpCode = OpCodes.Call;
-                                    instruction.Operand = fromRawLong;
+                                    ilProcessor.Replace(instruction, ilProcessor.Create(OpCodes.Call, fromRawLong));
                                 }
                                 catch
                                 {
@@ -112,11 +111,9 @@ namespace Purrdiction.Codegen
                                 {
                                     var fp = ConvertToConstFP(ilProcessor, instructions[j - 1], messages);
                                     if (fp == null) continue;
-                                    //var toRaw = ilProcessor.Create(OpCodes.Call, opAdditionFp64_Fp64);
+                                    var toRaw = ilProcessor.Create(OpCodes.Call, opAdditionFp64_Fp64);
                                     ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawLong));
-                                    //ilProcessor.Replace(instruction, toRaw);
-                                    instruction.OpCode = OpCodes.Call;
-                                    instruction.Operand = opAdditionFp64_Fp64;
+                                    ilProcessor.Replace(instruction, toRaw);
                                 }
                                 catch
                                 {
@@ -131,11 +128,9 @@ namespace Purrdiction.Codegen
                                 {
                                     var fp = ConvertToConstFP(ilProcessor, instructions[j - 2], messages);
                                     if (fp == null) continue;
-                                    //var toRaw = ilProcessor.Create(OpCodes.Call, opAdditionFp64_Fp64);
+                                    var toRaw = ilProcessor.Create(OpCodes.Call, opAdditionFp64_Fp64);
                                     ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawLong));
-                                    //ilProcessor.Replace(instruction, toRaw);
-                                    instruction.OpCode = OpCodes.Call;
-                                    instruction.Operand = opAdditionFp64_Fp64;
+                                    ilProcessor.Replace(instruction, toRaw);
                                 }
                                 catch
                                 {
@@ -150,11 +145,9 @@ namespace Purrdiction.Codegen
                                 {
                                     var fp = ConvertToConstFP(ilProcessor, instructions[j - 1], messages);
                                     if (fp == null) continue;
-                                    //var toRaw = ilProcessor.Create(OpCodes.Call, opSubstractionFp64_Fp64);
+                                    var toRaw = ilProcessor.Create(OpCodes.Call, opSubstractionFp64_Fp64);
                                     ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawLong));
-                                    //ilProcessor.Replace(instruction, toRaw);
-                                    instruction.OpCode = OpCodes.Call;
-                                    instruction.Operand = opSubstractionFp64_Fp64;
+                                    ilProcessor.Replace(instruction, toRaw);
                                 }
                                 catch
                                 {
@@ -169,11 +162,9 @@ namespace Purrdiction.Codegen
                                 {
                                     var fp = ConvertToConstFP(ilProcessor, instructions[j - 2], messages);
                                     if (fp == null) continue;
-                                    //var toRaw = ilProcessor.Create(OpCodes.Call, opSubstractionFp64_Fp64);
+                                    var toRaw = ilProcessor.Create(OpCodes.Call, opSubstractionFp64_Fp64);
                                     ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawLong));
-                                    //ilProcessor.Replace(instruction, toRaw);
-                                    instruction.OpCode = OpCodes.Call;
-                                    instruction.Operand = opSubstractionFp64_Fp64;
+                                    ilProcessor.Replace(instruction, toRaw);
                                 }
                                 catch
                                 {
@@ -187,11 +178,9 @@ namespace Purrdiction.Codegen
                                 {
                                     var fp = ConvertToConstFP(ilProcessor, instructions[j - 1], messages);
                                     if (fp == null) continue;
-                                    //var toRaw = ilProcessor.Create(OpCodes.Call, opMultiplyFp64_Fp64);
+                                    var toRaw = ilProcessor.Create(OpCodes.Call, opMultiplyFp64_Fp64);
                                     ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawLong));
-                                    //ilProcessor.Replace(instruction, toRaw);
-                                    instruction.OpCode = OpCodes.Call;
-                                    instruction.Operand = opMultiplyFp64_Fp64;
+                                    ilProcessor.Replace(instruction, toRaw);
                                 }
                                 catch
                                 {
@@ -205,11 +194,9 @@ namespace Purrdiction.Codegen
                                 {
                                     var fp = ConvertToConstFP(ilProcessor, instructions[j - 2], messages);
                                     if (fp == null) continue;
-                                    //var toRaw = ilProcessor.Create(OpCodes.Call, opMultiplyFp64_Fp64);
+                                    var toRaw = ilProcessor.Create(OpCodes.Call, opMultiplyFp64_Fp64);
                                     ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawLong));
-                                    //ilProcessor.Replace(instruction, toRaw);
-                                    instruction.OpCode = OpCodes.Call;
-                                    instruction.Operand = opMultiplyFp64_Fp64;
+                                    ilProcessor.Replace(instruction, toRaw);
                                 }
                                 catch
                                 {
@@ -223,11 +210,9 @@ namespace Purrdiction.Codegen
                                 {
                                     var fp = ConvertToConstFP(ilProcessor, instructions[j - 1], messages);
                                     if (fp == null) continue;
-                                    //var toRaw = ilProcessor.Create(OpCodes.Call, opDivisionFp64_Fp64);
+                                    var toRaw = ilProcessor.Create(OpCodes.Call, opDivisionFp64_Fp64);
                                     ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawLong));
-                                    //ilProcessor.Replace(instruction, toRaw);
-                                    instruction.OpCode = OpCodes.Call;
-                                    instruction.Operand = opDivisionFp64_Fp64;
+                                    ilProcessor.Replace(instruction, toRaw);
                                 }
                                 catch
                                 {
@@ -241,11 +226,9 @@ namespace Purrdiction.Codegen
                                 {
                                     var fp = ConvertToConstFP(ilProcessor, instructions[j - 2], messages);
                                     if (fp == null) continue;
-                                    //var toRaw = ilProcessor.Create(OpCodes.Call, opDivisionFp64_Fp64);
+                                    var toRaw = ilProcessor.Create(OpCodes.Call, opDivisionFp64_Fp64);
                                     ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawLong));
-                                    //ilProcessor.Replace(instruction, toRaw);
-                                    instruction.OpCode = OpCodes.Call;
-                                    instruction.Operand = opDivisionFp64_Fp64;
+                                    ilProcessor.Replace(instruction, toRaw);
                                 }
                                 catch
                                 {
@@ -259,11 +242,9 @@ namespace Purrdiction.Codegen
                                 {
                                     var fp = ConvertToConstFP(ilProcessor, instructions[j - 1], messages);
                                     if (fp == null) continue;
-                                    //var toRaw = ilProcessor.Create(OpCodes.Call, opModulusFp64_Fp64);
+                                    var toRaw = ilProcessor.Create(OpCodes.Call, opModulusFp64_Fp64);
                                     ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawLong));
-                                    //ilProcessor.Replace(instruction, toRaw);
-                                    instruction.OpCode = OpCodes.Call;
-                                    instruction.Operand = opModulusFp64_Fp64;
+                                    ilProcessor.Replace(instruction, toRaw);
                                 }
                                 catch
                                 {
@@ -277,11 +258,9 @@ namespace Purrdiction.Codegen
                                 {
                                     var fp = ConvertToConstFP(ilProcessor, instructions[j - 2], messages);
                                     if (fp == null) continue;
-                                    //var toRaw = ilProcessor.Create(OpCodes.Call, opModulusFp64_Fp64);
+                                    var toRaw = ilProcessor.Create(OpCodes.Call, opModulusFp64_Fp64);
                                     ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawLong));
-                                    //ilProcessor.Replace(instruction, toRaw);
-                                    instruction.OpCode = OpCodes.Call;
-                                    instruction.Operand = opModulusFp64_Fp64;
+                                    ilProcessor.Replace(instruction, toRaw);
                                 }
                                 catch
                                 {
@@ -361,20 +340,16 @@ namespace Purrdiction.Codegen
                 case Code.Ldc_R8:
                 {
                     double value = (double)instruction.Operand;
-                    //var constFp = processor.Create(OpCodes.Ldc_I8, FPMath.FromDouble(value));
-                    instruction.OpCode = OpCodes.Ldc_I8;
-                    instruction.Operand = FPMath.FromDouble(value);
-                    //processor.Replace(instruction, constFp);
-                    return instruction;
+                    var constFp = processor.Create(OpCodes.Ldc_I8, FPMath.FromDouble(value));
+                    processor.Replace(instruction, constFp);
+                    return constFp;
                 }
                 case Code.Ldc_R4:
                 {
                     float value = (float)instruction.Operand;
-                    //var constFp = processor.Create(OpCodes.Ldc_I8, FPMath.FromDouble(value));
-                    instruction.OpCode = OpCodes.Ldc_I8;
-                    instruction.Operand = FPMath.FromDouble(value);
-                    //processor.Replace(instruction, constFp);
-                    return instruction;
+                    var constFp = processor.Create(OpCodes.Ldc_I8, FPMath.FromDouble(value));
+                    processor.Replace(instruction, constFp);
+                    return constFp;
                 }
                 default:
                 {
