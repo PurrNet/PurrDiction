@@ -47,19 +47,9 @@ namespace Purrdiction.Codegen
                 if (!type.HasMethods)
                     return;
 
-                if (type.FullName == typeof(FP).FullName ||
-                    type.FullName == typeof(FP64).FullName ||
-                    type.FullName == typeof(FPMath).FullName ||
+                if (type.FullName == typeof(FP64).FullName ||
                     type.FullName == typeof(FP64Math).FullName)
                     return;
-
-                var fp32Type = module.GetTypeDefinition<FP>();
-                var fromRawInt = fp32Type.GetMethod("FromRaw").Import(module);
-                var opAdditionFp_Fp = fp32Type.GetMethodWithParams("op_Addition", typeof(FP), typeof(FP)).Import(module);
-                var opSubstractionFp_Fp = fp32Type.GetMethodWithParams("op_Subtraction", typeof(FP), typeof(FP)).Import(module);
-                var opMultiplyFp_Fp = fp32Type.GetMethodWithParams("op_Multiply", typeof(FP), typeof(FP)).Import(module);
-                var opDivisionFp_Fp = fp32Type.GetMethodWithParams("op_Division", typeof(FP), typeof(FP)).Import(module);
-                var opModulusFp_Fp = fp32Type.GetMethodWithParams("op_Modulus", typeof(FP), typeof(FP)).Import(module);
 
                 var fp64Type = module.GetTypeDefinition<FP64>();
                 var fromRawLong = fp64Type.GetMethod("FromRaw").Import(module);
@@ -96,26 +86,23 @@ namespace Purrdiction.Codegen
                         if (!methodDef.IsStatic)
                             continue;
 
-                        if (methodDef.DeclaringType.FullName != fp32Type.FullName &&
-                            methodDef.DeclaringType.FullName != fp64Type.FullName)
+                        if (methodDef.DeclaringType.FullName != fp64Type.FullName)
                             continue;
 
-                        bool is64 = methodDef.DeclaringType.FullName == fp64Type.FullName;
-                        var fromRawOp = is64 ? fromRawLong : fromRawInt;
                         switch (methodDef.Name)
                         {
-                            case "op_Implicit" when methodDef.Parameters.Count == 1 && CheckParam(methodDef, 0, out bool isUsing64):
+                            case "op_Implicit" when methodDef.Parameters.Count == 1 && CheckParam(methodDef, 0):
                             {
                                 try
                                 {
-                                    var res = ConvertToConstFP(is64, ilProcessor, instructions[j - 1], messages);
+                                    var res = ConvertToConstFP(ilProcessor, instructions[j - 1], messages);
                                     if (res == null) continue;
-                                    var fromRaw = ilProcessor.Create(OpCodes.Call, fromRawOp);
+                                    var fromRaw = ilProcessor.Create(OpCodes.Call, fromRawLong);
                                     ilProcessor.Replace(instruction, fromRaw);
                                 }
                                 catch
                                 {
-                                    Error(messages, $"Failed to generate implicit fixed point magic. is64:{is64}, isTrying64:{isUsing64}", instruction, ilProcessor.Body.Method);
+                                    Error(messages, $"Failed to generate implicit fixed point magic.", instruction, ilProcessor.Body.Method);
                                 }
                                 break;
                             }
@@ -123,11 +110,10 @@ namespace Purrdiction.Codegen
                             {
                                 try
                                 {
-                                    var fp = ConvertToConstFP(is64, ilProcessor, instructions[j - 1], messages);
+                                    var fp = ConvertToConstFP(ilProcessor, instructions[j - 1], messages);
                                     if (fp == null) continue;
-                                    var addOp = is64 ? opAdditionFp64_Fp64 : opAdditionFp_Fp;
-                                    var toRaw = ilProcessor.Create(OpCodes.Call, addOp);
-                                    ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawOp));
+                                    var toRaw = ilProcessor.Create(OpCodes.Call, opAdditionFp64_Fp64);
+                                    ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawLong));
                                     ilProcessor.Replace(instruction, toRaw);
                                 }
                                 catch
@@ -141,11 +127,10 @@ namespace Purrdiction.Codegen
                             {
                                 try
                                 {
-                                    var fp = ConvertToConstFP(is64, ilProcessor, instructions[j - 2], messages);
+                                    var fp = ConvertToConstFP(ilProcessor, instructions[j - 2], messages);
                                     if (fp == null) continue;
-                                    var addOp = is64 ? opAdditionFp64_Fp64 : opAdditionFp_Fp;
-                                    var toRaw = ilProcessor.Create(OpCodes.Call, addOp);
-                                    ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawOp));
+                                    var toRaw = ilProcessor.Create(OpCodes.Call, opAdditionFp64_Fp64);
+                                    ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawLong));
                                     ilProcessor.Replace(instruction, toRaw);
                                 }
                                 catch
@@ -159,11 +144,10 @@ namespace Purrdiction.Codegen
                             {
                                 try
                                 {
-                                    var fp = ConvertToConstFP(is64, ilProcessor, instructions[j - 1], messages);
+                                    var fp = ConvertToConstFP(ilProcessor, instructions[j - 1], messages);
                                     if (fp == null) continue;
-                                    var subOp = is64 ? opSubstractionFp64_Fp64 : opSubstractionFp_Fp;
-                                    var toRaw = ilProcessor.Create(OpCodes.Call, subOp);
-                                    ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawOp));
+                                    var toRaw = ilProcessor.Create(OpCodes.Call, opSubstractionFp64_Fp64);
+                                    ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawLong));
                                     ilProcessor.Replace(instruction, toRaw);
                                 }
                                 catch
@@ -177,11 +161,10 @@ namespace Purrdiction.Codegen
                             {
                                 try
                                 {
-                                    var fp = ConvertToConstFP(is64, ilProcessor, instructions[j - 2], messages);
+                                    var fp = ConvertToConstFP(ilProcessor, instructions[j - 2], messages);
                                     if (fp == null) continue;
-                                    var subOp = is64 ? opSubstractionFp64_Fp64 : opSubstractionFp_Fp;
-                                    var toRaw = ilProcessor.Create(OpCodes.Call, subOp);
-                                    ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawOp));
+                                    var toRaw = ilProcessor.Create(OpCodes.Call, opSubstractionFp64_Fp64);
+                                    ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawLong));
                                     ilProcessor.Replace(instruction, toRaw);
                                 }
                                 catch
@@ -194,11 +177,10 @@ namespace Purrdiction.Codegen
                             {
                                 try
                                 {
-                                    var fp = ConvertToConstFP(is64, ilProcessor, instructions[j - 1], messages);
+                                    var fp = ConvertToConstFP(ilProcessor, instructions[j - 1], messages);
                                     if (fp == null) continue;
-                                    var multpyOp = is64 ? opMultiplyFp64_Fp64 : opMultiplyFp_Fp;
-                                    var toRaw = ilProcessor.Create(OpCodes.Call, multpyOp);
-                                    ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawOp));
+                                    var toRaw = ilProcessor.Create(OpCodes.Call, opMultiplyFp64_Fp64);
+                                    ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawLong));
                                     ilProcessor.Replace(instruction, toRaw);
                                 }
                                 catch
@@ -211,11 +193,10 @@ namespace Purrdiction.Codegen
                             {
                                 try
                                 {
-                                    var fp = ConvertToConstFP(is64, ilProcessor, instructions[j - 2], messages);
+                                    var fp = ConvertToConstFP(ilProcessor, instructions[j - 2], messages);
                                     if (fp == null) continue;
-                                    var multpyOp = is64 ? opMultiplyFp64_Fp64 : opMultiplyFp_Fp;
-                                    var toRaw = ilProcessor.Create(OpCodes.Call, multpyOp);
-                                    ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawOp));
+                                    var toRaw = ilProcessor.Create(OpCodes.Call, opMultiplyFp64_Fp64);
+                                    ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawLong));
                                     ilProcessor.Replace(instruction, toRaw);
                                 }
                                 catch
@@ -228,11 +209,10 @@ namespace Purrdiction.Codegen
                             {
                                 try
                                 {
-                                    var fp = ConvertToConstFP(is64, ilProcessor, instructions[j - 1], messages);
+                                    var fp = ConvertToConstFP(ilProcessor, instructions[j - 1], messages);
                                     if (fp == null) continue;
-                                    var divOp = is64 ? opDivisionFp64_Fp64 : opDivisionFp_Fp;
-                                    var toRaw = ilProcessor.Create(OpCodes.Call, divOp);
-                                    ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawOp));
+                                    var toRaw = ilProcessor.Create(OpCodes.Call, opDivisionFp64_Fp64);
+                                    ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawLong));
                                     ilProcessor.Replace(instruction, toRaw);
                                 }
                                 catch
@@ -245,11 +225,10 @@ namespace Purrdiction.Codegen
                             {
                                 try
                                 {
-                                    var fp = ConvertToConstFP(is64, ilProcessor, instructions[j - 2], messages);
+                                    var fp = ConvertToConstFP(ilProcessor, instructions[j - 2], messages);
                                     if (fp == null) continue;
-                                    var divOp = is64 ? opDivisionFp64_Fp64 : opDivisionFp_Fp;
-                                    var toRaw = ilProcessor.Create(OpCodes.Call, divOp);
-                                    ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawOp));
+                                    var toRaw = ilProcessor.Create(OpCodes.Call, opDivisionFp64_Fp64);
+                                    ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawLong));
                                     ilProcessor.Replace(instruction, toRaw);
                                 }
                                 catch
@@ -262,11 +241,10 @@ namespace Purrdiction.Codegen
                             {
                                 try
                                 {
-                                    var fp = ConvertToConstFP(is64, ilProcessor, instructions[j - 1], messages);
+                                    var fp = ConvertToConstFP(ilProcessor, instructions[j - 1], messages);
                                     if (fp == null) continue;
-                                    var modOp = is64 ? opModulusFp64_Fp64 : opModulusFp_Fp;
-                                    var toRaw = ilProcessor.Create(OpCodes.Call, modOp);
-                                    ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawOp));
+                                    var toRaw = ilProcessor.Create(OpCodes.Call, opModulusFp64_Fp64);
+                                    ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawLong));
                                     ilProcessor.Replace(instruction, toRaw);
                                 }
                                 catch
@@ -279,11 +257,10 @@ namespace Purrdiction.Codegen
                             {
                                 try
                                 {
-                                    var fp = ConvertToConstFP(is64, ilProcessor, instructions[j - 2], messages);
+                                    var fp = ConvertToConstFP(ilProcessor, instructions[j - 2], messages);
                                     if (fp == null) continue;
-                                    var modOp = is64 ? opModulusFp64_Fp64 : opModulusFp_Fp;
-                                    var toRaw = ilProcessor.Create(OpCodes.Call, modOp);
-                                    ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawOp));
+                                    var toRaw = ilProcessor.Create(OpCodes.Call, opModulusFp64_Fp64);
+                                    ilProcessor.InsertAfter(fp, ilProcessor.Create(OpCodes.Call, fromRawLong));
                                     ilProcessor.Replace(instruction, toRaw);
                                 }
                                 catch
@@ -312,15 +289,7 @@ namespace Purrdiction.Codegen
             return cmp is "System.Single" or "System.Double";
         }
 
-        private static bool CheckParam(MethodDefinition methodDef, int idx, out bool is64)
-        {
-            var cmp = methodDef.Parameters[idx].ParameterType.FullName;
-            is64 = cmp is "System.Double";
-            return is64 || cmp is "System.Single";
-        }
-
-
-        public static void Error(ICollection<DiagnosticMessage> messages, string message, Instruction instruction, MethodDefinition method)
+        private static void Error(ICollection<DiagnosticMessage> messages, string message, Instruction instruction, MethodDefinition method)
         {
             if (method.DebugInformation.HasSequencePoints)
             {
@@ -365,25 +334,21 @@ namespace Purrdiction.Codegen
             }
         }
 
-        private static Instruction ConvertToConstFP(bool is64, ILProcessor processor, Instruction instruction, List<DiagnosticMessage> messages)
+        private static Instruction ConvertToConstFP(ILProcessor processor, Instruction instruction, List<DiagnosticMessage> messages)
         {
             switch (instruction.OpCode.Code)
             {
                 case Code.Ldc_R8:
                 {
                     double value = (double)instruction.Operand;
-                    var constFp =
-                        is64 ? processor.Create(OpCodes.Ldc_I8, FP64Math.FromDouble(value))
-                            : processor.Create(OpCodes.Ldc_I4, FPMath.FromDouble(value));
+                    var constFp = processor.Create(OpCodes.Ldc_I8, FP64Math.FromDouble(value));
                     processor.Replace(instruction, constFp);
                     return constFp;
                 }
                 case Code.Ldc_R4:
                 {
                     float value = (float)instruction.Operand;
-                    var constFp =
-                        is64 ? processor.Create(OpCodes.Ldc_I8, FP64Math.FromDouble(value))
-                            : processor.Create(OpCodes.Ldc_I4, FPMath.FromDouble(value));
+                    var constFp = processor.Create(OpCodes.Ldc_I8, FP64Math.FromDouble(value));
                     processor.Replace(instruction, constFp);
                     return constFp;
                 }
