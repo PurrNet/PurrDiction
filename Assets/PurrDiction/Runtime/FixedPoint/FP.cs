@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 using JetBrains.Annotations;
+using UnityEngine;
 
 namespace PurrNet.Prediction
 {
@@ -28,6 +29,12 @@ namespace PurrNet.Prediction
         public readonly float ToFloat() => FPMath.ToFloat(this);
 
         public FP(long rawValue) => this.rawValue = rawValue;
+
+        [MethodImpl(FPUtils.AggressiveInlining)]
+        public static explicit operator float(FP value) => FPMath.ToFloat(value);
+
+        [MethodImpl(FPUtils.AggressiveInlining)]
+        public static explicit operator double(FP value) => FPMath.ToDouble(value);
 
         [MethodImpl(FPUtils.AggressiveInlining)]
         public static implicit operator FP(int value) => FPMath.FromInt(value);
