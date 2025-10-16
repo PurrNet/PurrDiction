@@ -34,7 +34,7 @@ namespace PurrNet.Prediction
     public static class FPMath
     {
         public const int Shift = 32;
-        const long FractionMask = ( 1L << Shift ) - 1; // Space before 1L needed because of hacky C++ code generator
+        const long FractionMask = (1L << Shift) - 1;
         const long IntegerMask = ~FractionMask;
 
         // Constants
@@ -317,9 +317,9 @@ namespace PurrNet.Prediction
         internal static long Mul(long a, long b)
         {
             long ai = a >> Shift;
-            long af = (a & FractionMask);
+            long af = a & FractionMask;
             long bi = b >> Shift;
-            long bf = (b & FractionMask);
+            long bf = b & FractionMask;
             return FPUtils.LogicalShiftRight(af * bf, Shift) + ai * b + af * bi;
         }
 

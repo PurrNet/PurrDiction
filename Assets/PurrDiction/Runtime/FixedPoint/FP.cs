@@ -16,6 +16,7 @@ namespace PurrNet.Prediction
         public static readonly FP maxValue = new FP(FPMath.MaxValue);
         public static readonly FP pi = new FP(13493037705L);
         public static readonly FP zero = new FP(0);
+        public static readonly FP one = new FP(1L << FPMath.Shift);
         public static readonly FP epsilon = new FP(1L << (FPMath.Shift - 1));
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

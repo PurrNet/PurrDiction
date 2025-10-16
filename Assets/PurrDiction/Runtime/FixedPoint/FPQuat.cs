@@ -40,7 +40,6 @@ namespace PurrNet.Prediction
             return new FPQuat(axis.x * s, axis.y * s, axis.z * s, c);
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static FPQuat FromEuler(FPVec3 euler)
         {
             FP half = 0.5;
@@ -61,6 +60,23 @@ namespace PurrNet.Prediction
             q.z = cosX * cosY * sinZ + sinX * sinY * cosZ;
             q.w = cosX * cosY * cosZ - sinX * sinY * sinZ;
             return q;
+        }
+
+        public static FPQuat Inverse(FPQuat q)
+        {
+            var lengthSq = q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w;
+
+            if (lengthSq == FP.zero)
+                return identity;
+
+            var invLength = FP.one / lengthSq;
+
+            return new FPQuat(
+                -q.x * invLength,
+                -q.y * invLength,
+                -q.z * invLength,
+                q.w * invLength
+            );
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -84,7 +100,9 @@ namespace PurrNet.Prediction
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static FPQuat Conjugate(FPQuat q)
-            => new FPQuat(-q.x, -q.y, -q.z, q.w);
+        {
+            return new FPQuat(-q.x, -q.y, -q.z, q.w);
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static FPQuat Normalize(FPQuat q)
