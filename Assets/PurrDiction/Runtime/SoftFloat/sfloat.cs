@@ -136,7 +136,7 @@ namespace PurrNet.Prediction
         /// <summary>
         /// Converts an sfloat number to an integer
         /// </summary>
-        public static explicit operator int(sfloat f)
+        public static implicit operator int(sfloat f)
         {
             if (f.Exponent < 0)
             {
@@ -152,7 +152,7 @@ namespace PurrNet.Prediction
         /// <summary>
         /// Creates an sfloat number from an integer
         /// </summary>
-        public static explicit operator sfloat(int value)
+        public static implicit operator sfloat(int value)
         {
             switch (value)
             {
@@ -313,6 +313,11 @@ namespace PurrNet.Prediction
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static sfloat operator -(sfloat f1, sfloat f2) => f1 + -f2;
+
+        public static sfloat operator *(sfloat f1, int mult)
+        {
+            return f1 * (sfloat)mult;
+        }
 
         public static sfloat operator *(sfloat f1, sfloat f2)
         {
@@ -801,6 +806,11 @@ namespace PurrNet.Prediction
             }
 
             return -1;
+        }
+
+        public float ToFloat()
+        {
+            return ReinterpretIntToFloat32(rawValue);
         }
     }
 }

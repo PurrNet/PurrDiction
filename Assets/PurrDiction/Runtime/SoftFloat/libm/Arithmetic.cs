@@ -1,5 +1,4 @@
-﻿
-namespace PurrNet.Prediction
+﻿namespace PurrNet.Prediction
 {
     public static partial class MathS
     {
@@ -357,7 +356,7 @@ namespace PurrNet.Prediction
 
         public static int FloorToInt(sfloat x)
         {
-            return (int)Floor(x);
+            return Floor(x);
         }
 
         /// <summary>
@@ -403,7 +402,7 @@ namespace PurrNet.Prediction
 
         public static int CeilToInt(sfloat x)
         {
-            return (int)Ceil(x);
+            return Ceil(x);
         }
 
         /// <summary>
@@ -534,6 +533,26 @@ namespace PurrNet.Prediction
             ix = (q >> 1) + 0x3f000000;
             ix += m << 23;
             return sfloat.FromRaw((uint)ix);
+        }
+
+        public static sfloat Min(sfloat aX, sfloat bX)
+        {
+            return aX < bX ? aX : bX;
+        }
+
+        public static sfloat Max(sfloat aX, sfloat bX)
+        {
+            return aX > bX ? aX : bX;
+        }
+
+        public static sfloat Abs(sfloat val)
+        {
+            return val * val.Sign();
+        }
+
+        public static sfloat Lerp(sfloat a, sfloat b, sfloat lerp)
+        {
+            return a + (b - a) * lerp;
         }
     }
 }

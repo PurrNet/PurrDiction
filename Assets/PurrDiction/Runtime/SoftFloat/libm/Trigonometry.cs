@@ -192,7 +192,7 @@ namespace PurrNet.Prediction
         /// <summary>
         /// Returns the arctangent of x
         /// </summary>
-        public static sfloat ATan(sfloat x)
+        public static sfloat Atan(sfloat x)
         {
             sfloat z;
 
@@ -281,7 +281,7 @@ namespace PurrNet.Prediction
         /// <summary>
         /// Returns the signed angle between the positive x axis, and the direction (x, y)
         /// </summary>
-        public static sfloat ATan2(sfloat y, sfloat x)
+        public static sfloat Atan2(sfloat y, sfloat x)
         {
             if (x.IsNaN() || y.IsNaN())
             {
@@ -294,7 +294,7 @@ namespace PurrNet.Prediction
             if (ix == 0x3f800000)
             {
                 /* x=1.0 */
-                return ATan(y);
+                return Atan(y);
             }
 
             uint m = ((iy >> 31) & 1) | ((ix >> 30) & 2); /* 2*sign(x)+sign(y) */
@@ -348,7 +348,7 @@ namespace PurrNet.Prediction
             /* z = atan(|y/x|) with correct underflow */
             var z = (m & 2) != 0 && iy + (26 << 23) < ix
                 ? sfloat.zero /*|y/x| < 0x1p-26, x < 0 */
-                : ATan(sfloat.Abs(y / x));
+                : Atan(sfloat.Abs(y / x));
 
             return m switch
             {
@@ -362,7 +362,7 @@ namespace PurrNet.Prediction
         /// <summary>
         /// Returns the arccosine of x
         /// </summary>
-        public static sfloat ACos(sfloat x)
+        public static sfloat Acos(sfloat x)
         {
             const uint PIO2_HI_U32 = 0x3fc90fda; // 1.5707962513e+00
             const uint PIO2_LO_U32 = 0x33a22168; // 7.5497894159e-08
@@ -431,6 +431,6 @@ namespace PurrNet.Prediction
         /// <summary>
         /// Returns the arcsine of x
         /// </summary>
-        public static sfloat ASin(sfloat x) => sfloat.FromRaw(half_pi) - ACos(x);
+        public static sfloat Asin(sfloat x) => sfloat.FromRaw(half_pi) - Acos(x);
     }
 }
