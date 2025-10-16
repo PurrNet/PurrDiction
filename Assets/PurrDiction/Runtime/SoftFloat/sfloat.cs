@@ -99,7 +99,7 @@ namespace PurrNet.Prediction
         public static sfloat minValue => new sfloat(RawMinValue);
         public static sfloat epsilon => new sfloat(RawEpsilon);
 
-        public override string ToString() => ((float)this).ToString(CultureInfo.InvariantCulture);
+        public override string ToString() => ToFloat().ToString(CultureInfo.InvariantCulture);
 
         /// <summary>
         /// Creates an sfloat number from its parts: sign, exponent, mantissa
@@ -126,12 +126,7 @@ namespace PurrNet.Prediction
         /// <summary>
         /// Converts an sfloat number to a float value
         /// </summary>
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static explicit operator float(sfloat f)
-        {
-            uint raw = f.rawValue;
-            return ReinterpretIntToFloat32(raw);
-        }
+        public static explicit operator float(sfloat f) => throw new NotImplementedException();
 
         /// <summary>
         /// Converts an sfloat number to an integer
@@ -742,10 +737,10 @@ namespace PurrNet.Prediction
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsZero() => (rawValue & 0x7FFFFFFF) == 0;
 
-        public string ToString(string format, IFormatProvider formatProvider) => ((float)this).ToString(format, formatProvider);
-        public string ToString(string format) => ((float)this).ToString(format);
-        public string ToString(IFormatProvider provider) => ((float)this).ToString(provider);
-        public string ToStringInv() => ((float)this).ToString(CultureInfo.InvariantCulture);
+        public string ToString(string format, IFormatProvider formatProvider) => ToFloat().ToString(format, formatProvider);
+        public string ToString(string format) => ToFloat().ToString(format);
+        public string ToString(IFormatProvider provider) => ToFloat().ToString(provider);
+        public string ToStringInv() => ToFloat().ToString(CultureInfo.InvariantCulture);
 
         /// <summary>
         /// Returns the absolute value of the given sfloat number
