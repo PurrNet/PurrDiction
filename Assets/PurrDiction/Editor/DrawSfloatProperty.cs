@@ -19,7 +19,7 @@ namespace PurrNet.Prediction.Editor
 
             GUI.skin.label.alignment = TextAnchor.MiddleRight;
             GUI.color = new Color(1f, 1f, 0.5f, 0.5f);
-            GUI.Label(position, "SF ");
+            GUI.Label(position, "sfloat ");
             GUI.color = Color.white;
 
             var newFixedValue = sfloat.FromFloat(newValue);
