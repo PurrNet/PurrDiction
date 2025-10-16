@@ -117,7 +117,7 @@ namespace PurrNet.Prediction
         /// Creates an sfloat number from a float value
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static explicit operator sfloat(float f)
+        public static implicit operator sfloat(float f)
         {
             uint raw = ReinterpretFloatToInt32(f);
             return new sfloat(raw);
@@ -826,7 +826,8 @@ namespace PurrNet.Prediction
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static sfloat FromFloat(float value)
         {
-            return (sfloat)value;
+            uint raw = ReinterpretFloatToInt32(value);
+            return new sfloat(raw);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

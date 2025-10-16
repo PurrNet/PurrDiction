@@ -36,7 +36,7 @@ namespace PurrNet.Prediction
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static SQuat FromAxisAngle(SVec3 axis, Real angleRad)
         {
-            var half = angleRad * (Real)0.5;
+            var half = angleRad * 0.5f;
             var s = Math.Sin(half);
             var c = Math.Cos(half);
             return new SQuat(axis.x * s, axis.y * s, axis.z * s, c);

@@ -6,11 +6,11 @@ namespace PurrNet.Prediction
 {
     [Serializable]
     // ReSharper disable once PartialTypeWithSinglePart
-    public readonly partial struct FP : IEquatable<FP>
+    public partial struct FP : IEquatable<FP>
     {
         public const int SIZE_OF = 8;
 
-        public readonly long rawValue;
+        public long rawValue;
 
         public static readonly FP minValue = new FP(MathFP.MinValue);
         public static readonly FP maxValue = new FP(MathFP.MaxValue);
