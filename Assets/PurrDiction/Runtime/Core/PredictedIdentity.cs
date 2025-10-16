@@ -125,7 +125,11 @@ namespace PurrNet.Prediction
         public bool IsOwner(PlayerID player, bool asServer)
         {
             if (owner.HasValue)
+            {
+                if (owner.Value.isBot)
+                    return asServer;
                 return owner == player;
+            }
             return asServer;
         }
 
