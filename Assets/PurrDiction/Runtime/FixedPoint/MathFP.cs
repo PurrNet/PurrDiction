@@ -31,7 +31,7 @@ namespace PurrNet.Prediction
     /// <summary>
     /// Direct fixed point (signed 32.32) functions.
     /// </summary>
-    public static class FPMath
+    public static class MathFP
     {
         public const int Shift = 32;
         const long FractionMask = (1L << Shift) - 1;

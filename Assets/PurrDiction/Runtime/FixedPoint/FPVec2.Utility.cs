@@ -25,7 +25,7 @@ namespace PurrNet.Prediction
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static FP Length(FPVec2 v)
         {
-            return FPMath.Sqrt(LengthSq(v));
+            return MathFP.Sqrt(LengthSq(v));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

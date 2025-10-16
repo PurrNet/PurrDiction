@@ -14,7 +14,7 @@ namespace PurrNet.Prediction.Editor
 
             var value = FP.FromRaw(rawValue.longValue);
 
-            double representation = FPMath.ToDouble(value);
+            double representation = MathFP.ToDouble(value);
             var newValue = EditorGUI.DelayedDoubleField(position, label, representation);
 
             GUI.skin.label.alignment = TextAnchor.MiddleRight;
@@ -22,7 +22,7 @@ namespace PurrNet.Prediction.Editor
             GUI.Label(position, "FP ");
             GUI.color = Color.white;
 
-            var newFixedValue = FP.FromRaw(FPMath.FromDouble(newValue));
+            var newFixedValue = FP.FromRaw(MathFP.FromDouble(newValue));
             if (value != newFixedValue)
             {
                 rawValue.longValue = newFixedValue.rawValue;

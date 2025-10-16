@@ -35,8 +35,8 @@ namespace PurrNet.Prediction
         public static FPQuat FromAxisAngle(FPVec3 axis, FP angleRad)
         {
             var half = angleRad * 0.5;
-            var s = FPMath.Sin(half);
-            var c = FPMath.Cos(half);
+            var s = MathFP.Sin(half);
+            var c = MathFP.Cos(half);
             return new FPQuat(axis.x * s, axis.y * s, axis.z * s, c);
         }
 
@@ -47,12 +47,12 @@ namespace PurrNet.Prediction
             var halfY = euler.y * half;
             var halfZ = euler.z * half;
 
-            var sinX = FPMath.Sin(halfX);
-            var cosX = FPMath.Cos(halfX);
-            var sinY = FPMath.Sin(halfY);
-            var cosY = FPMath.Cos(halfY);
-            var sinZ = FPMath.Sin(halfZ);
-            var cosZ = FPMath.Cos(halfZ);
+            var sinX = MathFP.Sin(halfX);
+            var cosX = MathFP.Cos(halfX);
+            var sinY = MathFP.Sin(halfY);
+            var cosY = MathFP.Cos(halfY);
+            var sinZ = MathFP.Sin(halfZ);
+            var cosZ = MathFP.Cos(halfZ);
 
             FPQuat q;
             q.x = sinX * cosY * cosZ + cosX * sinY * sinZ;
@@ -107,7 +107,7 @@ namespace PurrNet.Prediction
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static FPQuat Normalize(FPQuat q)
         {
-            var mag = FPMath.Sqrt(q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w);
+            var mag = MathFP.Sqrt(q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w);
             return mag > FP.zero
                 ? new FPQuat(q.x / mag, q.y / mag, q.z / mag, q.w / mag)
                 : identity;
@@ -117,10 +117,10 @@ namespace PurrNet.Prediction
         public static FPQuat Lerp(FPQuat a, FPQuat b, FP t)
         {
             var q = new FPQuat(
-                FPMath.Lerp(a.x, b.x, t),
-                FPMath.Lerp(a.y, b.y, t),
-                FPMath.Lerp(a.z, b.z, t),
-                FPMath.Lerp(a.w, b.w, t)
+                MathFP.Lerp(a.x, b.x, t),
+                MathFP.Lerp(a.y, b.y, t),
+                MathFP.Lerp(a.z, b.z, t),
+                MathFP.Lerp(a.w, b.w, t)
             );
             return Normalize(q);
         }
@@ -135,12 +135,12 @@ namespace PurrNet.Prediction
             if (dot > threshold)
                 return Lerp(a, b, t);
 
-            var theta0 = FPMath.Acos(dot);
+            var theta0 = MathFP.Acos(dot);
             var theta = theta0 * t;
-            var sinTheta0 = FPMath.Sin(theta0);
-            var sinTheta = FPMath.Sin(theta);
+            var sinTheta0 = MathFP.Sin(theta0);
+            var sinTheta = MathFP.Sin(theta);
 
-            var s0 = FPMath.Cos(theta) - dot * sinTheta / sinTheta0;
+            var s0 = MathFP.Cos(theta) - dot * sinTheta / sinTheta0;
             var s1 = sinTheta / sinTheta0;
 
             var res = new FPQuat(

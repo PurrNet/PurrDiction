@@ -136,6 +136,7 @@ namespace PurrNet.Prediction
         /// <summary>
         /// Converts an sfloat number to an integer
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static implicit operator int(sfloat f)
         {
             if (f.Exponent < 0)
@@ -196,6 +197,7 @@ namespace PurrNet.Prediction
         /// <summary>
         /// Returns the leading zero count of the given 32-bit integer
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static int clz(int x)
         {
             x |= x >> 1;
@@ -214,6 +216,7 @@ namespace PurrNet.Prediction
             0, 0, 0, 0, 0, 0, 0, 0, 0, 8, 8, 8, 8, 8, 8, 8, 8, 16, 16, 16, 16, 16, 16, 16, 16, 24, 24, 24, 24, 24, 24, 24
         };
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static sfloat InternalAdd(sfloat f1, sfloat f2)
         {
             byte rawExp1 = f1.RawExponent;
@@ -306,6 +309,7 @@ namespace PurrNet.Prediction
             return f1.rawValue == f2.rawValue ? f1 : NaN;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static sfloat operator +(sfloat f1, sfloat f2)
         {
             return f1.RawExponent - f2.RawExponent >= 0 ? InternalAdd(f1, f2) : InternalAdd(f2, f1);
@@ -314,6 +318,7 @@ namespace PurrNet.Prediction
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static sfloat operator -(sfloat f1, sfloat f2) => f1 + -f2;
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static sfloat operator *(sfloat f1, int mult)
         {
             return f1 * (sfloat)mult;
@@ -626,8 +631,10 @@ namespace PurrNet.Prediction
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static unsafe float ReinterpretIntToFloat32(uint i) => *(float*)&i;
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override bool Equals(object obj) => obj != null && GetType() == obj.GetType() && Equals((sfloat)obj);
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool Equals(sfloat other)
         {
             if (RawExponent != 255)
@@ -646,6 +653,7 @@ namespace PurrNet.Prediction
             return other.RawMantissa != 0;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override int GetHashCode()
         {
             if (rawValue == SignMask)
@@ -663,6 +671,7 @@ namespace PurrNet.Prediction
             return unchecked((int)RawNaN);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator ==(sfloat f1, sfloat f2)
         {
             if (f1.RawExponent != 255)
@@ -696,6 +705,7 @@ namespace PurrNet.Prediction
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool operator >=(sfloat f1, sfloat f2) => !f1.IsNaN() && !f2.IsNaN() && f1.CompareTo(f2) >= 0;
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int CompareTo(sfloat other)
         {
             if (IsNaN() && other.IsNaN())
@@ -711,6 +721,7 @@ namespace PurrNet.Prediction
             return val1.CompareTo(val2);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int CompareTo(object obj) => obj is sfloat f ? CompareTo(f) : throw new ArgumentException("obj");
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -739,6 +750,7 @@ namespace PurrNet.Prediction
         /// <summary>
         /// Returns the absolute value of the given sfloat number
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static sfloat Abs(sfloat f)
         {
             if (f.RawExponent != 255 || f.IsInfinity())
@@ -753,6 +765,7 @@ namespace PurrNet.Prediction
         /// <summary>
         /// Returns the maximum of the two given sfloat values. Returns NaN iff either argument is NaN.
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static sfloat Max(sfloat val1, sfloat val2)
         {
             if (val1 > val2 || val1.IsNaN())
@@ -766,6 +779,7 @@ namespace PurrNet.Prediction
         /// <summary>
         /// Returns the minimum of the two given sfloat values. Returns NaN iff either argument is NaN.
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static sfloat Min(sfloat val1, sfloat val2)
         {
             if (val1 < val2 || val1.IsNaN())
@@ -788,6 +802,7 @@ namespace PurrNet.Prediction
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public bool IsNegative() => (rawValue & 0x80000000) != 0;
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public int Sign()
         {
             if (IsNaN())
@@ -808,6 +823,13 @@ namespace PurrNet.Prediction
             return -1;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static sfloat FromFloat(float value)
+        {
+            return (sfloat)value;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public float ToFloat()
         {
             return ReinterpretIntToFloat32(rawValue);

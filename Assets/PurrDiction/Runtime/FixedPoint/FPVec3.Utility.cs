@@ -29,7 +29,7 @@ namespace PurrNet.Prediction
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static FP Length(FPVec3 v)
         {
-            return FPMath.Sqrt(LengthSq(v));
+            return MathFP.Sqrt(LengthSq(v));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -54,19 +54,19 @@ namespace PurrNet.Prediction
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static FPVec3 ComponentMin(FPVec3 a, FPVec3 b)
         {
-            return new FPVec3(FPMath.Min(a.x, b.x), FPMath.Min(a.y, b.y), FPMath.Min(a.z, b.z));
+            return new FPVec3(MathFP.Min(a.x, b.x), MathFP.Min(a.y, b.y), MathFP.Min(a.z, b.z));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static FPVec3 ComponentMax(FPVec3 a, FPVec3 b)
         {
-            return new FPVec3(FPMath.Max(a.x, b.x), FPMath.Max(a.y, b.y), FPMath.Max(a.z, b.z));
+            return new FPVec3(MathFP.Max(a.x, b.x), MathFP.Max(a.y, b.y), MathFP.Max(a.z, b.z));
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static FPVec3 Abs(FPVec3 v)
         {
-            return new FPVec3(FPMath.Abs(v.x), FPMath.Abs(v.y), FPMath.Abs(v.z));
+            return new FPVec3(MathFP.Abs(v.x), MathFP.Abs(v.y), MathFP.Abs(v.z));
         }
 
         // --- To FPVec2 ---
