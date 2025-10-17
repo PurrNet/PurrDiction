@@ -28,11 +28,14 @@ namespace PurrNet.Prediction
     public delegate void OnCollisionDelegate(GameObject other, PhysicsCollision physicsEvent);
     public delegate void OnTriggerDelegate(GameObject other);
 
+#if UNITY_PHYSICS_3D
     [RequireComponent(typeof(Rigidbody))]
+#endif
     [RequireComponent(typeof(PredictedTransform))]
     [AddComponentMenu("PurrDiction/Unity Rigidbody/Predicted Rigidbody")]
     public class PredictedRigidbody : PredictedIdentity<UnityRigidbodyState>, IPredictedPhysicsCallbacks
     {
+#if UNITY_PHYSICS_3D
         [SerializeField, PurrLock] private Rigidbody _rigidbody;
         [SerializeField, PurrLock] private FloatAccuracy _floatAccuracy = FloatAccuracy.Medium;
         [SerializeField, PurrLock] private PhysicsEventMask _eventMask = (PhysicsEventMask)0x3F;
@@ -396,6 +399,22 @@ namespace PurrNet.Prediction
             predictionManager.physics3d.RegisterEvent(PhysicsEventType.Stay, this, other);
         }
 
+        public void MovePosition(Vector3 position)
+        {
+            _rigidbody.MovePosition(position);
+        }
+
+        public void MoveRotation(Quaternion rotation)
+        {
+            _rigidbody.MoveRotation(rotation);
+        }
+
+        public void Move(Vector3 position, Quaternion rotation)
+        {
+            _rigidbody.Move(position, rotation);
+        }
+
+
         public void RaiseTriggerEnter(GameObject other)
         {
             onTriggerEnter?.Invoke(other);
@@ -425,5 +444,36 @@ namespace PurrNet.Prediction
         {
             onCollisionStay?.Invoke(other, evContacts);
         }
+#else
+        public void RaiseTriggerEnter(GameObject other)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void RaiseTriggerExit(GameObject other)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void RaiseTriggerStay(GameObject other)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void RaiseCollisionEnter(GameObject other, PhysicsCollision evContacts)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void RaiseCollisionExit(GameObject other, PhysicsCollision evContacts)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void RaiseCollisionStay(GameObject other, PhysicsCollision evContacts)
+        {
+            throw new NotImplementedException();
+        }
+#endif
     }
 }

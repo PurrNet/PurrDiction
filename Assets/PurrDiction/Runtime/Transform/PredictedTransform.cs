@@ -1,5 +1,6 @@
 using System;
 using JetBrains.Annotations;
+using PurrNet.Logging;
 using PurrNet.Modules;
 using PurrNet.Packing;
 using PurrNet.Utils;
@@ -21,9 +22,14 @@ namespace PurrNet.Prediction
 
         public Transform graphics => _graphics;
 
+#if UNITY_PHYSICS_3D
         private Rigidbody _unityRigidbody;
-        private Rigidbody2D _unity2dRigidbody;
         private CharacterController _unityCtrler;
+#endif
+#if UNITY_PHYSICS_2D
+        private Rigidbody2D _unity2dRigidbody;
+#endif
+
         private bool _hasController;
         private bool _hasRigidbody2d;
         private bool _hasRigidbody;
@@ -42,12 +48,16 @@ namespace PurrNet.Prediction
 
         private void Awake()
         {
+#if UNITY_PHYSICS_3D
             _unityCtrler = GetComponent<CharacterController>();
             _unityRigidbody = GetComponent<Rigidbody>();
-            _unity2dRigidbody = GetComponent<Rigidbody2D>();
             _hasController = _unityCtrler != null;
             _hasRigidbody = _unityRigidbody != null;
+#endif
+#if UNITY_PHYSICS_2D
+            _unity2dRigidbody = GetComponent<Rigidbody2D>();
             _hasRigidbody2d = _unity2dRigidbody != null;
+#endif
             _hasView = _graphics;
         }
 
@@ -116,39 +126,52 @@ namespace PurrNet.Prediction
 
         protected override void GetUnityState(ref PredictedTransformState state)
         {
+#if UNITY_PHYSICS_2D
             if (_hasRigidbody2d)
             {
                 var rot = Quaternion.Euler(0, 0, _unity2dRigidbody.rotation);
                 state.SetPositionAndRotation(_unity2dRigidbody.position, rot);
+                return;
             }
-            else if (_hasRigidbody)
+#endif
+#if UNITY_PHYSICS_3D
+            if (_hasRigidbody)
             {
                 state.SetPositionAndRotation(_unityRigidbody.position, _unityRigidbody.rotation);
+                return;
             }
-            else state.SetPositionAndRotation(transform);
+#endif
+            state.SetPositionAndRotation(transform);
         }
 
         protected override void SetUnityState(PredictedTransformState state)
         {
+#if UNITY_PHYSICS_2D
             if (_hasRigidbody2d)
             {
                 _unity2dRigidbody.position = state.unityPosition;
                 _unity2dRigidbody.rotation = state.unityRotation.eulerAngles.z;
                 transform.SetPositionAndRotation(state.unityPosition, state.unityRotation);
+                return;
             }
-            else if (_hasRigidbody)
+#endif
+#if UNITY_PHYSICS_3D
+            if (_hasRigidbody)
             {
                 _unityRigidbody.position = state.unityPosition;
                 _unityRigidbody.rotation = state.unityRotation;
                 transform.SetPositionAndRotation(state.unityPosition, state.unityRotation);
+                return;
             }
-            else if (_hasController && _characterControllerPatch)
+            else if (_characterControllerPatch && _hasController)
             {
                 _unityCtrler.enabled = false;
                 transform.SetPositionAndRotation(state.unityPosition, state.unityRotation);
                 _unityCtrler.enabled = true;
+                return;
             }
-            else transform.SetPositionAndRotation(state.unityPosition, state.unityRotation);
+#endif
+            transform.SetPositionAndRotation(state.unityPosition, state.unityRotation);
         }
 
         private PredictedTransformState? _viewState;

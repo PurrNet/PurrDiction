@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using PurrNet.Logging;
+using PurrNet.Packing;
 using PurrNet.Pooling;
 using UnityEngine;
 
@@ -37,63 +38,81 @@ namespace PurrNet.Prediction
             state.nextInstanceId = _nextInstanceId;
         }
 
+        void Apply(List<InstanceDetails> list, DisposableList<DiffOp<InstanceDetails>> ops)
+        {
+            int offset = 0;
+            int count = ops.Count;
+            for (var i = 0; i < count; i++)
+            {
+                var op = ops[i];
+                switch (op.type)
+                {
+                    case OperationType.Add:
+                        for (var j = 0; j < op.values.Count; j++)
+                        {
+                            var details = op.values[j];
+                            var pid = details.prefabId;
+                            var instanceId = details.instanceId;
+
+                            _nextInstanceId = instanceId.instanceId;
+
+                            var goId = Create(pid, details.spawnPosition, details.spawnRotation, details.owner);
+                            if (!goId.HasValue)
+                                PurrLogger.LogError($"Mismatch: Failed to create prefab {pid}");
+                        }
+                        offset += op.values.Count;
+                        break;
+                    case OperationType.Insert:
+                    {
+                        int start = op.index + offset;
+                        for (var j = 0; j < op.values.Count; j++)
+                        {
+                            int insertIndex = start + j;
+
+                            var details = op.values[j];
+                            var pid = details.prefabId;
+                            var instanceId = details.instanceId;
+
+                            _nextInstanceId = instanceId.instanceId;
+
+                            var goId = CreateInserted(insertIndex, pid, details.spawnPosition, details.spawnRotation,
+                                details.owner);
+                            if (!goId.HasValue)
+                                PurrLogger.LogError($"Mismatch: Failed to create prefab {pid}");
+                        }
+                        offset += op.values.Count;
+                        break;
+                    }
+                    case OperationType.Delete:
+                    {
+                        int start = op.index + offset;
+                        for (int j = start; j < start + op.length; j++)
+                        {
+                            var details = list[j];
+                            if (_instanceMap.Remove(details.instanceId, out var instance) && instance)
+                            {
+                                _goToId.Remove(instance);
+                                Delete(details, instance, true);
+                            }
+                        }
+
+                        list.RemoveRange(start, op.length);
+                        offset -= op.length;
+                        break;
+                    }
+                    case OperationType.End:
+                    default:
+                        break;
+                }
+            }
+        }
+
         protected override void SetUnityState(PredictedHierarchyState state)
         {
-            var currentActions = _spawnedPrefabs.Count;
-            using var spawnedPrefabsCopy = DisposableList<InstanceDetails>.Create(state.spawnedPrefabs.Count);
-            spawnedPrefabsCopy.AddRange(state.spawnedPrefabs);
-            var stateActions = state.spawnedPrefabs.Count;
+            var actions = MyersDiff.Diff(_spawnedPrefabs, state.spawnedPrefabs);
 
-            var min = Mathf.Min(currentActions, stateActions);
-
-            int i = 0;
-
-            for (; i < min; i++)
-            {
-                var current = _spawnedPrefabs[i];
-                var target = spawnedPrefabsCopy[i];
-
-                if (!current.Equals(target))
-                    break;
-            }
-
-            // we match up to i, so we need to undo the rest of the actions
-            int countToUndo = currentActions - i;
-
-            if (countToUndo > 0)
-            {
-                for (var j = i; j < currentActions; ++j)
-                {
-                    var details = _spawnedPrefabs[j];
-                    if (_instanceMap.Remove(details.instanceId, out var instance) && instance)
-                    {
-                        _goToId.Remove(instance);
-                        Delete(details, instance, true);
-                    }
-                }
-
-                // clear the undone actions
-                _spawnedPrefabs.RemoveRange(i, countToUndo);
-            }
-
-            // we need to redo the rest of the actions
-            for (var j = i; j < stateActions; j++)
-            {
-                var details = spawnedPrefabsCopy[j];
-                var pid = details.prefabId;
-                var instanceId = details.instanceId;
-
-                _nextInstanceId = instanceId.instanceId;
-
-                var goId = Create(pid, details.spawnPosition, details.spawnRotation);
-                if (!goId.HasValue)
-                    PurrLogger.LogError($"Mismatch: Failed to create prefab {pid}");
-            }
-
+            Apply(_spawnedPrefabs, actions);
             _nextInstanceId = state.nextInstanceId;
-
-            if (_spawnedPrefabs.Count != spawnedPrefabsCopy.Count)
-                PurrLogger.LogError($"Mismatch: Action count {_spawnedPrefabs.Count} != {spawnedPrefabsCopy.Count}");
         }
 
         public PredictedObjectID? Create(int prefabId, PlayerID? owner = null)
@@ -112,11 +131,11 @@ namespace PurrNet.Prediction
             return Create(pid, position, rotation, owner);
         }
 
-        public PredictedObjectID? Create(int prefabId, Vector3 position, Quaternion rotation, PlayerID? owner = null)
+        PredictedObjectID? CreateInserted(int index, int prefabId, Vector3 position, Quaternion rotation, PlayerID? owner = null)
         {
             var instanceId = new PredictedObjectID(_nextInstanceId);
             _nextInstanceId++;
-            var key = new InstanceDetails(prefabId, instanceId, position, rotation);
+            var key = new InstanceDetails(prefabId, instanceId, position, rotation, owner);
 
             GameObject go;
 
@@ -142,7 +161,7 @@ namespace PurrNet.Prediction
 
             _instanceMap.Add(instanceId, go);
             _goToId.Add(go, instanceId);
-            _spawnedPrefabs.Add(key);
+            _spawnedPrefabs.Insert(index, key);
 
             if (!predictionManager.isSimulating)
             {
@@ -151,6 +170,11 @@ namespace PurrNet.Prediction
             }
 
             return instanceId;
+        }
+
+        public PredictedObjectID? Create(int prefabId, Vector3 position, Quaternion rotation, PlayerID? owner = null)
+        {
+            return CreateInserted(_spawnedPrefabs.Count, prefabId, position, rotation, owner);
         }
 
         readonly Dictionary<int, PredictedTickPool> _prefabToPool = new ();
@@ -224,7 +248,7 @@ namespace PurrNet.Prediction
         internal void RegisterSceneObject(GameObject root, int pid)
         {
             var instanceId = new PredictedObjectID(_nextInstanceId);
-            var key = new InstanceDetails(pid, instanceId, root.transform.position, root.transform.rotation);
+            var key = new InstanceDetails(pid, instanceId, root.transform.position, root.transform.rotation, null);
 
             _isSceneObject.Add(instanceId);
             _instanceMap.Add(instanceId, root);
@@ -268,26 +292,28 @@ namespace PurrNet.Prediction
             return _instanceMap.GetValueOrDefault(id.Value);
         }
 
-        public T GetComponent<T>(PredictedObjectID? id) where T : Component
+        public T GetComponent<T>(PredictedObjectID? id)
         {
             if (!id.HasValue)
-                return null;
+                return default;
 
             return GetComponent<T>(id.Value);
         }
 
-        public T GetComponent<T>(PredictedObjectID id) where T : Component
+        public T GetComponent<T>(PredictedObjectID id)
         {
-            return _instanceMap.GetValueOrDefault(id)?.GetComponent<T>();
+            var go = _instanceMap.GetValueOrDefault(id);
+            if (!go) return default;
+            return go.GetComponent<T>();
         }
 
-        public bool TryGetComponent<T>(PredictedObjectID id, out T go) where T : Component
+        public bool TryGetComponent<T>(PredictedObjectID id, out T go)
         {
             go = GetComponent<T>(id);
             return go != null;
         }
 
-        public bool TryGetComponent<T>(PredictedObjectID? id, out T go) where T : Component
+        public bool TryGetComponent<T>(PredictedObjectID? id, out T go)
         {
             go = GetComponent<T>(id);
             return go != null;

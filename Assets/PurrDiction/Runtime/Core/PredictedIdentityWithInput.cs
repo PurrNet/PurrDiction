@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using PurrNet.Modules;
 using PurrNet.Packing;
 using PurrNet.Prediction.Profiler;
@@ -48,6 +47,12 @@ namespace PurrNet.Prediction
 
         internal override void SimulateTick(ulong tick, float delta)
         {
+            if (!fullPredictedState.prediction.wasOnSimulationStartCalled)
+            {
+                SimulationStart();
+                fullPredictedState.prediction.wasOnSimulationStartCalled = true;
+            }
+
             if (IsOwner())
             {
                 if (!_inputHistory.TryGet(tick, out var input))
@@ -76,6 +81,13 @@ namespace PurrNet.Prediction
             }
         }
 
+        protected virtual void LateSimulate(INPUT input, ref STATE state, float delta) {}
+
+        internal override void LateSimulateTick(float delta)
+        {
+            LateSimulate(_currentInput, ref fullPredictedState.state, delta);
+        }
+
         /// <summary>
         /// Modify the extrapolated input before it is used to simulate the state.
         /// </summary>
@@ -93,7 +105,7 @@ namespace PurrNet.Prediction
             }
             else if (isServer)
             {
-                if (_queuedInput.Count <= 0)
+                if (_queuedInput == null)
                 {
                     if (!extrapolate)
                         _lastInput = GetDefaultInput();
@@ -101,10 +113,11 @@ namespace PurrNet.Prediction
                     return;
                 }
 
-                var input = _queuedInput.Dequeue();
+                var input = _queuedInput.Value;
                 SanitizeInput(ref input);
                 _lastInput = input;
                 _inputHistory.Write(tick, input);
+                _queuedInput = null;
             }
         }
 
@@ -112,13 +125,6 @@ namespace PurrNet.Prediction
         {
             if(isController)
                 UpdateInput(ref _nextInput);
-        }
-
-        internal virtual void SimulateRemote(ulong tick, float delta)
-        {
-            if (_inputHistory.TryGet(tick, out var input))
-                PreSimulate(input, ref fullPredictedState.state, delta);
-            else PreSimulate(GetDefaultInput(), ref fullPredictedState.state, delta);
         }
 
         protected virtual INPUT GetDefaultInput() => default;
@@ -190,7 +196,7 @@ namespace PurrNet.Prediction
             TickBandwidthProfiler.OnReadInput(myType, packer.positionInBits - pos, this);
         }
 
-        private readonly Queue<INPUT> _queuedInput = new ();
+        private INPUT? _queuedInput;
 
         /// <summary>
         /// Sanitize the input before using it.
@@ -212,8 +218,7 @@ namespace PurrNet.Prediction
 
                 var sanitizedInput = input;
                 SanitizeInput(ref sanitizedInput);
-                _queuedInput.Clear();
-                _queuedInput.Enqueue(sanitizedInput);
+                _queuedInput = sanitizedInput;
             }
             TickBandwidthProfiler.OnReadInput(myType, packer.positionInBits - pos, this);
         }

@@ -48,6 +48,7 @@ namespace PurrNet.Prediction
 
         readonly List<PredictedIdentity> _queue = new ();
         readonly List<PredictedIdentity> _systems = new ();
+        private int _systemsCount;
 
         GameObjectPoolCollection _pools;
 
@@ -57,15 +58,25 @@ namespace PurrNet.Prediction
             return _instances.TryGetValue(sceneHandle, out world);
         }
 
+        [ContextMenu("Debug/Print all systems")]
+        public void PrintAllSystems()
+        {
+            foreach (var system in _systems)
+                Debug.Log(system, system);
+        }
+
         private void Awake()
         {
             _instances[gameObject.scene.handle] = this;
 
+#if UNITY_PHYSICS_2D
             if ((_physicsProvider & PredictionPhysicsProvider.UnityPhysics2D) != 0)
                 Physics2D.simulationMode = SimulationMode2D.Script;
+#endif
+#if UNITY_PHYSICS_3D
             if ((_physicsProvider & PredictionPhysicsProvider.UnityPhysics3D) != 0)
                 Physics.simulationMode = SimulationMode.Script;
-
+#endif
             InitPooling();
         }
 
@@ -139,20 +150,11 @@ namespace PurrNet.Prediction
             tickDelta = 1f / tickRate;
             _lastVerifiedTick = 0;
 
-            if (ShouldRegisterSystem(BuiltInSystems.Hierarchy))
-                hierarchy = RegisterSystem<PredictedHierarchy>();
-
-            if (ShouldRegisterSystem(BuiltInSystems.Players))
-                players = RegisterSystem<PredictedPlayers>();
-
-            if (ShouldRegisterSystem(BuiltInSystems.Physics3D))
-                physics3d = RegisterSystem<Predicted3DPhysics>();
-
-            if (ShouldRegisterSystem(BuiltInSystems.Physics2D))
-                physics2d = RegisterSystem<Predicted2DPhysics>();
-
-            if (ShouldRegisterSystem(BuiltInSystems.Time))
-                time = RegisterSystem<PredictedTime>();
+            hierarchy = ShouldRegisterSystem(BuiltInSystems.Hierarchy) ? RegisterSystem<PredictedHierarchy>() : null;
+            players = ShouldRegisterSystem(BuiltInSystems.Players) ? RegisterSystem<PredictedPlayers>() : null;
+            physics3d = ShouldRegisterSystem(BuiltInSystems.Physics3D) ? RegisterSystem<Predicted3DPhysics>() : null;
+            physics2d = ShouldRegisterSystem(BuiltInSystems.Physics2D) ? RegisterSystem<Predicted2DPhysics>() : null;
+            time = ShouldRegisterSystem(BuiltInSystems.Time) ? RegisterSystem<PredictedTime>() : null;
 
             var roots = HashSetPool<GameObject>.Instantiate();
             var pid = -1;
@@ -171,6 +173,8 @@ namespace PurrNet.Prediction
                     }
                 }
             }
+
+            HashSetPool<GameObject>.Destroy(roots);
 
             _queue.Clear();
 
@@ -221,7 +225,7 @@ namespace PurrNet.Prediction
             if (hierarchy)
                 hierarchy.Cleanup();
 
-            for (var i = _systems.Count - 1; i >= 0; i--)
+            for (var i = _systemsCount - 1; i >= 0; i--)
             {
                 if (_systems[i])
                     Destroy(_systems[i]);
@@ -230,6 +234,7 @@ namespace PurrNet.Prediction
             _instanceMap.Clear();
             _queue.Clear();
             _systems.Clear();
+            _systemsCount = 0;
             _nextSystemId = 0;
             _deltas.Clear();
         }
@@ -240,6 +245,8 @@ namespace PurrNet.Prediction
         {
             var system = gameObject.AddComponent<T>();
             system.hideFlags = HideFlags.NotEditable;
+            if (cachedIsServer)
+                system.OnPreSetup();
             RegisterInstance(system, new PredictedObjectID(0), _nextSystemId++, null);
             return system;
         }
@@ -328,15 +335,30 @@ namespace PurrNet.Prediction
             _instanceMap[pid] = system;
             system.Setup(networkManager, this, pid, owner);
 
-            _systems.Add(system);
+            // i want to insert based on objectid first, then componet id such that I can guarantee that the order of the components is preserved
+            var myObjId = pid.objectId.instanceId.value;
+            int posToInsert = _systemsCount;
+
+            for (int i = 0; i < _systemsCount; i++)
+            {
+                var curObjId = _systems[i].id.objectId.instanceId.value;
+                if (curObjId > myObjId || curObjId == myObjId && _systems[i].id.componentId.value > pid.componentId.value)
+                {
+                    posToInsert = i;
+                    break;
+                }
+            }
+
+            _systems.Insert(posToInsert, system);
+            ++_systemsCount;
         }
 
         public void UnregisterInstance(PredictedIdentity predictedIdentity)
         {
             _instanceMap.Remove(predictedIdentity.id);
-            _systems.Remove(predictedIdentity);
+            if (_systems.Remove(predictedIdentity))
+                --_systemsCount;
         }
-
 
         protected override void OnObserverRemoved(PlayerID player)
         {
@@ -388,10 +410,9 @@ namespace PurrNet.Prediction
 
         private void WriteFullFrame(BitPacker packer, PlayerID target)
         {
-            int count = _systems.Count;
-            Packer<PackedInt>.Write(packer, count);
+            Packer<PackedInt>.Write(packer, _systemsCount);
 
-            for (var i = 0; i < count; i++)
+            for (var i = 0; i < _systemsCount; i++)
             {
                 if (_systems[i].isEventHandler)
                     continue;
@@ -400,10 +421,10 @@ namespace PurrNet.Prediction
             }
 
 
-            for (var i = 0; i < count; i++)
+            for (var i = 0; i < _systemsCount; i++)
                 _systems[i].WriteInput(localTick, target, packer, _deltaModuleState, true);
 
-            for (var i = 0; i < count; i++)
+            for (var i = 0; i < _systemsCount; i++)
             {
                 if (!_systems[i].isEventHandler)
                     continue;
@@ -457,7 +478,7 @@ namespace PurrNet.Prediction
         {
             localTickInContext = localTick;
 
-            var myPlayer = localPlayer ?? default;
+            var myPlayer = isSpawned ? localPlayer ?? default : default;
             cachedIsServer = isServer;
             var cachedIsClient = isClient;
 
@@ -465,13 +486,12 @@ namespace PurrNet.Prediction
             if (cachedIsServer)
                 isVerified = true;
 
-            var scount = _systems.Count;
             bool hasClients = _clientTicks.Count > 0;
 
             if (cachedIsServer && hasClients)
                 PrepareInputs();
 
-            for (var i = 0; i < scount; i++)
+            for (var i = 0; i < _systemsCount; i++)
             {
                 var system = _systems[i];
                 bool controller = system.IsOwner(myPlayer, cachedIsServer);
@@ -489,8 +509,11 @@ namespace PurrNet.Prediction
             if (time)
                 delta *= time.timeScale;
 
-            for (var i = 0; i < _systems.Count; i++)
+            for (var i = 0; i < _systemsCount; i++)
                 _systems[i].SimulateTick(localTick, delta);
+
+            for (var i = 0; i < _systemsCount; i++)
+                _systems[i].LateSimulateTick(delta);
 
             DoPhysicsPass();
 
@@ -500,7 +523,7 @@ namespace PurrNet.Prediction
                 SendFrameToOthers();
             }
 
-            for (var i = 0; i < _systems.Count; i++)
+            for (var i = 0; i < _systemsCount; i++)
                 _systems[i].PostSimulate(localTick, delta);
 
             if (cachedIsServer)
@@ -534,7 +557,7 @@ namespace PurrNet.Prediction
 
             using var frame = BitPackerPool.Get();
             uint writtenCount = 0;
-            for (var systemIdx = 0; systemIdx < _systems.Count; systemIdx++)
+            for (var systemIdx = 0; systemIdx < _systemsCount; systemIdx++)
             {
                 var system = _systems[systemIdx];
                 system.GetLatestUnityState();
@@ -553,10 +576,9 @@ namespace PurrNet.Prediction
 
         private void FinalizeTickOnServer(bool cachedIsClient)
         {
-            var count = _systems.Count;
             if (cachedIsClient)
             {
-                for (var systemIdx = 0; systemIdx < count; systemIdx++)
+                for (var systemIdx = 0; systemIdx < _systemsCount; systemIdx++)
                 {
                     _systems[systemIdx].GetLatestUnityState();
                     _systems[systemIdx].UpdateRollbackInterpolationState(tickDelta, false);
@@ -565,7 +587,7 @@ namespace PurrNet.Prediction
             }
             else
             {
-                for (var systemIdx = 0; systemIdx < count; systemIdx++)
+                for (var systemIdx = 0; systemIdx < _systemsCount; systemIdx++)
                 {
                     _systems[systemIdx].GetLatestUnityState();
                     _systems[systemIdx].SaveStateInHistory(localTick);
@@ -584,7 +606,6 @@ namespace PurrNet.Prediction
 
         private void WriteInitialFrameToOthers()
         {
-            var count = _systems.Count;
             var fCount = _clientFrames.Count;
 
             for (var j = 0; j < fCount; j++)
@@ -592,17 +613,16 @@ namespace PurrNet.Prediction
                 var frame = _clientFrames[j].packer;
                 var player = _clientFrames[j].player;
 
+                Packer<PackedInt>.Write(frame, _systemsCount);
 
-                Packer<PackedInt>.Write(frame, count);
-
-                for (var i = 0; i < count; i++)
+                for (var i = 0; i < _systemsCount; i++)
                 {
                     if (_systems[i].isEventHandler)
                         continue;
                     _systems[i].WriteCurrentState(player, frame, _deltaModuleState);
                 }
 
-                for (var i = 0; i < count; i++)
+                for (var i = 0; i < _systemsCount; i++)
                     _systems[i].WriteInput(localTick, player, frame, _deltaModuleState, true);
             }
         }
@@ -610,9 +630,8 @@ namespace PurrNet.Prediction
         private void WriteEventHandles()
         {
             var fCount = _clientFrames.Count;
-            int count = _systems.Count;
 
-            for (var i = 0; i < count; i++)
+            for (var i = 0; i < _systemsCount; i++)
             {
                 if (!_systems[i].isEventHandler)
                     continue;
@@ -644,7 +663,6 @@ namespace PurrNet.Prediction
                 }
 
                 var deltaLen = packer.ToByteData().length;
-
                 SendFrameToRemote(player, tick, new BitPackerWithLength(deltaLen, packer));
             }
         }
@@ -690,23 +708,27 @@ namespace PurrNet.Prediction
         private void DoPhysicsPass()
         {
             isInPhysicsPass = true;
+            // ReSharper disable once NotAccessedVariable
             var delta = tickDelta;
             if (time)
                 delta *= time.timeScale;
 
+#if UNITY_PHYSICS_2D
             if ((_physicsProvider & PredictionPhysicsProvider.UnityPhysics2D) != 0)
             {
                 var physicsScene = gameObject.scene.GetPhysicsScene2D();
                 if (physicsScene.IsValid())
                     physicsScene.Simulate(delta);
             }
-
+#endif
+#if UNITY_PHYSICS_3D
             if ((_physicsProvider & PredictionPhysicsProvider.UnityPhysics3D) != 0)
             {
                 var physicsScene = gameObject.scene.GetPhysicsScene();
                 if (physicsScene.IsValid())
                     physicsScene.Simulate(delta);
             }
+#endif
 
             isInPhysicsPass = false;
         }
@@ -768,14 +790,19 @@ namespace PurrNet.Prediction
 
         private void SyncTransforms()
         {
+#if UNITY_PHYSICS_2D
             if ((_physicsProvider & PredictionPhysicsProvider.UnityPhysics2D) != 0)
                 Physics2D.SyncTransforms();
-
+#endif
+#if UNITY_PHYSICS_3D
             if ((_physicsProvider & PredictionPhysicsProvider.UnityPhysics3D) != 0)
                 Physics.SyncTransforms();
+#endif
         }
 
         private ulong _lastVerifiedTick = 1;
+        public event Action onStartingToRollback;
+        public event Action onRollbackFinished;
 
         private void OnPostTick()
         {
@@ -787,6 +814,7 @@ namespace PurrNet.Prediction
                 return;
             }
 
+            onStartingToRollback?.Invoke();
             UpdateInterpolation(false);
 
             isSimulating = true;
@@ -827,12 +855,12 @@ namespace PurrNet.Prediction
             isSimulating = false;
 
             TickBandwidthProfiler.MarkEndOfTick();
+            onRollbackFinished?.Invoke();
         }
 
         private void UpdateInterpolation(bool accumulateError)
         {
-            var scount = _systems.Count;
-            for (var j = 0; j < scount; j++)
+            for (var j = 0; j < _systemsCount; j++)
                 _systems[j].UpdateRollbackInterpolationState(tickDelta, accumulateError);
         }
 
@@ -846,15 +874,18 @@ namespace PurrNet.Prediction
             {
                 localTickInContext = simTick;
 
-                for (var j = 0; j < _systems.Count; j++)
+                for (var j = 0; j < _systemsCount; j++)
                     _systems[j].SimulateTick(simTick, delta);
+
+                for (var j = 0; j < _systemsCount; j++)
+                    _systems[j].LateSimulateTick(delta);
 
                 DoPhysicsPass();
 
-                for (var i = 0; i < _systems.Count; i++)
+                for (var i = 0; i < _systemsCount; i++)
                     _systems[i].PostSimulate(simTick, delta);
 
-                var count = _systems.Count;
+                var count = _systemsCount;
                 for (var j = 0; j < count; j++)
                     _systems[j].GetLatestUnityState();
             }
@@ -869,15 +900,19 @@ namespace PurrNet.Prediction
                 delta *= time.timeScale;
 
             isSimulating = true;
-            for (var j = 0; j < _systems.Count; j++)
+
+            for (var j = 0; j < _systemsCount; j++)
                 _systems[j].SimulateTick(verifiedTick, delta);
+
+            for (var j = 0; j < _systemsCount; j++)
+                _systems[j].LateSimulateTick(delta);
 
             DoPhysicsPass();
 
-            for (var i = 0; i < _systems.Count; i++)
+            for (var i = 0; i < _systemsCount; i++)
                 _systems[i].PostSimulate(verifiedTick, delta);
 
-            var count = _systems.Count;
+            var count = _systemsCount;
             for (var j = 0; j < count; j++)
                 _systems[j].GetLatestUnityState();
             isSimulating = false;
@@ -991,10 +1026,9 @@ namespace PurrNet.Prediction
 
         private void UpdateView()
         {
-            int count = _systems.Count;
-
-            for (var i = 0; i < count; i++)
-                _systems[i].UpdateView(Time.unscaledDeltaTime);
+            var dt = Time.unscaledDeltaTime;
+            for (var i = 0; i < _systemsCount; i++)
+                _systems[i].UpdateView(dt);
         }
 
         public bool TryGetPrefab(int pid, out GameObject prefab)
@@ -1031,25 +1065,33 @@ namespace PurrNet.Prediction
 
         public static void ProperlySetPosAndRot(Transform transform, Vector3 position, Quaternion rotation)
         {
+#if UNITY_PHYSICS_2D
             if (transform.TryGetComponent(out Rigidbody2D rb2d))
             {
                 rb2d.position = position;
                 rb2d.rotation = rotation.eulerAngles.z;
                 transform.SetPositionAndRotation(position, rotation);
+                return;
             }
-            else if  (transform.TryGetComponent(out Rigidbody rb))
+#endif
+#if UNITY_PHYSICS_3D
+            if  (transform.TryGetComponent(out Rigidbody rb))
             {
                 rb.position = position;
                 rb.rotation = rotation;
                 transform.SetPositionAndRotation(position, rotation);
+                return;
             }
-            else if (transform.TryGetComponent(out CharacterController ctrler) && ctrler.enabled)
+
+            if (transform.TryGetComponent(out CharacterController ctrler) && ctrler.enabled)
             {
                 ctrler.enabled = false;
                 transform.SetPositionAndRotation(position, rotation);
                 ctrler.enabled = true;
+                return;
             }
-            else transform.SetPositionAndRotation(position, rotation);
+#endif
+            transform.SetPositionAndRotation(position, rotation);
         }
 
         internal GameObject InternalCreate(GameObject prefab, Vector3 position, Quaternion rotation, PredictedObjectID objectId, PlayerID? owner)
@@ -1073,21 +1115,23 @@ namespace PurrNet.Prediction
 
         internal void InternalDelete(PackedInt prefabId, GameObject instance)
         {
-            if (!_predictedPrefabs)
+            int pid = prefabId;
+
+            if (!_predictedPrefabs || pid < 0 || pid >= _predictedPrefabs.prefabs.Count)
             {
                 UnityProxy.DestroyImmediateDirectly(instance);
                 return;
             }
 
-            if (prefabId < 0 || prefabId >= _predictedPrefabs.prefabs.Count)
+            var prefabsInfo = _predictedPrefabs.prefabs[pid];
+
+            if (!prefabsInfo.pooling.usePooling)
             {
                 UnityProxy.DestroyImmediateDirectly(instance);
                 return;
             }
 
-            var prefab = _predictedPrefabs.prefabs[prefabId].prefab;
-
-            if (_pools.TryGetPool(prefab, out var pool))
+            if (_pools.TryGetPool(prefabsInfo.prefab, out var pool))
             {
                 UnregisterPooledInstance(instance);
                 pool.Delete(instance);

@@ -5,7 +5,9 @@ namespace PurrNet.Prediction.Tests
     public class SimpleCC : PredictedIdentity<SimpleWASDInput, SimpleCCState>
     {
         [SerializeField] private GameObject _projectile;
+#if UNITY_PHYSICS_3D
         [SerializeField] private Rigidbody _controller;
+#endif
         [SerializeField] private float _speed = 5;
 
         protected override void SanitizeInput(ref SimpleWASDInput input)
@@ -31,8 +33,8 @@ namespace PurrNet.Prediction.Tests
             if (move != Vector3.zero)
                 state.rotation = Mathf.Atan2(move.x, move.z) * Mathf.Rad2Deg;
 
+#if UNITY_PHYSICS_3D
             _controller.rotation = Quaternion.Euler(0, state.rotation, 0);
-
 #if UNITY_6000
             var vel = _controller.linearVelocity;
             vel.x = moveVector.x;
@@ -44,20 +46,6 @@ namespace PurrNet.Prediction.Tests
             vel.z = moveVector.z;
             _controller.velocity = vel;
 #endif
-
-            /*if (input.jump)
-                Shoot();*/
-        }
-
-        private void Shoot()
-        {
-            var pos = transform.position + transform.forward;
-            var projectileId = hierarchy.Create(_projectile, pos, transform.rotation);
-            var projectileRb = hierarchy.GetComponent<Rigidbody>(projectileId);
-#if UNITY_6000
-            projectileRb.linearVelocity = transform.forward * 10;
-#else
-            projectileRb.velocity = transform.forward * 10;
 #endif
         }
 

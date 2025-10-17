@@ -4,11 +4,15 @@ using UnityEngine.InputSystem;
 namespace PurrNet.Prediction.Prebuilt
 {
     [RequireComponent(typeof(PredictedTransform))]
+#if UNITY_PHYSICS_3D
     [RequireComponent(typeof(CharacterController))]
+#endif
     [AddComponentMenu("PurrDiction/Prebuilt/Transform/Top Down Movement")]
     public class TopDownMovement_CC : PredictedIdentity<TopDownMovement_CC.Input, TopDownMovement_CC.State>
     {
+#if UNITY_PHYSICS_3D
         [SerializeField] private CharacterController controller;
+#endif
         [SerializeField] private float movementSpeed = 5;
         private Camera _camera;
 
@@ -19,11 +23,13 @@ namespace PurrNet.Prediction.Prebuilt
                 Debug.LogError($"Failed to get camera tagget as main camera!", this);
         }
 
+#if UNITY_PHYSICS_3D
         private void Reset()
         {
             if (!TryGetComponent(out controller))
                 controller = gameObject.AddComponent<CharacterController>();
         }
+#endif
 
         protected override void Simulate(Input input, ref State state, float delta)
         {
@@ -31,7 +37,9 @@ namespace PurrNet.Prediction.Prebuilt
             movement.Normalize();
             var floatMovement = movement;
 
+#if UNITY_PHYSICS_3D
             controller.Move(floatMovement * movementSpeed * delta);
+#endif
 
             if (floatMovement != Vector3.zero)
             {

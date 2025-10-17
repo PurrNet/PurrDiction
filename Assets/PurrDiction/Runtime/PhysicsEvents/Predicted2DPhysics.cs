@@ -10,13 +10,14 @@ namespace PurrNet.Prediction
         public Vector2 point;
         public Vector2 normal;
         public float separation;
-
+#if UNITY_PHYSICS_2D
         public Physics2DContactPoint(ContactPoint2D contact)
         {
             point = contact.point;
             normal = contact.normal;
             separation = contact.separation;
         }
+#endif
     }
 
     public struct Physics2DEvent : IDisposable
@@ -33,6 +34,7 @@ namespace PurrNet.Prediction
 
     public struct PredictedPhysics2DData : IPredictedData<PredictedPhysics2DData>
     {
+#if UNITY_PHYSICS_2D
         public DisposableList<Physics2DEvent> events;
 
         public void Dispose()
@@ -42,6 +44,9 @@ namespace PurrNet.Prediction
                 events[i].Dispose();
             events.Dispose();
         }
+#else
+        public void Dispose() {}
+#endif
     }
 
     public class Predicted2DPhysics : PredictedIdentity<PredictedPhysics2DData>
@@ -52,10 +57,13 @@ namespace PurrNet.Prediction
         {
             return new PredictedPhysics2DData
             {
+#if UNITY_PHYSICS_2D
                 events = DisposableList<Physics2DEvent>.Create(16)
+#endif
             };
         }
 
+#if UNITY_PHYSICS_2D
         public override void PostSimulate(ulong tick, float delta)
         {
             ref var state = ref currentState;
@@ -172,5 +180,6 @@ namespace PurrNet.Prediction
         {
             return from;
         }
+#endif
     }
 }

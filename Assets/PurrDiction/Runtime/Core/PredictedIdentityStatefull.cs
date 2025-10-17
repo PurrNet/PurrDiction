@@ -137,7 +137,23 @@ namespace PurrNet.Prediction
             GetUnityState(ref fullPredictedState.state);
         }
 
-        internal override void SimulateTick(ulong tick, float delta) => Simulate(ref fullPredictedState.state, delta);
+        /// <summary>
+        /// Called before the first Simulate is executed
+        /// </summary>
+        protected virtual void SimulationStart() {}
+
+        internal override void SimulateTick(ulong tick, float delta)
+        {
+            if (!fullPredictedState.prediction.wasOnSimulationStartCalled)
+            {
+                SimulationStart();
+                fullPredictedState.prediction.wasOnSimulationStartCalled = true;
+            }
+            Simulate(ref fullPredictedState.state, delta);
+        }
+
+        internal override void LateSimulateTick(float delta)
+            => LateSimulate(ref fullPredictedState.state, delta);
 
         internal override void SaveStateInHistory(ulong tick)
         {
@@ -161,6 +177,8 @@ namespace PurrNet.Prediction
 
         protected virtual void Simulate(ref STATE state, float delta) {}
 
+        protected virtual void LateSimulate(ref STATE state, float delta) {}
+
         internal override void Rollback(ulong tick)
         {
             if (!_stateHistory.Read(tick, out var state))
@@ -173,7 +191,6 @@ namespace PurrNet.Prediction
             fullPredictedState = state.DeepCopy();
 
             owner = fullPredictedState.prediction.owner;
-            // id = fullPredictedState.prediction.predictedID;
             SetUnityState(fullPredictedState.state);
         }
 

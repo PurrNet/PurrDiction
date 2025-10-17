@@ -15,6 +15,19 @@ namespace PurrNet.Prediction
             return $"LinearVelocity: {linearVelocity}\nAngularVelocity: {angularVelocity}\nIsKinematic: {isKinematic}\nIsSleeping: {isSleeping}";
         }
 
+#if UNITY_PHYSICS_3D
+        public UnityRigidbodyState(Rigidbody rigidbody)
+        {
+#if UNITY_6000
+            linearVelocity = rigidbody.linearVelocity;
+#else
+            linearVelocity = rigidbody.velocity;
+#endif
+            angularVelocity = rigidbody.angularVelocity;
+            isKinematic = rigidbody.isKinematic;
+            isSleeping = rigidbody.IsSleeping();
+        }
+#endif
         public void Dispose() { }
     }
 
@@ -28,15 +41,15 @@ namespace PurrNet.Prediction
         public UnityRigidbodyCompressedState(UnityRigidbodyState state)
         {
             linearVelocity = new CompressedVector3(
-                new CompressedFloat(state.linearVelocity.x).Round(),
-                new CompressedFloat(state.linearVelocity.y).Round(),
-                new CompressedFloat(state.linearVelocity.z).Round()
+                new CompressedFloat(state.linearVelocity.x),
+                new CompressedFloat(state.linearVelocity.y),
+                new CompressedFloat(state.linearVelocity.z)
             );
 
             angularVelocity = new CompressedVector3(
-                new CompressedFloat(state.angularVelocity.x).Round(),
-                new CompressedFloat(state.angularVelocity.y).Round(),
-                new CompressedFloat(state.angularVelocity.z).Round()
+                new CompressedFloat(state.angularVelocity.x),
+                new CompressedFloat(state.angularVelocity.y),
+                new CompressedFloat(state.angularVelocity.z)
             );
 
             isKinematic = state.isKinematic;

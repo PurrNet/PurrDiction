@@ -3,55 +3,42 @@ using PurrNet.Packing;
 
 namespace PurrNet.Prediction
 {
-    public abstract class StatelessPredictedIdentity : PredictedIdentity
+    public static class StatelessHeSaidPacker
     {
-        protected virtual void Simulate(float delta) {}
+        [UsedByIL]
+        public static void Write(BitPacker stream, StatelessHeSaid value) { }
 
-        internal override void SimulateTick(ulong tick, float delta) => Simulate(delta);
+        [UsedByIL]
+        public static void Read(BitPacker stream, ref StatelessHeSaid value) { }
 
-        internal override void PrepareInput(bool isServer, bool isLocal, ulong tick, bool extrapolate)
+        [UsedByIL]
+        public static bool WriteDelta(BitPacker stream, StatelessHeSaid oldValue, StatelessHeSaid value)
         {
-        }
-
-        internal override void SaveStateInHistory(ulong tick)
-        {
-        }
-
-        internal override void Rollback(ulong tick)
-        {
-        }
-
-        public override void UpdateRollbackInterpolationState(float delta, bool accumulateError)
-        {
-        }
-
-        public override void ResetInterpolation()
-        {
-        }
-
-        internal override void GetLatestUnityState()
-        {
-        }
-
-        internal override bool WriteCurrentState(PlayerID target, BitPacker packer, DeltaModule deltaModule)
-        {
+            Packer<bool>.Write(stream, false);
             return false;
         }
 
-        internal override void WriteInput(ulong localTick, PlayerID receiver, BitPacker input, DeltaModule delta, bool reliable)
+        [UsedByIL]
+        public static void ReadDelta(BitPacker stream, StatelessHeSaid oldValue, ref StatelessHeSaid value)
         {
+            stream.AdvanceBits(1);
+        }
+    }
+
+    public struct StatelessHeSaid : IPredictedData<StatelessHeSaid>
+    {
+        public void Dispose() { }
+    }
+
+    public abstract class StatelessPredictedIdentity : PredictedIdentity<StatelessHeSaid>
+    {
+        protected override void Simulate(ref StatelessHeSaid state, float delta)
+        {
+            Simulate(delta);
         }
 
-        internal override void ReadState(ulong tick, BitPacker packer, DeltaModule delta)
-        {
-        }
+        protected override StatelessHeSaid Interpolate(StatelessHeSaid from, StatelessHeSaid to, float t) => to;
 
-        internal override void ReadInput(ulong tick, PlayerID sender, BitPacker packer, DeltaModule delta, bool reliable)
-        {
-        }
-
-        internal override void QueueInput(BitPacker packer, PlayerID sender, DeltaModule delta, bool reliable)
-        {
-        }
+        protected virtual void Simulate(float delta) {}
     }
 }

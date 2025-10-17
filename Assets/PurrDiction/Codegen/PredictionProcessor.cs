@@ -58,6 +58,8 @@ namespace Purrdiction.Codegen
                     {
                         var type = types[t];
 
+                        FPProcessor.HandleType(module, type, messages);
+
                         if (!PostProcessor.InheritsFrom(type, typeof(PredictedIdentity).FullName))
                             continue;
 

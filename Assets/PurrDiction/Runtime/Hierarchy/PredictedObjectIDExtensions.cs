@@ -17,15 +17,19 @@ namespace PurrNet.Prediction
             return id?.TryGetGameObject(manager, out gameObject) ?? false;
         }
 
-        public static T GetComponent<T>(this PredictedObjectID? id, PredictionManager manager) where T : Component
+        public static T GetComponent<T>(this PredictedObjectID? id, PredictionManager manager)
         {
-            return id?.GetComponent<T>(manager);
+            if (!id.HasValue)
+                return default;
+            return id.Value.GetComponent<T>(manager);
         }
 
-        public static bool TryGetComponent<T>(this PredictedObjectID? id, PredictionManager manager, out T component) where T : Component
+        public static bool TryGetComponent<T>(this PredictedObjectID? id, PredictionManager manager, out T component)
         {
-            component = null;
-            return id?.TryGetComponent(manager, out component) ?? false;
+            component = default;
+            if (!id.HasValue)
+                return false;
+            return id.Value.TryGetComponent(manager, out component);
         }
     }
 }

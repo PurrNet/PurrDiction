@@ -9,7 +9,7 @@ namespace PurrNet.Prediction.Tests
         {
             if (Input.GetKeyDown(KeyCode.F))
             {
-                Thread.Sleep(1000); // Freeze the game for 1 second
+                Thread.Sleep(2000); // Freeze the game for 1 second
             }
         }
     }

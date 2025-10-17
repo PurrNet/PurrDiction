@@ -1,0 +1,14 @@
+{
+    "name": "PurrDiction.SoftFloat",
+    "rootNamespace": "PurrNet.Prediction",
+    "references": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": true,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

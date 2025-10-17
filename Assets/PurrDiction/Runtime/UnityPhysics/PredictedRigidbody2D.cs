@@ -4,11 +4,14 @@ using UnityEngine;
 
 namespace PurrNet.Prediction
 {
+#if UNITY_PHYSICS_2D
     [RequireComponent(typeof(Rigidbody2D))]
+#endif
     [RequireComponent(typeof(PredictedTransform))]
     [AddComponentMenu("PurrDiction/Unity Rigidbody/Predicted Rigidbody 2D")]
     public class PredictedRigidbody2D : PredictedIdentity<UnityRigidbody2DState>
     {
+#if UNITY_PHYSICS_2D
         public delegate void OnCollisionDelegate(GameObject other, DisposableList<Physics2DContactPoint> evContacts);
         public delegate void OnTriggerDelegate(GameObject other);
 
@@ -32,6 +35,31 @@ namespace PurrNet.Prediction
         {
             linearVelocity = default;
             angularVelocity = default;
+        }
+
+        public void MovePosition(Vector2 position)
+        {
+            _rigidbody.MovePosition(position);
+        }
+
+        public void MoveRotation(Quaternion rotation)
+        {
+            _rigidbody.MoveRotation(rotation);
+        }
+
+        public void MoveRotation(float angle)
+        {
+            _rigidbody.MoveRotation(angle);
+        }
+
+        public void MovePositionAndRotation(Vector2 position, Quaternion rotation)
+        {
+            _rigidbody.MovePositionAndRotation(position, rotation);
+        }
+
+        public void MovePositionAndRotation(Vector2 position, float angle)
+        {
+            _rigidbody.MovePositionAndRotation(position, angle);
         }
 
         protected override void LateAwake()
@@ -288,5 +316,6 @@ namespace PurrNet.Prediction
             // Apply force
             AddForceAtPosition(direction * force, _rigidbody.position, mode);
         }
+#endif
     }
 }

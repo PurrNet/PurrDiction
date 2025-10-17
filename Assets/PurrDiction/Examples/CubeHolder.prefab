@@ -13,7 +13,7 @@ GameObject:
   - component: {fileID: 4586963088393127143}
   - component: {fileID: 2346156292922855443}
   - component: {fileID: 5825657312840132502}
-  - component: {fileID: -8545406667589423836}
+  - component: {fileID: 8536165718239299074}
   m_Layer: 0
   m_Name: CubeHolder
   m_TagString: Untagged
@@ -44,10 +44,10 @@ Rigidbody:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 208167536026591109}
-  serializedVersion: 4
+  serializedVersion: 5
   m_Mass: 1
-  m_Drag: 0
-  m_AngularDrag: 0.05
+  m_LinearDamping: 0
+  m_AngularDamping: 0.05
   m_CenterOfMass: {x: 0, y: 0, z: 0}
   m_InertiaTensor: {x: 1, y: 1, z: 1}
   m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
@@ -116,9 +116,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _rigidbody: {fileID: 1844987416951553775}
   _floatAccuracy: 0
-  _eventMask: 1
+  _eventMask: -1
   _ignoreTriggerOnTrigger: 0
---- !u!114 &-8545406667589423836
+--- !u!114 &8536165718239299074
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -129,7 +129,7 @@ MonoBehaviour:
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f14e0e7bb0217cc418ed3e3a4678eb3d, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: 
+  m_EditorClassIdentifier: PurrNet.Prediction.Tests::PurrNet.Prediction.Tests.SimpleRotatingPlatform
   _renderer: {fileID: 6575460605615584244}
   _predictedRigidbody: {fileID: 5825657312840132502}
 --- !u!1 &1096194966585776966
@@ -193,6 +193,8 @@ MeshRenderer:
   m_RayTracingAccelStructBuildFlagsOverride: 0
   m_RayTracingAccelStructBuildFlags: 1
   m_SmallMeshCulling: 1
+  m_ForceMeshLod: -1
+  m_MeshLodSelectionBias: 0
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
@@ -214,6 +216,7 @@ MeshRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
+  m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0

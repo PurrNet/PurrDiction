@@ -95,14 +95,21 @@ namespace PurrNet.Prediction
 
         public bool isOwner => IsOwner();
 
-        public bool isController => owner.HasValue ? owner == predictionManager.localPlayer : isServer;
+        public bool isController
+        {
+            get
+            {
+                if (owner.HasValue && predictionManager.isSpawned)
+                    return owner == predictionManager.localPlayer;
+                return predictionManager.cachedIsServer;
+            }
+        }
 
         public bool IsOwner()
         {
-            if (!predictionManager)
-                return false;
-
-            return owner == predictionManager.localPlayer;
+            if (predictionManager && predictionManager.isSpawned && owner == predictionManager.localPlayer)
+                return true;
+            return false;
         }
 
         public bool IsOwner(PlayerID player)
@@ -118,11 +125,17 @@ namespace PurrNet.Prediction
         public bool IsOwner(PlayerID player, bool asServer)
         {
             if (owner.HasValue)
+            {
+                if (owner.Value.isBot)
+                    return asServer;
                 return owner == player;
+            }
             return asServer;
         }
 
         internal abstract void SimulateTick(ulong tick, float delta);
+
+        internal abstract void LateSimulateTick(float delta);
 
         public virtual void PostSimulate(ulong tick, float delta) {}
 
@@ -138,6 +151,10 @@ namespace PurrNet.Prediction
 
         private PlayerID? _lastOwner;
 
+        /// <summary>
+        /// Called once when owner changes
+        /// This is meant to be used for view/visuals only and not part of the simulation
+        /// </summary>
         public virtual void OnViewOwnerChanged(PlayerID? oldOwner, PlayerID? newOwner) { }
 
         internal virtual void UpdateView(float deltaTime)

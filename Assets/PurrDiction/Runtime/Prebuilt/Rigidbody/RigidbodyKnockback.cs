@@ -7,8 +7,10 @@ namespace PurrNet.Prediction.Prebuilt
     [AddComponentMenu("PurrDiction/Prebuilt/Rigidbody/Knockback")]
     public class RigidbodyKnockback : PredictedIdentity<RigidbodyKnockback.KnockbackData>
     {
+#if UNITY_PHYSICS_3D
         [FormerlySerializedAs("rigidbody")]
         [SerializeField] private Rigidbody _rigidbody;
+#endif
 
         [FormerlySerializedAs("offensiveForce")]
         [Tooltip("How much force to apply to others")]
@@ -36,11 +38,13 @@ namespace PurrNet.Prediction.Prebuilt
         [SerializeField] private bool _drawGizmos = true;
 #endif
 
+#if UNITY_PHYSICS_3D
         private void Reset()
         {
             if(!TryGetComponent(out _rigidbody))
                 _rigidbody = gameObject.AddComponent<Rigidbody>();
         }
+#endif
 
         public void Knockback(Vector3 otherPosition, float force)
         {
@@ -68,11 +72,14 @@ namespace PurrNet.Prediction.Prebuilt
             if(state.force <= 0)
                 return;
 
+#if UNITY_PHYSICS_3D
             _rigidbody.AddForce(state.direction * state.force, ForceMode.Impulse);
+#endif
             state.direction = default;
             state.force = 0;
         }
 
+#if UNITY_PHYSICS_3D
         private void OnCollisionEnter(Collision other)
         {
             if(other.gameObject.TryGetComponent(out RigidbodyKnockback knockback))
@@ -88,6 +95,7 @@ namespace PurrNet.Prediction.Prebuilt
                 }
             }
         }
+#endif
 
 #if UNITY_EDITOR
         private void OnDrawGizmosSelected()
