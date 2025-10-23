@@ -830,7 +830,7 @@ PlayerSettings:
   webWasm2023: 0
   webEnableSubmoduleStrippingCompatibility: 0
   scriptingDefineSymbols:
-    Standalone: PURRNET_DEBUG_POOLING;PURR_DELTA_CHECK
+    Standalone: PURRNET_DEBUG_POOLING
   additionalCompilerArguments: {}
   platformArchitecture: {}
   scriptingBackend:

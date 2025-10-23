@@ -1,46 +1,21 @@
 ﻿using System;
-using JetBrains.Annotations;
 using PurrNet.Logging;
 using PurrNet.Modules;
 using PurrNet.Packing;
-using PurrNet.Prediction.Profiler;
-using PurrNet.Utils;
 using UnityEngine;
 
 namespace PurrNet.Prediction
 {
-    public readonly struct DeltaKey<T, S> : IStableHashable
+    public abstract class DeterministicIdentity<STATE> : PredictedIdentity where STATE : struct, IPredictedData<STATE>
     {
-        private readonly PredictedComponentID id;
+        protected virtual void Simulate(ref STATE state, sfloat delta) { }
 
-        public DeltaKey(PredictedComponentID id)
-        {
-            this.id = id;
-        }
+        protected virtual void LateSimulate(ref STATE state, sfloat delta) { }
 
-        public uint GetStableHash()
-        {
-            return Hasher<T>.stableHash ^ Hasher<S>.stableHash ^ id.componentId.value ^ id.objectId.instanceId.value;
-        }
-    }
+        internal override bool WriteCurrentState(PlayerID target, BitPacker packer, DeltaModule deltaModule) => false;
 
-    public readonly struct DeltaKey<T> : IStableHashable
-    {
-        private readonly PredictedComponentID id;
+        internal override void ReadState(ulong tick, BitPacker packer, DeltaModule deltaModule) { }
 
-        public DeltaKey(PredictedComponentID id)
-        {
-            this.id = id;
-        }
-
-        public uint GetStableHash()
-        {
-            return Hasher<T>.stableHash ^ id.componentId.value ^ id.objectId.instanceId.value;
-        }
-    }
-
-    public abstract class PredictedIdentity<STATE> : PredictedIdentity where STATE : struct, IPredictedData<STATE>
-    {
         public PredictedHierarchy hierarchy { get; private set; }
 
         public override string ToString()
@@ -83,7 +58,7 @@ namespace PurrNet.Prediction
             get => ref fullPredictedState.state;
         }
 
-        protected Type myType;
+        internal Type myType;
 
         internal override void Setup(NetworkManager manager, PredictionManager world, PredictedComponentID id, PlayerID? owner)
         {
@@ -149,11 +124,11 @@ namespace PurrNet.Prediction
                 SimulationStart();
                 fullPredictedState.prediction.wasOnSimulationStartCalled = true;
             }
-            Simulate(ref fullPredictedState.state, delta);
+            Simulate(ref fullPredictedState.state, sfloat.FromFloat(delta));
         }
 
         internal override void LateSimulateTick(float delta)
-            => LateSimulate(ref fullPredictedState.state, delta);
+            => LateSimulate(ref fullPredictedState.state, sfloat.FromFloat(delta));
 
         internal override void SaveStateInHistory(ulong tick)
         {
@@ -175,10 +150,6 @@ namespace PurrNet.Prediction
 
         protected virtual STATE GetInitialState() => default;
 
-        protected virtual void Simulate(ref STATE state, float delta) {}
-
-        protected virtual void LateSimulate(ref STATE state, float delta) {}
-
         internal override void Rollback(ulong tick)
         {
             if (!_stateHistory.Read(tick, out var state))
@@ -195,10 +166,6 @@ namespace PurrNet.Prediction
         }
 
         protected virtual void SetUnityState(STATE state) {}
-
-        protected DeltaKey<STATE> stateKey => new (id);
-
-        private DeltaKey<PredictedIdentityState, STATE> internalKey => new (id);
 
         internal override void WriteFirstState(BitPacker packer)
         {
@@ -219,73 +186,6 @@ namespace PurrNet.Prediction
                 state = state,
                 prediction = prediction
             });
-        }
-
-        internal override bool WriteCurrentState(PlayerID target, BitPacker packer, DeltaModule deltaModule)
-        {
-            int pos = packer.positionInBits;
-            int flagPos = packer.AdvanceBits(1);
-
-            bool changed = deltaModule.WriteReliable(packer, target, internalKey, fullPredictedState.prediction);
-            changed = WriteDeltaState(target, packer, deltaModule) || changed;
-
-            packer.WriteAt(flagPos, changed);
-            if (!changed)
-                packer.SetBitPosition(flagPos + 1);
-
-            TickBandwidthProfiler.OnWroteState(myType, packer.positionInBits - pos, this);
-            return changed;
-        }
-
-        protected virtual bool WriteDeltaState(PlayerID target, BitPacker packer, DeltaModule deltaModule)
-        {
-            return deltaModule.WriteReliable(packer, target, stateKey, fullPredictedState.state);
-        }
-
-        [UsedImplicitly]
-        internal override void ReadState(ulong tick, BitPacker packer, DeltaModule deltaModule)
-        {
-            int pos = packer.positionInBits;
-
-            bool changed = Packer<bool>.Read(packer);
-            if (changed)
-            {
-                STATE state = default;
-                PredictedIdentityState prediction = default;
-
-                deltaModule.ReadReliable(packer, internalKey, ref prediction);
-                ReadDeltaState(packer, deltaModule, ref state);
-
-                _stateHistory.Write(tick, new FULL_STATE<STATE>
-                {
-                    state = state,
-                    prediction = prediction
-                });
-            }
-            else
-            {
-                packer.SetBitPosition(pos);
-
-                STATE state = default;
-                PredictedIdentityState prediction = default;
-
-                deltaModule.ReadReliable(packer, internalKey, ref prediction);
-                packer.SetBitPosition(pos);
-                ReadDeltaState(packer, deltaModule, ref state);
-
-                _stateHistory.Write(tick, new FULL_STATE<STATE>
-                {
-                    state = state,
-                    prediction = prediction
-                });
-            }
-
-            TickBandwidthProfiler.OnReadState(myType, packer.positionInBits - pos, this);
-        }
-
-        protected virtual void ReadDeltaState(BitPacker packer, DeltaModule deltaModule, ref STATE state)
-        {
-            deltaModule.ReadReliable(packer, stateKey, ref state);
         }
 
         internal override void WriteInput(ulong localTick, PlayerID receiver, BitPacker input, DeltaModule deltaModule, bool reliable) { }

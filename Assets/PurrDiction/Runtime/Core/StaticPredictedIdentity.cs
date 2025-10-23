@@ -37,12 +37,20 @@ namespace PurrNet.Prediction
         {
         }
 
+        internal override void WriteFirstState(BitPacker packer)
+        {
+        }
+
         internal override bool WriteCurrentState(PlayerID receiver, BitPacker packer, DeltaModule deltaModule)
         {
             return false;
         }
 
         internal override void WriteInput(ulong localTick, PlayerID receiver, BitPacker input, DeltaModule deltaModule, bool reliable)
+        {
+        }
+
+        internal override void ReadFirstState(ulong tick, BitPacker packer)
         {
         }
 
