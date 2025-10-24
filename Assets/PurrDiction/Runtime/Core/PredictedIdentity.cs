@@ -151,6 +151,8 @@ namespace PurrNet.Prediction
 
         private PlayerID? _lastOwner;
 
+        public virtual bool isDeterministic => false;
+
         /// <summary>
         /// Called once when owner changes
         /// This is meant to be used for view/visuals only and not part of the simulation

@@ -417,7 +417,7 @@ namespace PurrNet.Prediction
                 if (_systems[i].isEventHandler)
                     continue;
 
-                _systems[i].WriteCurrentState(target, packer, _deltaModuleState);
+                _systems[i].WriteFirstState(packer);
             }
 
 
@@ -449,7 +449,7 @@ namespace PurrNet.Prediction
                 var system = _systems[i];
                 if (system.isEventHandler)
                     continue;
-                system.ReadState(localTick, data, _deltaModuleState);
+                system.ReadFirstState(localTick, data);
                 system.Rollback(localTick);
                 system.ResetInterpolation();
             }
@@ -567,6 +567,9 @@ namespace PurrNet.Prediction
                     system.WriteInput(localTick, default, frame, _deltaModuleState, false);
                     writtenCount += 1;
                 }
+
+                if (system.isDeterministic)
+                    _systems[systemIdx].SaveStateInHistory(localTick);
             }
 
             if (frame.positionInBytes >= MTU)
@@ -887,7 +890,11 @@ namespace PurrNet.Prediction
 
                 var count = _systemsCount;
                 for (var j = 0; j < count; j++)
+                {
                     _systems[j].GetLatestUnityState();
+                    if (_systems[j].isDeterministic)
+                        _systems[j].SaveStateInHistory(verifiedTick);
+                }
             }
             isSimulating = false;
             localTickInContext = localTick;
@@ -914,7 +921,11 @@ namespace PurrNet.Prediction
 
             var count = _systemsCount;
             for (var j = 0; j < count; j++)
+            {
                 _systems[j].GetLatestUnityState();
+                if (_systems[j].isDeterministic)
+                    _systems[j].SaveStateInHistory(verifiedTick);
+            }
             isSimulating = false;
         }
 
