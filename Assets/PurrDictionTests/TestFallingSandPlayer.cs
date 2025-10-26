@@ -44,7 +44,9 @@
         protected override void Simulate(FallingSandInput input, ref FallingSandPlayerState state, float delta)
         {
             if (input.cellToActivate.HasValue)
+            {
                 _fallingSand.SetGridValue(input.cellToActivate.Value);
+            }
         }
     }
 }

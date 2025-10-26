@@ -200,10 +200,15 @@ namespace PurrNet.Prediction
 
         private DeltaKey<PredictedIdentityState, STATE> internalKey => new (id);
 
-        internal override void WriteFirstState(BitPacker packer)
+        internal override void WriteFirstState(ulong tick, BitPacker packer)
         {
-            Packer<PredictedIdentityState>.Write(packer, fullPredictedState.prediction);
-            Packer<STATE>.Write(packer, fullPredictedState.state);
+            var savedState = fullPredictedState;
+
+            if (tick > 0 && _stateHistory.TryGet(tick, out var state))
+                savedState = state;
+
+            Packer<PredictedIdentityState>.Write(packer, savedState.prediction);
+            Packer<STATE>.Write(packer, savedState.state);
         }
 
         internal override void ReadFirstState(ulong tick, BitPacker packer)

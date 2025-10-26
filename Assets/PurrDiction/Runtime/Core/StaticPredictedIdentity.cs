@@ -37,7 +37,7 @@ namespace PurrNet.Prediction
         {
         }
 
-        internal override void WriteFirstState(BitPacker packer)
+        internal override void WriteFirstState(ulong tick, BitPacker packer)
         {
         }
 

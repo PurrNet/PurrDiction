@@ -45,4 +45,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: PurrNet.Prediction.Tests::PurrNet.Prediction.Tests.TestFallingSandPlayer
   _repeatInputFactor: 0.8
-  _extrapolateInput: 0
+  _extrapolateInput: 1

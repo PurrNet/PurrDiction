@@ -1,47 +1,36 @@
 using System;
+using System.Collections.Generic;
 using PurrNet.Pooling;
 
 namespace PurrNet.Prediction
 {
     public struct PredictedPlayersState : IPredictedData<PredictedPlayersState>
     {
-        public DisposableList<PlayerID> handledPlayers;
-        public DisposableList<PlayerID> purrNetPlayers;
+        public DisposableList<PlayerID> players;
+
+        [Obsolete("Use `players` instead")] public DisposableList<PlayerID> handledPlayers => players;
+        [Obsolete("Use `players` instead")] public DisposableList<PlayerID> purrNetPlayers => players;
 
         public void Dispose()
         {
-            handledPlayers.Dispose();
-            purrNetPlayers.Dispose();
+            players.Dispose();
         }
 
         public override string ToString()
         {
             string result = string.Empty;
 
-            if (!handledPlayers.isDisposed)
+            if (!players.isDisposed)
             {
-                result += $"handledPlayers: {handledPlayers.Count}\n";
-                for (var i = 0; i < handledPlayers.Count; i++)
+                result += $"players: {players.Count}\n";
+                for (var i = 0; i < players.Count; i++)
                 {
-                    var playerId = handledPlayers[i];
+                    var playerId = players[i];
                     result += $"(playerId: {playerId})";
-                    if (i < handledPlayers.Count - 1)
+                    if (i < players.Count - 1)
                         result += "\n";
                 }
 
-                result += "\n";
-            }
-
-            if (!purrNetPlayers.isDisposed)
-            {
-                result += $"purrNetPlayers: {purrNetPlayers.Count}\n";
-                for (var i = 0; i < purrNetPlayers.Count; i++)
-                {
-                    var playerId = purrNetPlayers[i];
-                    result += $"(playerId: {playerId})";
-                    if (i < purrNetPlayers.Count - 1)
-                        result += "\n";
-                }
                 result += "\n";
             }
 
@@ -49,51 +38,83 @@ namespace PurrNet.Prediction
         }
     }
 
-    public class PredictedPlayers : PredictedIdentity<PredictedPlayersState>
+    public struct PredictedPlayersInput : IPredictedData
+    {
+        public DisposableList<PlayerID> addPlayers;
+        public DisposableList<PlayerID> removePlayers;
+
+        public void Dispose()
+        {
+            addPlayers.Dispose();
+            removePlayers.Dispose();
+        }
+    }
+
+    public class PredictedPlayers : PredictedIdentity<PredictedPlayersInput, PredictedPlayersState>
     {
         public event Action<PlayerID> onPlayerAdded;
 
         public event Action<PlayerID> onPlayerRemoved;
 
+        public IReadOnlyList<PlayerID> players => currentState.players;
+
         protected override PredictedPlayersState GetInitialState()
         {
             return new PredictedPlayersState
             {
-                handledPlayers = DisposableList<PlayerID>.Create(16),
-                purrNetPlayers = DisposableList<PlayerID>.Create(16)
+                players = DisposableList<PlayerID>.Create(16)
             };
         }
 
-        protected override void GetUnityState(ref PredictedPlayersState state)
+        protected override void ModifyExtrapolatedInput(ref PredictedPlayersInput input)
         {
-            if (!isServer)
-                return;
+            if (!input.addPlayers.isDisposed)
+                input.addPlayers.Clear();
 
-            var actual = predictionManager.observers;
-            state.purrNetPlayers.Clear();
-            state.purrNetPlayers.AddRange(actual);
+            if (!input.removePlayers.isDisposed)
+                input.removePlayers.Clear();
         }
 
-        protected override void Simulate(ref PredictedPlayersState state, float delta)
+        protected override void GetFinalInput(ref PredictedPlayersInput input)
         {
-            for (var i = 0; i < state.purrNetPlayers.Count; i++)
-            {
-                var playerId = state.purrNetPlayers[i];
-                if (state.handledPlayers.Contains(playerId))
-                    continue;
+            var toAdd = DisposableList<PlayerID>.Create(16);
+            var toRemove = DisposableList<PlayerID>.Create(16);
 
-                state.handledPlayers.Add(playerId);
+            var observers = predictionManager.observers;
+
+            for (var i = 0; i < observers.Count; i++)
+            {
+                var player = observers[i];
+                if (!currentState.players.Contains(player))
+                    toAdd.Add(player);
+            }
+
+            foreach (var current in currentState.players)
+            {
+                if (!predictionManager.IsObserver(current))
+                    toRemove.Add(current);
+            }
+
+            input.addPlayers = toAdd;
+            input.removePlayers = toRemove;
+        }
+
+        protected override void Simulate(PredictedPlayersInput input, ref PredictedPlayersState state, float delta)
+        {
+            int added = input.addPlayers.isDisposed ? 0 : input.addPlayers.Count;
+            for (var i = 0; i < added; i++)
+            {
+                var playerId = input.addPlayers[i];
+                state.players.Add(playerId);
                 onPlayerAdded?.Invoke(playerId);
             }
 
-            for (var i = 0; i < state.handledPlayers.Count; i++)
+            int removed = input.removePlayers.isDisposed ? 0 : input.removePlayers.Count;
+            for (var i = 0; i < removed; i++)
             {
-                var playerId = state.handledPlayers[i];
-                if (state.purrNetPlayers.Contains(playerId))
-                    continue;
-
-                state.handledPlayers.RemoveAt(i);
-                onPlayerRemoved?.Invoke(playerId);
+                var playerId = input.removePlayers[i];
+                if (state.players.Remove(playerId))
+                    onPlayerRemoved?.Invoke(playerId);
             }
         }
 

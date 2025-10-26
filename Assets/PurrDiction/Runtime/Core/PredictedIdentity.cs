@@ -137,7 +137,7 @@ namespace PurrNet.Prediction
 
         internal abstract void LateSimulateTick(float delta);
 
-        public virtual void PostSimulate(ulong tick, float delta) {}
+        public virtual void PostSimulate() {}
 
         internal abstract void PrepareInput(bool isServer, bool isLocal, ulong tick, bool extrapolate);
 
@@ -170,7 +170,7 @@ namespace PurrNet.Prediction
 
         internal abstract void GetLatestUnityState();
 
-        internal abstract void WriteFirstState(BitPacker packer);
+        internal abstract void WriteFirstState(ulong tick, BitPacker packer);
 
         internal abstract bool WriteCurrentState(PlayerID receiver, BitPacker packer, DeltaModule deltaModule);
 

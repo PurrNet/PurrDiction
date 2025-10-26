@@ -19,7 +19,6 @@ namespace PurrNet.Prediction.Tests
 
         public int gridSize => _gridSize;
 
-
         protected override void Simulate(ref FallingSandState state, sfloat delta)
         {
             state.stepTimer += delta;

@@ -156,7 +156,7 @@ namespace PurrNet.Prediction
         {
             if (!_stateHistory.Read(tick, out var state))
             {
-                PurrLogger.LogError($"Failed to rollback to tick {tick}, state not found.");
+                PurrLogger.LogError($"Failed to rollback to tick {tick} (state not found, localTick: {predictionManager.localTick})");
                 return;
             }
 
@@ -169,10 +169,25 @@ namespace PurrNet.Prediction
 
         protected virtual void SetUnityState(STATE state) {}
 
-        internal override void WriteFirstState(BitPacker packer)
+        internal override void WriteFirstState(ulong tick, BitPacker packer)
         {
-            Packer<PredictedIdentityState>.Write(packer, fullPredictedState.prediction);
-            Packer<STATE>.Write(packer, fullPredictedState.state);
+            FULL_STATE<STATE> savedState;
+
+            if (tick > 0)
+            {
+                if (!_stateHistory.TryGet(tick, out savedState))
+                {
+                    PurrLogger.LogError($"Failed to write first state for {id}");
+                    return;
+                }
+            }
+            else
+            {
+                savedState = fullPredictedState;
+            }
+
+            Packer<PredictedIdentityState>.Write(packer, savedState.prediction);
+            Packer<STATE>.Write(packer, savedState.state);
         }
 
         internal override void ReadFirstState(ulong tick, BitPacker packer)

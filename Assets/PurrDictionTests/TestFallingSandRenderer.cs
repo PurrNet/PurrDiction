@@ -46,13 +46,11 @@ namespace PurrNet.Prediction.Tests
 
                 GUI.DrawTexture(rect, Texture2D.whiteTexture);
 
-                // Single click (GUI.Button)
-                if (GUI.Button(rect, "", GUI.skin.label))
-                    onClicked?.Invoke(i);
-
                 // Drag detection (hold + move)
                 if (isMouseHeld && rect.Contains(mousePos))
+                {
                     onClicked?.Invoke(i);
+                }
             }
         }
     }
