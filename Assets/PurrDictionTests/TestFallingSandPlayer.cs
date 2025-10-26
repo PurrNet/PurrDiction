@@ -1,4 +1,6 @@
-﻿namespace PurrNet.Prediction.Tests
+﻿using UnityEngine;
+
+namespace PurrNet.Prediction.Tests
 {
     public struct FallingSandInput : IPredictedData
     {
@@ -39,6 +41,14 @@
         {
             input.cellToActivate = _cell;
             _cell = null;
+        }
+
+        [SerializeField] private bool _interceptInput;
+
+        protected override void SanitizeInput(ref FallingSandInput input)
+        {
+            if (_interceptInput)
+                input.cellToActivate = null;
         }
 
         protected override void Simulate(FallingSandInput input, ref FallingSandPlayerState state, float delta)
