@@ -196,6 +196,34 @@ namespace PurrNet.Prediction
             TickBandwidthProfiler.OnReadInput(myType, packer.positionInBits - pos, this);
         }
 
+        public override void WriteFirstInput(ulong localTick, BitPacker packer)
+        {
+            int pos = packer.positionInBits;
+            if (_inputHistory.TryGet(localTick, out var savedInput))
+            {
+                Packer<bool>.Write(packer, true);
+                Packer<INPUT>.Write(packer, savedInput);
+            }
+            else
+            {
+                Packer<bool>.Write(packer, false);
+            }
+            TickBandwidthProfiler.OnWroteInput(myType, packer.positionInBits - pos, this);
+        }
+
+        public override void ReadFirstInput(ulong localTick, BitPacker packer)
+        {
+            var pos = packer.positionInBits;
+            if (Packer<bool>.Read(packer))
+            {
+                var input = Packer<INPUT>.Read(packer);
+                _inputHistory.Write(localTick, input);
+            }
+            else _inputHistory.Remove(localTick);
+
+            TickBandwidthProfiler.OnReadInput(myType, packer.positionInBits - pos, this);
+        }
+
         private INPUT? _queuedInput;
 
         /// <summary>

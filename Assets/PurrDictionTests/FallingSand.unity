@@ -347,9 +347,10 @@ MonoBehaviour:
   _builtInSystems: -1
   _predictedPrefabs: {fileID: 11400000, guid: 079cc261e29382d4d8d5fb2f904403a0, type: 2}
   _inputQueueSettings:
-    extrapolateForMissing: 0
+    extrapolateForMissing: 1
     minInputs: 1
     maxInputs: 4
+  _validateDeterministicData: 1
 --- !u!4 &1558659896
 Transform:
   m_ObjectHideFlags: 0
@@ -417,13 +418,13 @@ MonoBehaviour:
   _startClientFlags: 3
   _cookieScope: 1
   _dontDestroyOnLoad: 0
-  _transport: {fileID: 1793795281}
+  _transport: {fileID: 1793795283}
   _networkPrefabs: {fileID: 0}
   _networkAssets: {fileID: 0}
   _networkRules: {fileID: 11400000, guid: d8799083b96579a42b8b2d03e4ceae98, type: 2}
   _visibilityRules: {fileID: 11400000, guid: 8f014a5bd8dc68646a2a3c0b18c5bbd8, type: 2}
   _authenticator: {fileID: 0}
-  _tickRate: 20
+  _tickRate: 35
   _patchLingeringProcessBug: 0
 --- !u!114 &1793795281
 MonoBehaviour:
@@ -519,8 +520,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: PurrNet.Prediction.Tests::PurrNet.Prediction.Tests.TestFallingSand
   _gridSize: 15
   _seed: 65645
-  _stepDelta:
-    rawValue: 0
 --- !u!4 &2085136390
 Transform:
   m_ObjectHideFlags: 0

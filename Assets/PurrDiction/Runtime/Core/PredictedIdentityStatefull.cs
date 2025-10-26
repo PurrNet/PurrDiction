@@ -328,5 +328,9 @@ namespace PurrNet.Prediction
             var scaled = offset.Scale(offset, t);
             return from.Add(from, scaled);
         }
+
+        public override void ReadFirstInput(ulong localTick, BitPacker packer) {}
+
+        public override void WriteFirstInput(ulong localTick, BitPacker packer) {}
     }
 }

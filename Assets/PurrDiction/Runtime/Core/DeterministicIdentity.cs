@@ -14,9 +14,36 @@ namespace PurrNet.Prediction
 
         protected virtual void LateSimulate(ref STATE state, sfloat delta) { }
 
-        internal override bool WriteCurrentState(PlayerID target, BitPacker packer, DeltaModule deltaModule) => false;
+        internal override bool WriteCurrentState(PlayerID target, BitPacker packer, DeltaModule deltaModule)
+        {
+            if (predictionManager.validateDeterministicData)
+            {
+                Packer<bool>.Write(packer, true);
+                Packer<STATE>.Write(packer, fullPredictedState.state);
+                return true;
+            }
 
-        internal override void ReadState(ulong tick, BitPacker packer, DeltaModule deltaModule) { }
+            return false;
+        }
+
+        internal override void ReadState(ulong tick, BitPacker packer, DeltaModule deltaModule)
+        {
+            if (predictionManager.validateDeterministicData)
+            {
+                packer.AdvanceBits(1);
+                STATE read = default;
+                Packer<STATE>.Read(packer, ref read);
+
+                if (!Packer.AreEqual(read, fullPredictedState.state))
+                {
+                    Debug.LogError(
+                        $"State mismatch, should be:\n{read.ToString()}\nBut its:\n{fullPredictedState.state.ToString()}");
+                    Debug.Break();
+                }
+
+                read.Dispose();
+            }
+        }
 
         public PredictedHierarchy hierarchy { get; private set; }
 
@@ -126,6 +153,7 @@ namespace PurrNet.Prediction
                 SimulationStart();
                 fullPredictedState.prediction.wasOnSimulationStartCalled = true;
             }
+
             Simulate(ref fullPredictedState.state, sfloat.FromFloat(delta));
         }
 
@@ -171,23 +199,14 @@ namespace PurrNet.Prediction
 
         internal override void WriteFirstState(ulong tick, BitPacker packer)
         {
-            FULL_STATE<STATE> savedState;
-
-            if (tick > 0)
+            if (!_stateHistory.TryGet(tick, out var state))
             {
-                if (!_stateHistory.TryGet(tick, out savedState))
-                {
-                    PurrLogger.LogError($"Failed to write first state for {id}");
-                    return;
-                }
-            }
-            else
-            {
-                savedState = fullPredictedState;
+                PurrLogger.LogError($"Failed to write first state for tick {tick}");
+                return;
             }
 
-            Packer<PredictedIdentityState>.Write(packer, savedState.prediction);
-            Packer<STATE>.Write(packer, savedState.state);
+            Packer<PredictedIdentityState>.Write(packer, state.prediction);
+            Packer<STATE>.Write(packer, state.state);
         }
 
         internal override void ReadFirstState(ulong tick, BitPacker packer)
@@ -240,5 +259,9 @@ namespace PurrNet.Prediction
             var scaled = offset.Scale(offset, t);
             return from.Add(from, scaled);
         }
+
+        public override void ReadFirstInput(ulong localTick, BitPacker packer) {}
+
+        public override void WriteFirstInput(ulong localTick, BitPacker packer) {}
     }
 }

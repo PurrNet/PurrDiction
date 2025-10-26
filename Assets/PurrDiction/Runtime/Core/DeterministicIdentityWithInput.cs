@@ -140,7 +140,7 @@ namespace PurrNet.Prediction
 
         protected override void Simulate(ref STATE state, sfloat delta)
         {
-            PreSimulate(_lastInput, ref state, delta);
+            throw new System.NotImplementedException();
         }
 
         readonly struct DeltaKey : IStableHashable
@@ -159,6 +159,34 @@ namespace PurrNet.Prediction
         }
 
         DeltaKey key => new DeltaKey(id);
+
+        public override void WriteFirstInput(ulong localTick, BitPacker packer)
+        {
+            int pos = packer.positionInBits;
+            if (_inputHistory.TryGet(localTick, out var savedInput))
+            {
+                Packer<bool>.Write(packer, true);
+                Packer<INPUT>.Write(packer, savedInput);
+            }
+            else
+            {
+                Packer<bool>.Write(packer, false);
+            }
+            TickBandwidthProfiler.OnWroteInput(myType, packer.positionInBits - pos, this);
+        }
+
+        public override void ReadFirstInput(ulong localTick, BitPacker packer)
+        {
+            var pos = packer.positionInBits;
+            if (Packer<bool>.Read(packer))
+            {
+                var input = Packer<INPUT>.Read(packer);
+                _inputHistory.Write(localTick, input);
+            }
+            else _inputHistory.Remove(localTick);
+
+            TickBandwidthProfiler.OnReadInput(myType, packer.positionInBits - pos, this);
+        }
 
         internal override void WriteInput(ulong localTick, PlayerID receiver, BitPacker input, DeltaModule deltaModule, bool reliable)
         {

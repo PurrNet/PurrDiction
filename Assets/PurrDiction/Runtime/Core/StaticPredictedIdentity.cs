@@ -5,6 +5,10 @@ namespace PurrNet.Prediction
 {
     public sealed class StaticPredictedIdentity : PredictedIdentity
     {
+        public override void WriteFirstInput(ulong localTick, BitPacker packer) { }
+
+        public override void ReadFirstInput(ulong localTick, BitPacker packer) { }
+
         internal override void SimulateTick(ulong tick, float delta)
         {
         }

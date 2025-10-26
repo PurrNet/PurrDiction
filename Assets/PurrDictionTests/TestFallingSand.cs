@@ -6,28 +6,37 @@ namespace PurrNet.Prediction.Tests
     public struct FallingSandState : IPredictedData<FallingSandState>
     {
         public DisposableArray<bool> grid;
-        public sfloat stepTimer;
         public PredictedRandom random;
         public void Dispose() { }
+
+        public override string ToString()
+        {
+            string result = $"random: {random.seed}\n";
+            for (int i = 0; i < grid.Count; i++)
+            {
+                result += grid[i] ? "#" : "_";
+                if ((i + 1) % 15 == 0)
+                    result += '\n';
+            }
+            return result;
+        }
     }
 
     public class TestFallingSand : DeterministicIdentity<FallingSandState>
     {
         [SerializeField] private int _gridSize = 10;
         [SerializeField] private uint _seed = 65645;
-        [SerializeField] private sfloat _stepDelta = 0.5f;
 
         public int gridSize => _gridSize;
 
         protected override void Simulate(ref FallingSandState state, sfloat delta)
         {
-            state.stepTimer += delta;
-
-            if (state.stepTimer >= _stepDelta)
+            if (predictionManager.isVerified)
             {
-                TickSimulation(ref state);
-                state.stepTimer -= _stepDelta;
+                Debug.Log(predictionManager.time.tick);
+                Debug.Log(state);
             }
+            TickSimulation(ref state);
         }
 
         private void TickSimulation(ref FallingSandState state)
@@ -57,7 +66,7 @@ namespace PurrNet.Prediction.Tests
                     {
                         case true when canMoveRight:
                         {
-                            bool random = state.random.Next(2) == 0;
+                            bool random = false; //state.random.Next(2) == 0;
                             int nx = random ? x - 1 : x + 1;
                             nextState[(y + 1) * _gridSize + nx] = true;
                             continue;
@@ -92,6 +101,9 @@ namespace PurrNet.Prediction.Tests
 
         public void SetGridValue(int index)
         {
+            if (predictionManager.isVerified)
+                Debug.Log(index);
+
             if (index < 0 ||index >= _gridSize * _gridSize)
                 return;
             currentState.grid[index] = true;

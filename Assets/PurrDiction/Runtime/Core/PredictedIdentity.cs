@@ -204,5 +204,9 @@ namespace PurrNet.Prediction
         {
             OnAddedToPool();
         }
+
+        public abstract void WriteFirstInput(ulong localTick, BitPacker packer);
+
+        public abstract void ReadFirstInput(ulong localTick, BitPacker packer);
     }
 }
