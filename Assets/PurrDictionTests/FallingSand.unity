@@ -394,7 +394,7 @@ MonoBehaviour:
     extrapolateForMissing: 1
     minInputs: 1
     maxInputs: 4
-  _validateDeterministicData: 1
+  _validateDeterministicData: 0
 --- !u!4 &1558659896
 Transform:
   m_ObjectHideFlags: 0
@@ -468,7 +468,7 @@ MonoBehaviour:
   _networkRules: {fileID: 11400000, guid: d8799083b96579a42b8b2d03e4ceae98, type: 2}
   _visibilityRules: {fileID: 11400000, guid: 8f014a5bd8dc68646a2a3c0b18c5bbd8, type: 2}
   _authenticator: {fileID: 0}
-  _tickRate: 35
+  _tickRate: 60
   _patchLingeringProcessBug: 0
 --- !u!114 &1793795281
 MonoBehaviour:
@@ -562,7 +562,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ec17ccfce8678b442b2b0375b706562e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: PurrNet.Prediction.Tests::PurrNet.Prediction.Tests.TestFallingSand
-  _gridSize: 15
+  _gridSize: 50
   _seed: 65645
 --- !u!4 &2085136390
 Transform:
