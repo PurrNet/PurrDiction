@@ -895,7 +895,10 @@ namespace PurrNet.Prediction
 
                 isVerified = false;
 
-                ReplayToLatestTick(verifiedTick + 1);
+
+                SimulateFrame(verifiedTick + 1, true);
+                if (_deltas.Count == 0)
+                    ReplayToLatestTick(verifiedTick + 2);
                 SyncTransforms();
             }
 
