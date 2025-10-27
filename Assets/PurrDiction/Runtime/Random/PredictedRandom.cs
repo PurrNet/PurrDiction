@@ -45,7 +45,7 @@ namespace PurrNet.Prediction
         // Generates a random sfloat in the range [0, 1)
         public FP NextFP()
         {
-            return (FP)Next() / (FP)uint.MaxValue;
+            return (FP)Next() / 4294967296.0;
         }
 
         // Generates a random float in the range [min, max)

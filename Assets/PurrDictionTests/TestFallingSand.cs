@@ -7,7 +7,11 @@ namespace PurrNet.Prediction.Tests
     {
         public DisposableArray<bool> grid;
         public PredictedRandom random;
-        public void Dispose() { }
+
+        public void Dispose()
+        {
+            grid.Dispose();
+        }
 
         /*public override string ToString()
         {

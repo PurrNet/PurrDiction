@@ -394,8 +394,8 @@ namespace PurrNet.Prediction
 
             if (_tickManager != null)
             {
-                _tickManager.onPreTick -= OnPreTick;
-                _tickManager.onPostTick -= OnPostTick;
+                _tickManager.onReliablePreTick -= OnPreTick;
+                _tickManager.onReliablePostTick -= OnPostTick;
             }
         }
 

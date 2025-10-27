@@ -6,18 +6,18 @@ using UnityEngine;
 
 namespace PurrNet.Prediction
 {
-    public struct PlaySpawnerState : IPredictedData<PlaySpawnerState>
+    public struct PlayerSpawnerState : IPredictedData<PlayerSpawnerState>
     {
         public int spawnPointIndex;
         public DisposableDictionary<PlayerID, PredictedObjectID> players;
 
         public void Dispose()
         {
-            // TODO release managed resources here
+            players.Dispose();
         }
     }
 
-    public class PredictedPlayerSpawner : PredictedIdentity<PlaySpawnerState>
+    public class PredictedPlayerSpawner : PredictedIdentity<PlayerSpawnerState>
     {
         [SerializeField] private GameObject _playerPrefab;
         [SerializeField, PurrLock] private bool _destroyOnDisconnect;
@@ -38,9 +38,9 @@ namespace PurrNet.Prediction
             }
         }
 
-        protected override PlaySpawnerState GetInitialState()
+        protected override PlayerSpawnerState GetInitialState()
         {
-            return new PlaySpawnerState
+            return new PlayerSpawnerState
             {
                 spawnPointIndex = 0,
                 players = DisposableDictionary<PlayerID, PredictedObjectID>.Create()
