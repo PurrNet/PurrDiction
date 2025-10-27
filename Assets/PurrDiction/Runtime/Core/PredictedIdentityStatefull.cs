@@ -48,7 +48,7 @@ namespace PurrNet.Prediction
             return currentState.ToString();
         }
 
-        private Interpolated<FULL_STATE<STATE>> _interpolatedState;
+        private InterpolatedWithDispose<FULL_STATE<STATE>> _interpolatedState;
         private History<FULL_STATE<STATE>> _stateHistory;
 
         protected TickManager tickModule { get; private set; }
@@ -114,7 +114,7 @@ namespace PurrNet.Prediction
             var interpolationBuffer = (int)Mathf.Max(world.tickRate / (float)10, 2);
 
             if (_interpolatedState == null)
-                _interpolatedState = new Interpolated<FULL_STATE<STATE>>(FULLInterpolate, 1f / world.tickRate, copy, interpolationBuffer);
+                _interpolatedState = new InterpolatedWithDispose<FULL_STATE<STATE>>(FULLInterpolate, 1f / world.tickRate, copy, interpolationBuffer);
             else _interpolatedState.Teleport(copy);
 
             if (_stateHistory == null)
