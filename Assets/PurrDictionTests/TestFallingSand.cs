@@ -8,6 +8,18 @@ namespace PurrNet.Prediction.Tests
         public DisposableArray<bool> grid;
         public PredictedRandom random;
         public void Dispose() { }
+
+        public override string ToString()
+        {
+            string result = "\n";
+            for (int i = 0; i < grid.Count; i++)
+            {
+                result += grid[i] ? "#" : "_";
+                if ((i + 1) % 15 == 0)
+                    result += '\n';
+            }
+            return result;
+        }
     }
 
     public class TestFallingSand : DeterministicIdentity<FallingSandState>

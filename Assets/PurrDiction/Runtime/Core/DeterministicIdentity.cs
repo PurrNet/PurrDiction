@@ -189,7 +189,7 @@ namespace PurrNet.Prediction
         {
             if (!_stateHistory.Read(tick, out var state))
             {
-                PurrLogger.LogError($"Failed to rollback to tick {tick} (state not found, localTick: {predictionManager.localTick}; latest is {_stateHistory.MostRecentTick})");
+                PurrLogger.LogError($"Failed to rollback to tick {tick} (state not found, localTick: {predictionManager.localTick}; latest is {_stateHistory.MostRecentTick}, oldest is {_stateHistory.OldestTick})");
                 return;
             }
 

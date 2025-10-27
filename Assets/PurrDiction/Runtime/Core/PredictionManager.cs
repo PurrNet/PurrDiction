@@ -863,32 +863,35 @@ namespace PurrNet.Prediction
             isSimulating = true;
             isReplaying = true;
 
-            int c = _deltas.Count;
             while (_deltas.Count > 0)
             {
                 isVerified = true;
 
                 using var previousFrame = _deltas.Dequeue();
                 bool inPlace = previousFrame.clientTick <= 1;
+                var lastTick = _lastVerifiedTick;
                 if (!inPlace)
                     _lastVerifiedTick = previousFrame.clientTick;
-                ulong verifiedTick = _lastVerifiedTick;
 
-                Debug.Log("Verified tick: " + verifiedTick + " in place: " + inPlace + " previous frame: " + previousFrame.clientTick + " " + c);
-                if (inPlace)
+                ulong verifiedTick = _lastVerifiedTick;
+                bool isJump = verifiedTick - lastTick > 1;
+
+                var inPlaceTick = isJump ? lastTick : verifiedTick;
+
+                if (inPlace || isJump)
                 {
                     if (_playedFirst)
                     {
-                        RollbackToFrame(verifiedTick);
-                        SimulateFrameInPlace(verifiedTick);
-                        SimulateFrame(verifiedTick, true);
+                        RollbackToFrame(inPlaceTick);
+                        SimulateFrameInPlace(inPlaceTick);
+                        SimulateFrame(inPlaceTick, true);
                     }
 
                     _playedFirst = true;
                 }
 
-                RollbackToFrame(previousFrame.packer, verifiedTick);
-                SimulateFrame(verifiedTick, false);
+                RollbackToFrame(previousFrame.packer, inPlaceTick);
+                SimulateFrame(verifiedTick, true);
 
                 isVerified = false;
 
