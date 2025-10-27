@@ -119,6 +119,50 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &145666355
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 145666357}
+  - component: {fileID: 145666356}
+  m_Layer: 0
+  m_Name: Freez
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &145666356
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 145666355}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4be683947de3f9344822c4d1006961e1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: PurrNet.Prediction.Tests::PurrNet.Prediction.Tests.FreezeGame
+--- !u!4 &145666357
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 145666355}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -12.74369, y: 27.1225, z: -11.98265}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &330585543
 GameObject:
   m_ObjectHideFlags: 0
@@ -518,7 +562,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ec17ccfce8678b442b2b0375b706562e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: PurrNet.Prediction.Tests::PurrNet.Prediction.Tests.TestFallingSand
-  _gridSize: 15
+  _gridSize: 50
   _seed: 65645
 --- !u!4 &2085136390
 Transform:
@@ -547,8 +591,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2ab75ad5dbfb46409f66c8b7baf3a946, type: 3}
   m_Name: 
   m_EditorClassIdentifier: PurrNet.Prediction.Tests::PurrNet.Prediction.Tests.TestFallingSandRenderer
-  _width: 20
-  _padding: 1
+  _width: 10
+  _padding: 0
   sand: {fileID: 2085136389}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
@@ -559,3 +603,4 @@ SceneRoots:
   - {fileID: 1558659896}
   - {fileID: 457991333}
   - {fileID: 2085136390}
+  - {fileID: 145666357}

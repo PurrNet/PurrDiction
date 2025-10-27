@@ -45,7 +45,7 @@ namespace PurrNet.Prediction
             maxInputs = 4
         };
 
-        [Header("Debugging (affects bandwidth/performance)")]
+        [Header("Debugging")]
         [SerializeField] private bool _validateDeterministicData;
 
         public bool validateDeterministicData => _validateDeterministicData;
@@ -808,6 +808,7 @@ namespace PurrNet.Prediction
                     continue;
                 if (_validateDeterministicData && system.isDeterministic)
                     system.Rollback(stateTick);
+                system.ClearFuture(stateTick);
                 system.ReadState(stateTick, frame, _deltaModuleState);
                 system.Rollback(stateTick);
             }
@@ -817,10 +818,12 @@ namespace PurrNet.Prediction
 
             for (var i = 0; i < count; ++i)
             {
-                if (!_systems[i].isEventHandler)
+                var system = _systems[i];
+                if (!system.isEventHandler)
                     continue;
-                _systems[i].ReadState(stateTick, frame, _deltaModuleState);
-                _systems[i].Rollback(stateTick);
+                system.ClearFuture(stateTick);
+                system.ReadState(stateTick, frame, _deltaModuleState);
+                system.Rollback(stateTick);
             }
 
             SyncTransforms();
@@ -846,7 +849,7 @@ namespace PurrNet.Prediction
 
         private void OnPostTick()
         {
-            if (_deltas.Count == 0 || localTick <= _lastVerifiedTick)
+            if (cachedIsServer || _deltas.Count == 0 || localTick <= _lastVerifiedTick)
             {
                 if (isClient)
                     UpdateInterpolation(false);
@@ -859,21 +862,19 @@ namespace PurrNet.Prediction
 
             isSimulating = true;
             isReplaying = true;
-            isVerified = true;
 
-            bool hasRollback = false;
-            ulong verifiedTick = 1;
+            int c = _deltas.Count;
             while (_deltas.Count > 0)
             {
+                isVerified = true;
+
                 using var previousFrame = _deltas.Dequeue();
                 bool inPlace = previousFrame.clientTick <= 1;
                 if (!inPlace)
                     _lastVerifiedTick = previousFrame.clientTick;
-                verifiedTick = _lastVerifiedTick;
-                hasRollback = true;
+                ulong verifiedTick = _lastVerifiedTick;
 
-                Debug.Log(verifiedTick + " " + inPlace);
-
+                Debug.Log("Verified tick: " + verifiedTick + " in place: " + inPlace + " previous frame: " + previousFrame.clientTick + " " + c);
                 if (inPlace)
                 {
                     if (_playedFirst)
@@ -887,21 +888,15 @@ namespace PurrNet.Prediction
                 }
 
                 RollbackToFrame(previousFrame.packer, verifiedTick);
-                SimulateFrame(verifiedTick, true);
-            }
+                SimulateFrame(verifiedTick, false);
 
-            isVerified = false;
+                isVerified = false;
 
-            if (hasRollback)
-            {
                 ReplayToLatestTick(verifiedTick + 1);
                 SyncTransforms();
-                UpdateInterpolation(true);
             }
-            else
-            {
-                localTickInContext = localTick;
-            }
+
+            UpdateInterpolation(true);
 
             isReplaying = false;
             isSimulating = false;

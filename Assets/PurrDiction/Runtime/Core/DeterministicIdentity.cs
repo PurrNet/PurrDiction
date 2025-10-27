@@ -37,7 +37,7 @@ namespace PurrNet.Prediction
                 if (!Packer.AreEqual(read, fullPredictedState.state))
                 {
                     Debug.LogError(
-                        $"State mismatch, should be:\n{read.ToString()}\nBut its:\n{fullPredictedState.state.ToString()}");
+                        $"State mismatch (tick: {predictionManager.time.tick}), should be:\n{read.ToString()}\nBut its:\n{fullPredictedState.state.ToString()}");
                     Debug.Break();
                 }
 
@@ -50,6 +50,11 @@ namespace PurrNet.Prediction
         public override string ToString()
         {
             return currentState.ToString();
+        }
+
+        internal override void ClearFuture(ulong stateTick)
+        {
+            _stateHistory.ClearFuture(stateTick);
         }
 
         private Interpolated<FULL_STATE<STATE>> _interpolatedState;
@@ -122,7 +127,7 @@ namespace PurrNet.Prediction
             else _interpolatedState.Teleport(copy);
 
             if (_stateHistory == null)
-                _stateHistory = new History<FULL_STATE<STATE>>(world.tickRate * 5);
+                _stateHistory = new History<FULL_STATE<STATE>>(world.tickRate * 10);
             else _stateHistory.Clear();
             _stateHistory.Write(0, copy);
         }
@@ -184,7 +189,7 @@ namespace PurrNet.Prediction
         {
             if (!_stateHistory.Read(tick, out var state))
             {
-                PurrLogger.LogError($"Failed to rollback to tick {tick} (state not found, localTick: {predictionManager.localTick})");
+                PurrLogger.LogError($"Failed to rollback to tick {tick} (state not found, localTick: {predictionManager.localTick}; latest is {_stateHistory.MostRecentTick})");
                 return;
             }
 

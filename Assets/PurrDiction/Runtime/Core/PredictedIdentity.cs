@@ -208,5 +208,7 @@ namespace PurrNet.Prediction
         public abstract void WriteFirstInput(ulong localTick, BitPacker packer);
 
         public abstract void ReadFirstInput(ulong localTick, BitPacker packer);
+
+        internal abstract void ClearFuture(ulong stateTick);
     }
 }

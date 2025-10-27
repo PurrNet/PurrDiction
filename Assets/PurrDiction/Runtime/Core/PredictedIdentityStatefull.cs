@@ -329,6 +329,12 @@ namespace PurrNet.Prediction
             return from.Add(from, scaled);
         }
 
+
+        internal override void ClearFuture(ulong stateTick)
+        {
+            _stateHistory.ClearFuture(stateTick);
+        }
+
         public override void ReadFirstInput(ulong localTick, BitPacker packer) {}
 
         public override void WriteFirstInput(ulong localTick, BitPacker packer) {}

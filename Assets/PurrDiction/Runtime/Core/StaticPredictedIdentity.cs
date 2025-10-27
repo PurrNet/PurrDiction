@@ -9,6 +9,8 @@ namespace PurrNet.Prediction
 
         public override void ReadFirstInput(ulong localTick, BitPacker packer) { }
 
+        internal override void ClearFuture(ulong stateTick) { }
+
         internal override void SimulateTick(ulong tick, float delta)
         {
         }
