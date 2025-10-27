@@ -394,7 +394,7 @@ MonoBehaviour:
     extrapolateForMissing: 1
     minInputs: 1
     maxInputs: 4
-  _validateDeterministicData: 0
+  _validateDeterministicData: 1
 --- !u!4 &1558659896
 Transform:
   m_ObjectHideFlags: 0

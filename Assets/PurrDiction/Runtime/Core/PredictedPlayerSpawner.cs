@@ -56,6 +56,8 @@ namespace PurrNet.Prediction
             }
         }
 
+        protected override PlayerSpawnerState Interpolate(PlayerSpawnerState from, PlayerSpawnerState to, float t) => to;
+
         private void CleanupSpawnPoints()
         {
             bool hadNullEntry = false;
