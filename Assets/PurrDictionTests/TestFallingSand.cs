@@ -9,7 +9,7 @@ namespace PurrNet.Prediction.Tests
         public PredictedRandom random;
         public void Dispose() { }
 
-        public override string ToString()
+        /*public override string ToString()
         {
             string result = "\n";
             for (int i = 0; i < grid.Count; i++)
@@ -19,7 +19,7 @@ namespace PurrNet.Prediction.Tests
                     result += '\n';
             }
             return result;
-        }
+        }*/
     }
 
     public class TestFallingSand : DeterministicIdentity<FallingSandState>
