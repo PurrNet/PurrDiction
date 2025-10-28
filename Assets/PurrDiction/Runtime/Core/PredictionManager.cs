@@ -9,6 +9,7 @@ using PurrNet.Pooling;
 using PurrNet.Prediction.Profiler;
 using PurrNet.Transports;
 using PurrNet.Utils;
+using Unity.Profiling;
 using UnityEngine;
 
 namespace PurrNet.Prediction
@@ -50,6 +51,12 @@ namespace PurrNet.Prediction
         [SerializeField] private bool _validateDeterministicData;
 
         public bool validateDeterministicData => _validateDeterministicData;
+
+        static readonly ProfilerMarker SimulateMarker = new("PredictionManager.Simulate");
+        static readonly ProfilerMarker LateSimulateMarker = new("PredictionManager.LateSimulate");
+        static readonly ProfilerMarker UpdateViewMarker = new("PredictionManager.UpdateView");
+        static readonly ProfilerMarker SaveHistoryMarker = new("PredictionManager.SaveHistory");
+        static readonly ProfilerMarker WriteFrameOnServerMarker = new("PredictionManager.WriteFrameOnServer");
 
         readonly List<PredictedIdentity> _queue = new ();
         readonly List<PredictedIdentity> _systems = new ();
@@ -496,17 +503,23 @@ namespace PurrNet.Prediction
                 system.PrepareInput(cachedIsServer, controller, localTick, _inputQueueSettings.extrapolateForMissing);
             }
 
-            for (var i = 0; i < _systemsCount; i++)
+            using (SaveHistoryMarker.Auto())
             {
-                var system = _systems[i];
-                if (!system.isEventHandler)
-                    system.SaveStateInHistory(localTick);
+                for (var i = 0; i < _systemsCount; i++)
+                {
+                    var system = _systems[i];
+                    if (!system.isEventHandler)
+                        system.SaveStateInHistory(localTick);
+                }
             }
 
             if (cachedIsServer)
             {
-                ResetAllPackers();
-                WriteInitialFrameToOthers();
+                using (WriteFrameOnServerMarker.Auto())
+                {
+                    ResetAllPackers();
+                    WriteInitialFrameToOthers();
+                }
             }
 
             float delta = this.tickDelta;
@@ -514,25 +527,37 @@ namespace PurrNet.Prediction
             if (time)
                 delta *= time.timeScale;
 
-            for (var i = 0; i < _systemsCount; i++)
-                _systems[i].SimulateTick(localTick, delta);
+            using (SimulateMarker.Auto())
+            {
+                for (var i = 0; i < _systemsCount; i++)
+                    _systems[i].SimulateTick(localTick, delta);
+            }
 
-            for (var i = 0; i < _systemsCount; i++)
-                _systems[i].LateSimulateTick(delta);
+            using (LateSimulateMarker.Auto())
+            {
+                for (var i = 0; i < _systemsCount; i++)
+                    _systems[i].LateSimulateTick(delta);
+            }
 
             DoPhysicsPass();
 
-            for (var i = 0; i < _systemsCount; i++)
+            using (SaveHistoryMarker.Auto())
             {
-                var system = _systems[i];
-                if (system.isEventHandler)
-                    system.SaveStateInHistory(localTick);
+                for (var i = 0; i < _systemsCount; i++)
+                {
+                    var system = _systems[i];
+                    if (system.isEventHandler)
+                        system.SaveStateInHistory(localTick);
+                }
             }
 
             if (cachedIsServer)
             {
-                WriteEventHandles();
-                SendFrameToOthers();
+                using (WriteFrameOnServerMarker.Auto())
+                {
+                    WriteEventHandles();
+                    SendFrameToOthers();
+                }
             }
 
             for (var i = 0; i < _systemsCount; i++)
@@ -927,10 +952,17 @@ namespace PurrNet.Prediction
             isSimulating = true;
             localTickInContext = verifiedTick;
 
-            for (var j = 0; j < _systemsCount; j++)
-                _systems[j].SimulateTick(verifiedTick, delta);
-            for (var j = 0; j < _systemsCount; j++)
-                _systems[j].LateSimulateTick(delta);
+            using (SimulateMarker.Auto())
+            {
+                for (var j = 0; j < _systemsCount; j++)
+                    _systems[j].SimulateTick(verifiedTick, delta);
+            }
+
+            using (LateSimulateMarker.Auto())
+            {
+                for (var j = 0; j < _systemsCount; j++)
+                    _systems[j].LateSimulateTick(delta);
+            }
 
             DoPhysicsPass();
 
@@ -954,29 +986,41 @@ namespace PurrNet.Prediction
 
             if (saveState)
             {
-                for (var i = 0; i < _systemsCount; i++)
+                using (SaveHistoryMarker.Auto())
                 {
-                    var system = _systems[i];
-                    if (!system.isEventHandler)
-                        system.SaveStateInHistory(verifiedTick);
+                    for (var i = 0; i < _systemsCount; i++)
+                    {
+                        var system = _systems[i];
+                        if (!system.isEventHandler)
+                            system.SaveStateInHistory(verifiedTick);
+                    }
                 }
             }
 
-            for (var j = 0; j < _systemsCount; j++)
-                _systems[j].SimulateTick(verifiedTick, delta);
+            using (SimulateMarker.Auto())
+            {
+                for (var j = 0; j < _systemsCount; j++)
+                    _systems[j].SimulateTick(verifiedTick, delta);
+            }
 
-            for (var j = 0; j < _systemsCount; j++)
-                _systems[j].LateSimulateTick(delta);
+            using (LateSimulateMarker.Auto())
+            {
+                for (var j = 0; j < _systemsCount; j++)
+                    _systems[j].LateSimulateTick(delta);
+            }
 
             DoPhysicsPass();
 
             if (saveState)
             {
-                for (var i = 0; i < _systemsCount; i++)
+                using (SaveHistoryMarker.Auto())
                 {
-                    var system = _systems[i];
-                    if (system.isEventHandler)
-                        system.SaveStateInHistory(verifiedTick);
+                    for (var i = 0; i < _systemsCount; i++)
+                    {
+                        var system = _systems[i];
+                        if (system.isEventHandler)
+                            system.SaveStateInHistory(verifiedTick);
+                    }
                 }
             }
 
@@ -1098,9 +1142,12 @@ namespace PurrNet.Prediction
 
         private void UpdateView()
         {
-            var dt = Time.unscaledDeltaTime;
-            for (var i = 0; i < _systemsCount; i++)
-                _systems[i].UpdateView(dt);
+            using (UpdateViewMarker.Auto())
+            {
+                var dt = Time.unscaledDeltaTime;
+                for (var i = 0; i < _systemsCount; i++)
+                    _systems[i].UpdateView(dt);
+            }
         }
 
         public bool TryGetPrefab(int pid, out GameObject prefab)

@@ -15,32 +15,18 @@ namespace PurrNet.Prediction.Tests
 
     public class TestFallingSandPlayer : PredictedIdentity<FallingSandInput, FallingSandPlayerState>
     {
-        TestFallingSandRenderer _renderer;
-        TestFallingSand _fallingSand;
+        private TestFallingSand _fallingSand;
+        private FallingSandEvents _events;
 
         private void OnEnable()
         {
-            _renderer = InstanceHandler.GetInstance<TestFallingSandRenderer>();
-            _fallingSand = _renderer.sand;
-            _renderer.onClicked += ClickedCell;
+            _events = InstanceHandler.GetInstance<FallingSandEvents>();
+            _fallingSand = _events.sand;
         }
-
-        private void OnDisable()
-        {
-            _renderer.onClicked -= ClickedCell;
-        }
-
-        private void ClickedCell(int index)
-        {
-            _cell = index;
-        }
-
-        private int? _cell;
 
         protected override void GetFinalInput(ref FallingSandInput input)
         {
-            input.cellToActivate = _cell;
-            _cell = null;
+            input.cellToActivate = _events.isClicking ? _events.clickingIndex : null;
         }
 
         [SerializeField] private bool _interceptInput;
@@ -54,9 +40,7 @@ namespace PurrNet.Prediction.Tests
         protected override void Simulate(FallingSandInput input, ref FallingSandPlayerState state, float delta)
         {
             if (input.cellToActivate.HasValue)
-            {
                 _fallingSand.SetGridValue(input.cellToActivate.Value);
-            }
         }
     }
 }
