@@ -7,6 +7,7 @@ using PurrNet.Modules;
 using PurrNet.Packing;
 using PurrNet.Pooling;
 using PurrNet.Prediction.Profiler;
+using PurrNet.Transports;
 using PurrNet.Utils;
 using UnityEngine;
 
@@ -1011,7 +1012,7 @@ namespace PurrNet.Prediction
             ReceivedInput(tick, count, inputPacket, info);
         }
 
-        [ServerRpc(requireOwnership: false)]
+        [ServerRpc(requireOwnership: false, channel: Channel.UnreliableSequenced)]
         private void SendInputToServer(ulong tick, PackedUInt count, BitPacker inputPacket, RPCInfo info = default)
         {
             ReceivedInput(tick, count, inputPacket, info);

@@ -562,7 +562,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ec17ccfce8678b442b2b0375b706562e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: PurrNet.Prediction.Tests::PurrNet.Prediction.Tests.TestFallingSand
-  _gridSize: 15
+  _gridSize: 64
   _seed: 65645
 --- !u!4 &2085136390
 Transform:
