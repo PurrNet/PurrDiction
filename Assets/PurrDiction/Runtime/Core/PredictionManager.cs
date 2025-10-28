@@ -207,20 +207,35 @@ namespace PurrNet.Prediction
         protected override void OnSpawned()
         {
             _tickManager = networkManager.tickModule;
-            _tickManager.onReliablePreTick += OnPreTick;
-            _tickManager.onReliablePostTick += OnPostTick;
+            _tickManager.onPreTick += OnPreTick;
+            _tickManager.onPostTick += OnPostTick;
         }
 
         protected override void OnDespawned()
         {
             if (_tickManager != null)
             {
-                _tickManager.onReliablePreTick -= OnPreTick;
-                _tickManager.onReliablePostTick -= OnPostTick;
+                _tickManager.onPreTick -= OnPreTick;
+                _tickManager.onPostTick -= OnPostTick;
                 _tickManager = null;
             }
 
             CleanupAllSystems();
+        }
+
+        protected override void OnDestroy()
+        {
+            base.OnDestroy();
+
+            foreach (var packer in _clientFrames)
+                packer.Dispose();
+            _clientFrames.Clear();
+
+            if (_tickManager != null)
+            {
+                _tickManager.onPreTick -= OnPreTick;
+                _tickManager.onPostTick -= OnPostTick;
+            }
         }
 
         private void CleanupAllSystems()
@@ -381,21 +396,6 @@ namespace PurrNet.Prediction
                     _clientFrames.RemoveAt(i);
                     break;
                 }
-            }
-        }
-
-        protected override void OnDestroy()
-        {
-            base.OnDestroy();
-
-            foreach (var packer in _clientFrames)
-                packer.Dispose();
-            _clientFrames.Clear();
-
-            if (_tickManager != null)
-            {
-                _tickManager.onReliablePreTick -= OnPreTick;
-                _tickManager.onReliablePostTick -= OnPostTick;
             }
         }
 
