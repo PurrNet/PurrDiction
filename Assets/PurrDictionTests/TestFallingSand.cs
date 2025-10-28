@@ -1,31 +1,9 @@
+using PurrNet.Packing;
 using PurrNet.Pooling;
 using UnityEngine;
 
 namespace PurrNet.Prediction.Tests
 {
-    public struct FallingSandState : IPredictedData<FallingSandState>
-    {
-        public DisposableArray<bool> grid;
-        public PredictedRandom random;
-
-        public void Dispose()
-        {
-            grid.Dispose();
-        }
-
-        /*public override string ToString()
-        {
-            string result = "\n";
-            for (int i = 0; i < grid.Count; i++)
-            {
-                result += grid[i] ? "#" : "_";
-                if ((i + 1) % 15 == 0)
-                    result += '\n';
-            }
-            return result;
-        }*/
-    }
-
     public class TestFallingSand : DeterministicIdentity<FallingSandState>
     {
         [SerializeField] private int _gridSize = 10;
@@ -40,69 +18,119 @@ namespace PurrNet.Prediction.Tests
 
         private void TickSimulation(ref FallingSandState state)
         {
-            var nextState = DisposableArray<bool>.Create(_gridSize * _gridSize);
+            var newDirty = DisposableList<Size>.Create();
+            var dirtyIndexes = currentState.dirtyIndexes.list;
+            int count = dirtyIndexes.Count;
 
-            // iterate from bottom to top
-            for (int y = _gridSize - 1; y >= 0; y--)
+            for (int j = count - 1; j >= 0; j--)
             {
-                for (int x = 0; x < _gridSize; x++)
+                int index = dirtyIndexes[j];
+                var down = index + _gridSize;
+
+                // try to move down first
+                if (!GetGridValue(down))
                 {
-                    int i = y * _gridSize + x;
-                    if (!state.grid[i])
-                        continue;
+                    state.grid[index] = false;
+                    state.grid[down] = true;
+                    InsertDirtyIndex(newDirty, down);
+                    var up = index - _gridSize;
+                    if (up >= 0)
+                        InsertDirtyIndex(newDirty, up);
+                    continue;
+                }
 
-                    // try to move down first
-                    if (!GetGridValue(x, y + 1, nextState))
+                int x = index % _gridSize;
+                var left = x == 0 ?               -1 : index - 1 + _gridSize;
+                var right = x == _gridSize - 1 ?  -1 : index + 1 + _gridSize;
+
+                bool canMoveLeft = !GetGridValue(left);
+                bool canMoveRight = !GetGridValue(right);
+
+                switch (canMoveLeft)
+                {
+                    case true when canMoveRight:
                     {
-                        nextState[(y + 1) * _gridSize + x] = true;
-                        continue;
+                        bool random = state.random.Next(2) == 0;
+                        int nx = random ? left : right;
+                        state.grid[index] = false;
+                        state.grid[nx] = true;
+                        InsertDirtyIndex(newDirty, nx);
+                        break;
                     }
-
-                    bool canMoveLeft = !GetGridValue(x - 1, y + 1, nextState);
-                    bool canMoveRight = !GetGridValue(x + 1, y + 1, nextState);
-
-                    switch (canMoveLeft)
+                    case true:
+                        state.grid[index] = false;
+                        state.grid[left] = true;
+                        InsertDirtyIndex(newDirty, left);
+                        break;
+                    default:
                     {
-                        case true when canMoveRight:
+                        if (canMoveRight)
                         {
-                            bool random = state.random.Next(2) == 0;
-                            int nx = random ? x - 1 : x + 1;
-                            nextState[(y + 1) * _gridSize + nx] = true;
-                            continue;
+                            state.grid[index] = false;
+                            state.grid[right] = true;
+                            InsertDirtyIndex(newDirty, right);
                         }
-                        case true:
-                            nextState[(y + 1) * _gridSize + (x - 1)] = true;
-                            continue;
+                        break;
                     }
-
-                    if (canMoveRight)
-                    {
-                        nextState[(y + 1) * _gridSize + (x + 1)] = true;
-                        continue;
-                    }
-
-                    // can't move, stay still
-                    nextState[i] = true;
                 }
             }
 
-            state.grid.Dispose();
-            state.grid = nextState;
+            state.dirtyIndexes.Dispose();
+            state.dirtyIndexes = newDirty;
         }
 
-        public bool GetGridValue(int x, int y, DisposableArray<bool> nextState)
+        bool GetGridValue(int index)
         {
-            if (x < 0 || x >= _gridSize || y < 0 || y >= _gridSize)
-                return true; // out of bounds = solid
-            int index = y * _gridSize + x;
-            return currentState.grid[index] || nextState[index];
+            if (index < 0 ||index >= _gridSize * _gridSize)
+                return true;
+            return currentState.grid[index];
         }
 
         public void SetGridValue(int index)
         {
             if (index < 0 ||index >= _gridSize * _gridSize)
                 return;
+
+            if (currentState.grid[index])
+                return;
+
+            InsertDirtyIndex(index);
             currentState.grid[index] = true;
+        }
+
+        private static void InsertDirtyIndex(DisposableList<Size> list, int index)
+        {
+            var existingCount = list.Count;
+            int posToInsert = 0;
+
+            for (var i = 0; i < existingCount; ++i)
+            {
+                posToInsert = i;
+                var curVal = list[i].value;
+                if (curVal > index)
+                {
+                    if (curVal == index)
+                        return;
+                    break;
+                }
+            }
+
+            list.Insert(posToInsert, index);
+        }
+
+        private void InsertDirtyIndex(int index)
+        {
+            var existingCount = currentState.dirtyIndexes.Count;
+            int posToInsert = 0;
+
+            for (var i = 0; i < existingCount; ++i)
+            {
+                posToInsert = i;
+                if (currentState.dirtyIndexes[i].value > index)
+                    break;
+            }
+
+            currentState.dirtyIndexes.Insert(posToInsert, index);
         }
 
         protected override FallingSandState GetInitialState()
@@ -110,6 +138,7 @@ namespace PurrNet.Prediction.Tests
             return new FallingSandState
             {
                 grid = DisposableArray<bool>.Create(_gridSize * _gridSize),
+                dirtyIndexes = DisposableList<Size>.Create(),
                 random = PredictedRandom.Create(_seed)
             };
         }
