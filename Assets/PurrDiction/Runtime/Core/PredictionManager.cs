@@ -207,7 +207,7 @@ namespace PurrNet.Prediction
         protected override void OnSpawned()
         {
             _tickManager = networkManager.tickModule;
-            _tickManager.onReliableTick += OnPreTick;
+            _tickManager.onReliablePreTick += OnPreTick;
             _tickManager.onReliablePostTick += OnPostTick;
         }
 
@@ -215,7 +215,7 @@ namespace PurrNet.Prediction
         {
             if (_tickManager != null)
             {
-                _tickManager.onReliableTick -= OnPreTick;
+                _tickManager.onReliablePreTick -= OnPreTick;
                 _tickManager.onReliablePostTick -= OnPostTick;
                 _tickManager = null;
             }
@@ -793,7 +793,7 @@ namespace PurrNet.Prediction
             SyncTransforms();
         }
 
-        private void RollbackToFrame(BitPacker frame, ulong stateTick)
+        private void RollbackToFrame(BitPacker frame, ulong stateTick, ulong inputTick)
         {
             frame.ResetPositionAndMode(true);
 
@@ -814,7 +814,7 @@ namespace PurrNet.Prediction
             }
 
             for (var i = 0; i < count; ++i)
-                _systems[i].ReadInput(stateTick, default, frame, _deltaModuleState, true);
+                _systems[i].ReadInput(inputTick, default, frame, _deltaModuleState, true);
 
             for (var i = 0; i < count; ++i)
             {
@@ -866,7 +866,6 @@ namespace PurrNet.Prediction
             while (_deltas.Count > 0)
             {
                 isVerified = true;
-
                 using var previousFrame = _deltas.Dequeue();
                 bool inPlace = previousFrame.clientTick <= 1;
                 var lastTick = _lastVerifiedTick;
@@ -890,18 +889,13 @@ namespace PurrNet.Prediction
                     _playedFirst = true;
                 }
 
-                RollbackToFrame(previousFrame.packer, inPlaceTick);
+                RollbackToFrame(previousFrame.packer, inPlaceTick, verifiedTick);
                 SimulateFrame(verifiedTick, true);
-
                 isVerified = false;
-
-
-                SimulateFrame(verifiedTick + 1, true);
-                if (_deltas.Count == 0)
-                    ReplayToLatestTick(verifiedTick + 2);
-                SyncTransforms();
             }
 
+            ReplayToLatestTick(_lastVerifiedTick + 1);
+            SyncTransforms();
             UpdateInterpolation(true);
 
             isReplaying = false;
