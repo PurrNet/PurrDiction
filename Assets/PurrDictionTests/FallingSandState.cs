@@ -3,9 +3,20 @@ using PurrNet.Pooling;
 
 namespace PurrNet.Prediction.Tests
 {
+    public struct ByteColor
+    {
+        public byte R, G, B;
+    }
+
+    public struct SandTile
+    {
+        public ByteColor? color;
+        public bool hasValue => color.HasValue;
+    }
+
     public struct FallingSandState : IPredictedData<FallingSandState>, IDuplicate<FallingSandState>
     {
-        public DisposableArray<bool> grid;
+        public DisposableArray<SandTile> grid;
         public DisposableList<Size> dirtyIndexes;
         public PredictedRandom random;
 
@@ -19,7 +30,7 @@ namespace PurrNet.Prediction.Tests
             return new FallingSandState
             {
                 dirtyIndexes = DisposableList<Size>.Create(dirtyIndexes),
-                grid = DisposableArray<bool>.Create(grid),
+                grid = DisposableArray<SandTile>.Create(grid),
                 random = random
             };
         }

@@ -412,7 +412,7 @@ namespace PurrNet.Prediction
             if (player == localPlayer)
                 return;
 
-            if (_lastFullFrame.positionInBits == 0)
+            if (localTick == 1)
                 OnPreTick();
 
             _clientTicks[player] = new InputQueue();
@@ -428,7 +428,29 @@ namespace PurrNet.Prediction
             if (player == localPlayer)
                 return;
 
-            SyncFullState(player, tickRate, tickDelta, _lastFullFrame);
+            using var frame = BitPackerPool.Get();
+            var tick = localTick - 1;
+            RollbackToFrame(tick);
+
+            Packer<Size>.Write(frame, _systemsCount);
+
+            for (var i = 0; i < _systemsCount; i++)
+            {
+                if (!_systems[i].isEventHandler)
+                    _systems[i].WriteFirstState(tick, frame);
+            }
+
+            for (var i = 0; i < _systemsCount; i++)
+                _systems[i].WriteFirstInput(tick, frame);
+
+            for (var i = 0; i < _systemsCount; i++)
+            {
+                if (_systems[i].isEventHandler)
+                    _systems[i].WriteFirstState(tick, frame);
+            }
+
+            SimulateFrame(localTick, false);
+            SyncFullState(player, tickRate, tickDelta, frame);
         }
 
         [TargetRpc(compressionLevel: CompressionLevel.Best)]
@@ -476,8 +498,6 @@ namespace PurrNet.Prediction
 
         public bool cachedIsServer { get; private set; }
 
-        private readonly BitPacker _lastFullFrame = new BitPacker();
-
         private void OnPreTick()
         {
             cachedIsServer = isServer;
@@ -489,9 +509,6 @@ namespace PurrNet.Prediction
             isSimulating = true;
             if (cachedIsServer)
                 isVerified = true;
-
-            _lastFullFrame.ResetPositionAndMode(false);
-            Packer<Size>.Write(_lastFullFrame, _systemsCount);
 
             if (cachedIsServer)
                 PrepareInputs();
@@ -642,16 +659,6 @@ namespace PurrNet.Prediction
         {
             var fCount = _clientFrames.Count;
 
-            for (var i = 0; i < _systemsCount; i++)
-            {
-                var system = _systems[i];
-                if (!system.isEventHandler)
-                    system.WriteFirstState(localTick, _lastFullFrame);
-            }
-
-            for (var i = 0; i < _systemsCount; i++)
-                _systems[i].WriteFirstInput(localTick, _lastFullFrame);
-
             for (var j = 0; j < fCount; j++)
             {
                 var frame = _clientFrames[j].packer;
@@ -682,7 +689,6 @@ namespace PurrNet.Prediction
                     continue;
 
                 var system = _systems[i];
-                system.WriteFirstState(localTick, _lastFullFrame);
 
                 for (var j = 0; j < fCount; j++)
                 {

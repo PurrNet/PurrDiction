@@ -5,6 +5,7 @@ namespace PurrNet.Prediction.Tests
     public struct FallingSandInput : IPredictedData
     {
         public int? cellToActivate;
+        public bool useBrush;
         public void Dispose() { }
     }
 
@@ -24,9 +25,25 @@ namespace PurrNet.Prediction.Tests
             _fallingSand = _events.sand;
         }
 
+        protected override void UpdateInput(ref FallingSandInput input)
+        {
+            input.useBrush |= Input.GetMouseButtonDown(1);
+        }
+
         protected override void GetFinalInput(ref FallingSandInput input)
         {
-            input.cellToActivate = _events.isClicking ? _events.clickingIndex : null;
+            bool leftClick = Input.GetMouseButton(0);
+
+            if (leftClick)
+            {
+                input.cellToActivate = _events.isClicking ? _events.clickingIndex : null;
+                input.useBrush = false;
+            }
+            else if (input.useBrush)
+            {
+                input.cellToActivate = _events.clickingIndex;
+            }
+            else input.cellToActivate = null;
         }
 
         [SerializeField] private bool _interceptInput;
@@ -40,7 +57,14 @@ namespace PurrNet.Prediction.Tests
         protected override void Simulate(FallingSandInput input, ref FallingSandPlayerState state, float delta)
         {
             if (input.cellToActivate.HasValue)
-                _fallingSand.SetGridValue(input.cellToActivate.Value);
+            {
+                if (input.useBrush)
+                    _fallingSand.PlaceBrush(input.cellToActivate.Value);
+                else _fallingSand.SetGridValue(input.cellToActivate.Value, new SandTile
+                {
+                    color = new ByteColor()
+                });
+            }
         }
     }
 }

@@ -1,3 +1,4 @@
+using System;
 using PurrNet.Packing;
 using PurrNet.Pooling;
 using UnityEngine;
@@ -11,11 +12,18 @@ namespace PurrNet.Prediction.Tests
         [SerializeField] private int _gridSize = 10;
         [SerializeField] private uint _seed = 65645;
         [SerializeField] private RawImage _display;
+        [SerializeField] private Texture2D _brush;
 
         private Texture2D _tex;
         private Color32[] _colors;
+        private Color32[] _brushColors;
 
         public int gridSize => _gridSize;
+
+        private void Awake()
+        {
+            _brushColors = _brush.GetPixels32();
+        }
 
         protected override void LateAwake()
         {
@@ -48,8 +56,9 @@ namespace PurrNet.Prediction.Tests
             for (int j = count - 1; j >= 0; j--)
             {
                 int index = dirtyIndexes[j];
+                var tile = currentState.grid[index];
 
-                if (!currentState.grid[index])
+                if (!tile.hasValue)
                     continue;
 
                 var down = index + _gridSize;
@@ -57,8 +66,8 @@ namespace PurrNet.Prediction.Tests
                 // try to move down first
                 if (!GetGridValue(down))
                 {
-                    state.grid[index] = false;
-                    state.grid[down] = true;
+                    state.grid[index] = default;
+                    state.grid[down] = tile;
                     InsertDirtyIndex(newDirty, down);
                     var up = index - _gridSize;
                     if (up >= 0)
@@ -79,22 +88,22 @@ namespace PurrNet.Prediction.Tests
                     {
                         bool random = state.random.Next(2) == 0;
                         int nx = random ? left : right;
-                        state.grid[index] = false;
-                        state.grid[nx] = true;
+                        state.grid[index] = default;
+                        state.grid[nx] = tile;
                         InsertDirtyIndex(newDirty, nx);
                         break;
                     }
                     case true:
-                        state.grid[index] = false;
-                        state.grid[left] = true;
+                        state.grid[index] = default;
+                        state.grid[left] = tile;
                         InsertDirtyIndex(newDirty, left);
                         break;
                     default:
                     {
                         if (canMoveRight)
                         {
-                            state.grid[index] = false;
-                            state.grid[right] = true;
+                            state.grid[index] = default;
+                            state.grid[right] = tile;
                             InsertDirtyIndex(newDirty, right);
                         }
                         break;
@@ -110,19 +119,51 @@ namespace PurrNet.Prediction.Tests
         {
             if (index < 0 ||index >= _gridSize * _gridSize)
                 return true;
-            return currentState.grid[index];
+            return currentState.grid[index].hasValue;
         }
 
-        public void SetGridValue(int index)
+        public void SetGridValue(int index, SandTile tile)
         {
             if (index < 0 ||index >= _gridSize * _gridSize)
                 return;
 
-            if (currentState.grid[index])
+            if (currentState.grid[index].hasValue)
                 return;
 
             InsertDirtyIndex(index);
-            currentState.grid[index] = true;
+            currentState.grid[index] = tile;
+        }
+
+        public void PlaceBrush(int index)
+        {
+            var width = _brush.width;
+            int x = index % _gridSize;
+            int y = index / _gridSize;
+            var cm1 = _brushColors.Length - 1;
+            for (var i = cm1; i >= 0; --i)
+            {
+                int px = x + i % width - width / 2;
+                int py = y + i / width - width / 2;
+
+                int brushIndex = py * _gridSize + px;
+
+                var color = _brushColors[cm1 - i];
+
+                if (color.a < 200)
+                    continue;
+
+                var tile = new SandTile
+                {
+                    color = new ByteColor
+                    {
+                        R = color.r,
+                        G = color.g,
+                        B = color.b
+                    }
+                };
+
+                SetGridValue(brushIndex, tile);
+            }
         }
 
         private static void InsertDirtyIndex(DisposableList<Size> list, int index)
@@ -164,10 +205,15 @@ namespace PurrNet.Prediction.Tests
         {
             return new FallingSandState
             {
-                grid = DisposableArray<bool>.Create(_gridSize * _gridSize),
+                grid = DisposableArray<SandTile>.Create(_gridSize * _gridSize),
                 dirtyIndexes = DisposableList<Size>.Create(),
                 random = PredictedRandom.Create(_seed)
             };
+        }
+
+        protected override FallingSandState Interpolate(FallingSandState from, FallingSandState to, float t)
+        {
+            return to;
         }
 
         protected override void UpdateView(FallingSandState viewState, FallingSandState? verified)
@@ -177,7 +223,20 @@ namespace PurrNet.Prediction.Tests
                 var view = viewState.grid;
                 var countm1 = view.Count - 1;
                 for (int i = countm1; i >= 0; --i)
-                    _colors[countm1 - i] = view[i] ? new Color32(255, 0, 0, 255) : new Color32(255, 255, 255, 255);
+                {
+                    var tile = view[i];
+                    if (tile.color.HasValue)
+                    {
+                        _colors[countm1 - i] = new Color32(
+                            tile.color.Value.R,
+                            tile.color.Value.G,
+                            tile.color.Value.B, 255);
+                    }
+                    else
+                    {
+                        _colors[countm1 - i] = Color.white;
+                    }
+                }
                 _tex.SetPixels32(_colors);
                 _tex.Apply(false);
             }
