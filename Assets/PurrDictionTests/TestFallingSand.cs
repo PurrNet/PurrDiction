@@ -1,4 +1,4 @@
-using System;
+using System.Runtime.CompilerServices;
 using PurrNet.Packing;
 using PurrNet.Pooling;
 using UnityEngine;
@@ -14,6 +14,8 @@ namespace PurrNet.Prediction.Tests
         [SerializeField] private RawImage _display;
         [SerializeField] private Texture2D _brush;
 
+        private int _gridSize2;
+
         private Texture2D _tex;
         private Color32[] _colors;
         private Color32[] _brushColors;
@@ -27,6 +29,7 @@ namespace PurrNet.Prediction.Tests
 
         protected override void LateAwake()
         {
+            _gridSize2 = _gridSize * _gridSize;
             int n = _gridSize;
             _tex = new Texture2D(n, n, TextureFormat.RGBA32, false)
             {
@@ -53,7 +56,7 @@ namespace PurrNet.Prediction.Tests
             var dirtyIndexes = currentState.dirtyIndexes.list;
             int count = dirtyIndexes.Count;
 
-            for (int j = count - 1; j >= 0; j--)
+            for (int j = count - 1; j >= 0; --j)
             {
                 int index = dirtyIndexes[j];
                 var tile = currentState.grid[index];
@@ -62,6 +65,7 @@ namespace PurrNet.Prediction.Tests
                     continue;
 
                 var down = index + _gridSize;
+                var up = index - _gridSize;
 
                 // try to move down first
                 if (!GetGridValue(down))
@@ -69,9 +73,7 @@ namespace PurrNet.Prediction.Tests
                     state.grid[index] = default;
                     state.grid[down] = tile;
                     InsertDirtyIndex(newDirty, down);
-                    var up = index - _gridSize;
-                    if (up >= 0)
-                        InsertDirtyIndex(newDirty, up);
+                    if (up >= 0) InsertDirtyIndex(newDirty, up);
                     continue;
                 }
 
@@ -91,12 +93,14 @@ namespace PurrNet.Prediction.Tests
                         state.grid[index] = default;
                         state.grid[nx] = tile;
                         InsertDirtyIndex(newDirty, nx);
+                        if (up >= 0) InsertDirtyIndex(newDirty, up);
                         break;
                     }
                     case true:
                         state.grid[index] = default;
                         state.grid[left] = tile;
                         InsertDirtyIndex(newDirty, left);
+                        if (up >= 0) InsertDirtyIndex(newDirty, up);
                         break;
                     default:
                     {
@@ -105,6 +109,7 @@ namespace PurrNet.Prediction.Tests
                             state.grid[index] = default;
                             state.grid[right] = tile;
                             InsertDirtyIndex(newDirty, right);
+                            if (up >= 0) InsertDirtyIndex(newDirty, up);
                         }
                         break;
                     }
@@ -115,16 +120,17 @@ namespace PurrNet.Prediction.Tests
             state.dirtyIndexes = newDirty;
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         bool GetGridValue(int index)
         {
-            if (index < 0 ||index >= _gridSize * _gridSize)
+            if (index < 0 || index >= _gridSize2)
                 return true;
             return currentState.grid[index].hasValue;
         }
 
         public void SetGridValue(int index, SandTile tile)
         {
-            if (index < 0 ||index >= _gridSize * _gridSize)
+            if (index < 0 || index >= _gridSize2)
                 return;
 
             if (currentState.grid[index].hasValue)
@@ -166,39 +172,45 @@ namespace PurrNet.Prediction.Tests
             }
         }
 
-        private static void InsertDirtyIndex(DisposableList<Size> list, int index)
+        private static bool BinarySearch(DisposableList<Size> list, int value, out int index)
         {
-            var existingCount = list.Count;
-            int posToInsert = 0;
+            int low = 0;
+            int high = list.Count - 1;
 
-            for (var i = 0; i < existingCount; ++i)
+            while (low <= high)
             {
-                posToInsert = i;
-                var curVal = list[i].value;
-                if (curVal > index)
+                int mid = (low + high) / 2;
+                if (list[mid].value < value)
                 {
-                    if (curVal == index)
-                        return;
-                    break;
+                    low = mid + 1;
+                }
+                else if (list[mid].value > value)
+                {
+                    high = mid - 1;
+                }
+                else
+                {
+                    index = mid;
+                    return true;
                 }
             }
 
-            list.Insert(posToInsert, index);
+            index = low;
+            return false;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static void InsertDirtyIndex(DisposableList<Size> list, int index)
+        {
+            if (BinarySearch(list, index, out var result))
+                return;
+
+            list.Insert(result, index);
         }
 
         private void InsertDirtyIndex(int index)
         {
-            var existingCount = currentState.dirtyIndexes.Count;
-            int posToInsert = 0;
-
-            for (var i = 0; i < existingCount; ++i)
-            {
-                posToInsert = i;
-                if (currentState.dirtyIndexes[i].value > index)
-                    break;
-            }
-
-            currentState.dirtyIndexes.Insert(posToInsert, index);
+            InsertDirtyIndex(currentState.dirtyIndexes, index);
         }
 
         protected override FallingSandState GetInitialState()
@@ -221,8 +233,9 @@ namespace PurrNet.Prediction.Tests
             using (RenderMarker.Auto())
             {
                 var view = viewState.grid;
-                var countm1 = view.Count - 1;
-                for (int i = countm1; i >= 0; --i)
+                var count = view.Count;
+                var countm1 = count - 1;
+                for (int i = 0; i < count; ++i)
                 {
                     var tile = view[i];
                     if (tile.color.HasValue)
@@ -237,7 +250,7 @@ namespace PurrNet.Prediction.Tests
                         _colors[countm1 - i] = Color.white;
                     }
                 }
-                _tex.SetPixels32(_colors);
+                _tex.SetPixelData(_colors, 0);
                 _tex.Apply(false);
             }
         }
