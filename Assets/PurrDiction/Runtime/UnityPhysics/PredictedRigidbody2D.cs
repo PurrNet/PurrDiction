@@ -83,6 +83,13 @@ namespace PurrNet.Prediction
 
         protected override void GetUnityState(ref UnityRigidbody2DState state)
         {
+            if (_rigidbody.bodyType != RigidbodyType2D.Dynamic)
+            {
+                state.linearVelocity = default;
+                state.angularVelocity = default;
+                return;
+            }
+
             state.linearVelocity = linearVelocity;
             state.angularVelocity = angularVelocity;
 #if UNITY_6000
@@ -92,6 +99,9 @@ namespace PurrNet.Prediction
 
         protected override void SetUnityState(UnityRigidbody2DState state)
         {
+            if (_rigidbody.bodyType != RigidbodyType2D.Dynamic)
+                return;
+
             linearVelocity = state.linearVelocity;
             angularVelocity = state.angularVelocity;
 #if UNITY_6000
