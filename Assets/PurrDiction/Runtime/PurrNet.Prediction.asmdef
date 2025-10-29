@@ -3,6 +3,8 @@
     "rootNamespace": "PurrNet.Prediction",
     "references": [
         "GUID:6e20f757a1bae164fa42750dd2b27dcb",
+        "GUID:9c3f5385f72df4e4d8e7e3f64b3fa4f1",
+        "GUID:eec24cbd8ed01ce448a7b125d2cf8254",
         "GUID:25b66764e5eb9a64dafc43ec782fe09b",
         "GUID:20ea01ee0cb7096449afb3ff5adbd92f",
         "GUID:635334121cbb93e42a0ade5df8702ec4",
@@ -12,7 +14,7 @@
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
-    "allowUnsafeCode": false,
+    "allowUnsafeCode": true,
     "overrideReferences": false,
     "precompiledReferences": [],
     "autoReferenced": true,
@@ -24,14 +26,14 @@
             "define": "PURRSCENE_OBJECT_FILTERS"
         },
         {
-          "name": "com.unity.modules.physics",
-          "expression": "",
-          "define": "UNITY_PHYSICS_3D"
+            "name": "com.unity.modules.physics",
+            "expression": "",
+            "define": "UNITY_PHYSICS_3D"
         },
         {
-          "name": "com.unity.modules.physics2d",
-          "expression": "",
-          "define": "UNITY_PHYSICS_2D"
+            "name": "com.unity.modules.physics2d",
+            "expression": "",
+            "define": "UNITY_PHYSICS_2D"
         }
     ],
     "noEngineReferences": false

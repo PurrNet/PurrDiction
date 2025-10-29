@@ -70,7 +70,7 @@ namespace PurrNet.Prediction
 
         public override int GetHashCode()
         {
-            return HashCode.Combine(objectId, componentId.value);
+            return (int)(objectId.instanceId.value ^ componentId.value);
         }
 
         public override string ToString()

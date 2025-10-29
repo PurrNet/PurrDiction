@@ -1,10 +1,8 @@
-using PurrNet.Modules;
-using PurrNet.Packing;
 using UnityEngine;
 
 namespace PurrNet.Prediction
 {
-    public class PredictedTime : PredictedIdentity<PredictedTimeState>
+    public class PredictedTime : DeterministicIdentity<PredictedTimeState>
     {
         public float timeScale
         {
@@ -43,24 +41,8 @@ namespace PurrNet.Prediction
             Time.timeScale = state.timeScale;
         }
 
-        protected override void Simulate(ref PredictedTimeState state, float delta)
+        protected override void Simulate(ref PredictedTimeState state, sfloat delta)
         {
-            state.tick += 1;
-        }
-
-        protected override bool WriteDeltaState(PlayerID target, BitPacker packer, DeltaModule deltaModule)
-        {
-            return deltaModule.WriteReliableWithModifier(packer, target, stateKey, fullPredictedState.state, ModifyOldValue);
-        }
-
-        protected override void ReadDeltaState(BitPacker packer, DeltaModule deltaModule, ref PredictedTimeState state)
-        {
-            deltaModule.ReadReliableWithModifier(packer, stateKey, ref state, ModifyOldValue);
-        }
-
-        static void ModifyOldValue(ref PredictedTimeState state)
-        {
-            // we can accurately predict the new value and decrease bandwidth here so why not
             state.tick += 1;
         }
 

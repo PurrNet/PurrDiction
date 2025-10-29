@@ -1,40 +1,62 @@
 using System.Collections.Generic;
 using PurrNet.Logging;
+using PurrNet.Pooling;
+using PurrNet.Utils;
 using UnityEngine;
 
 namespace PurrNet.Prediction
 {
-    public class PredictedPlayerSpawner : StatelessPredictedIdentity
+    public struct PlayerSpawnerState : IPredictedData<PlayerSpawnerState>
+    {
+        public int spawnPointIndex;
+        public DisposableDictionary<PlayerID, PredictedObjectID> players;
+
+        public void Dispose()
+        {
+            players.Dispose();
+        }
+    }
+
+    public class PredictedPlayerSpawner : PredictedIdentity<PlayerSpawnerState>
     {
         [SerializeField] private GameObject _playerPrefab;
-        [SerializeField] private bool _destroyOnDisconnect;
+        [SerializeField, PurrLock] private bool _destroyOnDisconnect;
         [SerializeField] private List<Transform> spawnPoints = new List<Transform>();
-
-        private int _currentSpawnPoint;
-        readonly Dictionary<PlayerID, PredictedObjectID> _players = new ();
 
         private void Awake() => CleanupSpawnPoints();
 
         protected override void LateAwake()
         {
-            _currentSpawnPoint = 0;
-            _players.Clear();
-
-            if (predictionManager.players != null)
+            if (predictionManager.players)
             {
+                var players = predictionManager.players.players;
+                for (var i = 0; i < players.Count; i++)
+                    OnPlayerLoadedScene(players[i]);
+
                 predictionManager.players.onPlayerAdded += OnPlayerLoadedScene;
                 predictionManager.players.onPlayerRemoved += OnPlayerUnloadedScene;
             }
         }
 
+        protected override PlayerSpawnerState GetInitialState()
+        {
+            return new PlayerSpawnerState
+            {
+                spawnPointIndex = 0,
+                players = DisposableDictionary<PlayerID, PredictedObjectID>.Create()
+            };
+        }
+
         protected override void Destroyed()
         {
-            if (predictionManager && predictionManager.players != null)
+            if (predictionManager && predictionManager.players)
             {
                 predictionManager.players.onPlayerAdded -= OnPlayerLoadedScene;
                 predictionManager.players.onPlayerRemoved -= OnPlayerUnloadedScene;
             }
         }
+
+        protected override PlayerSpawnerState Interpolate(PlayerSpawnerState from, PlayerSpawnerState to, float t) => to;
 
         private void CleanupSpawnPoints()
         {
@@ -58,10 +80,10 @@ namespace PurrNet.Prediction
             if (!_destroyOnDisconnect)
                 return;
 
-            if (_players.TryGetValue(player, out var playerID))
+            if (currentState.players.TryGetValue(player, out var playerID))
             {
                 predictionManager.hierarchy.Delete(playerID);
-                _players.Remove(player);
+                currentState.players.Remove(player);
             }
         }
 
@@ -70,7 +92,7 @@ namespace PurrNet.Prediction
             if (!enabled)
                 return;
 
-            if (_players.ContainsKey(player))
+            if (currentState.players.ContainsKey(player))
                 return;
 
             PredictedObjectID? newPlayer;
@@ -79,8 +101,8 @@ namespace PurrNet.Prediction
 
             if (spawnPoints.Count > 0)
             {
-                var spawnPoint = spawnPoints[_currentSpawnPoint];
-                _currentSpawnPoint = (_currentSpawnPoint + 1) % spawnPoints.Count;
+                var spawnPoint = spawnPoints[currentState.spawnPointIndex];
+                currentState.spawnPointIndex = (currentState.spawnPointIndex + 1) % spawnPoints.Count;
                 newPlayer = predictionManager.hierarchy.Create(_playerPrefab, spawnPoint.position, spawnPoint.rotation, player);
             }
             else
@@ -91,7 +113,7 @@ namespace PurrNet.Prediction
             if (!newPlayer.HasValue)
                 return;
 
-            _players[player] = newPlayer.Value;
+            currentState.players[player] = newPlayer.Value;
             predictionManager.SetOwnership(newPlayer, player);
         }
     }

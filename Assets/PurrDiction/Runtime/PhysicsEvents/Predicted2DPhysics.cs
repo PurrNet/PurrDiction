@@ -64,7 +64,7 @@ namespace PurrNet.Prediction
         }
 
 #if UNITY_PHYSICS_2D
-        public override void PostSimulate(ulong tick, float delta)
+        public override void PostSimulate()
         {
             ref var state = ref currentState;
             var pm = predictionManager;

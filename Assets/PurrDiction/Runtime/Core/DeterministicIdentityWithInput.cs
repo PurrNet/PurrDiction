@@ -1,4 +1,4 @@
-using PurrNet.Modules;
+﻿using PurrNet.Modules;
 using PurrNet.Packing;
 using PurrNet.Prediction.Profiler;
 using PurrNet.Utils;
@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace PurrNet.Prediction
 {
-    public abstract class PredictedIdentity<INPUT, STATE> : PredictedIdentity<STATE>
+    public abstract class DeterministicIdentity<INPUT, STATE> : DeterministicIdentity<STATE>
         where STATE : struct, IPredictedData<STATE>
         where INPUT : struct, IPredictedData
     {
@@ -47,6 +47,7 @@ namespace PurrNet.Prediction
 
         internal override void SimulateTick(ulong tick, float delta)
         {
+            var sdelta = sfloat.FromFloat(delta);
             if (!fullPredictedState.prediction.wasOnSimulationStartCalled)
             {
                 SimulationStart();
@@ -56,8 +57,8 @@ namespace PurrNet.Prediction
             if (IsOwner())
             {
                 if (!_inputHistory.TryGet(tick, out var input))
-                    PreSimulate(GetDefaultInput(), ref fullPredictedState.state, delta);
-                else PreSimulate(input, ref fullPredictedState.state, delta);
+                    PreSimulate(GetDefaultInput(), ref fullPredictedState.state, sdelta);
+                else PreSimulate(input, ref fullPredictedState.state, sdelta);
             }
             else
             {
@@ -68,24 +69,24 @@ namespace PurrNet.Prediction
                             ModifyExtrapolatedInput(ref extrainput);
                         uint maxInputs = (uint)Mathf.CeilToInt(_repeatInputFactor * 10 / (delta * 60));
                         if (distanceInTicks <= maxInputs)
-                            PreSimulate(extrainput, ref fullPredictedState.state, delta);
-                        else PreSimulate(GetDefaultInput(), ref fullPredictedState.state, delta);
+                             PreSimulate(extrainput, ref fullPredictedState.state, sdelta);
+                        else PreSimulate(GetDefaultInput(), ref fullPredictedState.state, sdelta);
                         break;
                     case false when _inputHistory.TryGet(tick, out var input):
-                        PreSimulate(input, ref fullPredictedState.state, delta);
+                        PreSimulate(input, ref fullPredictedState.state, sdelta);
                         break;
                     default:
-                        PreSimulate(GetDefaultInput(), ref fullPredictedState.state, delta);
+                        PreSimulate(GetDefaultInput(), ref fullPredictedState.state, sdelta);
                         break;
                 }
             }
         }
 
-        protected virtual void LateSimulate(INPUT input, ref STATE state, float delta) {}
+        protected virtual void LateSimulate(INPUT input, ref STATE state, sfloat delta) {}
 
         internal override void LateSimulateTick(float delta)
         {
-            LateSimulate(_currentInput, ref fullPredictedState.state, delta);
+            LateSimulate(_currentInput, ref fullPredictedState.state, sfloat.FromFloat(delta));
         }
 
         /// <summary>
@@ -129,17 +130,17 @@ namespace PurrNet.Prediction
 
         protected virtual INPUT GetDefaultInput() => default;
 
-        private void PreSimulate(INPUT input, ref STATE state, float delta)
+        private void PreSimulate(INPUT input, ref STATE state, sfloat delta)
         {
             _currentInput = input;
             Simulate(input, ref state, delta);
         }
 
-        protected abstract void Simulate(INPUT input, ref STATE state, float delta);
+        protected abstract void Simulate(INPUT input, ref STATE state, sfloat delta);
 
-        protected override void Simulate(ref STATE state, float delta)
+        protected override void Simulate(ref STATE state, sfloat delta)
         {
-            PreSimulate(_lastInput, ref state, delta);
+            throw new System.NotImplementedException();
         }
 
         readonly struct DeltaKey : IStableHashable
@@ -158,43 +159,6 @@ namespace PurrNet.Prediction
         }
 
         DeltaKey key => new DeltaKey(id);
-
-        internal override void WriteInput(ulong localTick, PlayerID receiver, BitPacker input, DeltaModule deltaModule, bool reliable)
-        {
-            int pos = input.positionInBits;
-
-            if (_inputHistory.TryGet(localTick, out var savedInput))
-            {
-                Packer<bool>.Write(input, true);
-
-                if (reliable)
-                     deltaModule.WriteReliable(input, receiver, key, savedInput);
-                else deltaModule.Write(input, receiver, key, savedInput);
-            }
-            else
-            {
-                Packer<bool>.Write(input, false);
-            }
-
-            TickBandwidthProfiler.OnWroteInput(myType, input.positionInBits - pos, this);
-        }
-
-        internal override void ReadInput(ulong tick, PlayerID sender, BitPacker packer, DeltaModule deltaModule, bool reliable)
-        {
-            var pos = packer.positionInBits;
-
-            if (Packer<bool>.Read(packer))
-            {
-                INPUT input = default;
-                if (reliable)
-                    deltaModule.ReadReliable(packer, key, ref input);
-                else deltaModule.Read(packer, key, sender, ref input);
-                _inputHistory.Write(tick, input);
-            }
-            else _inputHistory.Remove(tick);
-
-            TickBandwidthProfiler.OnReadInput(myType, packer.positionInBits - pos, this);
-        }
 
         public override void WriteFirstInput(ulong localTick, BitPacker packer)
         {
@@ -224,6 +188,43 @@ namespace PurrNet.Prediction
             TickBandwidthProfiler.OnReadInput(myType, packer.positionInBits - pos, this);
         }
 
+        internal override void WriteInput(ulong localTick, PlayerID receiver, BitPacker input, DeltaModule deltaModule, bool reliable)
+        {
+            int pos = input.positionInBits;
+
+            if (_inputHistory.TryGet(localTick, out var savedInput))
+            {
+                Packer<bool>.Write(input, true);
+
+                if (reliable)
+                    deltaModule.WriteReliable(input, receiver, key, savedInput);
+                else deltaModule.Write(input, receiver, key, savedInput);
+            }
+            else
+            {
+                Packer<bool>.Write(input, false);
+            }
+
+            TickBandwidthProfiler.OnWroteInput(myType, input.positionInBits - pos, this);
+        }
+
+        internal override void ReadInput(ulong tick, PlayerID sender, BitPacker packer, DeltaModule deltaModule, bool reliable)
+        {
+            var pos = packer.positionInBits;
+
+            if (Packer<bool>.Read(packer))
+            {
+                INPUT input = default;
+                if (reliable)
+                    deltaModule.ReadReliable(packer, key, ref input);
+                else deltaModule.Read(packer, key, sender, ref input);
+                _inputHistory.Write(tick, input);
+            }
+            else _inputHistory.Remove(tick);
+
+            TickBandwidthProfiler.OnReadInput(myType, packer.positionInBits - pos, this);
+        }
+
         private INPUT? _queuedInput;
 
         /// <summary>
@@ -241,7 +242,7 @@ namespace PurrNet.Prediction
                 INPUT input = default;
 
                 if (reliable)
-                     deltaModule.ReadReliable(packer, key, ref input);
+                    deltaModule.ReadReliable(packer, key, ref input);
                 else deltaModule.Read(packer, key, sender, ref input);
 
                 var sanitizedInput = input;
