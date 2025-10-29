@@ -182,10 +182,7 @@ namespace PurrNet.Prediction
         internal override void Rollback(ulong tick)
         {
             if (!_stateHistory.Read(tick, out var state))
-            {
-                PurrLogger.LogError($"Failed to rollback to tick {tick}, state not found.");
                 return;
-            }
 
             fullPredictedState.Dispose();
             fullPredictedState = state.DeepCopy();
