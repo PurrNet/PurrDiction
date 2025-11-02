@@ -53,7 +53,11 @@ namespace PurrNet.Prediction
         public PredictedPrefabs predictedPrefabs
         {
             get => _predictedPrefabs;
-            set => _predictedPrefabs = value;
+            set
+            {
+                _predictedPrefabs = value;
+                InitPooling();
+            }
         }
 
         public bool validateDeterministicData => _validateDeterministicData;
@@ -122,7 +126,7 @@ namespace PurrNet.Prediction
                 _poolParent.SetActive(false);
             }
 
-            _pools = new GameObjectPoolCollection(_poolParent.transform);
+            _pools ??= new GameObjectPoolCollection(_poolParent.transform);
             for (var i = 0; i < _predictedPrefabs.prefabs.Count; i++)
             {
                 var prefab = _predictedPrefabs.prefabs[i];
