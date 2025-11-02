@@ -50,6 +50,12 @@ namespace PurrNet.Prediction
         [Header("Debugging")]
         [SerializeField] private bool _validateDeterministicData;
 
+        public PredictedPrefabs predictedPrefabs
+        {
+            get => _predictedPrefabs;
+            set => _predictedPrefabs = value;
+        }
+
         public bool validateDeterministicData => _validateDeterministicData;
 
         static readonly ProfilerMarker SimulateMarker = new("PredictionManager.Simulate");
