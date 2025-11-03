@@ -162,6 +162,8 @@ GameObject:
   - component: {fileID: 4230114255477379906}
   - component: {fileID: 3826029466696574374}
   - component: {fileID: 1085109774632596692}
+  - component: {fileID: -1229949131876051209}
+  - component: {fileID: 3228812635257960997}
   m_Layer: 0
   m_Name: PlayerTest
   m_TagString: Untagged
@@ -286,6 +288,41 @@ MonoBehaviour:
   _projectile: {fileID: 208167536026591109, guid: eb91489127ad82e4cbc003840e08c8f8, type: 3}
   _controller: {fileID: 3826029466696574374}
   _speed: 5
+--- !u!114 &-1229949131876051209
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2990978637306053845}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1602759bda2545c4b8adfd7f422baea9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _identitiesToSpawn:
+  - {fileID: 3228812635257960997}
+--- !u!114 &3228812635257960997
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2990978637306053845}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e79e3f4c3519674f9bd0e5952734451, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _isSetup: 0
+  _prefabId: -2147483648
+  _componentIndex: -2147483648
+  _shouldBePooled: 0
+  _parent: {fileID: 0}
+  _invertedPathToNearestParent: 
+  _directChildren: []
+  _networkRules: {fileID: 0}
+  _visitiblityRules: {fileID: 0}
 --- !u!1 &5020783690899223932
 GameObject:
   m_ObjectHideFlags: 0
