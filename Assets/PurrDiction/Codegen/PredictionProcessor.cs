@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using JetBrains.Annotations;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
@@ -161,7 +162,16 @@ namespace Purrdiction.Codegen
             if (name.StartsWith("UnityEngine."))
                 return false;
 
-            return !name.Contains("Editor");
+            if (name.Contains("Editor"))
+                return false;
+
+            if (name.Equals("PurrNet.Prediction", StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            bool referencesPurrNet = compiledAssembly.References
+                .Any(r => Path.GetFileNameWithoutExtension(r).Equals("PurrNet.Prediction", StringComparison.OrdinalIgnoreCase));
+
+            return referencesPurrNet;
         }
     }
 }
