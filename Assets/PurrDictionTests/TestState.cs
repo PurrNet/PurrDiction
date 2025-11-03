@@ -24,7 +24,7 @@ namespace PurrNet.Prediction.Tests
         {
             base.ViewEnter(isVerified);
 
-            Debug.Log($"View entered state: {gameObject.name} | {isVerified}");
+            //Debug.Log($"View entered state: {gameObject.name} | {isVerified}");
         }
 
         public static void NextState()
