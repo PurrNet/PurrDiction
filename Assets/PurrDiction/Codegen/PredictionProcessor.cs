@@ -26,6 +26,25 @@ namespace Purrdiction.Codegen
             return types;
         }
 
+        private static bool HasPurrDictionAsReference(string myName, ModuleDefinition module)
+        {
+            if (myName == "PurrNet.Prediction")
+                return true;
+
+            bool hasRef = false;
+
+            foreach (var reference in module.AssemblyReferences)
+            {
+                if (reference.Name == "PurrNet.Prediction")
+                {
+                    hasRef = true;
+                    break;
+                }
+            }
+
+            return hasRef;
+        }
+
         public override ILPostProcessResult Process(ICompiledAssembly compiledAssembly)
         {
             try
@@ -52,6 +71,11 @@ namespace Purrdiction.Codegen
                 for (var m = 0; m < assemblyDefinition.Modules.Count; m++)
                 {
                     var module = assemblyDefinition.Modules[m];
+                    var hasPurrDictionAsReference = HasPurrDictionAsReference(compiledAssembly.Name, module);
+
+                    if (!hasPurrDictionAsReference)
+                        continue;
+
                     using var types = GetAllTypes(module);
 
                     for (var t = 0; t < types.Count; t++)
