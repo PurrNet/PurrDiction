@@ -14,8 +14,10 @@ namespace PurrNet.Prediction
         // Generates a random uint in the range [0, uint.MaxValue)
         public uint Next()
         {
-            seed = seed * 1664525u + 1013904223u; // LCG constants
-            return seed;
+            seed ^= seed << 13;
+            seed ^= seed >> 17;
+            seed ^= seed << 5;
+            return seed * 0x85EBCA6Bu;
         }
 
         // Generates a random integer in the range [min, max)
