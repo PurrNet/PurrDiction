@@ -64,7 +64,7 @@ namespace PurrNet.Prediction
 
         public override void ResetInterpolation()
         {
-            _interpolatedState?.Teleport(fullPredictedState);
+            _interpolatedState?.Teleport(fullPredictedState.DeepCopy());
         }
 
         public override void ResetState()
@@ -124,7 +124,7 @@ namespace PurrNet.Prediction
 
             if (_interpolatedState == null)
                 _interpolatedState = new InterpolatedWithDispose<FULL_STATE<STATE>>(FULLInterpolate, 1f / world.tickRate, copy, interpolationBuffer);
-            else _interpolatedState.Teleport(copy);
+            else _interpolatedState.Teleport(copy.DeepCopy());
 
             if (_stateHistory == null)
                 _stateHistory = new History<FULL_STATE<STATE>>(world.tickRate * 10);
