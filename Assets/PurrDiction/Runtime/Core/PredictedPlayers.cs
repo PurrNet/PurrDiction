@@ -1,10 +1,11 @@
 using System;
 using System.Collections.Generic;
+using PurrNet.Packing;
 using PurrNet.Pooling;
 
 namespace PurrNet.Prediction
 {
-    public struct PredictedPlayersState : IPredictedData<PredictedPlayersState>
+    public struct PredictedPlayersState : IPredictedData<PredictedPlayersState>, IDuplicate<PredictedPlayersState>
     {
         public DisposableList<PlayerID> players;
 
@@ -14,6 +15,14 @@ namespace PurrNet.Prediction
         public void Dispose()
         {
             players.Dispose();
+        }
+
+        public PredictedPlayersState Duplicate()
+        {
+            return new PredictedPlayersState
+            {
+                players = players.Duplicate()
+            };
         }
 
         public override string ToString()

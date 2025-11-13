@@ -117,7 +117,7 @@ namespace PurrNet.Prediction
             else _interpolatedState.Teleport(copy);
 
             if (_stateHistory == null)
-                _stateHistory = new History<FULL_STATE<STATE>>(world.tickRate * 5);
+                _stateHistory = new History<FULL_STATE<STATE>>(world.tickRate * 10);
             else _stateHistory.Clear();
             _stateHistory.Write(0, copy);
         }
@@ -324,7 +324,6 @@ namespace PurrNet.Prediction
             var scaled = offset.Scale(offset, t);
             return from.Add(from, scaled);
         }
-
 
         internal override void ClearFuture(ulong stateTick)
         {

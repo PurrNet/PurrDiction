@@ -23,6 +23,7 @@ namespace PurrNet.Prediction.Tests
         public void Dispose()
         {
             grid.Dispose();
+            dirtyIndexes.Dispose();
         }
 
         public FallingSandState Duplicate()

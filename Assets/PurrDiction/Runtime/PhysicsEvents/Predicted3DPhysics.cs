@@ -21,7 +21,7 @@ namespace PurrNet.Prediction
 #endif
     }
 
-    public struct PhysicsCollision : IDisposable
+    public struct PhysicsCollision : IDisposable, IDuplicate<PhysicsCollision>
     {
 #if UNITY_PHYSICS_3D
         public DisposableList<PhysicsContactPoint> contacts;
@@ -29,13 +29,24 @@ namespace PurrNet.Prediction
         public Vector3 relativeVelocity;
 
         public void Dispose() => contacts.Dispose();
+
+        public PhysicsCollision Duplicate()
+        {
+            return new PhysicsCollision
+            {
+                contacts = contacts.Duplicate(),
+                impulse = impulse,
+                relativeVelocity = relativeVelocity
+            };
+        }
 #else
         public void Dispose() {}
 
+        public PhysicsCollision Duplicate() {}
 #endif
     }
 
-    public struct PhysicsEvent : IPackedAuto, IDisposable
+    public struct PhysicsEvent : IPackedAuto, IDisposable, IDuplicate<PhysicsEvent>
     {
         public bool isTrigger;
         public PhysicsEventType type;
@@ -44,9 +55,21 @@ namespace PurrNet.Prediction
         public PhysicsCollision collision;
 
         public void Dispose() => collision.Dispose();
+
+        public PhysicsEvent Duplicate()
+        {
+            return new PhysicsEvent
+            {
+                isTrigger = isTrigger,
+                type = type,
+                me = me,
+                other = other,
+                collision = collision.Duplicate()
+            };
+        }
     }
 
-    public struct PredictedPhysicsData : IPredictedData<PredictedPhysicsData>
+    public struct PredictedPhysicsData : IPredictedData<PredictedPhysicsData>, IDuplicate<PredictedPhysicsData>
     {
         public DisposableList<PhysicsEvent> events;
 
@@ -56,6 +79,14 @@ namespace PurrNet.Prediction
             for (var i = 0; i < count; i++)
                 events[i].Dispose();
             events.Dispose();
+        }
+
+        public PredictedPhysicsData Duplicate()
+        {
+            return new PredictedPhysicsData
+            {
+                events = events.Duplicate()
+            };
         }
     }
 

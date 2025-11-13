@@ -1,8 +1,9 @@
-﻿using PurrNet.Pooling;
+﻿using PurrNet.Packing;
+using PurrNet.Pooling;
 
 namespace PurrNet.Prediction
 {
-    public struct PredictedHierarchyState : IPredictedData<PredictedHierarchyState>
+    public struct PredictedHierarchyState : IPredictedData<PredictedHierarchyState>, IDuplicate<PredictedHierarchyState>
     {
         public DisposableList<InstanceDetails> spawnedPrefabs;
         public DisposableList<PredictedObjectID> toDelete;
@@ -19,6 +20,15 @@ namespace PurrNet.Prediction
         {
             spawnedPrefabs.Dispose();
             toDelete.Dispose();
+        }
+
+        public PredictedHierarchyState Duplicate()
+        {
+            return new PredictedHierarchyState(
+                spawnedPrefabs.Duplicate(),
+                toDelete.Duplicate(),
+                nextInstanceId
+            );
         }
 
         public override string ToString()
