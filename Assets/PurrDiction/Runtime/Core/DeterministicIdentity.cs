@@ -123,7 +123,8 @@ namespace PurrNet.Prediction
             var interpolationBuffer = (int)Mathf.Max(world.tickRate / (float)10, 2);
 
             if (_interpolatedState == null)
-                _interpolatedState = new InterpolatedWithDispose<FULL_STATE<STATE>>(FULLInterpolate, 1f / world.tickRate, copy, interpolationBuffer);
+                _interpolatedState = new InterpolatedWithDispose<FULL_STATE<STATE>>(
+                    FULLInterpolate, 1f / world.tickRate, copy.DeepCopy(), interpolationBuffer);
             else _interpolatedState.Teleport(copy.DeepCopy());
 
             if (_stateHistory == null)
