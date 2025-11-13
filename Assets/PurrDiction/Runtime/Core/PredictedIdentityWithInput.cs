@@ -35,7 +35,7 @@ namespace PurrNet.Prediction
 
         protected virtual void UpdateInput(ref INPUT input) { }
 
-        private INPUT _lastInput;
+        private INPUT? _lastInput;
         private INPUT _nextInput;
 
         internal override void Setup(NetworkManager manager, PredictionManager world, PredictedComponentID id, PlayerID? owner)
@@ -99,8 +99,9 @@ namespace PurrNet.Prediction
             {
                 GetFinalInput(ref _nextInput);
                 SanitizeInput(ref _nextInput);
+                _lastInput?.Dispose();
                 _lastInput = _nextInput;
-                _inputHistory.Write(tick, _nextInput);
+                _inputHistory.Write(tick, Packer.Copy(_nextInput));
                 _nextInput = GetDefaultInput();
             }
             else if (isServer)
@@ -108,15 +109,20 @@ namespace PurrNet.Prediction
                 if (_queuedInput == null)
                 {
                     if (!extrapolate)
+                    {
+                        _lastInput?.Dispose();
                         _lastInput = GetDefaultInput();
-                    _inputHistory.Write(tick, _lastInput);
+                    }
+
+                    _inputHistory.Write(tick, Packer.Copy(_lastInput.GetValueOrDefault()));
                     return;
                 }
 
                 var input = _queuedInput.Value;
                 SanitizeInput(ref input);
+                _lastInput?.Dispose();
                 _lastInput = input;
-                _inputHistory.Write(tick, input);
+                _inputHistory.Write(tick, Packer.Copy(input));
                 _queuedInput = null;
             }
         }
@@ -139,7 +145,7 @@ namespace PurrNet.Prediction
 
         protected override void Simulate(ref STATE state, float delta)
         {
-            PreSimulate(_lastInput, ref state, delta);
+            PreSimulate(_lastInput.GetValueOrDefault(), ref state, delta);
         }
 
         readonly struct DeltaKey : IStableHashable
