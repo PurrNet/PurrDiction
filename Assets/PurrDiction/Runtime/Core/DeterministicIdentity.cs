@@ -117,20 +117,20 @@ namespace PurrNet.Prediction
             fullPredictedState.state = GetInitialState();
             GetLatestUnityState();
 
-            var copy = fullPredictedState.DeepCopy();
-
             // if TickRate is 30, then this should be 2
             var interpolationBuffer = (int)Mathf.Max(world.tickRate / (float)10, 2);
 
             if (_interpolatedState == null)
+            {
                 _interpolatedState = new InterpolatedWithDispose<FULL_STATE<STATE>>(
-                    FULLInterpolate, 1f / world.tickRate, copy.DeepCopy(), interpolationBuffer);
-            else _interpolatedState.Teleport(copy.DeepCopy());
+                    FULLInterpolate, 1f / world.tickRate, fullPredictedState.DeepCopy(), interpolationBuffer);
+            }
+            else _interpolatedState.Teleport(fullPredictedState.DeepCopy());
 
             if (_stateHistory == null)
                 _stateHistory = new History<FULL_STATE<STATE>>(world.tickRate * 10);
             else _stateHistory.Clear();
-            _stateHistory.Write(0, copy);
+            _stateHistory.Write(0, fullPredictedState.DeepCopy());
         }
 
         /// <summary>
