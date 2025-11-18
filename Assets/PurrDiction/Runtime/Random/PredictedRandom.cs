@@ -14,8 +14,10 @@ namespace PurrNet.Prediction
         // Generates a random uint in the range [0, uint.MaxValue)
         public uint Next()
         {
-            seed = seed * 1664525u + 1013904223u; // LCG constants
-            return seed;
+            seed ^= seed << 13;
+            seed ^= seed >> 17;
+            seed ^= seed << 5;
+            return seed * 0x85EBCA6Bu;
         }
 
         // Generates a random integer in the range [min, max)
@@ -36,10 +38,32 @@ namespace PurrNet.Prediction
             return Next() / (float)uint.MaxValue;
         }
 
+        // Generates a random sfloat in the range [0, 1)
+        public sfloat NextSFloat()
+        {
+            return sfloat.Abs((int)Next() / (sfloat)int.MaxValue);
+        }
+
+        // Generates a random sfloat in the range [0, 1)
+        public FP NextFP()
+        {
+            return (FP)Next() / 4294967296.0;
+        }
+
         // Generates a random float in the range [min, max)
         public float NextFloat(float min, float max)
         {
             return min + (max - min) * NextFloat();
+        }
+
+        public sfloat NextSFloat(sfloat min, sfloat max)
+        {
+            return min + (max - min) * NextSFloat();
+        }
+
+        public FP NextFP(FP min, FP max)
+        {
+            return min + (max - min) * NextFP();
         }
     }
 }

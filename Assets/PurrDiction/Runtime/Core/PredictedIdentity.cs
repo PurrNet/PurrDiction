@@ -137,7 +137,7 @@ namespace PurrNet.Prediction
 
         internal abstract void LateSimulateTick(float delta);
 
-        public virtual void PostSimulate(ulong tick, float delta) {}
+        public virtual void PostSimulate() {}
 
         internal abstract void PrepareInput(bool isServer, bool isLocal, ulong tick, bool extrapolate);
 
@@ -150,6 +150,8 @@ namespace PurrNet.Prediction
         public abstract void ResetInterpolation();
 
         private PlayerID? _lastOwner;
+
+        public virtual bool isDeterministic => false;
 
         /// <summary>
         /// Called once when owner changes
@@ -168,9 +170,13 @@ namespace PurrNet.Prediction
 
         internal abstract void GetLatestUnityState();
 
+        internal abstract void WriteFirstState(ulong tick, BitPacker packer);
+
         internal abstract bool WriteCurrentState(PlayerID receiver, BitPacker packer, DeltaModule deltaModule);
 
         internal abstract void WriteInput(ulong localTick, PlayerID receiver, BitPacker input, DeltaModule deltaModule, bool reliable);
+
+        internal abstract void ReadFirstState(ulong tick, BitPacker packer);
 
         internal abstract void ReadState(ulong tick, BitPacker packer, DeltaModule deltaModule);
 
@@ -198,5 +204,11 @@ namespace PurrNet.Prediction
         {
             OnAddedToPool();
         }
+
+        public abstract void WriteFirstInput(ulong localTick, BitPacker packer);
+
+        public abstract void ReadFirstInput(ulong localTick, BitPacker packer);
+
+        internal abstract void ClearFuture(ulong stateTick);
     }
 }

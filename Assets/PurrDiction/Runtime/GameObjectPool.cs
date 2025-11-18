@@ -16,6 +16,8 @@ namespace PurrNet.Prediction
 
         public void Register(GameObject prefab, int warmup)
         {
+            if (_pools.ContainsKey(prefab))
+                return;
             _pools[prefab] = new GameObjectPool(prefab, _parent, warmup);
         }
 

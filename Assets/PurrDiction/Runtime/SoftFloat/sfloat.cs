@@ -26,13 +26,14 @@ using System;
 using System.Diagnostics;
 using System.Globalization;
 using System.Runtime.CompilerServices;
+using PurrNet.Packing;
 
 namespace PurrNet.Prediction
 {
     // Internal representation is identical to IEEE binary32 floating point numbers
     [DebuggerDisplay("{ToStringInv()}")]
     [Serializable]
-    public struct sfloat : IEquatable<sfloat>, IComparable<sfloat>, IComparable, IFormattable
+    public struct sfloat : IEquatable<sfloat>, IComparable<sfloat>, IComparable, IFormattable, IPackedAuto
     {
         /// <summary>
         /// Raw byte representation of an sfloat number

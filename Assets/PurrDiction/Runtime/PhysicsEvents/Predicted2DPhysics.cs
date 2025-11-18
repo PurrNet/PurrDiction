@@ -20,7 +20,7 @@ namespace PurrNet.Prediction
 #endif
     }
 
-    public struct Physics2DEvent : IDisposable
+    public struct Physics2DEvent : IDisposable, IDuplicate<Physics2DEvent>
     {
         public bool isTrigger;
         public PhysicsEventType type;
@@ -29,10 +29,25 @@ namespace PurrNet.Prediction
         public PredictedComponentID other;
         public DisposableList<Physics2DContactPoint> contacts;
 
-        public void Dispose() => contacts.Dispose();
+        public void Dispose()
+        {
+            contacts.Dispose();
+        }
+
+        public Physics2DEvent Duplicate()
+        {
+            return new Physics2DEvent
+            {
+                isTrigger = isTrigger,
+                type = type,
+                me = me,
+                other = other,
+                contacts = contacts.Duplicate()
+            };
+        }
     }
 
-    public struct PredictedPhysics2DData : IPredictedData<PredictedPhysics2DData>
+    public struct PredictedPhysics2DData : IPredictedData<PredictedPhysics2DData>, IDuplicate<PredictedPhysics2DData>
     {
 #if UNITY_PHYSICS_2D
         public DisposableList<Physics2DEvent> events;
@@ -44,8 +59,18 @@ namespace PurrNet.Prediction
                 events[i].Dispose();
             events.Dispose();
         }
+
+        public PredictedPhysics2DData Duplicate()
+        {
+            return new PredictedPhysics2DData
+            {
+                events = events.Duplicate()
+            };
+        }
 #else
         public void Dispose() {}
+
+        public PredictedPhysics2DData Duplicate() {}
 #endif
     }
 
@@ -64,7 +89,7 @@ namespace PurrNet.Prediction
         }
 
 #if UNITY_PHYSICS_2D
-        public override void PostSimulate(ulong tick, float delta)
+        public override void PostSimulate()
         {
             ref var state = ref currentState;
             var pm = predictionManager;
@@ -178,7 +203,7 @@ namespace PurrNet.Prediction
         protected override PredictedPhysics2DData Interpolate(PredictedPhysics2DData from, PredictedPhysics2DData to,
             float t)
         {
-            return from;
+            return to;
         }
 #endif
     }

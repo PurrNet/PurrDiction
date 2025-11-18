@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Runtime.CompilerServices;
 using JetBrains.Annotations;
+using PurrNet.Packing;
 
 namespace PurrNet.Prediction
 {
     [Serializable]
     // ReSharper disable once PartialTypeWithSinglePart
-    public partial struct FP : IEquatable<FP>
+    public partial struct FP : IEquatable<FP>, IPackedAuto
     {
         public const int SIZE_OF = 8;
 

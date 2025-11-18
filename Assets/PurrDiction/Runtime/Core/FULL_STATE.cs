@@ -1,5 +1,6 @@
 ﻿using System;
 using PurrNet.Packing;
+using Unity.Profiling;
 
 namespace PurrNet.Prediction
 {
@@ -9,13 +10,18 @@ namespace PurrNet.Prediction
         public T state;
         public PredictedIdentityState prediction;
 
+        static readonly ProfilerMarker SimulateMarker = new("DeepCopy." + typeof(T).FullName);
+
         public FULL_STATE<T> DeepCopy()
         {
-            return new FULL_STATE<T>
+            using (SimulateMarker.Auto())
             {
-                state = Packer.Copy(state),
-                prediction = prediction
-            };
+                return new FULL_STATE<T>
+                {
+                    state = Packer.Copy(state),
+                    prediction = prediction
+                };
+            }
         }
 
         public void Dispose()
