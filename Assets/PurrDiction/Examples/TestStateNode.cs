@@ -19,10 +19,7 @@ namespace PurrDiction.Examples
         protected override void Simulate(SimpleWASDInput input, ref State state, float delta)
         {
             if (input.jump)
-            {
                 Shoot();
-                Shoot();
-            }
         }
 
         private void Shoot()
@@ -50,11 +47,7 @@ namespace PurrDiction.Examples
             input.horizontal = Input.GetAxisRaw("Horizontal");
             input.vertical = Input.GetAxisRaw("Vertical");
             input.dash = Input.GetKey(KeyCode.LeftShift);
-        }
-
-        protected override void UpdateInput(ref SimpleWASDInput input)
-        {
-            input.jump |= Input.GetKeyDown(KeyCode.Space);
+            input.jump = Input.GetKey(KeyCode.Space);
         }
     }
 }
