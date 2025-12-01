@@ -294,6 +294,27 @@ namespace PurrNet.Prediction
 
         public void RegisterInstance(GameObject go, PredictedObjectID objectID, PlayerID? owner, bool reset)
         {
+            var context = new PredictedSpawnContext(this, objectID, owner);
+
+            OnBeforeRegisterInstance?.Invoke(go, context);
+
+            var initializers = ListPool<IPredictedObjectInitializer>.Instantiate();
+            go.GetComponentsInChildren(true, initializers);
+
+            for (var i = 0; i < initializers.Count; i++)
+            {
+                try
+                {
+                    initializers[i].OnBeforePredictedRegister(context);
+                }
+                catch (Exception e)
+                {
+                    PurrLogger.LogError($"Error in IPredictedObjectInitializer: {e}", go);
+                }
+            }
+
+            ListPool<IPredictedObjectInitializer>.Destroy(initializers);
+
             var components = ListPool<PredictedIdentity>.Instantiate();
             go.GetComponentsInChildren(true, components);
             int count = components.Count;
@@ -1310,5 +1331,7 @@ namespace PurrNet.Prediction
             pid = default;
             return false;
         }
+
+        public static event Action<GameObject, PredictedSpawnContext> OnBeforeRegisterInstance;
     }
 }
