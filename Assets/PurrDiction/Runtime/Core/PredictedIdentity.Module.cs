@@ -12,7 +12,7 @@ namespace PurrNet.Prediction
         protected void ModuleSetup(NetworkManager manager, PredictionManager world, PredictedComponentID id, PlayerID? owner)
         {
             for (int i = 0; i < _modules.Count; i++)
-                _modules[i].Setup(this, world);
+                _modules[i].SetupInternal(this, world);
         }
         
         public T RegisterModule<T>(T module) where T : PredictedModule
@@ -20,28 +20,28 @@ namespace PurrNet.Prediction
             module.moduleIndex = _modules.Count;
             _modules.Add(module);
             if (predictionManager)
-                module.Setup(this, predictionManager);
+                module.SetupInternal(this, predictionManager);
             return module;
         }
 
         protected void SimulateModules(ulong tick, float delta)
         {
-            for (int i = 0; i < _modules.Count; i++) _modules[i].Simulate(tick, delta);
+            for (int i = 0; i < _modules.Count; i++) _modules[i].SimulateInternal(tick, delta);
         }
 
         protected void LateSimulateModules(float delta)
         {
-            for (int i = 0; i < _modules.Count; i++) _modules[i].LateSimulate(delta);
+            for (int i = 0; i < _modules.Count; i++) _modules[i].LateSimulateInternal(delta);
         }
 
         protected void RollbackModules(ulong tick)
         {
-            for (int i = 0; i < _modules.Count; i++) _modules[i].Rollback(tick);
+            for (int i = 0; i < _modules.Count; i++) _modules[i].RollbackInternal(tick);
         }
 
         protected void SaveModulesState(ulong tick)
         {
-            for (int i = 0; i < _modules.Count; i++) _modules[i].SaveState(tick);
+            for (int i = 0; i < _modules.Count; i++) _modules[i].SaveStateInternal(tick);
         }
 
         protected bool WriteModules(PlayerID receiver, BitPacker packer, DeltaModule deltaModule)
@@ -49,7 +49,7 @@ namespace PurrNet.Prediction
             bool didWriteAny = false;
             for (int i = 0; i < _modules.Count; i++)
             {
-                didWriteAny |= _modules[i].WriteState(receiver, packer, deltaModule); 
+                didWriteAny |= _modules[i].WriteStateInternal(receiver, packer, deltaModule); 
             }
             return didWriteAny;
         }
@@ -58,25 +58,25 @@ namespace PurrNet.Prediction
         {
             for (int i = 0; i < _modules.Count; i++) 
             {
-                _modules[i].ReadState(tick, packer, deltaModule);
+                _modules[i].ReadStateInternal(tick, packer, deltaModule);
             }
         }
 
         protected void UpdateModulesInterpolation(float delta, bool accumulateError)
         {
-            for (int i = 0; i < _modules.Count; i++) _modules[i].UpdateInterpolation(delta, accumulateError);
+            for (int i = 0; i < _modules.Count; i++) _modules[i].UpdateInterpolationInternal(delta, accumulateError);
         }
 
         protected void ResetModulesInterpolation()
         {
-            for (int i = 0; i < _modules.Count; i++) _modules[i].ResetInterpolation();
+            for (int i = 0; i < _modules.Count; i++) _modules[i].ResetInterpolationInternal();
         }
         
         protected void WriteFirstStateModules(ulong tick, BitPacker packer)
         {
             for (int i = 0; i < _modules.Count; i++) 
             {
-                _modules[i].WriteFirstState(tick, packer); 
+                _modules[i].WriteFirstStateInternal(tick, packer); 
             }
         }
 
@@ -84,7 +84,7 @@ namespace PurrNet.Prediction
         {
             for (int i = 0; i < _modules.Count; i++) 
             {
-                _modules[i].ReadFirstState(tick, packer); 
+                _modules[i].ReadFirstStateInternal(tick, packer); 
             }
         }
         
@@ -92,7 +92,7 @@ namespace PurrNet.Prediction
         {
             for (int i = 0; i < _modules.Count; i++) 
             {
-                _modules[i].ClearFuture(tick); // Assuming modules have history to clear
+                _modules[i].ClearFutureInternal(tick);
             }
         }
     }
