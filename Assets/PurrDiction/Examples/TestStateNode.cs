@@ -1,6 +1,7 @@
 using PurrNet.Prediction;
 using PurrNet.Prediction.StateMachine;
 using PurrNet.Prediction.Tests;
+using PurrNet.Utils;
 using UnityEngine;
 
 namespace PurrDiction.Examples
@@ -10,6 +11,8 @@ namespace PurrDiction.Examples
         [SerializeField] private GameObject _projectile;
 
         private TimerModule _timer;
+
+        [PurrReadOnly, SerializeField] private float _predictedTimer, _verifiedTimer;
 
         public struct State : IPredictedData<State>
         {
@@ -22,6 +25,8 @@ namespace PurrDiction.Examples
         {
             base.LateAwake();
             _timer = new TimerModule(this);
+            _timer.onPredictedTimerUpdated_View += time => _predictedTimer = time;
+            _timer.onVerifiedTimerUpdated_View += time => _verifiedTimer = time;
         }
 
         protected override void Simulate(SimpleWASDInput input, ref State state, float delta)
