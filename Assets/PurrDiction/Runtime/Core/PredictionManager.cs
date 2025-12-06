@@ -447,7 +447,7 @@ namespace PurrNet.Prediction
             for (var i = 0; i < _systemsCount; i++)
             {
                 if (!_systems[i].isEventHandler)
-                    _systems[i].WriteFirstState(tick, frame);
+                    _systems[i].RunWriteFirstState(tick, frame);
             }
 
             for (var i = 0; i < _systemsCount; i++)
@@ -456,7 +456,7 @@ namespace PurrNet.Prediction
             for (var i = 0; i < _systemsCount; i++)
             {
                 if (_systems[i].isEventHandler)
-                    _systems[i].WriteFirstState(tick, frame);
+                    _systems[i].RunWriteFirstState(tick, frame);
             }
 
             SimulateFrame(localTick, false);
@@ -480,9 +480,9 @@ namespace PurrNet.Prediction
                 var system = _systems[i];
                 if (system.isEventHandler)
                     continue;
-                system.ReadFirstState(1, data);
-                system.Rollback(1);
-                system.ResetInterpolation();
+                system.RunReadFirstState(1, data);
+                system.RunRollback(1);
+                system.RunResetInterpolation();
             }
 
             for (var i = 0; i < count; i++)
@@ -491,11 +491,11 @@ namespace PurrNet.Prediction
             for (var i = 0; i < count; i++)
             {
                 if (_systems[i].isEventHandler)
-                    _systems[i].ReadFirstState(1, data);
+                    _systems[i].RunReadFirstState(1, data);
             }
 
             for (var i = 0; i < count; i++)
-                _systems[i].SaveStateInHistory(1);
+                _systems[i].RunSaveState(1);
 
             SyncTransforms();
 
@@ -536,7 +536,7 @@ namespace PurrNet.Prediction
                 {
                     var system = _systems[i];
                     if (!system.isEventHandler)
-                        system.SaveStateInHistory(localTick);
+                        system.RunSaveState(localTick);
                 }
             }
 
@@ -557,13 +557,13 @@ namespace PurrNet.Prediction
             using (SimulateMarker.Auto())
             {
                 for (var i = 0; i < _systemsCount; i++)
-                    _systems[i].SimulateTick(localTick, delta);
+                    _systems[i].RunSimulateTick(localTick, delta);
             }
 
             using (LateSimulateMarker.Auto())
             {
                 for (var i = 0; i < _systemsCount; i++)
-                    _systems[i].LateSimulateTick(delta);
+                    _systems[i].RunLateSimulateTick(delta);
             }
 
             DoPhysicsPass();
@@ -574,7 +574,7 @@ namespace PurrNet.Prediction
                 {
                     var system = _systems[i];
                     if (system.isEventHandler)
-                        system.SaveStateInHistory(localTick);
+                        system.RunSaveState(localTick);
                 }
             }
 
@@ -646,7 +646,7 @@ namespace PurrNet.Prediction
                 {
                     var system = _systems[systemIdx];
                     system.GetLatestUnityState();
-                    system.UpdateRollbackInterpolationState(tickDelta, false);
+                    system.RunUpdateRollbackInterpolation(tickDelta, false);
                 }
             }
             else
@@ -681,7 +681,7 @@ namespace PurrNet.Prediction
                     if (_systems[i].isEventHandler)
                         continue;
 
-                    _systems[i].WriteCurrentState(player, frame, _deltaModuleState);
+                    _systems[i].RunWriteCurrentState(player, frame, _deltaModuleState);
                 }
 
                 for (var i = 0; i < _systemsCount; i++)
@@ -704,7 +704,7 @@ namespace PurrNet.Prediction
                 {
                     var frame = _clientFrames[j];
                     var packer = frame.packer;
-                    system.WriteCurrentState(frame.player, packer, _deltaModuleState);
+                    system.RunWriteCurrentState(frame.player, packer, _deltaModuleState);
                 }
             }
         }
@@ -831,7 +831,7 @@ namespace PurrNet.Prediction
         private void RollbackToFrame(ulong stateTick)
         {
             for (var i = 0; i < _systemsCount; i++)
-                _systems[i].Rollback(stateTick);
+                _systems[i].RunRollback(stateTick);
             SyncTransforms();
         }
 
@@ -849,10 +849,10 @@ namespace PurrNet.Prediction
                 if (system.isEventHandler)
                     continue;
                 if (_validateDeterministicData && system.isDeterministic)
-                    system.Rollback(stateTick);
-                system.ClearFuture(stateTick);
-                system.ReadState(stateTick, frame, _deltaModuleState);
-                system.Rollback(stateTick);
+                    system.RunRollback(stateTick);
+                system.RunClearFuture(stateTick);
+                system.RunReadState(stateTick, frame, _deltaModuleState);
+                system.RunRollback(stateTick);
             }
 
             for (var i = 0; i < count; ++i)
@@ -863,9 +863,9 @@ namespace PurrNet.Prediction
                 var system = _systems[i];
                 if (!system.isEventHandler)
                     continue;
-                system.ClearFuture(stateTick);
-                system.ReadState(stateTick, frame, _deltaModuleState);
-                system.Rollback(stateTick);
+                system.RunClearFuture(stateTick);
+                system.RunReadState(stateTick, frame, _deltaModuleState);
+                system.RunRollback(stateTick);
             }
 
             SyncTransforms();
@@ -950,7 +950,7 @@ namespace PurrNet.Prediction
         private void UpdateInterpolation(bool accumulateError)
         {
             for (var j = 0; j < _systemsCount; j++)
-                _systems[j].UpdateRollbackInterpolationState(tickDelta, accumulateError);
+                _systems[j].RunUpdateRollbackInterpolation(tickDelta, accumulateError);
         }
 
         private void ReplayToLatestTick(ulong verifiedTick)
@@ -971,13 +971,13 @@ namespace PurrNet.Prediction
             using (SimulateMarker.Auto())
             {
                 for (var j = 0; j < _systemsCount; j++)
-                    _systems[j].SimulateTick(verifiedTick, delta);
+                    _systems[j].RunSimulateTick(verifiedTick, delta);
             }
 
             using (LateSimulateMarker.Auto())
             {
                 for (var j = 0; j < _systemsCount; j++)
-                    _systems[j].LateSimulateTick(delta);
+                    _systems[j].RunLateSimulateTick(delta);
             }
 
             DoPhysicsPass();
@@ -1008,7 +1008,7 @@ namespace PurrNet.Prediction
                     {
                         var system = _systems[i];
                         if (!system.isEventHandler)
-                            system.SaveStateInHistory(verifiedTick);
+                            system.RunSaveState(verifiedTick);
                     }
                 }
             }
@@ -1016,13 +1016,13 @@ namespace PurrNet.Prediction
             using (SimulateMarker.Auto())
             {
                 for (var j = 0; j < _systemsCount; j++)
-                    _systems[j].SimulateTick(verifiedTick, delta);
+                    _systems[j].RunSimulateTick(verifiedTick, delta);
             }
 
             using (LateSimulateMarker.Auto())
             {
                 for (var j = 0; j < _systemsCount; j++)
-                    _systems[j].LateSimulateTick(delta);
+                    _systems[j].RunLateSimulateTick(delta);
             }
 
             DoPhysicsPass();
@@ -1035,7 +1035,7 @@ namespace PurrNet.Prediction
                     {
                         var system = _systems[i];
                         if (system.isEventHandler)
-                            system.SaveStateInHistory(verifiedTick);
+                            system.RunSaveState(verifiedTick);
                     }
                 }
             }
