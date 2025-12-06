@@ -38,8 +38,8 @@ namespace PurrNet.Prediction
         
         public virtual void Setup(PredictedIdentity parent, PredictionManager world) { }
 
-        public abstract void Simulate(ulong tick, float delta);
-        public abstract void LateSimulate(float delta);
+        public virtual void Simulate(ulong tick, float delta) { }
+        public virtual void LateSimulate(float delta) { }
         public abstract void Rollback(ulong tick);
         public abstract void SaveState(ulong tick);
         public abstract bool WriteState(PlayerID receiver, BitPacker packer, DeltaModule deltaModule);
