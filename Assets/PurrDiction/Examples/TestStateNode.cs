@@ -14,13 +14,6 @@ namespace PurrDiction.Examples
 
         [PurrReadOnly, SerializeField] private float _predictedTimer, _verifiedTimer;
 
-        public struct State : IPredictedData<State>
-        {
-            public float time;
-
-            public void Dispose() { }
-        }
-
         protected override void LateAwake()
         {
             base.LateAwake();
@@ -31,18 +24,13 @@ namespace PurrDiction.Examples
 
         protected override void Simulate(SimpleWASDInput input, ref State state, float delta)
         {
-            if (input.jump)
-            {
-                if (!_timer.isTimerRunning)
-                {
-                    Shoot();
-                    _timer.StartTimer(0.5f);
-                }
-            }
+            if (input.jump && !_timer.isTimerRunning)
+                Shoot();
         }
 
         private void Shoot()
         {
+            _timer.StartTimer(0.5f);
 #if UNITY_PHYSICS_3D
             var pos = transform.position + transform.forward;
             var projectileId = hierarchy.Create(_projectile, pos, transform.rotation);
@@ -67,6 +55,11 @@ namespace PurrDiction.Examples
             input.vertical = Input.GetAxisRaw("Vertical");
             input.dash = Input.GetKey(KeyCode.LeftShift);
             input.jump = Input.GetKey(KeyCode.Space);
+        }
+
+        public struct State : IPredictedData<State>
+        {
+            public void Dispose() { }
         }
     }
 }
