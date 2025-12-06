@@ -18,6 +18,12 @@ namespace PurrNet.Prediction
             LateSimulateTick(delta);
         }
 
+        internal void RunUpdateView(float deltaTime)
+        {
+            UpdateView(deltaTime);
+            UpdateModuleView(deltaTime);
+        }
+
         internal void RunRollback(ulong tick)
         {
             RollbackModules(tick);

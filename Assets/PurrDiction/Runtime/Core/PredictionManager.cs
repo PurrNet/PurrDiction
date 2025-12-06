@@ -1162,7 +1162,7 @@ namespace PurrNet.Prediction
             {
                 var dt = Time.unscaledDeltaTime;
                 for (var i = 0; i < _systemsCount; i++)
-                    _systems[i].UpdateView(dt);
+                    _systems[i].RunUpdateView(dt);
             }
         }
 

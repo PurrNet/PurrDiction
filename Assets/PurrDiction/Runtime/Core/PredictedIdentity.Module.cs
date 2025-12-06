@@ -24,6 +24,11 @@ namespace PurrNet.Prediction
             return module;
         }
 
+        internal void UpdateModuleView(float deltaTime)
+        {
+            for (int i = 0; i < _modules.Count; i++) _modules[i].UpdateViewInternal(deltaTime);
+        }
+
         protected void SimulateModules(ulong tick, float delta)
         {
             for (int i = 0; i < _modules.Count; i++) _modules[i].SimulateInternal(tick, delta);
