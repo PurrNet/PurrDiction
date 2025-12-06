@@ -66,7 +66,9 @@ namespace PurrNet.Prediction
         internal void ClearFutureInternal(ulong tick) => ClearFuture(tick);
         protected abstract void ClearFuture(ulong tick);
 
-        public virtual void UpdateInterpolation(float delta, bool accumulateError) { }
-        public virtual void ResetInterpolation() { }
+        internal void UpdateInterpolationInternal(float delta, bool accumulateError) => UpdateInterpolation(delta, accumulateError);
+        protected virtual void UpdateInterpolation(float delta, bool accumulateError) { }
+        internal void ResetInterpolationInternal() => ResetInterpolation();
+        protected virtual void ResetInterpolation() { }
     }
 }
