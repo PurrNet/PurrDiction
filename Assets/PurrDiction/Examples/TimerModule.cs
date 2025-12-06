@@ -52,7 +52,7 @@ namespace PurrNet.Prediction.Tests
 
         protected override void Simulate(ref TimerState state, float delta)
         {
-            if (!_manualTick)
+            if (_manualTick)
                 return;
 
             TickTimer(ref state, delta);
