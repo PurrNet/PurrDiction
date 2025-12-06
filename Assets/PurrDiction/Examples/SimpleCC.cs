@@ -4,7 +4,6 @@ namespace PurrNet.Prediction.Tests
 {
     public class SimpleCC : PredictedIdentity<SimpleWASDInput, SimpleCCState>
     {
-        [SerializeField] private GameObject _projectile;
 #if UNITY_PHYSICS_3D
         [SerializeField] private Rigidbody _controller;
 #endif
@@ -33,6 +32,8 @@ namespace PurrNet.Prediction.Tests
             if (move != Vector3.zero)
                 state.rotation = Mathf.Atan2(move.x, move.z) * Mathf.Rad2Deg;
 
+            
+            
 #if UNITY_PHYSICS_3D
             _controller.rotation = Quaternion.Euler(0, state.rotation, 0);
 #if UNITY_6000
