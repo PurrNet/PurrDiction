@@ -39,19 +39,32 @@ namespace PurrNet.Prediction
         }
 
         protected virtual void OnInitialize() { }
-        
-        public virtual void Setup(PredictedIdentity parent, PredictionManager world) { }
 
-        public virtual void Simulate(ulong tick, float delta) { }
-        public virtual void LateSimulate(float delta) { }
-        public abstract void Rollback(ulong tick);
-        public abstract void SaveState(ulong tick);
-        public abstract bool WriteState(PlayerID receiver, BitPacker packer, DeltaModule deltaModule);
-        public abstract void ReadState(ulong tick, BitPacker packer, DeltaModule deltaModule);
+        internal void SetupInternal(PredictedIdentity parent, PredictionManager world) => Setup(parent, world);
         
-        public abstract void WriteFirstState(ulong tick, BitPacker packer);
-        public abstract void ReadFirstState(ulong tick, BitPacker packer);
-        public abstract void ClearFuture(ulong tick);
+        
+        protected virtual void Setup(PredictedIdentity parent, PredictionManager world) { }
+
+        internal void SimulateInternal(ulong tick, float delta) => Simulate(tick, delta);
+        
+        protected virtual void Simulate(ulong tick, float delta) { }
+        internal void LateSimulateInternal(float delta) => LateSimulate(delta);
+        protected virtual void LateSimulate(float delta) { }
+        internal void RollbackInternal(ulong tick) => Rollback(tick);
+        protected abstract void Rollback(ulong tick);
+        internal void SaveStateInternal(ulong tick) => SaveState(tick);
+        protected abstract void SaveState(ulong tick);
+        internal bool WriteStateInternal(PlayerID receiver, BitPacker packer, DeltaModule deltaModule)=> WriteState(receiver, packer, deltaModule);
+        protected abstract bool WriteState(PlayerID receiver, BitPacker packer, DeltaModule deltaModule);
+        internal void ReadStateInternal(ulong tick, BitPacker packer, DeltaModule deltaModule) => ReadState(tick, packer, deltaModule);
+        protected abstract void ReadState(ulong tick, BitPacker packer, DeltaModule deltaModule);
+
+        internal void WriteFirstStateInternal(ulong tick, BitPacker packer) => WriteFirstState(tick, packer);
+        protected abstract void WriteFirstState(ulong tick, BitPacker packer);
+        internal void ReadFirstStateInternal(ulong tick, BitPacker packer) => ReadFirstState(tick, packer);
+        protected abstract void ReadFirstState(ulong tick, BitPacker packer);
+        internal void ClearFutureInternal(ulong tick) => ClearFuture(tick);
+        protected abstract void ClearFuture(ulong tick);
 
         public virtual void UpdateInterpolation(float delta, bool accumulateError) { }
         public virtual void ResetInterpolation() { }
