@@ -7,10 +7,7 @@ namespace PurrNet.Prediction.Tests
         public event Action onTimerEnded;
         public bool isTimerRunning => currentState.timer.HasValue;
         
-        public TimerModule(PredictedIdentity identity) : base(identity)
-        {
-            
-        }
+        public TimerModule(PredictedIdentity identity) : base(identity) { }
 
         public void StartTimer(float timer)
         {
