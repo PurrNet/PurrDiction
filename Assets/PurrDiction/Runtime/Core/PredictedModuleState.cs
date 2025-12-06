@@ -57,5 +57,26 @@ namespace PurrNet.Prediction
                 history.Write(tick, state);
             }
         }
+        
+        public override void WriteFirstState(ulong tick, BitPacker packer)
+        {
+            var savedState = state;
+
+            if (tick > 0 && history.TryGet(tick, out var historyState))
+                savedState = historyState;
+
+            Packer<TState>.Write(packer, savedState);
+        }
+
+        public override void ReadFirstState(ulong tick, BitPacker packer)
+        {
+            Packer<TState>.Read(packer, ref state);
+            history.Write(tick, state);
+        }
+
+        public override void ClearFuture(ulong tick)
+        {
+            history.ClearFuture(tick);
+        }
     }
 }
