@@ -9,6 +9,12 @@ namespace PurrNet.Prediction
     {
         private readonly List<PredictedModule> _modules = new();
 
+        protected void ModuleSetup(NetworkManager manager, PredictionManager world, PredictedComponentID id, PlayerID? owner)
+        {
+            for (int i = 0; i < _modules.Count; i++)
+                _modules[i].Setup(this, world);
+        }
+        
         public T RegisterModule<T>(T module) where T : PredictedModule
         {
             _modules.Add(module);

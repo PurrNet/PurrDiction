@@ -82,6 +82,8 @@ namespace PurrNet.Prediction
             isFreshSpawn = false;
             predictionManager = world;
 
+            ModuleSetup(manager,world,id, owner);
+
             LateAwake();
         }
 
