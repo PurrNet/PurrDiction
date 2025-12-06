@@ -9,6 +9,8 @@ namespace PurrDiction.Examples
     {
         [SerializeField] private GameObject _projectile;
 
+        private TimerModule _timer;
+
         public struct State : IPredictedData<State>
         {
             public float time;
@@ -16,10 +18,22 @@ namespace PurrDiction.Examples
             public void Dispose() { }
         }
 
+        protected override void LateAwake()
+        {
+            base.LateAwake();
+            _timer = new TimerModule(this);
+        }
+
         protected override void Simulate(SimpleWASDInput input, ref State state, float delta)
         {
             if (input.jump)
-                Shoot();
+            {
+                if (!_timer.isTimerRunning)
+                {
+                    Shoot();
+                    _timer.StartTimer(0.5f);
+                }
+            }
         }
 
         private void Shoot()
