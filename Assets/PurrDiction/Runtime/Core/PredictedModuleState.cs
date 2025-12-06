@@ -7,9 +7,10 @@ namespace PurrNet.Prediction
     {
         protected History<TState> history { get; private set; }
         public TState state;
-
-        protected override void OnSetup()
+        
+        protected PredictedModule(PredictedIdentity identity, TState state) : base(identity)
         {
+            this.state = state;
             history = new History<TState>();
         }
 
@@ -26,14 +27,34 @@ namespace PurrNet.Prediction
             history.Write(tick, state);
         }
 
-        public override void WriteState(BitPacker packer, DeltaModule deltaModule)
+        public override bool WriteState(PlayerID receiver, BitPacker packer, DeltaModule deltaModule)
         {
-            Packer<TState>.Write(packer, state);
+            int pos = packer.positionInBits;
+            
+            int flagPos = packer.AdvanceBits(1);
+            
+            bool changed = deltaModule.WriteReliable(packer, receiver, GetDeltaKey(), state);
+            packer.WriteAt(flagPos, changed);
+
+            if (!changed)
+            {
+                packer.SetBitPosition(flagPos + 1);
+            }
+
+            //Not sure if we need this?
+            //TickBandwidthProfiler.OnWroteState(this.GetType().Name, packer.positionInBits - pos, identity);
+
+            return changed;
         }
 
         public override void ReadState(BitPacker packer, DeltaModule deltaModule)
         {
-            Packer<TState>.Read(packer, ref state);
+            bool changed = packer.ReadBool();
+
+            if (changed)
+            {
+                deltaModule.ReadReliable(packer, GetDeltaKey(), ref state);
+            }
         }
     }
 }
