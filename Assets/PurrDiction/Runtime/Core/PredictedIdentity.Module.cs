@@ -71,5 +71,29 @@ namespace PurrNet.Prediction
         {
             for (int i = 0; i < _modules.Count; i++) _modules[i].ResetInterpolation();
         }
+        
+        protected void WriteFirstStateModules(ulong tick, BitPacker packer)
+        {
+            for (int i = 0; i < _modules.Count; i++) 
+            {
+                _modules[i].WriteFirstState(packer); 
+            }
+        }
+
+        protected void ReadFirstStateModules(ulong tick, BitPacker packer)
+        {
+            for (int i = 0; i < _modules.Count; i++) 
+            {
+                _modules[i].ReadFirstState(tick, packer); 
+            }
+        }
+        
+        protected void ClearFutureModules(ulong tick)
+        {
+            for (int i = 0; i < _modules.Count; i++) 
+            {
+                _modules[i].ClearFuture(tick); // Assuming modules have history to clear
+            }
+        }
     }
 }
