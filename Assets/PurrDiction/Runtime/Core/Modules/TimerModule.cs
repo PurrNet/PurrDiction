@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace PurrNet.Prediction.Tests
+namespace PurrNet.Prediction
 {
     public class TimerModule : PredictedModule<TimerState>
     {
