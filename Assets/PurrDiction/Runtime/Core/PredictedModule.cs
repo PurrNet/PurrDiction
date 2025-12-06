@@ -34,7 +34,11 @@ namespace PurrNet.Prediction
             this.manager = identity.predictionManager;
         
             identity.RegisterModule(this);
+        
+            OnInitialize();
         }
+
+        protected virtual void OnInitialize() { }
         
         public virtual void Setup(PredictedIdentity parent, PredictionManager world) { }
 
@@ -44,9 +48,11 @@ namespace PurrNet.Prediction
         public abstract void SaveState(ulong tick);
         public abstract bool WriteState(PlayerID receiver, BitPacker packer, DeltaModule deltaModule);
         public abstract void ReadState(ulong tick, BitPacker packer, DeltaModule deltaModule);
+        
         public abstract void WriteFirstState(ulong tick, BitPacker packer);
         public abstract void ReadFirstState(ulong tick, BitPacker packer);
         public abstract void ClearFuture(ulong tick);
+
         public virtual void UpdateInterpolation(float delta, bool accumulateError) { }
         public virtual void ResetInterpolation() { }
     }

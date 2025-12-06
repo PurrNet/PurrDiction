@@ -5,24 +5,41 @@ namespace PurrNet.Prediction
 {
     public abstract class PredictedModule<TState> : PredictedModule where TState : struct, IPredictedData<TState>
     {
-        protected History<TState> history { get; private set; } = new History<TState>();
-        public TState state;
+        internal FULL_STATE<TState> fullPredictedState;
+        
+        public ref TState currentState => ref fullPredictedState.state;
 
+        private History<FULL_STATE<TState>> _history = new History<FULL_STATE<TState>>();
         public PredictedModule(PredictedIdentity identity) : base(identity) { }
 
-        protected ModuleDeltaKey<TState> deltaKey => new ModuleDeltaKey<TState>(identity.id, moduleIndex);
+        protected ModuleDeltaKey<PredictedIdentityState> predictionKey => new ModuleDeltaKey<PredictedIdentityState>(identity.id, moduleIndex);
+        protected ModuleDeltaKey<TState> stateKey => new ModuleDeltaKey<TState>(identity.id, moduleIndex);
+
+        public override void Simulate(ulong tick, float delta)
+        {
+            if (!fullPredictedState.prediction.wasOnSimulationStartCalled)
+            {
+                SimulationStart();
+                fullPredictedState.prediction.wasOnSimulationStartCalled = true;
+            }
+            Simulate(ref fullPredictedState.state, delta);
+        }
+
+        protected virtual void SimulationStart() { }
+        
+        protected virtual void Simulate(ref TState state, float delta) { }
 
         public override void Rollback(ulong tick)
         {
-            if (history.Read(tick, out var result))
+            if (_history.Read(tick, out var result))
             {
-                state = result;
+                fullPredictedState = result.DeepCopy();
             }
         }
 
         public override void SaveState(ulong tick)
         {
-            history.Write(tick, state);
+            _history.Write(tick, fullPredictedState.DeepCopy());
         }
 
         public override bool WriteState(PlayerID receiver, BitPacker packer, DeltaModule deltaModule)
@@ -30,7 +47,8 @@ namespace PurrNet.Prediction
             int pos = packer.positionInBits;
             int flagPos = packer.AdvanceBits(1);
 
-            bool changed = deltaModule.WriteReliable(packer, receiver, deltaKey, state);
+            bool changed = deltaModule.WriteReliable(packer, receiver, predictionKey, fullPredictedState.prediction);
+            changed |= deltaModule.WriteReliable(packer, receiver, stateKey, fullPredictedState.state);
 
             packer.WriteAt(flagPos, changed);
             
@@ -47,36 +65,43 @@ namespace PurrNet.Prediction
 
             if (changed)
             {
-                deltaModule.ReadReliable(packer, deltaKey, ref state);
-                history.Write(tick, state);
+                deltaModule.ReadReliable(packer, predictionKey, ref fullPredictedState.prediction);
+                deltaModule.ReadReliable(packer, stateKey, ref fullPredictedState.state);
+                _history.Write(tick, fullPredictedState.DeepCopy());
             }
             else
             {
                 packer.SetBitPosition(pos);
-                deltaModule.ReadReliable(packer, deltaKey, ref state);
-                history.Write(tick, state);
+                deltaModule.ReadReliable(packer, predictionKey, ref fullPredictedState.prediction);
+                
+                packer.SetBitPosition(pos);
+                deltaModule.ReadReliable(packer, stateKey, ref fullPredictedState.state);
+                
+                _history.Write(tick, fullPredictedState.DeepCopy());
             }
         }
-        
+
         public override void WriteFirstState(ulong tick, BitPacker packer)
         {
-            var savedState = state;
+            var savedState = fullPredictedState;
 
-            if (tick > 0 && history.TryGet(tick, out var historyState))
+            if (tick > 0 && _history.TryGet(tick, out var historyState))
                 savedState = historyState;
 
-            Packer<TState>.Write(packer, savedState);
+            Packer<PredictedIdentityState>.Write(packer, savedState.prediction);
+            Packer<TState>.Write(packer, savedState.state);
         }
 
         public override void ReadFirstState(ulong tick, BitPacker packer)
         {
-            Packer<TState>.Read(packer, ref state);
-            history.Write(tick, state);
+            Packer<PredictedIdentityState>.Read(packer, ref fullPredictedState.prediction);
+            Packer<TState>.Read(packer, ref fullPredictedState.state);
+            _history.Write(tick, fullPredictedState.DeepCopy());
         }
 
         public override void ClearFuture(ulong tick)
         {
-            history.ClearFuture(tick);
+            _history.ClearFuture(tick);
         }
     }
 }
