@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace PurrNet.Prediction
 {
-    public abstract class PredictedIdentity : MonoBehaviour
+    public abstract partial class PredictedIdentity : MonoBehaviour
     {
         public virtual string GetExtraString()
         {
