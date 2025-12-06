@@ -35,8 +35,16 @@ namespace PurrNet.Prediction
         
             identity.RegisterModule(this);
         
+            InitializeLifecycle();
+        }
+        
+        private void InitializeLifecycle()
+        {
+            OnCoreInitialize();
             OnInitialize();
         }
+        
+        internal virtual void OnCoreInitialize() { }
 
         protected virtual void OnInitialize() { }
 
