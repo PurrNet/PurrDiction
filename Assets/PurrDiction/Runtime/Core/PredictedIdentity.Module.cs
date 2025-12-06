@@ -17,6 +17,7 @@ namespace PurrNet.Prediction
         
         public T RegisterModule<T>(T module) where T : PredictedModule
         {
+            module.moduleIndex = _modules.Count;
             _modules.Add(module);
             if (predictionManager)
                 module.Setup(this, predictionManager);
@@ -43,14 +44,22 @@ namespace PurrNet.Prediction
             for (int i = 0; i < _modules.Count; i++) _modules[i].SaveState(tick);
         }
 
-        protected void WriteModules(BitPacker packer, DeltaModule deltaModule)
+        protected bool WriteModules(PlayerID receiver, BitPacker packer, DeltaModule deltaModule)
         {
-            for (int i = 0; i < _modules.Count; i++) _modules[i].WriteState(packer, deltaModule);
+            bool didWriteAny = false;
+            for (int i = 0; i < _modules.Count; i++)
+            {
+                didWriteAny |= _modules[i].WriteState(receiver, packer, deltaModule); 
+            }
+            return didWriteAny;
         }
 
-        protected void ReadModules(BitPacker packer, DeltaModule deltaModule)
+        protected void ReadModules(ulong tick, BitPacker packer, DeltaModule deltaModule)
         {
-            for (int i = 0; i < _modules.Count; i++) _modules[i].ReadState(packer, deltaModule);
+            for (int i = 0; i < _modules.Count; i++) 
+            {
+                _modules[i].ReadState(tick, packer, deltaModule);
+            }
         }
 
         protected void UpdateModulesInterpolation(float delta, bool accumulateError)
