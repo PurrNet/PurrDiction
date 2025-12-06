@@ -135,55 +135,19 @@ namespace PurrNet.Prediction
             return asServer;
         }
 
-        internal void SimulateInitialTick(ulong tick, float delta)
-        {
-            SimulateInitialTick(tick, delta);
-            SimulateModules(tick, delta);
-        }
-
         internal abstract void SimulateTick(ulong tick, float delta);
-        
-        internal void LateSimulateInitialTick(float delta)
-        {
-            LateSimulateTick(delta);
-            LateSimulateModules(delta);
-        }
         
         internal abstract void LateSimulateTick(float delta);
         
         public virtual void PostSimulate() {}
 
         internal abstract void PrepareInput(bool isServer, bool isLocal, ulong tick, bool extrapolate);
-
-        internal void SaveStateInternal(ulong tick)
-        {
-            SaveStateInHistory(tick);
-            SaveModulesState(tick);
-        }
         
         internal abstract void SaveStateInHistory(ulong tick);
-
-        internal void RollbackInternal(ulong tick)
-        {
-            Rollback(tick);
-            RollbackModules(tick);
-        }
         
         internal abstract void Rollback(ulong tick);
-
-        internal void UpdateRollbackInterpolationStateInternal(float delta, bool accumulateError)
-        {
-            UpdateRollbackInterpolationState(delta, accumulateError);
-            UpdateModulesInterpolation(delta, accumulateError);
-        }
         
         public abstract void UpdateRollbackInterpolationState(float delta, bool accumulateError);
-
-        public void ResetInterpolationFull()
-        {
-            ResetInterpolation();
-            ResetModulesInterpolation();
-        }
         
         public abstract void ResetInterpolation();
 
