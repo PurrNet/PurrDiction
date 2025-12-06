@@ -76,7 +76,7 @@ namespace PurrNet.Prediction
         {
             for (int i = 0; i < _modules.Count; i++) 
             {
-                _modules[i].WriteFirstState(packer); 
+                _modules[i].WriteFirstState(tick, packer); 
             }
         }
 
