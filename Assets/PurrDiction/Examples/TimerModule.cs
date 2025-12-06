@@ -18,10 +18,26 @@ namespace PurrNet.Prediction.Tests
         
         public TimerModule(PredictedIdentity identity) : base(identity) { }
 
+        /// <summary>
+        /// Starts the timer
+        /// </summary>
+        /// <param name="timer">Initial value for the timer</param>
+        /// <param name="manualTick">Whether it should automatically count down, or you want to handle the ticking of the timer</param>
         public void StartTimer(float timer, bool manualTick = false)
         {
             currentState.timer = timer;
             _manualTick = manualTick;
+        }
+
+        /// <summary>
+        /// Stops the timer immediately
+        /// </summary>
+        /// <param name="silent">Whether the onTimerEnded action should not call</param>
+        public void StopTimer(bool silent = false)
+        {
+            currentState.timer = null;
+            if(!silent)
+                onTimerEnded?.Invoke();
         }
 
         protected override void UpdateView(TimerState viewState, TimerState? verifiedState)
@@ -55,19 +71,24 @@ namespace PurrNet.Prediction.Tests
             if (_manualTick)
                 return;
 
-            TickTimer(ref state, delta);
+            TickTimer(ref state, -delta);
         }
 
-        public void TickTimer(ref TimerState state, float delta)
+        /// <summary>
+        /// Ticking the timer manually, all you need is the TimerState for reference and the amount to tick. Typically just -delta would do the trick
+        /// </summary>
+        /// <param name="state">The currentState of the module</param>
+        /// <param name="tick">The amount to move the timer by</param>
+        /// <param name="autoStopOnDownTick">Whether it should end the timer when hitting 0</param>
+        public void TickTimer(ref TimerState state, float tick, bool autoStopOnDownTick = true)
         {
             if (!state.timer.HasValue)
                 return;
 
-            state.timer -= delta;
+            state.timer = tick;
             if (state.timer <= 0)
             {
-                onTimerEnded?.Invoke();
-                state.timer = null;
+                StopTimer();
             }
         }
     }
