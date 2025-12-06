@@ -1,3 +1,4 @@
+using System;
 using PurrNet.Modules;
 using PurrNet.Packing;
 
@@ -8,22 +9,93 @@ namespace PurrNet.Prediction
         internal FULL_STATE<TState> fullPredictedState;
         
         public ref TState currentState => ref fullPredictedState.state;
+
         private History<FULL_STATE<TState>> _history = new History<FULL_STATE<TState>>();
-        private InterpolatedWithDispose<FULL_STATE<TState>> _interpolatedState;
         
+        private InterpolatedWithDispose<FULL_STATE<TState>> _interpolatedState;
         private FULL_STATE<TState>? _viewState;
+
         public TState viewState;
         public TState? verifiedState => _history.Count > 0 ? _history[^1].state : null;
-        
+
         public PredictedModule(PredictedIdentity identity) : base(identity) { }
 
         protected ModuleDeltaKey<PredictedIdentityState> predictionKey => new ModuleDeltaKey<PredictedIdentityState>(identity.id, moduleIndex);
         protected ModuleDeltaKey<TState> stateKey => new ModuleDeltaKey<TState>(identity.id, moduleIndex);
 
-        protected override void OnInitialize()
+        internal override void OnCoreInitialize()
         {
-            base.OnInitialize();
+            var tickRate = manager.tickRate;
+            var bufferSize = (int)Math.Max(tickRate / 10f, 2);
+            
+            _interpolatedState = new InterpolatedWithDispose<FULL_STATE<TState>>(
+                FULLInterpolate, 
+                1f / tickRate, 
+                fullPredictedState.DeepCopy(), 
+                bufferSize
+            );
         }
+
+        protected sealed override void UpdateView(float delta)
+        {
+            if (_interpolatedState == null) return;
+
+            if (_viewState.HasValue)
+            {
+                _interpolatedState.Add(_viewState.Value);
+                _viewState = null;
+            }
+
+            var result = _interpolatedState.Advance(delta);
+            viewState = result.state;
+            
+            UpdateView(viewState, verifiedState);
+        }
+
+        /// <summary>
+        /// Override this to apply visual updates (e.g. transform.position = viewState.position)
+        /// </summary>
+        protected virtual void UpdateView(TState viewState, TState? verifiedState) { }
+        
+        /// <summary>
+        /// Override to handle interpolation between states manually
+        /// </summary>
+        /// <param name="from">State to interpolate from</param>
+        /// <param name="to">State to interpolate to</param>
+        /// <param name="t">Step</param>
+        /// <returns>The interpolated state at the given step</returns>
+        protected virtual TState Interpolate(TState from, TState to, float t)
+        {
+            var offset = to.Add(to, from.Negate(from));
+            var scaled = offset.Scale(offset, t);
+            return from.Add(from, scaled);
+        }
+
+        private FULL_STATE<TState> FULLInterpolate(FULL_STATE<TState> from, FULL_STATE<TState> to, float t)
+        {
+            var state = Interpolate(from.state, to.state, t);
+            return new FULL_STATE<TState>
+            {
+                state = state,
+                prediction = from.prediction
+            };
+        }
+
+        protected override void ResetInterpolation()
+        {
+            _interpolatedState?.Teleport(fullPredictedState.DeepCopy());
+        }
+        
+        protected override void UpdateInterpolation(float delta, bool accumulateError)
+        {
+            var copy = fullPredictedState.DeepCopy();
+            ModifyRollbackViewState(ref copy.state, delta, accumulateError);
+
+            _viewState?.Dispose();
+            _viewState = copy;
+        }
+
+        protected virtual void ModifyRollbackViewState(ref TState state, float delta, bool accumulateError) { }
 
         protected override void Simulate(ulong tick, float delta)
         {
@@ -113,61 +185,5 @@ namespace PurrNet.Prediction
         {
             _history.ClearFuture(tick);
         }
-        
-        protected override void UpdateInterpolation(float delta, bool accumulateError)
-        {
-            // This is called during Rollback to smooth out corrections
-            var copy = fullPredictedState.DeepCopy();
-            ModifyRollbackViewState(ref copy.state, delta, accumulateError);
-
-            _viewState?.Dispose();
-            _viewState = copy;
-        }
-
-        protected sealed override void UpdateView(float delta)
-        {
-            if (_interpolatedState == null) return;
-
-            if (_viewState.HasValue)
-            {
-                _interpolatedState.Add(_viewState.Value);
-                _viewState = null;
-            }
-
-            var result = _interpolatedState.Advance(delta);
-            viewState = result.state;
-            
-            UpdateView(viewState, verifiedState);
-        }
-
-        private FULL_STATE<TState> FULLInterpolate(FULL_STATE<TState> from, FULL_STATE<TState> to, float t)
-        {
-            var state = Interpolate(from.state, to.state, t);
-            return new FULL_STATE<TState>
-            {
-                state = state,
-                prediction = from.prediction
-            };
-        }
-
-        protected override void ResetInterpolation()
-        {
-            _interpolatedState?.Teleport(fullPredictedState.DeepCopy());
-        }
-
-        /// <summary>
-        /// Interpolate between two states (e.g., Vector3.Lerp)
-        /// </summary>
-        protected abstract TState Interpolate(TState from, TState to, float t);
-
-        /// <summary>
-        /// Apply the interpolated state to the visual object (e.g. Transform)
-        /// </summary>
-        protected virtual void UpdateView(TState viewState, TState? verified) { }
-        
-        /// <summary>
-        /// Optional: Modify state before it goes into the interpolator (e.g. for error accumulation)
-        /// </summary>
-        protected virtual void ModifyRollbackViewState(ref TState state, float delta, bool accumulateError) { }
     }
 }
