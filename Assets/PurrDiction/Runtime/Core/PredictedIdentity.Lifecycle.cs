@@ -70,7 +70,6 @@ namespace PurrNet.Prediction
 
         internal void RunClearFuture(ulong tick)
         {
-            // Assuming modules have history to clear too?
             ClearFutureModules(tick);
             ClearFuture(tick);
         }
