@@ -42,18 +42,24 @@ namespace PurrNet.Prediction
 
         private float _lastPredictedViewTime, _lastVerifiedViewTime;
         private bool _manualTick;
-        
-        public TimerModule(PredictedIdentity identity) : base(identity) { }
+
+        /// <summary>
+        /// Constructs the timer module with the given settings.
+        /// </summary>
+        /// <param name="identity">The predicted identity which this module is linked to</param>
+        /// <param name="manualTick">Whether it should automatically count down, or you want to handle the ticking of the timer</param>
+        public TimerModule(PredictedIdentity identity, bool manualTick = false) : base(identity)
+        {
+            _manualTick = manualTick;
+        }
 
         /// <summary>
         /// Starts the timer
         /// </summary>
         /// <param name="timer">Initial value for the timer</param>
-        /// <param name="manualTick">Whether it should automatically count down, or you want to handle the ticking of the timer</param>
-        public void StartTimer(float timer, bool manualTick = false)
+        public void StartTimer(float timer)
         {
             currentState.timer = timer;
-            _manualTick = manualTick;
         }
 
         /// <summary>
