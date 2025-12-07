@@ -34,6 +34,12 @@ namespace PurrNet.Prediction
             _manager.onRollbackFinished -= OnRollbackFinished;
         }
 
+        public void CacheCurrentState()
+        {
+            for (int i = 0; i < _rigidbodies.Length; i++)
+                _state[i] = new UnityRigidbodyState(_rigidbodies[i]);
+        }
+
         private void OnStartingToRollback()
         {
             for (int i = 0; i < _rigidbodies.Length; i++)
@@ -50,6 +56,9 @@ namespace PurrNet.Prediction
                 var state = _state[i];
                 var rb = _rigidbodies[i];
                 rb.isKinematic = state.isKinematic;
+                if (state.isKinematic)
+                    continue;
+
 #if UNITY_6000
                 rb.linearVelocity = state.linearVelocity;
 #else
