@@ -8,6 +8,9 @@ namespace PurrNet.Prediction
     {
         internal FULL_STATE<TState> fullPredictedState;
         
+        /// <summary>
+        /// The current simulation relevant state
+        /// </summary>
         public ref TState currentState => ref fullPredictedState.state;
 
         private History<FULL_STATE<TState>> _history = new History<FULL_STATE<TState>>();
@@ -16,6 +19,11 @@ namespace PurrNet.Prediction
         private FULL_STATE<TState>? _viewState;
 
         public TState viewState;
+        
+        /// <summary>
+        /// The last fully verified state received from the server (or authoritative state if local).
+        /// Returns null if no history exists yet.
+        /// </summary>
         public TState? verifiedState => _history.Count > 0 ? _history[^1].state : null;
 
         public PredictedModule(PredictedIdentity identity) : base(identity) { }
@@ -51,10 +59,13 @@ namespace PurrNet.Prediction
             
             UpdateView(viewState, verifiedState);
         }
-
+        
         /// <summary>
-        /// Override this to apply visual updates (e.g. transform.position = viewState.position)
+        /// Override this to apply visual updates based on the interpolated state.
+        /// (e.g., transforming a GameObject based on viewState.position).
         /// </summary>
+        /// <param name="viewState">The smooth, interpolated state for the current frame.</param>
+        /// <param name="verifiedState">The latest authoritative state, useful for comparisons or error correction.</param>
         protected virtual void UpdateView(TState viewState, TState? verifiedState) { }
         
         /// <summary>
@@ -95,6 +106,10 @@ namespace PurrNet.Prediction
             _viewState = copy;
         }
 
+        /// <summary>
+        /// Allows modification of the state used for rollback interpolation before it is committed.
+        /// Useful for accumulating prediction error into the visual state to smooth out corrections.
+        /// </summary>
         protected virtual void ModifyRollbackViewState(ref TState state, float delta, bool accumulateError) { }
 
         protected override void Simulate(ulong tick, float delta)
@@ -107,8 +122,17 @@ namespace PurrNet.Prediction
             Simulate(ref fullPredictedState.state, delta);
         }
 
+        /// <summary>
+        /// Called exactly once before the very first simulation tick executes.
+        /// </summary>
         protected virtual void SimulationStart() { }
         
+        /// <summary>
+        /// Executes the simulation logic for this module.
+        /// Modify the <paramref name="state"/> directly to advance the simulation. Or use the `currentState`
+        /// </summary>
+        /// <param name="state">Reference to the current simulation state.</param>
+        /// <param name="delta">Time in seconds since the last tick.</param>
         protected virtual void Simulate(ref TState state, float delta) { }
 
         protected override void Rollback(ulong tick)
