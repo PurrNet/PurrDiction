@@ -98,7 +98,7 @@ namespace PurrNet.Prediction
             if (_manualTick)
                 return;
 
-            TickTimer(ref state, -delta);
+            TickTimer(-delta);
         }
 
         /// <summary>
@@ -107,13 +107,13 @@ namespace PurrNet.Prediction
         /// <param name="state">The currentState of the module</param>
         /// <param name="tick">The amount to move the timer by</param>
         /// <param name="autoStopOnDownTick">Whether it should end the timer when hitting 0</param>
-        public void TickTimer(ref TimerState state, float tick, bool autoStopOnDownTick = true)
+        public void TickTimer(float tick, bool autoStopOnDownTick = true)
         {
-            if (!state.timer.HasValue)
+            if (!currentState.timer.HasValue)
                 return;
 
-            state.timer += tick;
-            if (state.timer <= 0)
+            currentState.timer += tick;
+            if (currentState.timer <= 0)
             {
                 StopTimer();
             }
