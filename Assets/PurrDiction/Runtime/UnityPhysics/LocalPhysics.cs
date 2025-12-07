@@ -34,10 +34,14 @@ namespace PurrNet.Prediction
             _manager.onRollbackFinished -= OnRollbackFinished;
         }
 
-        public void CacheCurrentState()
+        public void CacheCurrentState(bool overrideVelocities = false)
         {
             for (int i = 0; i < _rigidbodies.Length; i++)
-                _state[i] = new UnityRigidbodyState(_rigidbodies[i]);
+            {
+                if (overrideVelocities)
+                     _state[i] = new UnityRigidbodyState(_rigidbodies[i]);
+                else _state[i].isKinematic = _rigidbodies[i].isKinematic;
+            }
         }
 
         private void OnStartingToRollback()
