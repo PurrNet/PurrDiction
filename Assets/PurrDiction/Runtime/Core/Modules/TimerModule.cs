@@ -112,7 +112,7 @@ namespace PurrNet.Prediction
             if (!state.timer.HasValue)
                 return;
 
-            state.timer = tick;
+            state.timer += tick;
             if (state.timer <= 0)
             {
                 StopTimer();
