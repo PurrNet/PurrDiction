@@ -5,13 +5,40 @@ namespace PurrNet.Prediction
 {
     public class TimerModule : PredictedModule<TimerState>
     {
+        /// <summary>
+        /// Returns the predicted time to use for view
+        /// </summary>
         public float predictedViewTimer { get; private set; }
+        
+        /// <summary>
+        /// Returns the verified time to use for view
+        /// </summary>
         public float verifiedViewTimer { get; private set; }
 
+        /// <summary>
+        /// Invoked when the view updates, this returns predicted-view. Good for visual use.
+        /// </summary>
         public event Action<float> onPredictedTimerUpdated_View;
+        
+        /// <summary>
+        /// Invoked when the view updated comes in with verified data. Should be once per frame
+        /// </summary>
         public event Action<float> onVerifiedTimerUpdated_View;
+        
+        /// <summary>
+        /// Invoked when the timer is stopped
+        /// </summary>
         public event Action onTimerEnded;
+        
+        /// <summary>
+        /// Whether the timer is currently running or not
+        /// </summary>
         public bool isTimerRunning => currentState.timer.HasValue;
+
+        /// <summary>
+        /// Returns the current timer value
+        /// </summary>
+        public float remaining => currentState.timer.HasValue ? currentState.timer.Value : 0;
 
         private float _lastPredictedViewTime, _lastVerifiedViewTime;
         private bool _manualTick;
