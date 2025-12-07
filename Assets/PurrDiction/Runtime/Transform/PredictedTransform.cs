@@ -181,7 +181,7 @@ namespace PurrNet.Prediction
 
         public override void ResetInterpolation()
         {
-            base.ResetInterpolation();
+            base.RunResetInterpolation();
             _accumulatedPositionError = default;
             _accumulatedRotationError = Quaternion.identity;
             _viewState = null;
