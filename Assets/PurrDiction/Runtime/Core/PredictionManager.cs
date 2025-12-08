@@ -593,6 +593,8 @@ namespace PurrNet.Prediction
             {
                 using (WriteFrameOnServerMarker.Auto())
                 {
+                    for (var i = 0; i < _systemsCount; i++)
+                        _systems[i].lastVerifiedTick = localTick;
                     WriteEventHandles();
                     SendFrameToOthers();
                 }
