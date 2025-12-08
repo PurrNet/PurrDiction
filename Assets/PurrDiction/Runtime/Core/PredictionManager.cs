@@ -44,7 +44,7 @@ namespace PurrNet.Prediction
         {
             extrapolateForMissing = true,
             minInputs = 1,
-            maxInputs = 4
+            maxInputs = 2
         };
 
         [Header("Debugging")]
@@ -110,7 +110,7 @@ namespace PurrNet.Prediction
             return Task.CompletedTask;
         }
 
-        private static GameObject _poolParent;
+        private GameObject _poolParent;
 
         private void InitPooling()
         {
@@ -253,6 +253,12 @@ namespace PurrNet.Prediction
             {
                 _tickManager.onPreTick -= OnPreTick;
                 _tickManager.onPostTick -= OnPostTick;
+            }
+
+            if (_pools != null)
+            {
+                _pools.Dispose();
+                _pools = null;
             }
         }
 

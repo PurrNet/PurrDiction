@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using PurrNet.Pooling;
 using UnityEngine;
@@ -25,17 +26,29 @@ namespace PurrNet.Prediction
         {
             return _pools.TryGetValue(prefab, out pool);
         }
+
+        public void Dispose()
+        {
+            foreach (var (_, val) in _pools)
+                val.Dispose();
+            _pools.Clear();
+        }
     }
 
-    public class GameObjectPool : GenericPool<GameObject>
+    public class GameObjectPool
     {
-        public GameObjectPool(GameObject prefab, Transform parent, int warmupCount) : base(
-            () => UnityProxy.InstantiateDirectly(prefab),
-            reset: obj =>
+        private readonly Stack<GameObject> _pool = new Stack<GameObject>();
+        private readonly Func<GameObject> _factory;
+        private readonly Action<GameObject> _reset;
+
+        public GameObjectPool(GameObject prefab, Transform parent, int warmupCount)
+        {
+            _factory = () => UnityProxy.InstantiateDirectly(prefab);
+            _reset = obj =>
             {
                 obj.transform.SetParent(parent, false);
-            })
-        {
+            };
+
             var toDelete = ListPool<GameObject>.Instantiate();
 
             for (int i = 0; i < warmupCount; i++)
@@ -49,6 +62,29 @@ namespace PurrNet.Prediction
 
             foreach (var go in toDelete)
                 Delete(go);
+        }
+
+        public GameObject Allocate()
+        {
+            return _pool.Count > 0 ? _pool.Pop() : _factory();
+        }
+
+        public void Delete(GameObject obj)
+        {
+            if (!obj)
+                return;
+            _reset(obj);
+            _pool.Push(obj);
+        }
+
+        public void Dispose()
+        {
+            foreach (var go in _pool)
+            {
+                if (go)
+                    UnityEngine.Object.Destroy(go);
+            }
+            _pool.Clear();
         }
     }
 }
