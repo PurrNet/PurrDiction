@@ -70,6 +70,8 @@ namespace PurrNet.Prediction
 
         public bool isServer { get; private set; }
 
+        public SceneID sceneId { get; private set; }
+
         internal virtual void Setup(NetworkManager manager, PredictionManager world, PredictedComponentID id, PlayerID? owner)
         {
             isServer = manager.isServer;
@@ -81,6 +83,7 @@ namespace PurrNet.Prediction
 
             isFreshSpawn = false;
             predictionManager = world;
+            sceneId = world.sceneId;
 
             ModuleSetup(manager,world,id, owner);
 
@@ -136,19 +139,19 @@ namespace PurrNet.Prediction
         }
 
         internal abstract void SimulateTick(ulong tick, float delta);
-        
+
         internal abstract void LateSimulateTick(float delta);
-        
+
         public virtual void PostSimulate() {}
 
         internal abstract void PrepareInput(bool isServer, bool isLocal, ulong tick, bool extrapolate);
-        
+
         internal abstract void SaveStateInHistory(ulong tick);
-        
+
         internal abstract void Rollback(ulong tick);
-        
+
         public abstract void UpdateRollbackInterpolationState(float delta, bool accumulateError);
-        
+
         public abstract void ResetInterpolation();
 
         private PlayerID? _lastOwner;
@@ -173,7 +176,7 @@ namespace PurrNet.Prediction
         internal abstract void GetLatestUnityState();
 
         internal abstract void WriteFirstState(ulong tick, BitPacker packer);
-        
+
         internal abstract bool WriteCurrentState(PlayerID receiver, BitPacker packer, DeltaModule deltaModule);
 
         internal abstract void WriteInput(ulong localTick, PlayerID receiver, BitPacker input, DeltaModule deltaModule, bool reliable);

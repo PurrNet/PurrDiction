@@ -11,30 +11,49 @@ namespace PurrNet.Prediction
     public readonly struct DeltaKey<T, S> : IStableHashable
     {
         private readonly PredictedComponentID id;
+        private readonly SceneID scene;
 
-        public DeltaKey(PredictedComponentID id)
+        public DeltaKey(SceneID scene, PredictedComponentID id)
         {
             this.id = id;
+            this.scene = scene;
         }
 
         public uint GetStableHash()
         {
-            return Hasher<T>.stableHash ^ Hasher<S>.stableHash ^ id.componentId.value ^ id.objectId.instanceId.value;
+            const uint Off = 2166136261u;
+            const uint Pri = 16777619u;
+            uint h = Off;
+            h = (h ^ Hasher<T>.stableHash) * Pri;
+            h = (h ^ Hasher<S>.stableHash) * Pri;
+            h = (h ^ id.componentId.value) * Pri;
+            h = (h ^ id.objectId.instanceId.value) * Pri;
+            h = (h ^ scene.id.value) * Pri;
+            return h;
         }
     }
 
     public readonly struct DeltaKey<T> : IStableHashable
     {
         private readonly PredictedComponentID id;
+        private readonly SceneID scene;
 
-        public DeltaKey(PredictedComponentID id)
+        public DeltaKey(SceneID scene, PredictedComponentID id)
         {
             this.id = id;
+            this.scene = scene;
         }
 
         public uint GetStableHash()
         {
-            return Hasher<T>.stableHash ^ id.componentId.value ^ id.objectId.instanceId.value;
+            const uint Off = 2166136261u;
+            const uint Pri = 16777619u;
+            uint h = Off;
+            h = (h ^ Hasher<T>.stableHash) * Pri;
+            h = (h ^ id.componentId.value) * Pri;
+            h = (h ^ id.objectId.instanceId.value) * Pri;
+            h = (h ^ scene.id.value) * Pri;
+            return h;
         }
     }
 
@@ -194,9 +213,9 @@ namespace PurrNet.Prediction
 
         protected virtual void SetUnityState(STATE state) {}
 
-        protected DeltaKey<STATE> stateKey => new (id);
+        protected DeltaKey<STATE> stateKey => new (sceneId, id);
 
-        private DeltaKey<PredictedIdentityState, STATE> internalKey => new (id);
+        private DeltaKey<PredictedIdentityState, STATE> internalKey => new (sceneId, id);
 
         internal override void WriteFirstState(ulong tick, BitPacker packer)
         {

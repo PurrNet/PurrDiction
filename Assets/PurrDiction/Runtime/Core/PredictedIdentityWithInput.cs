@@ -1,7 +1,6 @@
 using PurrNet.Modules;
 using PurrNet.Packing;
 using PurrNet.Prediction.Profiler;
-using PurrNet.Utils;
 using UnityEngine;
 
 namespace PurrNet.Prediction
@@ -148,22 +147,7 @@ namespace PurrNet.Prediction
             PreSimulate(_lastInput.GetValueOrDefault(), ref state, delta);
         }
 
-        readonly struct DeltaKey : IStableHashable
-        {
-            private readonly PredictedComponentID id;
-
-            public DeltaKey(PredictedComponentID id)
-            {
-                this.id = id;
-            }
-
-            public uint GetStableHash()
-            {
-                return (uint)id.GetHashCode() ^ Hasher<INPUT>.stableHash;
-            }
-        }
-
-        DeltaKey key => new DeltaKey(id);
+        DeltaKey<INPUT, STATE> key => new DeltaKey<INPUT, STATE>(sceneId, id);
 
         internal override void WriteInput(ulong localTick, PlayerID receiver, BitPacker input, DeltaModule deltaModule, bool reliable)
         {

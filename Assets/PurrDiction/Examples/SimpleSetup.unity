@@ -627,7 +627,7 @@ MonoBehaviour:
   _inputQueueSettings:
     extrapolateForMissing: 0
     minInputs: 1
-    maxInputs: 4
+    maxInputs: 2
   _validateDeterministicData: 0
 --- !u!4 &1558659896
 Transform:
