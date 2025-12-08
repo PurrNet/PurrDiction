@@ -54,6 +54,9 @@ namespace PurrNet.Prediction
 
         public void Dispose()
         {
+            if (events.isDisposed)
+                return;
+
             int count = events.Count;
             for (var i = 0; i < count; i++)
                 events[i].Dispose();

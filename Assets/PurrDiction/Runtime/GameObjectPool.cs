@@ -43,7 +43,18 @@ namespace PurrNet.Prediction
 
         public GameObjectPool(GameObject prefab, Transform parent, int warmupCount)
         {
-            _factory = () => UnityProxy.InstantiateDirectly(prefab);
+            _factory = () =>
+            {
+                var res = UnityProxy.InstantiateDirectly(prefab);
+                using var nidentities = DisposableList<NetworkIdentity>.Create();
+                res.GetComponentsInChildren(nidentities.list);
+                for (var i = 0; i < nidentities.Count; i++)
+                {
+                    var id = nidentities[i];
+                    if (id) id.skipSceneAutoSpawning = true;
+                }
+                return res;
+            };
             _reset = obj =>
             {
                 obj.transform.SetParent(parent, false);
