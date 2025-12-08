@@ -235,7 +235,15 @@ namespace PurrNet.Prediction
 
         public STATE viewState;
 
-        public STATE? verifiedState => _stateHistory.Count > 0 ? _stateHistory[^1].state : null;
+        public STATE? verifiedState
+        {
+            get
+            {
+                if (lastVerifiedTick.HasValue && _stateHistory.TryGet(lastVerifiedTick.Value, out var state))
+                    return state.state;
+                return null;
+            }
+        }
 
         internal override void UpdateView(float deltaTime)
         {
@@ -251,7 +259,7 @@ namespace PurrNet.Prediction
             }
 
             viewState = _interpolatedState.Advance(deltaTime).state;
-            UpdateView(viewState, _stateHistory.Count > 0 ? _stateHistory[^1].state : null);
+            UpdateView(viewState, verifiedState);
         }
 
         protected virtual void UpdateView(STATE viewState, STATE? verified) {}

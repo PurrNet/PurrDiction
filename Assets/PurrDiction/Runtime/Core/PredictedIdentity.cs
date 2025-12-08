@@ -6,6 +6,8 @@ namespace PurrNet.Prediction
 {
     public abstract partial class PredictedIdentity : MonoBehaviour
     {
+        public ulong? lastVerifiedTick { get; internal set; }
+
         public virtual string GetExtraString()
         {
             return string.Empty;

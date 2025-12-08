@@ -496,12 +496,17 @@ namespace PurrNet.Prediction
 
             for (var i = 0; i < count; i++)
             {
-                if (_systems[i].isEventHandler)
-                    _systems[i].RunReadFirstState(1, data);
+                var system = _systems[i];
+                if (system.isEventHandler)
+                    system.RunReadFirstState(1, data);
             }
 
             for (var i = 0; i < count; i++)
-                _systems[i].RunSaveState(1);
+            {
+                var system = _systems[i];
+                system.RunSaveState(1);
+                system.lastVerifiedTick = 1;
+            }
 
             SyncTransforms();
 
@@ -859,6 +864,7 @@ namespace PurrNet.Prediction
                 system.RunClearFuture(stateTick);
                 system.RunReadState(stateTick, frame, _deltaModuleState);
                 system.RunRollback(stateTick);
+                system.lastVerifiedTick = stateTick;
             }
 
             for (var i = 0; i < count; ++i)
@@ -872,6 +878,7 @@ namespace PurrNet.Prediction
                 system.RunClearFuture(stateTick);
                 system.RunReadState(stateTick, frame, _deltaModuleState);
                 system.RunRollback(stateTick);
+                system.lastVerifiedTick = stateTick;
             }
 
             SyncTransforms();
