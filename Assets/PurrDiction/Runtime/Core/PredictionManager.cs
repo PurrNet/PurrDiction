@@ -286,7 +286,7 @@ namespace PurrNet.Prediction
             _deltas.Clear();
         }
 
-        private uint _nextSystemId;
+        private uint _nextSystemId = 0;
 
         public T RegisterSystem<T>() where T : PredictedIdentity
         {
@@ -294,7 +294,7 @@ namespace PurrNet.Prediction
             system.hideFlags = HideFlags.NotEditable;
             if (cachedIsServer)
                 system.OnPreSetup();
-            RegisterInstance(system, new PredictedObjectID(0), _nextSystemId++, null);
+            RegisterInstance(system, new PredictedObjectID(1), _nextSystemId++, null);
             return system;
         }
 

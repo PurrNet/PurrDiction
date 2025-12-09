@@ -166,7 +166,7 @@ namespace PurrNet.Prediction
 
             if (currentState.TryGetValue(player, out var playerID))
             {
-                predictionManager.hierarchy.Delete(playerID);
+                hierarchy.Delete(playerID);
                 currentState.Remove(player);
             }
         }
@@ -187,11 +187,11 @@ namespace PurrNet.Prediction
             {
                 var spawnPoint = spawnPoints[currentState.spawnPointIndex];
                 currentState.spawnPointIndex = (currentState.spawnPointIndex + 1) % spawnPoints.Count;
-                newPlayer = predictionManager.hierarchy.Create(_playerPrefab, spawnPoint.position, spawnPoint.rotation, player);
+                newPlayer = hierarchy.Create(_playerPrefab, spawnPoint.position, spawnPoint.rotation, player);
             }
             else
             {
-                newPlayer = predictionManager.hierarchy.Create(_playerPrefab, owner: player);
+                newPlayer = hierarchy.Create(_playerPrefab, owner: player);
             }
 
             if (!newPlayer.HasValue)
