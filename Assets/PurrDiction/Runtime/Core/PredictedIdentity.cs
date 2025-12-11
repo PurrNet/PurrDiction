@@ -50,6 +50,11 @@ namespace PurrNet.Prediction
             OnRemovedFromPool();
         }
 
+        internal void TriggerOnRemovedFromPool()
+        {
+            OnRemovedFromPool();
+        }
+
         protected virtual void OnRemovedFromPool() {}
 
         protected virtual void OnAddedToPool() {}
