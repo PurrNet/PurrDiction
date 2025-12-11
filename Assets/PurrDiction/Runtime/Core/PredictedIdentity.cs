@@ -106,6 +106,8 @@ namespace PurrNet.Prediction
         {
             get
             {
+                if (!predictionManager)
+                    return false;
                 if (owner.HasValue && predictionManager.isSpawned)
                     return owner == predictionManager.localPlayer;
                 return predictionManager.cachedIsServer;
