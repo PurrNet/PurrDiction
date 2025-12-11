@@ -1,10 +1,9 @@
 using PurrNet.Modules;
 using PurrNet.Packing;
-using UnityEngine;
 
 namespace PurrNet.Prediction
 {
-    public abstract partial class PredictedIdentity : MonoBehaviour
+    public abstract partial class PredictedIdentity
     {
         internal void RunSimulateTick(ulong tick, float delta)
         {
@@ -41,7 +40,7 @@ namespace PurrNet.Prediction
             UpdateModulesInterpolation(delta, accumulateError);
             UpdateRollbackInterpolationState(delta, accumulateError);
         }
-        
+
         internal void RunResetInterpolation()
         {
             ResetModulesInterpolation();
@@ -52,7 +51,7 @@ namespace PurrNet.Prediction
         {
             bool modulesChanged = WriteModules(receiver, packer, deltaModule);
             bool identityChanged = WriteCurrentState(receiver, packer, deltaModule);
-            
+
             return modulesChanged || identityChanged;
         }
 
