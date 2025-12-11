@@ -313,7 +313,7 @@ namespace PurrNet.Prediction
                     component.OnPreSetup();
                     if (reset)
                          component.ResetState();
-                    else component.TriggerOnRemovedFromPool();
+                    // else component.TriggerOnRemovedFromPool();
                     RegisterInstance(component, objectID, i, owner);
                 }
             }
@@ -336,8 +336,8 @@ namespace PurrNet.Prediction
                     if (reset)
                         components[i].ResetState();
                     UnregisterInstance(components[i]);
-                    components[i].TriggerDestroyedEvent();
-                    components[i].TriggerOnPooledEvent();
+                    /*components[i].TriggerDestroyedEvent();
+                    components[i].TriggerOnPooledEvent();*/
                 }
             }
 
