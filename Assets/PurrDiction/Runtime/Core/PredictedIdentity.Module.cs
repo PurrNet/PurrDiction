@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using PurrNet.Modules;
 using PurrNet.Packing;
-using UnityEngine;
 
 namespace PurrNet.Prediction
 {
