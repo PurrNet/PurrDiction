@@ -42,7 +42,7 @@ namespace PurrNet.Prediction
 #else
         public void Dispose() {}
 
-        public PhysicsCollision Duplicate() {}
+        public PhysicsCollision Duplicate() => default;
 #endif
     }
 

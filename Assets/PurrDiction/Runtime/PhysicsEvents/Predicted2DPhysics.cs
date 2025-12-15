@@ -73,7 +73,7 @@ namespace PurrNet.Prediction
 #else
         public void Dispose() {}
 
-        public PredictedPhysics2DData Duplicate() {}
+        public PredictedPhysics2DData Duplicate() => default;
 #endif
     }
 
