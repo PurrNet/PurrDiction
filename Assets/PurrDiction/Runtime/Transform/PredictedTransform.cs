@@ -68,12 +68,12 @@ namespace PurrNet.Prediction
                     return base.WriteDeltaState(target, packer, deltaModule);
                 case FloatAccuracy.Medium:
                 {
-                    var key = new DeltaKey<PredictedTransformCompressedState>(id);
+                    var key = new DeltaKey<PredictedTransformCompressedState>(sceneId, id);
                     return deltaModule.WriteReliable(packer, target, key, new PredictedTransformCompressedState(currentState));
                 }
                 case FloatAccuracy.Low:
                 {
-                    var key = new DeltaKey<PredictedTransformHalfState>(id);
+                    var key = new DeltaKey<PredictedTransformHalfState>(sceneId, id);
                     return deltaModule.WriteReliable(packer, target, key, new PredictedTransformHalfState(currentState));
                 }
                 default: throw new ArgumentOutOfRangeException();
@@ -90,7 +90,7 @@ namespace PurrNet.Prediction
                     break;
                 case FloatAccuracy.Medium:
                 {
-                    var key = new DeltaKey<PredictedTransformCompressedState>(id);
+                    var key = new DeltaKey<PredictedTransformCompressedState>(sceneId, id);
                     PredictedTransformCompressedState compressedState = default;
                     deltaModule.ReadReliable(packer, key, ref compressedState);
 
@@ -100,7 +100,7 @@ namespace PurrNet.Prediction
                 }
                 case FloatAccuracy.Low:
                 {
-                    var key = new DeltaKey<PredictedTransformHalfState>(id);
+                    var key = new DeltaKey<PredictedTransformHalfState>(sceneId, id);
                     PredictedTransformHalfState compressedState = default;
                     deltaModule.ReadReliable(packer, key, ref compressedState);
 

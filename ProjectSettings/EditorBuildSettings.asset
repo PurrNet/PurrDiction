@@ -6,6 +6,9 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/PurrDiction/Examples/SimpleSetup.unity
+    guid: ff68cffc67134674c968106bb3c3b5b1
+  - enabled: 1
     path: Assets/PurrDictionTests/SampleSceneUnity.unity
     guid: 1b032fbfbb87b6e4cb477150e436d68b
   - enabled: 1

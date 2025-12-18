@@ -13,7 +13,7 @@ namespace PurrNet.Prediction
         readonly Dictionary<GameObject, PredictedObjectID> _goToId = new ();
         readonly HashSet<PredictedObjectID> _isSceneObject = new ();
 
-        private uint _nextInstanceId = 1;
+        private uint _nextInstanceId = 2;
 
         protected override PredictedHierarchyState GetInitialState()
         {

@@ -128,12 +128,12 @@ namespace PurrNet.Prediction
                     return base.WriteDeltaState(target, packer, deltaModule);
                 case FloatAccuracy.Medium:
                 {
-                    var key = new DeltaKey<UnityRigidbodyCompressedState>(id);
+                    var key = new DeltaKey<UnityRigidbodyCompressedState>(predictionManager.sceneId, id);
                     return deltaModule.WriteReliable(packer, target, key, new UnityRigidbodyCompressedState(currentState));
                 }
                 case FloatAccuracy.Low:
                 {
-                    var key = new DeltaKey<UnityRigidbodyHalfState>(id);
+                    var key = new DeltaKey<UnityRigidbodyHalfState>(predictionManager.sceneId, id);
                     var res = deltaModule.WriteReliable(packer, target, key, new UnityRigidbodyHalfState(currentState));
                     return res;
                 }
@@ -150,7 +150,7 @@ namespace PurrNet.Prediction
                     break;
                 case FloatAccuracy.Medium:
                 {
-                    var key = new DeltaKey<UnityRigidbodyCompressedState>(id);
+                    var key = new DeltaKey<UnityRigidbodyCompressedState>(sceneId, id);
                     UnityRigidbodyCompressedState compressedState = default;
                     deltaModule.ReadReliable(packer, key, ref compressedState);
 
@@ -162,7 +162,7 @@ namespace PurrNet.Prediction
                 }
                 case FloatAccuracy.Low:
                 {
-                    var key = new DeltaKey<UnityRigidbodyHalfState>(id);
+                    var key = new DeltaKey<UnityRigidbodyHalfState>(sceneId, id);
                     UnityRigidbodyHalfState halfState = default;
                     deltaModule.ReadReliable(packer, key, ref halfState);
 

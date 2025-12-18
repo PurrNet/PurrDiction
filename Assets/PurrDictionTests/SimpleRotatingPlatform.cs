@@ -1,5 +1,7 @@
+using System;
 using PurrNet.Logging;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 namespace PurrNet.Prediction.Tests
 {

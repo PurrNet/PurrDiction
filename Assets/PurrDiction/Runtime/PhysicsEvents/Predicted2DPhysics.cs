@@ -54,6 +54,9 @@ namespace PurrNet.Prediction
 
         public void Dispose()
         {
+            if (events.isDisposed)
+                return;
+
             int count = events.Count;
             for (var i = 0; i < count; i++)
                 events[i].Dispose();
@@ -70,7 +73,7 @@ namespace PurrNet.Prediction
 #else
         public void Dispose() {}
 
-        public PredictedPhysics2DData Duplicate() {}
+        public PredictedPhysics2DData Duplicate() => default;
 #endif
     }
 

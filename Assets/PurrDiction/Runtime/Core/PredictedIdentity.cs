@@ -4,8 +4,10 @@ using UnityEngine;
 
 namespace PurrNet.Prediction
 {
-    public abstract class PredictedIdentity : MonoBehaviour
+    public abstract partial class PredictedIdentity : MonoBehaviour
     {
+        public ulong? lastVerifiedTick { get; internal set; }
+
         public virtual string GetExtraString()
         {
             return string.Empty;
@@ -48,6 +50,11 @@ namespace PurrNet.Prediction
             OnRemovedFromPool();
         }
 
+        internal void TriggerOnRemovedFromPool()
+        {
+            OnRemovedFromPool();
+        }
+
         protected virtual void OnRemovedFromPool() {}
 
         protected virtual void OnAddedToPool() {}
@@ -70,6 +77,8 @@ namespace PurrNet.Prediction
 
         public bool isServer { get; private set; }
 
+        public SceneID sceneId { get; private set; }
+
         internal virtual void Setup(NetworkManager manager, PredictionManager world, PredictedComponentID id, PlayerID? owner)
         {
             isServer = manager.isServer;
@@ -81,6 +90,9 @@ namespace PurrNet.Prediction
 
             isFreshSpawn = false;
             predictionManager = world;
+            sceneId = world.sceneId;
+
+            ModuleSetup(manager,world,id, owner);
 
             LateAwake();
         }
@@ -99,6 +111,8 @@ namespace PurrNet.Prediction
         {
             get
             {
+                if (!predictionManager)
+                    return false;
                 if (owner.HasValue && predictionManager.isSpawned)
                     return owner == predictionManager.localPlayer;
                 return predictionManager.cachedIsServer;
