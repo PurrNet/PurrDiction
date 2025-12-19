@@ -16,7 +16,7 @@ namespace PurrNet.Prediction
                 $"LinearVelocity: {linearVelocity}\n" +
                 $"AngularVelocity: {angularVelocity}\n" +
                 $"BodyType: {bodyType}\n" +
-                $"IsSleeping:{isSleeping}";
+                $"IsSleeping: {isSleeping}";
         }
 
 #if UNITY_PHYSICS_2D
