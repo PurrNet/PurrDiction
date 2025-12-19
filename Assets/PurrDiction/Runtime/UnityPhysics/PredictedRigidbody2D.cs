@@ -83,13 +83,6 @@ namespace PurrNet.Prediction
 
         protected override void GetUnityState(ref UnityRigidbody2DState state)
         {
-            if (_rigidbody.bodyType != RigidbodyType2D.Dynamic)
-            {
-                state.linearVelocity = default;
-                state.angularVelocity = default;
-                return;
-            }
-
             state.linearVelocity = linearVelocity;
             state.angularVelocity = angularVelocity;
 #if UNITY_6000
@@ -99,9 +92,6 @@ namespace PurrNet.Prediction
 
         protected override void SetUnityState(UnityRigidbody2DState state)
         {
-            if (_rigidbody.bodyType != RigidbodyType2D.Dynamic)
-                return;
-
             linearVelocity = state.linearVelocity;
             angularVelocity = state.angularVelocity;
 #if UNITY_6000
@@ -210,30 +200,46 @@ namespace PurrNet.Prediction
 
         public Vector2 linearVelocity
         {
+            get
+            {
 #if UNITY_6000
-            get => _rigidbody.linearVelocity;
-            set => _rigidbody.linearVelocity = value;
+                return _rigidbody.linearVelocity;
 #else
-            get => _rigidbody.velocity;
-            set => _rigidbody.velocity = value;
+                return _rigidbody.velocity;
 #endif
+            }
+
+            set
+            {
+                //setting linearVelocity on static Rigidbody2D logs a warning.
+                if (_rigidbody.bodyType == RigidbodyType2D.Static)
+                    return;
+
+#if UNITY_6000
+                _rigidbody.linearVelocity = value;
+#else
+                _rigidbody.velocity = value
+#endif
+            }
         }
 
         public Vector2 velocity
         {
-#if UNITY_6000
-            get => _rigidbody.linearVelocity;
-            set => _rigidbody.linearVelocity = value;
-#else
-            get => _rigidbody.velocity;
-            set => _rigidbody.velocity = value;
-#endif
+            get => linearVelocity;
+            set => linearVelocity = value;
         }
 
         public float angularVelocity
         {
             get => _rigidbody.angularVelocity;
-            set => _rigidbody.angularVelocity = value;
+            set
+            {
+                //setting angularVelocity on static Rigidbody2D logs a warning.
+                if (_rigidbody.bodyType == RigidbodyType2D.Static)
+                    return;
+
+                _rigidbody.angularVelocity = value;
+            }
         }
 
         /// <summary>
