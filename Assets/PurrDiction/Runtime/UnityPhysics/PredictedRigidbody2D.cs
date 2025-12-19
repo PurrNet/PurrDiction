@@ -218,7 +218,7 @@ namespace PurrNet.Prediction
 #if UNITY_6000
                 _rigidbody.linearVelocity = value;
 #else
-                _rigidbody.velocity = value
+                _rigidbody.velocity = value;
 #endif
             }
         }
