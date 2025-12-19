@@ -1,5 +1,4 @@
-﻿#define UNITY_PHYSICS_2D
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace PurrNet.Prediction
 {
