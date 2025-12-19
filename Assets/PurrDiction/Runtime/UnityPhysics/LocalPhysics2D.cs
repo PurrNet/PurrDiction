@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿#define UNITY_PHYSICS_2D
+using UnityEngine;
 
 namespace PurrNet.Prediction
 {
@@ -40,18 +41,16 @@ namespace PurrNet.Prediction
             {
                 var rb = _rigidbodies[i];
 
-                _state[i] = new UnityRigidbody2DState
-                {
-                    linearVelocity = rb.linearVelocity,
-                    angularVelocity = rb.angularVelocity,
-                    bodyType = rb.bodyType,
-                    isSleeping = rb.IsSleeping()
-                };
+                _state[i] = new UnityRigidbody2DState( rb );
 
                 rb.bodyType = RigidbodyType2D.Kinematic;
 
                 //reset velocities as setting bodyType to Kinematic does not reset them like on 3d rigidbodies
-                rb.linearVelocity = Vector2.zero;
+#if UNITY_6000
+                rb.linearVelocity = default;
+#else
+                rb.velocity = default;
+#endif
                 rb.angularVelocity = default;
             }
         }
@@ -67,7 +66,11 @@ namespace PurrNet.Prediction
                 if (state.bodyType == RigidbodyType2D.Static)
                     continue;
 
+#if UNITY_6000
                 rb.linearVelocity = state.linearVelocity;
+#else
+                rb.velocity = state.linearVelocity;
+#endif
                 rb.angularVelocity = state.angularVelocity;
                 if (state.isSleeping)
                     rb.Sleep();
@@ -75,5 +78,5 @@ namespace PurrNet.Prediction
             }
         }
 #endif
-    }
-}
+            }
+        }
