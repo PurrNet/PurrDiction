@@ -24,11 +24,11 @@ namespace PurrNet.Prediction
         {
 #if UNITY_6000
             linearVelocity = rigidbody.linearVelocity;
+            linearDamping = rigidbody.linearDamping;
 #else
             linearVelocity = rigidbody.velocity;
 #endif
             angularVelocity = rigidbody.angularVelocity;
-            linearDamping = rigidbody.linearDamping;
             bodyType = rigidbody.bodyType;
             isSleeping = rigidbody.IsSleeping();
         }
