@@ -12,7 +12,11 @@ namespace PurrNet.Prediction
 
         public override string ToString()
         {
-            return $"LinearVelocity: {linearVelocity}\nAngularVelocity: {angularVelocity}\nIsKinematic: {isKinematic}\nIsSleeping: {isSleeping}";
+            return 
+                $"LinearVelocity: {linearVelocity}\n" +
+                $"AngularVelocity: {angularVelocity}\n" +
+                $"IsKinematic: {isKinematic}\n" +
+                $"IsSleeping: {isSleeping}";
         }
 
 #if UNITY_PHYSICS_3D

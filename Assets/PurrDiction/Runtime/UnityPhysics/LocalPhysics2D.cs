@@ -1,0 +1,80 @@
+﻿#define UNITY_PHYSICS_2D
+using UnityEngine;
+
+namespace PurrNet.Prediction
+{
+    public class LocalPhysics2D : MonoBehaviour
+    {
+#if UNITY_PHYSICS_2D
+        private PredictionManager _manager;
+        private Rigidbody2D[] _rigidbodies;
+        private UnityRigidbody2DState[] _state;
+
+        private void Awake()
+        {
+            _rigidbodies = GetComponentsInChildren<Rigidbody2D>();
+            _state = new UnityRigidbody2DState[_rigidbodies.Length];
+        }
+
+        private void Start()
+        {
+            if (PredictionManager.TryGetInstance(gameObject.scene.handle, out var manager))
+            {
+                _manager = manager;
+                _manager.onStartingToRollback += OnStartingToRollback;
+                _manager.onRollbackFinished += OnRollbackFinished;
+            }
+        }
+
+        private void OnDestroy()
+        {
+            if (!_manager)
+                return;
+
+            _manager.onStartingToRollback -= OnStartingToRollback;
+            _manager.onRollbackFinished -= OnRollbackFinished;
+        }
+
+        private void OnStartingToRollback()
+        {
+            for(int i = 0; i < _rigidbodies.Length; i++)
+            {
+                var rb = _rigidbodies[i];
+
+                _state[i] = new UnityRigidbody2DState
+                {
+                    linearVelocity = rb.linearVelocity,
+                    angularVelocity = rb.angularVelocity,
+                    bodyType = rb.bodyType,
+                    isSleeping = rb.IsSleeping()
+                };
+
+                rb.bodyType = RigidbodyType2D.Kinematic;
+
+                //reset velocities as setting bodyType to Kinematic does not reset them like on 3d rigidbodies
+                rb.linearVelocity = Vector2.zero;
+                rb.angularVelocity = default;
+            }
+        }
+
+        private void OnRollbackFinished()
+        {
+            for (int i = 0; i < _rigidbodies.Length; i++)
+            {
+                var state = _state[i];
+                var rb = _rigidbodies[i];
+                rb.bodyType = state.bodyType;
+                //Rigidbody2D can have velocity even when Kinematic. We only skip when bodyType is Static
+                if (state.bodyType == RigidbodyType2D.Static)
+                    continue;
+
+                rb.linearVelocity = state.linearVelocity;
+                rb.angularVelocity = state.angularVelocity;
+                if (state.isSleeping)
+                    rb.Sleep();
+                else rb.WakeUp();
+            }
+        }
+#endif
+    }
+}
