@@ -68,13 +68,14 @@ namespace PurrNet.Prediction
                 _eventMask = PhysicsEventMask.None;
         }
 
-
         protected override UnityRigidbody2DState GetInitialState()
         {
             return new UnityRigidbody2DState
             {
                 linearVelocity = linearVelocity,
                 angularVelocity = angularVelocity,
+                bodyType = (int) _rigidbody.bodyType,
+                isSleeping = _rigidbody.IsSleeping(),
 #if UNITY_6000
                 linearDamping = _rigidbody.linearDamping,
 #endif
@@ -85,6 +86,8 @@ namespace PurrNet.Prediction
         {
             state.linearVelocity = linearVelocity;
             state.angularVelocity = angularVelocity;
+            state.bodyType = (int) _rigidbody.bodyType;
+            state.isSleeping = _rigidbody.IsSleeping();
 #if UNITY_6000
             state.linearDamping = _rigidbody.linearDamping;
 #endif
@@ -92,8 +95,21 @@ namespace PurrNet.Prediction
 
         protected override void SetUnityState(UnityRigidbody2DState state)
         {
-            linearVelocity = state.linearVelocity;
-            angularVelocity = state.angularVelocity;
+            _rigidbody.bodyType = (RigidbodyType2D) state.bodyType;
+            
+            if( _rigidbody.bodyType != RigidbodyType2D.Static)
+            { 
+                linearVelocity = state.linearVelocity;
+                angularVelocity = state.angularVelocity;
+            }
+
+            if (_rigidbody.IsSleeping() != state.isSleeping)
+            { 
+                if ( state.isSleeping)
+                    _rigidbody.Sleep();
+                else 
+                    _rigidbody.WakeUp();
+            }
 #if UNITY_6000
             _rigidbody.linearDamping = state.linearDamping;
 #endif

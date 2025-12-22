@@ -40,7 +40,7 @@ namespace PurrNet.Prediction
             {
                 var rb = _rigidbodies[i];
 
-                _state[i] = new UnityRigidbody2DState( rb );
+                _state[i] = new UnityRigidbody2DState(rb);
 
                 rb.bodyType = RigidbodyType2D.Kinematic;
 
@@ -60,9 +60,9 @@ namespace PurrNet.Prediction
             {
                 var state = _state[i];
                 var rb = _rigidbodies[i];
-                rb.bodyType = state.bodyType;
+                rb.bodyType = (RigidbodyType2D) state.bodyType;
                 //Rigidbody2D can have velocity even when Kinematic. We only skip when bodyType is Static
-                if (state.bodyType == RigidbodyType2D.Static)
+                if (rb.bodyType == RigidbodyType2D.Static)
                     continue;
 
 #if UNITY_6000
@@ -77,5 +77,5 @@ namespace PurrNet.Prediction
             }
         }
 #endif
-            }
-        }
+    }
+}

@@ -7,7 +7,7 @@ namespace PurrNet.Prediction
         public Vector2 linearVelocity;
         public float angularVelocity;
         public float linearDamping;
-        public RigidbodyType2D bodyType;
+        public int bodyType;
         public bool isSleeping;
 
         public override string ToString()
@@ -29,7 +29,7 @@ namespace PurrNet.Prediction
             linearVelocity = rigidbody.velocity;
 #endif
             angularVelocity = rigidbody.angularVelocity;
-            bodyType = rigidbody.bodyType;
+            bodyType = (int) rigidbody.bodyType;
             isSleeping = rigidbody.IsSleeping();
         }
 #endif
