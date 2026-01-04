@@ -1,3 +1,4 @@
+using System;
 using PurrNet.Modules;
 using PurrNet.Packing;
 using PurrNet.Utils;
@@ -24,7 +25,9 @@ namespace PurrNet.Prediction
     public abstract class PredictedModule
     {
         public PredictedIdentity identity { get; private set; }
+        [Obsolete("Use predictionManager instead. This was a bad naming convention on me - Bobsi")]
         public PredictionManager manager { get; private set; }
+        public PredictionManager predictionManager => manager;
         
         /// <summary>
         /// The index of this module within the parent identity's module list.
