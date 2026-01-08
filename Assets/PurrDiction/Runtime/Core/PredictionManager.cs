@@ -11,6 +11,7 @@ using PurrNet.Transports;
 using PurrNet.Utils;
 using Unity.Profiling;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace PurrNet.Prediction
 {
@@ -120,6 +121,7 @@ namespace PurrNet.Prediction
             if (!_poolParent)
             {
                 _poolParent = new GameObject("PooledPrefabs");
+                SceneManager.MoveGameObjectToScene(_poolParent, gameObject.scene);
 #if !PURRNET_DEBUG_POOLING
                 _poolParent.hideFlags = HideFlags.HideAndDontSave;
 #endif
@@ -1260,7 +1262,7 @@ namespace PurrNet.Prediction
             }
             else
             {
-                var go = UnityProxy.InstantiateDirectly(prefab, position, rotation);
+                var go = UnityProxy.InstantiateDirectly(prefab, position, rotation, gameObject.scene);
                 RegisterInstance(go, objectId, owner, false);
                 return go;
             }
