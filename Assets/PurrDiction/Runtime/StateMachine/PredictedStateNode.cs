@@ -23,6 +23,7 @@ namespace PurrNet.Prediction.StateMachine
         public virtual void Enter() {}
         public virtual void ViewEnter(bool isVerified) { }
         protected virtual void StateSimulate(ref T state, float delta) {}
+        protected virtual void StateUpdateView(T predictedState, T? validatedState) { }
 
         public void StateSimulate(float delta)
         {
@@ -30,6 +31,14 @@ namespace PurrNet.Prediction.StateMachine
             StateSimulate(ref s, delta);
             currentState=s;
         }
+
+        protected override void UpdateView(T vs, T? verified)
+        {
+            base.UpdateView(vs, verified);
+            if(machine && ReferenceEquals(machine.currentStateNode, this))
+                StateUpdateView(vs, verified);
+        }
+
         public virtual void Exit() {}
         public virtual void ViewExit(bool isVerified) { }
     }
@@ -47,6 +56,7 @@ namespace PurrNet.Prediction.StateMachine
         public virtual void Enter() { }
         public virtual void ViewEnter(bool isVerified) { }
         protected virtual void StateSimulate(in TInput input, ref T state, float delta) {}
+        protected virtual void StateUpdateView(T predictedState, T? validatedState) { }
 
         public void StateSimulate(float delta)
         {
@@ -55,6 +65,14 @@ namespace PurrNet.Prediction.StateMachine
             StateSimulate(in i, ref s, delta);
             currentState=s;
         }
+
+        protected override void UpdateView(T vs, T? verified)
+        {
+            base.UpdateView(vs, verified);
+            if(machine && ReferenceEquals(machine.currentStateNode, this))
+                StateUpdateView(vs, verified);
+        }
+
         public virtual void Exit() { }
         public virtual void ViewExit(bool isVerified) { }
     }
