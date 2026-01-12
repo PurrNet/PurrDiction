@@ -7,19 +7,10 @@ using UnityEngine;
 
 namespace PurrNet.Prediction
 {
-    public struct PlayerWithObject : IDuplicate<PlayerWithObject>
+    public struct PlayerWithObject
     {
         public PredictedObjectID objectID;
         public PlayerID playerID;
-
-        public PlayerWithObject Duplicate()
-        {
-            return new PlayerWithObject
-            {
-                objectID = objectID,
-                playerID = playerID
-            };
-        }
     }
 
     public struct PlayerSpawnerState : IPredictedData<PlayerSpawnerState>, IDuplicate<PlayerSpawnerState>

@@ -98,8 +98,11 @@ namespace PurrNet.Prediction
                     toAdd.Add(player);
             }
 
-            foreach (var current in currentState.players)
+            var playersCount = currentState.players.Count;
+            var currentPlayers = currentState.players;
+            for (var i = 0; i < playersCount; i++)
             {
+                var current = currentPlayers[i];
                 if (!predictionManager.IsObserver(current))
                     toRemove.Add(current);
             }

@@ -18,7 +18,7 @@ namespace PurrNet.Prediction
             {
                 return new FULL_STATE<T>
                 {
-                    state = Packer.Copy(state),
+                    state = PurrCopy<T>.Copy(state),
                     prediction = prediction
                 };
             }
