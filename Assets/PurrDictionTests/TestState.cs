@@ -27,6 +27,12 @@ namespace PurrNet.Prediction.Tests
             //Debug.Log($"View entered state: {gameObject.name} | {isVerified}");
         }
 
+        protected override void StateUpdateView(StateData predictedState, StateData? validatedState)
+        {
+            base.StateUpdateView(predictedState, validatedState);
+            //Debug.Log($"Updating view for {gameObject.name}");
+        }
+
         public static void NextState()
         {
             Instances[0].machine.Next();
