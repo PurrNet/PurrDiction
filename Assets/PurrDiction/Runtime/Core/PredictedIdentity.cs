@@ -41,6 +41,8 @@ namespace PurrNet.Prediction
 
         public virtual void OnPreSetup() {  }
 
+        internal virtual void OnPrepareSimulationInputs(ulong tick, float delta) {  }
+
         public virtual void ResetState()
         {
             isServer = false;

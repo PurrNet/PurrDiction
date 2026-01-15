@@ -73,37 +73,38 @@ namespace PurrNet.Prediction
         internal override void SimulateTick(ulong tick, float delta)
         {
             var sdelta = sfloat.FromFloat(delta);
+
             if (!fullPredictedState.prediction.wasOnSimulationStartCalled)
             {
                 SimulationStart();
                 fullPredictedState.prediction.wasOnSimulationStartCalled = true;
             }
 
+            PreSimulate(_currentInput, ref fullPredictedState.state, sdelta);
+        }
+
+        internal override void OnPrepareSimulationInputs(ulong tick, float delta)
+        {
+            _currentInput = GetInputForTick(tick, delta);
+        }
+
+        private INPUT GetInputForTick(ulong tick, float delta)
+        {
             if (IsOwner())
             {
-                if (!_inputHistory.TryGet(tick, out var input))
-                    PreSimulate(GetDefaultInput(), ref fullPredictedState.state, sdelta);
-                else PreSimulate(input, ref fullPredictedState.state, sdelta);
+                return !_inputHistory.TryGet(tick, out var input) ? GetDefaultInput() : input;
             }
-            else
+
+            switch (_extrapolateInput)
             {
-                switch (_extrapolateInput)
-                {
-                    case true when _inputHistory.TryGetClosest(tick, out var extrainput, out var distanceInTicks):
-                        if (distanceInTicks > 0)
-                            ModifyExtrapolatedInput(ref extrainput);
-                        uint maxInputs = (uint)Mathf.CeilToInt(_repeatInputFactor * 10 / (delta * 60));
-                        if (distanceInTicks <= maxInputs)
-                             PreSimulate(extrainput, ref fullPredictedState.state, sdelta);
-                        else PreSimulate(GetDefaultInput(), ref fullPredictedState.state, sdelta);
-                        break;
-                    case false when _inputHistory.TryGet(tick, out var input):
-                        PreSimulate(input, ref fullPredictedState.state, sdelta);
-                        break;
-                    default:
-                        PreSimulate(GetDefaultInput(), ref fullPredictedState.state, sdelta);
-                        break;
-                }
+                case true when _inputHistory.TryGetClosest(tick, out var extrainput, out var distanceInTicks):
+                    if (distanceInTicks > 0)
+                        ModifyExtrapolatedInput(ref extrainput);
+                    uint maxInputs = (uint)Mathf.CeilToInt(_repeatInputFactor * 10 / (delta * 60));
+                    return distanceInTicks <= maxInputs ? extrainput : GetDefaultInput();
+                case false when _inputHistory.TryGet(tick, out var input):
+                    return input;
+                default: return GetDefaultInput();
             }
         }
 
@@ -163,7 +164,6 @@ namespace PurrNet.Prediction
 
         private void PreSimulate(INPUT input, ref STATE state, sfloat delta)
         {
-            _currentInput = input;
             Simulate(input, ref state, delta);
         }
 

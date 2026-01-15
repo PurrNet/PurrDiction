@@ -64,6 +64,7 @@ namespace PurrNet.Prediction
         public bool validateDeterministicData => _validateDeterministicData;
 
         static readonly ProfilerMarker SimulateMarker = new("PredictionManager.Simulate");
+        static readonly ProfilerMarker SimulateInputsMarker = new("PredictionManager.PrepareSimulationInputs");
         static readonly ProfilerMarker LateSimulateMarker = new("PredictionManager.LateSimulate");
         static readonly ProfilerMarker UpdateViewMarker = new("PredictionManager.UpdateView");
         static readonly ProfilerMarker SaveHistoryMarker = new("PredictionManager.SaveHistory");
@@ -570,6 +571,12 @@ namespace PurrNet.Prediction
             if (time)
                 delta *= time.timeScale;
 
+            using (SimulateInputsMarker.Auto())
+            {
+                for (var i = 0; i < _systemsCount; i++)
+                    _systems[i].OnPrepareSimulationInputs(localTick, delta);
+            }
+
             using (SimulateMarker.Auto())
             {
                 for (var i = 0; i < _systemsCount; i++)
@@ -988,6 +995,12 @@ namespace PurrNet.Prediction
             isSimulating = true;
             localTickInContext = verifiedTick;
 
+            using (SimulateInputsMarker.Auto())
+            {
+                for (var i = 0; i < _systemsCount; i++)
+                    _systems[i].OnPrepareSimulationInputs(verifiedTick, delta);
+            }
+
             using (SimulateMarker.Auto())
             {
                 for (var j = 0; j < _systemsCount; j++)
@@ -1031,6 +1044,12 @@ namespace PurrNet.Prediction
                             system.RunSaveState(verifiedTick);
                     }
                 }
+            }
+
+            using (SimulateInputsMarker.Auto())
+            {
+                for (var i = 0; i < _systemsCount; i++)
+                    _systems[i].OnPrepareSimulationInputs(verifiedTick, delta);
             }
 
             using (SimulateMarker.Auto())
