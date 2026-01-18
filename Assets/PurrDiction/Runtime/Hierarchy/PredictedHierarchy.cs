@@ -159,8 +159,8 @@ namespace PurrNet.Prediction
                 go = predictionManager.InternalCreate(prefab, position, rotation, instanceId, owner);
             }
 
-            _instanceMap.Add(instanceId, go);
-            _goToId.Add(go, instanceId);
+            _instanceMap[instanceId] = go;
+            _goToId[go] = instanceId;
             _spawnedPrefabs.Insert(index, key);
 
             if (!predictionManager.isSimulating)
