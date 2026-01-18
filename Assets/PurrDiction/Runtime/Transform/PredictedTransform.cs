@@ -200,7 +200,7 @@ namespace PurrNet.Prediction
 
         protected override void OnAddedToPool()
         {
-            if (_hasView && _unparentGraphics)
+            if (_hasView && _unparentGraphics && _graphics)
                 _graphics.SetParent(_originalGraphicsParent);
         }
 
