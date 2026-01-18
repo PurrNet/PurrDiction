@@ -1305,7 +1305,7 @@ namespace PurrNet.Prediction
                 return;
             }
 
-            if (_pools.TryGetPool(prefabsInfo.prefab, out var pool))
+            if (_pools != null && _pools.TryGetPool(prefabsInfo.prefab, out var pool))
             {
                 UnregisterPooledInstance(instance);
                 pool.Delete(instance);
