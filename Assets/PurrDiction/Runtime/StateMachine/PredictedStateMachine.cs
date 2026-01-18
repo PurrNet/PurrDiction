@@ -124,7 +124,8 @@ namespace PurrNet.Prediction.StateMachine
             var state = new SMState()
             {
                 wantedState = 0,
-                stateIndex = -1
+                stateIndex = -1,
+                lastEnteredStateIndex = -1
             };
 
             return state;
