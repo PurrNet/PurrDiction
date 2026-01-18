@@ -76,8 +76,6 @@ namespace PurrNet.Prediction.StateMachine
                     _states[_previousViewStateIndex].ViewEnter(false);
             }
         }
-        
-        private int _lastEnteredStateIndex = -1;
 
         protected override void Simulate(ref SMState state, float delta)
         {
@@ -88,19 +86,19 @@ namespace PurrNet.Prediction.StateMachine
             {
                 var index = state.wantedState;
                 state.wantedState = -1;
-        
+
                 if (state.stateIndex > -1)
                     _states[state.stateIndex].Exit();
 
                 state.stateIndex = index;
                 _states[state.stateIndex].Enter();
-                _lastEnteredStateIndex = state.stateIndex;
+                state.lastEnteredStateIndex = state.stateIndex;
                 state.transition++;
             }
-            else if (state.stateIndex > -1 && state.stateIndex != _lastEnteredStateIndex)
+            else if (state.stateIndex > -1 && state.stateIndex != state.lastEnteredStateIndex)
             {
                 _states[state.stateIndex].Enter();
-                _lastEnteredStateIndex = state.stateIndex;
+                state.lastEnteredStateIndex = state.stateIndex;
 #if UNITY_EDITOR
                 _previousStateNode = null;
                 _currentStateNode = _states[state.stateIndex];
@@ -110,7 +108,7 @@ namespace PurrNet.Prediction.StateMachine
 
             if (state.stateIndex > -1 && _states[state.stateIndex] != null)
                 _states[state.stateIndex].StateSimulate(delta);
-            
+
 #if UNITY_EDITOR
             if (state.stateIndex > -1 && _currentStateNode != _states[state.stateIndex])
             {
@@ -120,7 +118,7 @@ namespace PurrNet.Prediction.StateMachine
             }
 #endif
         }
-        
+
         protected override SMState GetInitialState()
         {
             var state = new SMState()
@@ -179,6 +177,8 @@ namespace PurrNet.Prediction.StateMachine
             public int wantedState;
             public int stateIndex;
             public uint transition;
+
+            public int lastEnteredStateIndex;
 
             public void Dispose() { }
         }
