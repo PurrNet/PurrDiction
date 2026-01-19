@@ -89,9 +89,19 @@ namespace PurrNet.Prediction
                 Debug.Log(system, system);
         }
 
+        private uint _sessionSeed;
+
+        /// <summary>
+        /// The session seed for this prediction manager instance.
+        /// This is randomly generated on Awake and is used to seed any predicted random number generators.
+        ///
+        /// </summary>
+        public uint sessionSeed => _sessionSeed;
+
         private void Awake()
         {
             _instances[gameObject.scene.handle] = this;
+            _sessionSeed = (uint)UnityEngine.Random.Range(int.MinValue, int.MaxValue);
 
 #if UNITY_PHYSICS_2D
             if ((_physicsProvider & PredictionPhysicsProvider.UnityPhysics2D) != 0)
@@ -157,6 +167,8 @@ namespace PurrNet.Prediction
 
         public PredictedTime time { get; private set; }
 
+        public PredictedRandomSystem random { get; private set; }
+
         private DeltaModule _deltaModuleState;
 
         bool ShouldRegisterSystem(BuiltInSystems system)
@@ -179,6 +191,7 @@ namespace PurrNet.Prediction
             physics3d = ShouldRegisterSystem(BuiltInSystems.Physics3D) ? RegisterSystem<Predicted3DPhysics>() : null;
             physics2d = ShouldRegisterSystem(BuiltInSystems.Physics2D) ? RegisterSystem<Predicted2DPhysics>() : null;
             time = ShouldRegisterSystem(BuiltInSystems.Time) ? RegisterSystem<PredictedTime>() : null;
+            random = ShouldRegisterSystem(BuiltInSystems.Random) ? RegisterSystem<PredictedRandomSystem>() : null;
 
             var roots = HashSetPool<GameObject>.Instantiate();
             var pid = -1;
@@ -472,13 +485,14 @@ namespace PurrNet.Prediction
             }
 
             SimulateFrame(localTick, false);
-            SyncFullState(player, tickRate, tickDelta, frame);
+            SyncFullState(player, tickRate, tickDelta, _sessionSeed, frame);
         }
 
         [TargetRpc(compressionLevel: CompressionLevel.Best)]
-        private void SyncFullState([UsedImplicitly] PlayerID target, int tickRate, float delta, BitPacker data)
+        private void SyncFullState([UsedImplicitly] PlayerID target, int tickRate, float delta, uint randomSeed, BitPacker data)
         {
             isSimulating = true;
+            _sessionSeed = randomSeed;
 
             tickDelta = delta;
             this.tickRate = tickRate;
