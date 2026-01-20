@@ -249,11 +249,23 @@ namespace PurrNet.Prediction
             int flagPos = packer.AdvanceBits(1);
 
             bool changed = deltaModule.WriteReliable(packer, target, internalKey, fullPredictedState.prediction);
+#if PURR_DELTA_CHECK_LITE
+            changed = deltaModule.WriteReliable(packer, target, stateKey, fullPredictedState.state) || changed;
+#else
             changed = WriteDeltaState(target, packer, deltaModule) || changed;
+#endif
 
             packer.WriteAt(flagPos, changed);
             if (!changed)
                 packer.SetBitPosition(flagPos + 1);
+
+#if PURR_DELTA_CHECK_LITE
+            using var tmp = BitPackerPool.Get();
+            Packer<PredictedIdentityState>.Write(packer, fullPredictedState.prediction);
+            Packer<STATE>.Write(packer, fullPredictedState.state);
+            var hash = tmp.GetDeterministicHash32();
+            Packer<uint>.WriteFunc(packer, hash);
+#endif
 
             TickBandwidthProfiler.OnWroteState(myType, packer.positionInBits - pos, this);
             return changed;
@@ -270,19 +282,27 @@ namespace PurrNet.Prediction
             int pos = packer.positionInBits;
 
             bool changed = Packer<bool>.Read(packer);
+            FULL_STATE<STATE> newState;
+
             if (changed)
             {
                 STATE state = default;
                 PredictedIdentityState prediction = default;
 
                 deltaModule.ReadReliable(packer, internalKey, ref prediction);
+#if PURR_DELTA_CHECK_LITE
+                deltaModule.ReadReliable(packer, stateKey, ref state);
+#else
                 ReadDeltaState(packer, deltaModule, ref state);
+#endif
 
-                _stateHistory.Write(tick, new FULL_STATE<STATE>
+                newState = new FULL_STATE<STATE>
                 {
                     state = state,
                     prediction = prediction
-                });
+                };
+
+                _stateHistory.Write(tick, newState);
             }
             else
             {
@@ -293,14 +313,32 @@ namespace PurrNet.Prediction
 
                 deltaModule.ReadReliable(packer, internalKey, ref prediction);
                 packer.SetBitPosition(pos);
+#if PURR_DELTA_CHECK_LITE
+                deltaModule.ReadReliable(packer, stateKey, ref state);
+#else
                 ReadDeltaState(packer, deltaModule, ref state);
+#endif
 
-                _stateHistory.Write(tick, new FULL_STATE<STATE>
+                newState = new FULL_STATE<STATE>
                 {
                     state = state,
                     prediction = prediction
-                });
+                };
+
+                _stateHistory.Write(tick, newState);
             }
+
+#if PURR_DELTA_CHECK_LITE
+            using var tmp = BitPackerPool.Get();
+            Packer<PredictedIdentityState>.Write(packer, newState.prediction);
+            Packer<STATE>.Write(packer, newState.state);
+            uint hash = tmp.GetDeterministicHash32();
+            uint shouldBeHash = default;
+            Packer<uint>.ReadFunc(packer, ref shouldBeHash);
+
+            if (hash != shouldBeHash)
+                Debug.LogError($"[PurrDiction] Delta corruption detected on `{this}` ({typeof(STATE).FullName}). Hashes do not match! Read {shouldBeHash}, calculated {hash}.");
+#endif
 
             TickBandwidthProfiler.OnReadState(myType, packer.positionInBits - pos, this);
         }
