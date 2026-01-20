@@ -6,6 +6,11 @@ namespace PurrNet.Prediction
     {
         public uint seed;
 
+        public override string ToString()
+        {
+            return $"PredictedRandom(seed: {seed})";
+        }
+
         public static PredictedRandom Create(uint seed)
         {
             return new PredictedRandom { seed = seed };
