@@ -554,10 +554,14 @@ namespace PurrNet.Prediction
             if (cachedIsServer)
                 PrepareInputs();
 
+            using var ownedIdentities = DisposableList<PredictedIdentity>.Create(_systemsCount);
+
             for (var i = 0; i < _systemsCount; i++)
             {
                 var system = _systems[i];
                 bool controller = system.IsOwner(myPlayer, cachedIsServer);
+                if (controller)
+                    ownedIdentities.Add(system);
                 system.PrepareInput(cachedIsServer, controller, localTick, _inputQueueSettings.extrapolateForMissing);
             }
 
@@ -631,7 +635,7 @@ namespace PurrNet.Prediction
 
             if (cachedIsServer)
                 FinalizeTickOnServer(cachedIsClient);
-            else FinalizeInputOnClient(myPlayer);
+            else FinalizeInputOnClient(ownedIdentities);
 
             isSimulating = false;
 
@@ -654,7 +658,7 @@ namespace PurrNet.Prediction
             }
         }
 
-        private void FinalizeInputOnClient(PlayerID myPlayer)
+        private void FinalizeInputOnClient(DisposableList<PredictedIdentity> ownedIdentities)
         {
             const int MTU = 1024;
 
@@ -664,10 +668,16 @@ namespace PurrNet.Prediction
             {
                 var system = _systems[systemIdx];
                 system.GetLatestUnityState();
-                if (system.hasInput && system.IsOwner(myPlayer))
+            }
+
+            var count = ownedIdentities.Count;
+            for (var ownedIdx = 0; ownedIdx < count; ownedIdx++)
+            {
+                var owned = ownedIdentities[ownedIdx];
+                if (owned && owned.hasInput)
                 {
-                    Packer<PredictedComponentID>.Write(frame, system.id);
-                    system.WriteInput(localTick, default, frame, _deltaModuleState, false);
+                    Packer<PredictedComponentID>.Write(frame, owned.id);
+                    owned.WriteInput(localTick, default, frame, _deltaModuleState, false);
                     writtenCount += 1;
                 }
             }
