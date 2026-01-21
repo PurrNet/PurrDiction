@@ -58,6 +58,7 @@ namespace PurrNet.Prediction
                                 PurrLogger.LogError($"Mismatch: Failed to create prefab {pid}");
                         }
                         offset += op.values.Count;
+                        op.values.Dispose();
                         break;
                     case OperationType.Insert:
                     {
@@ -75,6 +76,7 @@ namespace PurrNet.Prediction
                                 PurrLogger.LogError($"Mismatch: Failed to create prefab {pid}");
                         }
                         offset += op.values.Count;
+                        op.values.Dispose();
                         break;
                     }
                     case OperationType.Delete:
@@ -105,8 +107,11 @@ namespace PurrNet.Prediction
             }
         }
 
+        private bool _isRollingBack = false;
+
         protected override void SetUnityState(PredictedHierarchyState state)
         {
+            _isRollingBack = true;
             var actions = MyersDiff.Diff(_spawnedPrefabs, state.spawnedPrefabs);
 
             Apply(_spawnedPrefabs, actions);
@@ -129,6 +134,7 @@ namespace PurrNet.Prediction
             }
 #endif
             _nextInstanceId = state.nextInstanceId;
+            _isRollingBack = false;
         }
 
         public PredictedObjectID? Create(int prefabId, PlayerID? owner = null)
@@ -182,7 +188,7 @@ namespace PurrNet.Prediction
             _goToId[go] = instanceId;
             _spawnedPrefabs.Insert(index, key);
 
-            if (!predictionManager.isSimulating)
+            if (!_isRollingBack && !predictionManager.isSimulating)
             {
                 ref var state = ref currentState;
                 GetUnityState(ref state);
