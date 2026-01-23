@@ -3,7 +3,6 @@ using PurrNet.Logging;
 using PurrNet.Packing;
 using PurrNet.Pooling;
 using UnityEngine;
-using UnityEngine.UIElements;
 
 namespace PurrNet.Prediction
 {
