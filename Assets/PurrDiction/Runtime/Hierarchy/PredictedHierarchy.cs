@@ -392,7 +392,8 @@ namespace PurrNet.Prediction
                 if (details.instanceId.Equals(id))
                 {
                     _spawnedPrefabs.RemoveAt(i);
-                    Delete(details, instance, !isVerified);
+                    var prefabId = details.prefabId.value;
+                    Delete(details, instance, prefabId < 0 || !isVerified);
                     return;
                 }
             }
