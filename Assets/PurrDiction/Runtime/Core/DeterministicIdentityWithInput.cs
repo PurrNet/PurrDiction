@@ -72,15 +72,18 @@ namespace PurrNet.Prediction
 
         internal override void SimulateTick(ulong tick, float delta)
         {
-            var sdelta = sfloat.FromFloat(delta);
-
-            if (!fullPredictedState.prediction.wasOnSimulationStartCalled)
+            using (simulateMarker.Auto())
             {
-                SimulationStart();
-                fullPredictedState.prediction.wasOnSimulationStartCalled = true;
-            }
+                var sdelta = sfloat.FromFloat(delta);
 
-            PreSimulate(_currentInput, ref fullPredictedState.state, sdelta);
+                if (!fullPredictedState.prediction.wasOnSimulationStartCalled)
+                {
+                    SimulationStart();
+                    fullPredictedState.prediction.wasOnSimulationStartCalled = true;
+                }
+
+                PreSimulate(_currentInput, ref fullPredictedState.state, sdelta);
+            }
         }
 
         internal override void OnPrepareSimulationInputs(ulong tick, float delta)

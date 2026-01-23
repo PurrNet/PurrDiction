@@ -1,6 +1,7 @@
 using PurrNet.Modules;
 using PurrNet.Packing;
 using PurrNet.Prediction.Profiler;
+using Unity.Profiling;
 using UnityEngine;
 
 namespace PurrNet.Prediction
@@ -51,13 +52,16 @@ namespace PurrNet.Prediction
 
         internal override void SimulateTick(ulong tick, float delta)
         {
-            if (!fullPredictedState.prediction.wasOnSimulationStartCalled)
+            using (simulateMarker.Auto())
             {
-                SimulationStart();
-                fullPredictedState.prediction.wasOnSimulationStartCalled = true;
-            }
+                if (!fullPredictedState.prediction.wasOnSimulationStartCalled)
+                {
+                    SimulationStart();
+                    fullPredictedState.prediction.wasOnSimulationStartCalled = true;
+                }
 
-            PreSimulate(_currentInput, ref fullPredictedState.state, delta);
+                PreSimulate(_currentInput, ref fullPredictedState.state, delta);
+            }
         }
 
         private INPUT GetInputForTick(ulong tick, float delta)

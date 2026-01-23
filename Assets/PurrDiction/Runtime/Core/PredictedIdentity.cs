@@ -1,5 +1,6 @@
 using PurrNet.Modules;
 using PurrNet.Packing;
+using Unity.Profiling;
 using UnityEngine;
 
 namespace PurrNet.Prediction
@@ -11,6 +12,13 @@ namespace PurrNet.Prediction
         public virtual string GetExtraString()
         {
             return string.Empty;
+        }
+
+        protected readonly ProfilerMarker simulateMarker;
+
+        protected PredictedIdentity()
+        {
+            simulateMarker = new ProfilerMarker($"{GetType().Name}.Simulate");
         }
 
         public PredictionManager predictionManager { get; protected set; }

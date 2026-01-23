@@ -164,12 +164,16 @@ namespace PurrNet.Prediction
 
         internal override void SimulateTick(ulong tick, float delta)
         {
-            if (!fullPredictedState.prediction.wasOnSimulationStartCalled)
+            using (simulateMarker.Auto())
             {
-                SimulationStart();
-                fullPredictedState.prediction.wasOnSimulationStartCalled = true;
+                if (!fullPredictedState.prediction.wasOnSimulationStartCalled)
+                {
+                    SimulationStart();
+                    fullPredictedState.prediction.wasOnSimulationStartCalled = true;
+                }
+
+                Simulate(ref fullPredictedState.state, delta);
             }
-            Simulate(ref fullPredictedState.state, delta);
         }
 
         internal override void LateSimulateTick(float delta)
