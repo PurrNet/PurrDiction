@@ -3,6 +3,7 @@ using PurrNet.Logging;
 using PurrNet.Packing;
 using PurrNet.Pooling;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace PurrNet.Prediction
 {
@@ -166,6 +167,13 @@ namespace PurrNet.Prediction
             if (pool.TryTakePrecise(key, out var instance))
             {
                 go = instance;
+                go.transform.SetPositionAndRotation(position, rotation);
+                predictionManager.RegisterInstance(go, instanceId, owner, false);
+                go.SetActive(true);
+            }
+            else if (key.prefabId.value < 0 && pool.TryTakeSceneObject(key, out var sceneObj))
+            {
+                go = sceneObj;
                 go.transform.SetPositionAndRotation(position, rotation);
                 predictionManager.RegisterInstance(go, instanceId, owner, false);
                 go.SetActive(true);
