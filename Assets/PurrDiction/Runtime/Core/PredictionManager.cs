@@ -532,7 +532,7 @@ namespace PurrNet.Prediction
 
             isSimulating = false;
 
-            ReplayToLatestTick(1);
+            ReplayToLatestTick(1, true);
         }
 
         readonly List<PlayerPacker> _clientFrames = new (16);
@@ -987,7 +987,9 @@ namespace PurrNet.Prediction
                 isVerified = false;
             }
 
-            ReplayToLatestTick(_lastVerifiedTick + 1);
+            SimulateFrame(_lastVerifiedTick + 1, true);
+            ReplayToLatestTick(_lastVerifiedTick + 2, false);
+
             SyncTransforms();
             UpdateInterpolation(true);
 
@@ -1004,10 +1006,10 @@ namespace PurrNet.Prediction
                 _systems[j].RunUpdateRollbackInterpolation(tickDelta, accumulateError);
         }
 
-        private void ReplayToLatestTick(ulong verifiedTick)
+        private void ReplayToLatestTick(ulong verifiedTick, bool saveState)
         {
             for (ulong simTick = verifiedTick; simTick < localTick; simTick++)
-                SimulateFrame(simTick, true);
+                SimulateFrame(simTick, saveState);
         }
 
         private void SimulateFrameInPlace(ulong verifiedTick)
