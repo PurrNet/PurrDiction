@@ -96,7 +96,7 @@ namespace PurrNet.Prediction
         {
             if (IsOwner())
             {
-                return !_inputHistory.TryGet(tick, out var input) ? GetDefaultInput() : input;
+                return !_inputHistory.TryGet(tick, out var input) ? GetDefaultInput() : PurrCopy<INPUT>.Copy(input);
             }
 
             switch (_extrapolateInput)

@@ -15,6 +15,8 @@ namespace PurrNet.Prediction
 
         public override bool hasInput => true;
 
+        public bool extrapolateInput {get => _extrapolateInput; set => _extrapolateInput = value; }
+
         private History<INPUT> _inputHistory;
 
         public ref INPUT currentInput => ref _currentInput;
@@ -68,7 +70,7 @@ namespace PurrNet.Prediction
         {
             if (IsOwner())
             {
-                return !_inputHistory.TryGet(tick, out var input) ? GetDefaultInput() : input;
+                return !_inputHistory.TryGet(tick, out var input) ? GetDefaultInput() : PurrCopy<INPUT>.Copy(input);
             }
 
             switch (_extrapolateInput)
