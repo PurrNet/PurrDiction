@@ -484,7 +484,7 @@ namespace PurrNet.Prediction
                     _systems[i].RunWriteFirstState(tick, frame);
             }
 
-            SimulateFrame(localTick, false);
+            SimulateFrameInitial(localTick, tick);
             SyncFullState(player, tickRate, tickDelta, _sessionSeed, frame);
         }
 
@@ -1043,6 +1043,45 @@ namespace PurrNet.Prediction
 
             for (var i = 0; i < _systemsCount; i++)
                 _systems[i].PostSimulate();
+            for (var j = 0; j < _systemsCount; j++)
+                _systems[j].GetLatestUnityState();
+
+            isSimulating = false;
+            localTickInContext = localTick;
+        }
+
+        private void SimulateFrameInitial(ulong stateTick, ulong inputTick)
+        {
+            var delta = tickDelta;
+            if (time)
+                delta *= time.timeScale;
+
+            isSimulating = true;
+            localTickInContext = stateTick;
+
+            using (SimulateInputsMarker.Auto())
+            {
+                for (var i = 0; i < _systemsCount; i++)
+                    _systems[i].OnPrepareSimulationInputs(inputTick, delta);
+            }
+
+            using (SimulateMarker.Auto())
+            {
+                for (var j = 0; j < _systemsCount; j++)
+                    _systems[j].RunSimulateTick(stateTick, delta);
+            }
+
+            using (LateSimulateMarker.Auto())
+            {
+                for (var j = 0; j < _systemsCount; j++)
+                    _systems[j].RunLateSimulateTick(delta);
+            }
+
+            DoPhysicsPass();
+
+            for (var i = 0; i < _systemsCount; i++)
+                _systems[i].PostSimulate();
+
             for (var j = 0; j < _systemsCount; j++)
                 _systems[j].GetLatestUnityState();
 

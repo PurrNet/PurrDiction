@@ -43,7 +43,7 @@ namespace PurrNet.Prediction
 
         private History<INPUT> _inputHistory;
 
-        public INPUT currentInput => _currentInput;
+        public ref INPUT currentInput => ref _currentInput;
         private INPUT _currentInput;
 
         public override string ToString()
@@ -88,6 +88,7 @@ namespace PurrNet.Prediction
 
         internal override void OnPrepareSimulationInputs(ulong tick, float delta)
         {
+            _currentInput.Dispose();
             _currentInput = GetInputForTick(tick, delta);
         }
 
@@ -101,12 +102,17 @@ namespace PurrNet.Prediction
             switch (_extrapolateInput)
             {
                 case true when _inputHistory.TryGetClosest(tick, out var extrainput, out var distanceInTicks):
-                    if (distanceInTicks > 0)
-                        ModifyExtrapolatedInput(ref extrainput);
                     uint maxInputs = (uint)Mathf.CeilToInt(_repeatInputFactor * 10 / (delta * 60));
-                    return distanceInTicks <= maxInputs ? extrainput : GetDefaultInput();
+                    if (distanceInTicks > maxInputs)
+                    {
+                        return GetDefaultInput();
+                    }
+                    var copy = PurrCopy<INPUT>.Copy(extrainput);
+                    if (distanceInTicks > 0)
+                        ModifyExtrapolatedInput(ref copy);
+                    return copy;
                 case false when _inputHistory.TryGet(tick, out var input):
-                    return input;
+                    return PurrCopy<INPUT>.Copy(input);
                 default: return GetDefaultInput();
             }
         }
