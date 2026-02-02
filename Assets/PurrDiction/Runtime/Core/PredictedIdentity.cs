@@ -192,6 +192,8 @@ namespace PurrNet.Prediction
             }
         }
 
+        internal virtual void LateUpdateView(float deltaTime) { }
+
         internal abstract void GetLatestUnityState();
 
         internal abstract void WriteFirstState(ulong tick, BitPacker packer);

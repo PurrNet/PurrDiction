@@ -1268,6 +1268,18 @@ namespace PurrNet.Prediction
                 for (var i = 0; i < _systemsCount; i++)
                     _systems[i].RunUpdateView(dt);
             }
+
+            LateUpdateView();
+        }
+
+        private void LateUpdateView()
+        {
+            using (UpdateViewMarker.Auto())
+            {
+                var dt = Time.unscaledDeltaTime;
+                for (var i = 0; i < _systemsCount; i++)
+                    _systems[i].RunLateUpdateView(dt);
+            }
         }
 
         public bool TryGetPrefab(int pid, out GameObject prefab)
