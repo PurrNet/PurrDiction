@@ -33,6 +33,18 @@ namespace PurrNet.Prediction
 #pragma warning restore CS0618 // Type or member is obsolete
         }
 
+        internal override void UpdateView(float deltaTime)
+        {
+#pragma warning disable CS0618 // Type or member is obsolete
+            UpdateView(default, default);
+#pragma warning restore CS0618 // Type or member is obsolete
+        }
+
+        [Obsolete("Use UpdateView() instead."), UsedImplicitly, MethodImpl(MethodImplOptions.AggressiveInlining)]
+        protected virtual void UpdateView(StatelessHeSaid stateless, StatelessHeSaid? verified) => UpdateView();
+
+        protected virtual void UpdateView() { }
+
         protected virtual void LateSimulate(float delta) {}
 
         internal override void LateSimulateTick(float delta) => LateSimulate(delta);
