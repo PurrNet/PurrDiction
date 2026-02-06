@@ -39,7 +39,8 @@ namespace PurrNet.Prediction
             BuiltInSystems.Physics2D |
             BuiltInSystems.Time |
             BuiltInSystems.Hierarchy |
-            BuiltInSystems.Players;
+            BuiltInSystems.Players |
+            BuiltInSystems.Random;
         [SerializeField] private PredictedPrefabs _predictedPrefabs;
         [SerializeField] private InputQueueSettings _inputQueueSettings = new()
         {

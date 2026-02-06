@@ -95,12 +95,19 @@ namespace PurrNet.Prediction
         /// </summary>
         /// <param name="tick">Which tick did this happen in.</param>
         /// <param name="data">What is the state/data of the tick.</param>
-        public void Write(ulong tick, T data)
+        public void Write(ulong tick, in T data)
         {
             var entry = new Entry {
                 Tick = tick,
                 Data = data
             };
+
+            // Fast path for appending, AKA most common case
+            if (m_data.Count == 0 || tick > m_data[^1].Tick)
+            {
+                m_data.Add(entry);
+                return;
+            }
 
             if (Find(tick, out var index))
             {
