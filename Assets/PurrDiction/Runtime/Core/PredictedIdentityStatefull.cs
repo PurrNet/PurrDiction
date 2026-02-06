@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Runtime.CompilerServices;
 using JetBrains.Annotations;
 using PurrNet.Modules;
 using PurrNet.Packing;
@@ -181,6 +182,13 @@ namespace PurrNet.Prediction
 
         internal override void SaveStateInHistory(ulong tick)
         {
+            if (RuntimeHelpers.IsReferenceOrContainsReferences<STATE>() && _stateHistory.Count > 0)
+            {
+                var lastIdx = _stateHistory.Count - 1;
+                if (Packer.AreEqual(_stateHistory[lastIdx].state, fullPredictedState.state))
+                    return;
+            }
+
             _stateHistory.Write(tick, fullPredictedState.DeepCopy());
         }
 
@@ -205,7 +213,7 @@ namespace PurrNet.Prediction
 
         internal override void Rollback(ulong tick)
         {
-            if (!_stateHistory.Read(tick, out var state))
+            if (!_stateHistory.ReadOrPrevious(tick, out var state))
                 return;
 
             fullPredictedState.Dispose();
@@ -225,7 +233,7 @@ namespace PurrNet.Prediction
         {
             var savedState = fullPredictedState;
 
-            if (tick > 0 && _stateHistory.TryGet(tick, out var state))
+            if (tick > 0 && _stateHistory.ReadOrPrevious(tick, out var state))
                 savedState = state;
 
             Packer<PredictedIdentityState>.Write(packer, savedState.prediction);

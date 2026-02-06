@@ -222,6 +222,33 @@ namespace PurrNet.Prediction
             return Read(tick, out result);
         }
 
+        /// <summary>
+        /// Returns the data at the specified tick, or if no exact match exists,
+        /// returns the closest previous entry (the most recent entry before the tick).
+        /// </summary>
+        /// <param name="tick">The tick you are searching for.</param>
+        /// <param name="result">The data stored or default if not found.</param>
+        /// <returns>True if an exact or previous entry was found.</returns>
+        public bool ReadOrPrevious(ulong tick, out T result)
+        {
+            result = default;
+
+            if (Find(tick, out var index))
+            {
+                result = this[index];
+                return true;
+            }
+
+            // index is the insertion point; index-1 is the closest previous entry
+            if (index > 0)
+            {
+                result = this[index - 1];
+                return true;
+            }
+
+            return false;
+        }
+
         public bool TryGetClosest(ulong tick, out T result)
         {
             result = default;
