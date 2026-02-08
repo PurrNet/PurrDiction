@@ -318,7 +318,7 @@ namespace PurrNet.Prediction
         {
             get
             {
-                if (lastVerifiedTick.HasValue && _stateHistory.TryGet(lastVerifiedTick.Value, out var state))
+                if (lastVerifiedTick.HasValue && _stateHistory.ReadOrPrevious(lastVerifiedTick.Value, out var state))
                     return state.state;
                 return null;
             }
