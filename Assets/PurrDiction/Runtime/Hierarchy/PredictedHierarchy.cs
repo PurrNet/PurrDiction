@@ -273,7 +273,7 @@ namespace PurrNet.Prediction
             }
             else
             {
-                predictionManager.InternalDelete(details.prefabId,go);
+                predictionManager.InternalDelete(details.prefabId, go);
             }
         }
 

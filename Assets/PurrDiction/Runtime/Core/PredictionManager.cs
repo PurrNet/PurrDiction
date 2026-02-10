@@ -1371,6 +1371,7 @@ namespace PurrNet.Prediction
 
             if (!_predictedPrefabs || pid < 0 || pid >= _predictedPrefabs.prefabs.Count)
             {
+                UnregisterInstance(instance, false);
                 UnityProxy.DestroyImmediateDirectly(instance);
                 return;
             }
@@ -1379,6 +1380,7 @@ namespace PurrNet.Prediction
 
             if (!prefabsInfo.pooling.usePooling)
             {
+                UnregisterInstance(instance, false);
                 UnityProxy.DestroyImmediateDirectly(instance);
                 return;
             }
@@ -1388,7 +1390,11 @@ namespace PurrNet.Prediction
                 UnregisterPooledInstance(instance);
                 pool.Delete(instance);
             }
-            else UnityProxy.DestroyImmediateDirectly(instance);
+            else
+            {
+                UnregisterInstance(instance, false);
+                UnityProxy.DestroyImmediateDirectly(instance);
+            }
         }
 
         public void SetOwnership(PredictedObjectID? root, PlayerID? player)
