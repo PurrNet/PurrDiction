@@ -315,7 +315,7 @@ namespace PurrNet.Prediction
             return system;
         }
 
-        public void RegisterInstance(GameObject go, PredictedObjectID objectID, PlayerID? owner, bool reset)
+        public void RegisterInstance(GameObject go, PredictedObjectID objectID, PlayerID? owner, bool reset, bool triggedOnRemovedFromPool)
         {
             var components = ListPool<PredictedIdentity>.Instantiate();
             go.GetComponentsInChildren(true, components);
@@ -330,7 +330,8 @@ namespace PurrNet.Prediction
                     component.OnPreSetup();
                     if (reset)
                          component.ResetState();
-                    // else component.TriggerOnRemovedFromPool();
+                    if (triggedOnRemovedFromPool)
+                        component.TriggerOnRemovedFromPool();
                     RegisterInstance(component, objectID, i, owner);
                 }
             }
@@ -338,7 +339,7 @@ namespace PurrNet.Prediction
             ListPool<PredictedIdentity>.Destroy(components);
         }
 
-        public void UnregisterInstance(GameObject go, bool reset)
+        public void UnregisterInstance(GameObject go, bool reset, bool destroyEvent)
         {
             if (!go)
                 return;
@@ -353,8 +354,8 @@ namespace PurrNet.Prediction
                     if (reset)
                         components[i].ResetState();
                     UnregisterInstance(components[i]);
-                    /*components[i].TriggerDestroyedEvent();
-                    components[i].TriggerOnPooledEvent();*/
+                    if (destroyEvent)
+                        components[i].TriggerDestroyedEvent();
                 }
             }
 
@@ -1354,13 +1355,13 @@ namespace PurrNet.Prediction
                 var trs = go.transform;
                 ProperlySetPosAndRot(trs, position, rotation);
                 trs.SetParent(null);
-                RegisterInstance(go, objectId, owner, true);
+                RegisterInstance(go, objectId, owner, true, true);
                 return go;
             }
             else
             {
                 var go = UnityProxy.InstantiateDirectly(prefab, position, rotation, gameObject.scene);
-                RegisterInstance(go, objectId, owner, false);
+                RegisterInstance(go, objectId, owner, false, false);
                 return go;
             }
         }
@@ -1371,7 +1372,7 @@ namespace PurrNet.Prediction
 
             if (!_predictedPrefabs || pid < 0 || pid >= _predictedPrefabs.prefabs.Count)
             {
-                UnregisterInstance(instance, false);
+                UnregisterInstance(instance, false, true);
                 UnityProxy.DestroyImmediateDirectly(instance);
                 return;
             }
@@ -1380,7 +1381,7 @@ namespace PurrNet.Prediction
 
             if (!prefabsInfo.pooling.usePooling)
             {
-                UnregisterInstance(instance, false);
+                UnregisterInstance(instance, false, true);
                 UnityProxy.DestroyImmediateDirectly(instance);
                 return;
             }
@@ -1392,7 +1393,7 @@ namespace PurrNet.Prediction
             }
             else
             {
-                UnregisterInstance(instance, false);
+                UnregisterInstance(instance, false, true);
                 UnityProxy.DestroyImmediateDirectly(instance);
             }
         }

@@ -88,7 +88,7 @@ namespace PurrNet.Prediction
                             if (_instanceMap.Remove(details.instanceId, out var instance) && instance)
                             {
                                 _goToId.Remove(instance);
-                                Delete(details, instance, true);
+                                Delete(details, instance, true, false);
                             }
                             else
                             {
@@ -167,14 +167,14 @@ namespace PurrNet.Prediction
             {
                 go = instance;
                 go.transform.SetPositionAndRotation(position, rotation);
-                predictionManager.RegisterInstance(go, instanceId, owner, false);
+                predictionManager.RegisterInstance(go, instanceId, owner, false, false);
                 go.SetActive(true);
             }
             else if (key.prefabId.value < 0 && pool.TryTakeSceneObject(key, out var sceneObj))
             {
                 go = sceneObj;
                 go.transform.SetPositionAndRotation(position, rotation);
-                predictionManager.RegisterInstance(go, instanceId, owner, false);
+                predictionManager.RegisterInstance(go, instanceId, owner, false, false);
                 go.SetActive(true);
             }
             else
@@ -256,7 +256,7 @@ namespace PurrNet.Prediction
             }
         }
 
-        private void Delete(InstanceDetails details, GameObject go, bool canPool)
+        private void Delete(InstanceDetails details, GameObject go, bool canPool, bool triggerDestroyEvent)
         {
             if (!canPool)
             {
@@ -269,7 +269,7 @@ namespace PurrNet.Prediction
             if (pool.Put(details, go, predictionManager.localTick))
             {
                 go.SetActive(false);
-                predictionManager.UnregisterInstance(go, false);
+                predictionManager.UnregisterInstance(go, false, triggerDestroyEvent);
             }
             else
             {
@@ -287,7 +287,7 @@ namespace PurrNet.Prediction
             _goToId.Add(root, instanceId);
             _spawnedPrefabs.Add(key);
 
-            predictionManager.RegisterInstance(root, instanceId, null, false);
+            predictionManager.RegisterInstance(root, instanceId, null, false, false);
         }
 
         public PredictedObjectID? Create(GameObject prefab, PlayerID? owner = null)
@@ -392,7 +392,7 @@ namespace PurrNet.Prediction
                 {
                     _spawnedPrefabs.RemoveAt(i);
                     var prefabId = details.prefabId.value;
-                    Delete(details, instance, prefabId < 0 || !isVerified);
+                    Delete(details, instance, prefabId < 0 || !isVerified, true);
                     return;
                 }
             }
@@ -451,7 +451,7 @@ namespace PurrNet.Prediction
 
                 if (_isSceneObject.Contains(instance.instanceId))
                 {
-                    predictionManager.UnregisterInstance(go, true);
+                    predictionManager.UnregisterInstance(go, true, true);
                     continue;
                 }
 
