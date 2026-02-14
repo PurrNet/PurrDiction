@@ -24,11 +24,9 @@ namespace PurrNet.Prediction.StateMachine
             }
         }
 
-#if UNITY_EDITOR
         public IPredictedStateNodeBase _previousStateNode;
         public IPredictedStateNodeBase _nextStateNode;
         public IPredictedStateNodeBase _currentStateNode;
-#endif
 
         private int _previousViewStateIndex = -1;
         private int _previousVerifiedViewStateIndex = -1;
@@ -36,9 +34,7 @@ namespace PurrNet.Prediction.StateMachine
         private void Awake()
         {
             _states = _wrappedStates.Select(wrapped => wrapped.Value).ToList();
-#if UNITY_EDITOR
             _currentStateNode = _states.FirstOrDefault();
-#endif
 
             for (var i = 0; i < _states.Count; i++)
             {
@@ -99,24 +95,20 @@ namespace PurrNet.Prediction.StateMachine
             {
                 _states[state.stateIndex].Enter();
                 state.lastEnteredStateIndex = state.stateIndex;
-#if UNITY_EDITOR
                 _previousStateNode = null;
                 _currentStateNode = _states[state.stateIndex];
                 _nextStateNode = _states[(state.stateIndex + 1) % _states.Count];
-#endif
             }
 
             if (state.stateIndex > -1 && _states[state.stateIndex] != null)
                 _states[state.stateIndex].StateSimulate(delta);
 
-#if UNITY_EDITOR
             if (state.stateIndex > -1 && _currentStateNode != _states[state.stateIndex])
             {
                 _previousStateNode = _currentStateNode;
                 _currentStateNode = _states[state.stateIndex];
                 _nextStateNode = _states[(state.stateIndex + 1) % _states.Count];
             }
-#endif
         }
 
         protected override SMState GetInitialState()
@@ -147,10 +139,8 @@ namespace PurrNet.Prediction.StateMachine
 
         public void SetState(int stateIndex)
         {
-#if UNITY_EDITOR
             _previousStateNode = _currentStateNode;
             _nextStateNode = _states[(currentState.stateIndex + 1) % _states.Count];
-#endif
             SetWantedStateIndex(stateIndex);
         }
 
