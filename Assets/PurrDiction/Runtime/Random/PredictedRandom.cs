@@ -6,7 +6,7 @@ namespace PurrNet.Prediction
     public struct PredictedRandom : IPackedAuto
     {
         public uint seed;
-        const uint MCG_MULTIPLIER_CONSTANT = 0x93D765DD;
+        const uint LCG_MULTIPLIER_CONSTANT = 0x915f77f5;
         const uint FLOAT_EXPONENT_MASK = 0x3F800000;
         public override string ToString()
         {
@@ -24,7 +24,9 @@ namespace PurrNet.Prediction
             seed ^= seed << 13;
             seed ^= seed >> 17;
             seed ^= seed << 5;
-            return seed * MCG_MULTIPLIER_CONSTANT;
+            seed *= LCG_MULTIPLIER_CONSTANT;
+            seed++;
+            return seed;
         }
 
         // Generates a random integer in the range [min, max)
@@ -54,7 +56,7 @@ namespace PurrNet.Prediction
         // Generates a random sfloat in the range [0, 1)
         public FP NextFP()
         {
-            return FP.FromRaw((long)((ulong)Next() >> MathFP.Shift));
+            return FP.FromRaw(Next());
         }
 
         // Generates a random float in the range [min, max)
