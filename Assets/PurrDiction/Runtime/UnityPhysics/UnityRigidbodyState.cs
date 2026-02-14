@@ -9,14 +9,16 @@ namespace PurrNet.Prediction
         public Vector3 angularVelocity;
         public bool isKinematic;
         public bool isSleeping;
+        public bool useGravity;
 
         public override string ToString()
         {
-            return 
+            return
                 $"LinearVelocity: {linearVelocity}\n" +
                 $"AngularVelocity: {angularVelocity}\n" +
                 $"IsKinematic: {isKinematic}\n" +
-                $"IsSleeping: {isSleeping}";
+                $"IsSleeping: {isSleeping}\n" +
+                $"UseGravity: {useGravity}";
         }
 
 #if UNITY_PHYSICS_3D
@@ -30,6 +32,7 @@ namespace PurrNet.Prediction
             angularVelocity = rigidbody.angularVelocity;
             isKinematic = rigidbody.isKinematic;
             isSleeping = rigidbody.IsSleeping();
+            useGravity = rigidbody.useGravity;
         }
 #endif
         public void Dispose() { }
@@ -41,6 +44,7 @@ namespace PurrNet.Prediction
         public CompressedVector3 angularVelocity;
         public bool isKinematic;
         public bool isSleeping;
+        public bool useGravity;
 
         public UnityRigidbodyCompressedState(UnityRigidbodyState state)
         {
@@ -58,11 +62,12 @@ namespace PurrNet.Prediction
 
             isKinematic = state.isKinematic;
 			isSleeping = state.isSleeping;
+            useGravity = state.useGravity;
         }
 
         public override string ToString()
         {
-            return $"MediumState LinearVelocity: {linearVelocity}\nAngularVelocity: {angularVelocity}\nIsKinematic: {isKinematic}\nIsSleeping: {isSleeping}";
+            return $"MediumState LinearVelocity: {linearVelocity}\nAngularVelocity: {angularVelocity}\nIsKinematic: {isKinematic}\nIsSleeping: {isSleeping}\nUseGravity : {useGravity}";
         }
     }
 
@@ -72,18 +77,19 @@ namespace PurrNet.Prediction
         public HalfVector3 angularVelocity;
         public bool isKinematic;
         public bool isSleeping;
-
+        public bool useGravity;
         public UnityRigidbodyHalfState(UnityRigidbodyState state)
         {
             linearVelocity = state.linearVelocity;
             angularVelocity = state.angularVelocity;
             isKinematic = state.isKinematic;
 			isSleeping = state.isSleeping;
+            useGravity = state.useGravity;
         }
 
         public override string ToString()
         {
-            return $"HalfState LinearVelocity: {(Vector3)linearVelocity}\nAngularVelocity: {(Vector3)angularVelocity}\nIsKinematic: {isKinematic}\nIsSleeping: {isSleeping}";
+            return $"HalfState LinearVelocity: {(Vector3)linearVelocity}\nAngularVelocity: {(Vector3)angularVelocity}\nIsKinematic: {isKinematic}\nIsSleeping: {isSleeping}\nUseGravity: {useGravity}";
         }
     }
 }

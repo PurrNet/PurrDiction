@@ -97,6 +97,11 @@ namespace PurrNet.Prediction
             get => _rigidbody.isKinematic;
             set => _rigidbody.isKinematic = value;
         }
+        public bool useGravity
+        {
+            get => _rigidbody.useGravity;
+            set => _rigidbody.useGravity = value;
+        }
 
         private bool _defaultKinematic;
 
@@ -158,6 +163,7 @@ namespace PurrNet.Prediction
                     state.angularVelocity = compressedState.angularVelocity;
                     state.isKinematic = compressedState.isKinematic;
                     state.isSleeping = compressedState.isSleeping;
+                    state.useGravity = compressedState.useGravity;
                     break;
                 }
                 case FloatAccuracy.Low:
@@ -170,6 +176,7 @@ namespace PurrNet.Prediction
                     state.angularVelocity = halfState.angularVelocity;
                     state.isKinematic = halfState.isKinematic;
                     state.isSleeping = halfState.isSleeping;
+                    state.useGravity = halfState.useGravity;
                     break;
                 }
                 default: throw new ArgumentOutOfRangeException();
@@ -294,7 +301,8 @@ namespace PurrNet.Prediction
                 linearVelocity = linearVelocity,
                 angularVelocity = angularVelocity,
                 isKinematic = isKinematic,
-                isSleeping = _rigidbody.IsSleeping()
+                isSleeping = _rigidbody.IsSleeping(),
+                useGravity = useGravity,
             };
         }
 
@@ -304,12 +312,13 @@ namespace PurrNet.Prediction
             state.linearVelocity = linearVelocity;
             state.angularVelocity = angularVelocity;
             state.isSleeping = _rigidbody.IsSleeping();
+            state.useGravity = useGravity;
         }
 
         protected override void SetUnityState(UnityRigidbodyState state)
         {
             isKinematic = state.isKinematic;
-
+            useGravity = state.useGravity;
             if (!state.isKinematic)
             {
                 linearVelocity = state.linearVelocity;
