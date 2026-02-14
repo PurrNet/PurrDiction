@@ -1,11 +1,13 @@
 using PurrNet.Packing;
+using System;
 
 namespace PurrNet.Prediction
 {
     public struct PredictedRandom : IPackedAuto
     {
         public uint seed;
-
+        const uint MCG_MULTIPLIER_CONSTANT = 0x93D765DD;
+        const uint FLOAT_EXPONENT_MASK = 0x3F800000;
         public override string ToString()
         {
             return $"PredictedRandom(seed: {seed})";
@@ -22,7 +24,7 @@ namespace PurrNet.Prediction
             seed ^= seed << 13;
             seed ^= seed >> 17;
             seed ^= seed << 5;
-            return seed * 0x85EBCA6Bu;
+            return seed * MCG_MULTIPLIER_CONSTANT;
         }
 
         // Generates a random integer in the range [min, max)
@@ -40,19 +42,19 @@ namespace PurrNet.Prediction
         // Generates a random float in the range [0, 1)
         public float NextFloat()
         {
-            return Next() / (float)uint.MaxValue;
+            return BitConverter.Int32BitsToSingle((int)((Next() >> 9) | FLOAT_EXPONENT_MASK)) - 1.0f;
         }
 
         // Generates a random sfloat in the range [0, 1)
         public sfloat NextSFloat()
         {
-            return sfloat.Abs((int)Next() / (sfloat)int.MaxValue);
+            return sfloat.FromRaw((Next() >> 9) | FLOAT_EXPONENT_MASK) - sfloat.one;
         }
 
         // Generates a random sfloat in the range [0, 1)
         public FP NextFP()
         {
-            return (FP)Next() / 4294967296.0;
+            return FP.FromRaw((long)((ulong)Next() >> MathFP.Shift));
         }
 
         // Generates a random float in the range [min, max)
