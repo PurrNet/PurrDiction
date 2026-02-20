@@ -603,13 +603,13 @@ namespace PurrNet.Prediction
                     _systems[i].RunSimulateTick(localTick, delta);
             }
 
+            DoPhysicsPass();
+
             using (LateSimulateMarker.Auto())
             {
                 for (var i = 0; i < _systemsCount; i++)
                     _systems[i].RunLateSimulateTick(delta);
             }
-
-            DoPhysicsPass();
 
             using (SaveHistoryMarker.Auto())
             {
@@ -1035,13 +1035,13 @@ namespace PurrNet.Prediction
                     _systems[j].RunSimulateTick(verifiedTick, delta);
             }
 
+            DoPhysicsPass();
+
             using (LateSimulateMarker.Auto())
             {
                 for (var j = 0; j < _systemsCount; j++)
                     _systems[j].RunLateSimulateTick(delta);
             }
-
-            DoPhysicsPass();
 
             for (var i = 0; i < _systemsCount; i++)
                 _systems[i].PostSimulate();
@@ -1073,13 +1073,13 @@ namespace PurrNet.Prediction
                     _systems[j].RunSimulateTick(stateTick, delta);
             }
 
+            DoPhysicsPass();
+
             using (LateSimulateMarker.Auto())
             {
                 for (var j = 0; j < _systemsCount; j++)
                     _systems[j].RunLateSimulateTick(delta);
             }
-
-            DoPhysicsPass();
 
             for (var i = 0; i < _systemsCount; i++)
                 _systems[i].PostSimulate();
@@ -1125,13 +1125,13 @@ namespace PurrNet.Prediction
                     _systems[j].RunSimulateTick(verifiedTick, delta);
             }
 
+            DoPhysicsPass();
+
             using (LateSimulateMarker.Auto())
             {
                 for (var j = 0; j < _systemsCount; j++)
                     _systems[j].RunLateSimulateTick(delta);
             }
-
-            DoPhysicsPass();
 
             if (saveState)
             {
