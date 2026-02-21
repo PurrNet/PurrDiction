@@ -200,7 +200,7 @@ namespace PurrNet.Prediction
 
         protected override void OnAddedToPool()
         {
-            if (_hasView && _unparentGraphics)
+            if (_hasView && _unparentGraphics && _graphics)
                 _graphics.SetParent(_originalGraphicsParent);
         }
 
@@ -243,8 +243,12 @@ namespace PurrNet.Prediction
             {
                 var newError = lastPrediction.unityPosition - oldPrediction.unityPosition;
                 _accumulatedPositionError += newError;
-                _accumulatedRotationError = Quaternion.Inverse(oldPrediction.unityRotation) *
-                                            lastPrediction.unityRotation * _accumulatedRotationError;
+
+                var deltaPred =
+                    Quaternion.Inverse(oldPrediction.unityRotation) *
+                    lastPrediction.unityRotation;
+
+                _accumulatedRotationError *= deltaPred;
             }
 
             var positionError = _accumulatedPositionError.magnitude;
@@ -302,14 +306,16 @@ namespace PurrNet.Prediction
             }
             else
             {
-                newView.unityRotation = Quaternion.Inverse(_accumulatedRotationError) * lastPrediction.unityRotation;
+                newView.unityRotation =
+                    lastPrediction.unityRotation * Quaternion.Inverse(_accumulatedRotationError);
 
                 var rotRate = rotationInterpolation.correctionRateMinMax;
                 var rotBlend = rotationInterpolation.correctionBlendMinMax;
                 var rotLerp = Mathf.Clamp01(Mathf.InverseLerp(rotBlend.x, rotBlend.y, rotationError));
                 float rate = Mathf.Lerp(rotRate.x, rotRate.y, rotLerp) * delta;
 
-                _accumulatedRotationError = Quaternion.Slerp(_accumulatedRotationError, Quaternion.identity, rate);
+                _accumulatedRotationError =
+                    Quaternion.Slerp(_accumulatedRotationError, Quaternion.identity, rate);
             }
 
             _viewState = newView;

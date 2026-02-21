@@ -15,9 +15,11 @@ namespace PurrNet.Prediction
 
         public override bool hasInput => true;
 
+        public bool extrapolateInput {get => _extrapolateInput; set => _extrapolateInput = value; }
+
         private History<INPUT> _inputHistory;
 
-        public INPUT currentInput => _currentInput;
+        public ref INPUT currentInput => ref _currentInput;
         private INPUT _currentInput;
 
         public override string ToString()
@@ -44,39 +46,48 @@ namespace PurrNet.Prediction
             _inputHistory = new History<INPUT>(world.tickRate * 5);
         }
 
+        internal override void OnPrepareSimulationInputs(ulong tick, float delta)
+        {
+            _currentInput.Dispose();
+            _currentInput = GetInputForTick(tick, delta);
+        }
+
         internal override void SimulateTick(ulong tick, float delta)
         {
-            if (!fullPredictedState.prediction.wasOnSimulationStartCalled)
+            using (simulateMarker.Auto())
             {
-                SimulationStart();
-                fullPredictedState.prediction.wasOnSimulationStartCalled = true;
-            }
+                if (!fullPredictedState.prediction.wasOnSimulationStartCalled)
+                {
+                    SimulationStart();
+                    fullPredictedState.prediction.wasOnSimulationStartCalled = true;
+                }
 
+                PreSimulate(_currentInput, ref fullPredictedState.state, delta);
+            }
+        }
+
+        private INPUT GetInputForTick(ulong tick, float delta)
+        {
             if (IsOwner())
             {
-                if (!_inputHistory.TryGet(tick, out var input))
-                    PreSimulate(GetDefaultInput(), ref fullPredictedState.state, delta);
-                else PreSimulate(input, ref fullPredictedState.state, delta);
+                return !_inputHistory.TryGet(tick, out var input) ? GetDefaultInput() : PurrCopy<INPUT>.Copy(input);
             }
-            else
+
+            switch (_extrapolateInput)
             {
-                switch (_extrapolateInput)
-                {
-                    case true when _inputHistory.TryGetClosest(tick, out var extrainput, out var distanceInTicks):
-                        if (distanceInTicks > 0)
-                            ModifyExtrapolatedInput(ref extrainput);
-                        uint maxInputs = (uint)Mathf.CeilToInt(_repeatInputFactor * 10 / (delta * 60));
-                        if (distanceInTicks <= maxInputs)
-                            PreSimulate(extrainput, ref fullPredictedState.state, delta);
-                        else PreSimulate(GetDefaultInput(), ref fullPredictedState.state, delta);
-                        break;
-                    case false when _inputHistory.TryGet(tick, out var input):
-                        PreSimulate(input, ref fullPredictedState.state, delta);
-                        break;
-                    default:
-                        PreSimulate(GetDefaultInput(), ref fullPredictedState.state, delta);
-                        break;
-                }
+                case true when _inputHistory.TryGetClosest(tick, out var extrainput, out var distanceInTicks):
+                    uint maxInputs = (uint)Mathf.CeilToInt(_repeatInputFactor * 10 / (delta * 60));
+                    if (distanceInTicks > maxInputs)
+                    {
+                        return GetDefaultInput();
+                    }
+                    var copy = PurrCopy<INPUT>.Copy(extrainput);
+                    if (distanceInTicks > 0)
+                        ModifyExtrapolatedInput(ref copy);
+                    return copy;
+                case false when _inputHistory.TryGet(tick, out var input):
+                    return PurrCopy<INPUT>.Copy(input);
+                default: return GetDefaultInput();
             }
         }
 
@@ -136,7 +147,6 @@ namespace PurrNet.Prediction
 
         private void PreSimulate(INPUT input, ref STATE state, float delta)
         {
-            _currentInput = input;
             Simulate(input, ref state, delta);
         }
 

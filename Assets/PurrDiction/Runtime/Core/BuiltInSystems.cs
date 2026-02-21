@@ -12,6 +12,7 @@ namespace PurrNet.Prediction
         Physics2D = 1 << 1,
         Time = 1 << 2,
         Hierarchy = 1 << 3,
-        Players = 1 << 4
+        Players = 1 << 4,
+        Random = 1 << 5,
     }
 }

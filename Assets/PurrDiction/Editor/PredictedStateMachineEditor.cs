@@ -146,14 +146,16 @@ namespace PurrNet.Prediction.Editor
             if (currentData == null)
                 return result;
 
-            foreach (var field in dataType.GetFields(BindingFlags.Public | BindingFlags.Instance))
+            for (var i = 0; i < dataType.GetFields(BindingFlags.Public | BindingFlags.Instance).Length; i++)
             {
+                var field = dataType.GetFields(BindingFlags.Public | BindingFlags.Instance)[i];
                 var value = field.GetValue(currentData);
                 result[field.Name] = value?.ToString() ?? "null";
             }
 
-            foreach (var property in dataType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
+            for (var i = 0; i < dataType.GetProperties(BindingFlags.Public | BindingFlags.Instance).Length; i++)
             {
+                var property = dataType.GetProperties(BindingFlags.Public | BindingFlags.Instance)[i];
                 if (property.CanRead)
                 {
                     var value = property.GetValue(currentData);

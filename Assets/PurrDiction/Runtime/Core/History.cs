@@ -95,12 +95,19 @@ namespace PurrNet.Prediction
         /// </summary>
         /// <param name="tick">Which tick did this happen in.</param>
         /// <param name="data">What is the state/data of the tick.</param>
-        public void Write(ulong tick, T data)
+        public void Write(ulong tick, in T data)
         {
             var entry = new Entry {
                 Tick = tick,
                 Data = data
             };
+
+            // Fast path for appending, AKA most common case
+            if (m_data.Count == 0 || tick > m_data[^1].Tick)
+            {
+                m_data.Add(entry);
+                return;
+            }
 
             if (Find(tick, out var index))
             {
@@ -213,6 +220,33 @@ namespace PurrNet.Prediction
         public bool TryGet(ulong tick, out T result)
         {
             return Read(tick, out result);
+        }
+
+        /// <summary>
+        /// Returns the data at the specified tick, or if no exact match exists,
+        /// returns the closest previous entry (the most recent entry before the tick).
+        /// </summary>
+        /// <param name="tick">The tick you are searching for.</param>
+        /// <param name="result">The data stored or default if not found.</param>
+        /// <returns>True if an exact or previous entry was found.</returns>
+        public bool ReadOrPrevious(ulong tick, out T result)
+        {
+            result = default;
+
+            if (Find(tick, out var index))
+            {
+                result = this[index];
+                return true;
+            }
+
+            // index is the insertion point; index-1 is the closest previous entry
+            if (index > 0)
+            {
+                result = this[index - 1];
+                return true;
+            }
+
+            return false;
         }
 
         public bool TryGetClosest(ulong tick, out T result)

@@ -39,6 +39,26 @@ namespace PurrNet.Prediction
             return false;
         }
 
+        public bool TryTakeSceneObject(InstanceDetails id, out GameObject go)
+        {
+            var c = _pool.Count;
+
+            for (var i = 0; i < c; i++)
+            {
+                var instance = _pool[i];
+
+                if (instance.prefabId != id.prefabId)
+                    continue;
+
+                go = instance.gameObject;
+                _pool.RemoveAt(i);
+                return true;
+            }
+
+            go = null;
+            return false;
+        }
+
         public bool TryTake(InstanceDetails id, out GameObject go)
         {
             int closestIndex = -1;

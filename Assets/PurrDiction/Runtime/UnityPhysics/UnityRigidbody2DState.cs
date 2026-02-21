@@ -7,11 +7,32 @@ namespace PurrNet.Prediction
         public Vector2 linearVelocity;
         public float angularVelocity;
         public float linearDamping;
+        public int bodyType;
+        public bool isSleeping;
 
         public override string ToString()
         {
-            return $"(linearVelocity: {linearVelocity}, angularVelocity: {angularVelocity})";
+            return
+                $"LinearVelocity: {linearVelocity}\n" +
+                $"AngularVelocity: {angularVelocity}\n" +
+                $"BodyType: {bodyType}\n" +
+                $"IsSleeping: {isSleeping}";
         }
+
+#if UNITY_PHYSICS_2D
+        public UnityRigidbody2DState( Rigidbody2D rigidbody )
+        {
+#if UNITY_6000
+            linearVelocity = rigidbody.linearVelocity;
+            linearDamping = rigidbody.linearDamping;
+#else
+            linearVelocity = rigidbody.velocity;
+#endif
+            angularVelocity = rigidbody.angularVelocity;
+            bodyType = (int) rigidbody.bodyType;
+            isSleeping = rigidbody.IsSleeping();
+        }
+#endif
 
         public void Dispose() { }
     }

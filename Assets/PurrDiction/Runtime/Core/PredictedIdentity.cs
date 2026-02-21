@@ -1,5 +1,6 @@
 using PurrNet.Modules;
 using PurrNet.Packing;
+using Unity.Profiling;
 using UnityEngine;
 
 namespace PurrNet.Prediction
@@ -11,6 +12,13 @@ namespace PurrNet.Prediction
         public virtual string GetExtraString()
         {
             return string.Empty;
+        }
+
+        protected readonly ProfilerMarker simulateMarker;
+
+        protected PredictedIdentity()
+        {
+            simulateMarker = new ProfilerMarker($"{GetType().Name}.Simulate");
         }
 
         public PredictionManager predictionManager { get; protected set; }
@@ -40,6 +48,8 @@ namespace PurrNet.Prediction
         }
 
         public virtual void OnPreSetup() {  }
+
+        internal virtual void OnPrepareSimulationInputs(ulong tick, float delta) {  }
 
         public virtual void ResetState()
         {
@@ -181,6 +191,8 @@ namespace PurrNet.Prediction
                 _lastOwner = owner;
             }
         }
+
+        internal virtual void LateUpdateView(float deltaTime) { }
 
         internal abstract void GetLatestUnityState();
 

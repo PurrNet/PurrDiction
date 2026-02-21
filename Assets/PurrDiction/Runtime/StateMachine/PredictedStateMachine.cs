@@ -24,11 +24,9 @@ namespace PurrNet.Prediction.StateMachine
             }
         }
 
-#if UNITY_EDITOR
         public IPredictedStateNodeBase _previousStateNode;
         public IPredictedStateNodeBase _nextStateNode;
         public IPredictedStateNodeBase _currentStateNode;
-#endif
 
         private int _previousViewStateIndex = -1;
         private int _previousVerifiedViewStateIndex = -1;
@@ -36,9 +34,7 @@ namespace PurrNet.Prediction.StateMachine
         private void Awake()
         {
             _states = _wrappedStates.Select(wrapped => wrapped.Value).ToList();
-#if UNITY_EDITOR
             _currentStateNode = _states.FirstOrDefault();
-#endif
 
             for (var i = 0; i < _states.Count; i++)
             {
@@ -84,33 +80,44 @@ namespace PurrNet.Prediction.StateMachine
 
             if (state.wantedState > -1)
             {
-#if UNITY_EDITOR
-                _previousStateNode = _currentStateNode;
-                _nextStateNode = _states[(state.wantedState + 1) % _states.Count];
-                _currentStateNode = _states[state.wantedState];
-#endif
-
                 var index = state.wantedState;
                 state.wantedState = -1;
-                
+
                 if (state.stateIndex > -1)
                     _states[state.stateIndex].Exit();
 
                 state.stateIndex = index;
                 _states[state.stateIndex].Enter();
+                state.lastEnteredStateIndex = state.stateIndex;
                 state.transition++;
+            }
+            else if (state.stateIndex > -1 && state.stateIndex != state.lastEnteredStateIndex)
+            {
+                _states[state.stateIndex].Enter();
+                state.lastEnteredStateIndex = state.stateIndex;
+                _previousStateNode = null;
+                _currentStateNode = _states[state.stateIndex];
+                _nextStateNode = _states[(state.stateIndex + 1) % _states.Count];
             }
 
             if (state.stateIndex > -1 && _states[state.stateIndex] != null)
                 _states[state.stateIndex].StateSimulate(delta);
+
+            if (state.stateIndex > -1 && _currentStateNode != _states[state.stateIndex])
+            {
+                _previousStateNode = _currentStateNode;
+                _currentStateNode = _states[state.stateIndex];
+                _nextStateNode = _states[(state.stateIndex + 1) % _states.Count];
+            }
         }
-        
+
         protected override SMState GetInitialState()
         {
             var state = new SMState()
             {
                 wantedState = 0,
-                stateIndex = -1
+                stateIndex = -1,
+                lastEnteredStateIndex = -1
             };
 
             return state;
@@ -132,10 +139,8 @@ namespace PurrNet.Prediction.StateMachine
 
         public void SetState(int stateIndex)
         {
-#if UNITY_EDITOR
             _previousStateNode = _currentStateNode;
             _nextStateNode = _states[(currentState.stateIndex + 1) % _states.Count];
-#endif
             SetWantedStateIndex(stateIndex);
         }
 
@@ -163,6 +168,8 @@ namespace PurrNet.Prediction.StateMachine
             public int wantedState;
             public int stateIndex;
             public uint transition;
+
+            public int lastEnteredStateIndex;
 
             public void Dispose() { }
         }

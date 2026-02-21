@@ -154,13 +154,16 @@ namespace PurrNet.Prediction
 
         internal override void SimulateTick(ulong tick, float delta)
         {
-            if (!fullPredictedState.prediction.wasOnSimulationStartCalled)
+            using (simulateMarker.Auto())
             {
-                SimulationStart();
-                fullPredictedState.prediction.wasOnSimulationStartCalled = true;
-            }
+                if (!fullPredictedState.prediction.wasOnSimulationStartCalled)
+                {
+                    SimulationStart();
+                    fullPredictedState.prediction.wasOnSimulationStartCalled = true;
+                }
 
-            Simulate(ref fullPredictedState.state, sfloat.FromFloat(delta));
+                Simulate(ref fullPredictedState.state, sfloat.FromFloat(delta));
+            }
         }
 
         internal override void LateSimulateTick(float delta)
@@ -245,6 +248,11 @@ namespace PurrNet.Prediction
             }
         }
 
+        internal override void LateUpdateView(float deltaTime)
+        {
+            LateUpdateView(viewState, verifiedState);
+        }
+
         internal override void UpdateView(float deltaTime)
         {
             base.UpdateView(deltaTime);
@@ -263,6 +271,8 @@ namespace PurrNet.Prediction
         }
 
         protected virtual void UpdateView(STATE viewState, STATE? verified) {}
+
+        protected virtual void LateUpdateView(STATE viewState, STATE? verified) {}
 
         protected virtual STATE Interpolate(STATE from, STATE to, float t)
         {

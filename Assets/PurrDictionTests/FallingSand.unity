@@ -496,7 +496,7 @@ MonoBehaviour:
   _inputQueueSettings:
     extrapolateForMissing: 1
     minInputs: 1
-    maxInputs: 4
+    maxInputs: 2
   _validateDeterministicData: 0
 --- !u!4 &1558659896
 Transform:
@@ -565,7 +565,7 @@ MonoBehaviour:
   _startClientFlags: 3
   _cookieScope: 1
   _dontDestroyOnLoad: 0
-  _transport: {fileID: 1793795283}
+  _transport: {fileID: 1793795281}
   _networkPrefabs: {fileID: 0}
   _networkAssets: {fileID: 0}
   _networkRules: {fileID: 11400000, guid: d8799083b96579a42b8b2d03e4ceae98, type: 2}

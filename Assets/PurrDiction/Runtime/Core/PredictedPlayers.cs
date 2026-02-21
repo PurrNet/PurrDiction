@@ -1,64 +1,9 @@
 using System;
 using System.Collections.Generic;
-using PurrNet.Packing;
 using PurrNet.Pooling;
 
 namespace PurrNet.Prediction
 {
-    public struct PredictedPlayersState : IPredictedData<PredictedPlayersState>, IDuplicate<PredictedPlayersState>
-    {
-        public DisposableList<PlayerID> players;
-
-        [Obsolete("Use `players` instead")] public DisposableList<PlayerID> handledPlayers => players;
-        [Obsolete("Use `players` instead")] public DisposableList<PlayerID> purrNetPlayers => players;
-
-        public void Dispose()
-        {
-            players.Dispose();
-        }
-
-        public PredictedPlayersState Duplicate()
-        {
-            return new PredictedPlayersState
-            {
-                players = players.Duplicate()
-            };
-        }
-
-        public override string ToString()
-        {
-            string result = string.Empty;
-
-            if (!players.isDisposed)
-            {
-                result += $"players: {players.Count}\n";
-                for (var i = 0; i < players.Count; i++)
-                {
-                    var playerId = players[i];
-                    result += $"(playerId: {playerId})";
-                    if (i < players.Count - 1)
-                        result += "\n";
-                }
-
-                result += "\n";
-            }
-
-            return result;
-        }
-    }
-
-    public struct PredictedPlayersInput : IPredictedData
-    {
-        public DisposableList<PlayerID> addPlayers;
-        public DisposableList<PlayerID> removePlayers;
-
-        public void Dispose()
-        {
-            addPlayers.Dispose();
-            removePlayers.Dispose();
-        }
-    }
-
     public class PredictedPlayers : PredictedIdentity<PredictedPlayersInput, PredictedPlayersState>
     {
         public event Action<PlayerID> onPlayerAdded;
@@ -67,21 +12,17 @@ namespace PurrNet.Prediction
 
         public IReadOnlyList<PlayerID> players => currentState.players;
 
+        private void Awake()
+        {
+            extrapolateInput = false;
+        }
+
         protected override PredictedPlayersState GetInitialState()
         {
             return new PredictedPlayersState
             {
                 players = DisposableList<PlayerID>.Create(16)
             };
-        }
-
-        protected override void ModifyExtrapolatedInput(ref PredictedPlayersInput input)
-        {
-            if (!input.addPlayers.isDisposed)
-                input.addPlayers.Clear();
-
-            if (!input.removePlayers.isDisposed)
-                input.removePlayers.Clear();
         }
 
         protected override void GetFinalInput(ref PredictedPlayersInput input)
@@ -98,8 +39,11 @@ namespace PurrNet.Prediction
                     toAdd.Add(player);
             }
 
-            foreach (var current in currentState.players)
+            var playersCount = currentState.players.Count;
+            var currentPlayers = currentState.players;
+            for (var i = 0; i < playersCount; i++)
             {
+                var current = currentPlayers[i];
                 if (!predictionManager.IsObserver(current))
                     toRemove.Add(current);
             }
