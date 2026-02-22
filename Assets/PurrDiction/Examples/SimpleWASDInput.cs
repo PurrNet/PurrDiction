@@ -10,6 +10,8 @@ namespace PurrNet.Prediction.Tests
         public bool jump;
         public bool dash;
 
+        public UnityEngine.Object someAsset;
+
         public void Dispose() { }
 
         public override string ToString()

@@ -1,0 +1,428 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d9ac2e59ec50867458fa45964a218963, type: 3}
+  m_Name: NetworkAssets
+  m_EditorClassIdentifier: PurrNet.Runtime::PurrNet.NetworkAssets
+  autoGenerate: 1
+  folder: {fileID: 102900000, guid: 00000000000000001000000000000000, type: 3}
+  _enabledTypeNames:
+  - UnityEngine.ScriptableObject, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral,
+    PublicKeyToken=null
+  assets:
+  - {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: 1120369429361536294, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: 7040659881675835329, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: 1781555164194001046, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: -2099379676528639254, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: -5630151704836100654, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: -1680190386980627800, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: 7476244043514120974, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: 2411907206095950430, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: -7471211009204490832, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: 7727032971491509709, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: 3001919216989983466, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: -2185481485913320682, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: -8784545083839296357, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: -1654692200621890270, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: -4090225696740746782, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: 6240969308177333660, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: 392368643174621059, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: 7970375526676320489, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: 6564999863303420839, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: -5548793354506133487, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: -2996187274519451318, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: -1967631576421560919, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: -1246895598473198080, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: 335763634227698153, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: 592073515761840383, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: 1025543830046995696, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: 1054132383583890850, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: 1903506563957944628, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: 2064916234097673511, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: 3279352641294131588, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: 3710738434707379630, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: 3837173908680883260, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: 4502412055082496612, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: 4754684134866288074, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: 5064262545289094806, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: 6940538419726410420, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: 7983440169816151513, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: 8056856818456041789, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: 11400000}
+  - {fileID: 11400000, guid: 8042f8e3fcc98c2408044db43190293c, type: 2}
+  - {fileID: 11400000, guid: 3bc69f3464f686748883b06b540e96d4, type: 2}
+  - {fileID: 11400000, guid: 4a8aa8e44e23cfd4a8d4387ef3f36173, type: 2}
+  - {fileID: 11400000, guid: 079cc261e29382d4d8d5fb2f904403a0, type: 2}
+  - {fileID: 11400000, guid: ab09877e2e707104187f6f83e2f62510, type: 2}
+  - {fileID: -9167874883656233139, guid: ab09877e2e707104187f6f83e2f62510, type: 2}
+  - {fileID: 1918650496244738858, guid: ab09877e2e707104187f6f83e2f62510, type: 2}
+  - {fileID: 853819529557874667, guid: ab09877e2e707104187f6f83e2f62510, type: 2}
+  - {fileID: 1052315754049611418, guid: ab09877e2e707104187f6f83e2f62510, type: 2}
+  - {fileID: -1170528603972255243, guid: ab09877e2e707104187f6f83e2f62510, type: 2}
+  - {fileID: -8270506406425502121, guid: ab09877e2e707104187f6f83e2f62510, type: 2}
+  - {fileID: -5520245016509672950, guid: ab09877e2e707104187f6f83e2f62510, type: 2}
+  - {fileID: 7173750748008157695, guid: ab09877e2e707104187f6f83e2f62510, type: 2}
+  - {fileID: 1666464333004379222, guid: ab09877e2e707104187f6f83e2f62510, type: 2}
+  - {fileID: 9001657382290151224, guid: ab09877e2e707104187f6f83e2f62510, type: 2}
+  - {fileID: -6335409530604852063, guid: ab09877e2e707104187f6f83e2f62510, type: 2}
+  - {fileID: -1216621516061285780, guid: ab09877e2e707104187f6f83e2f62510, type: 2}
+  - {fileID: 3959858460715838825, guid: ab09877e2e707104187f6f83e2f62510, type: 2}
+  - {fileID: -7743500325797982168, guid: ab09877e2e707104187f6f83e2f62510, type: 2}
+  - {fileID: 4644742534064026673, guid: ab09877e2e707104187f6f83e2f62510, type: 2}
+  - {fileID: -4463884970436517307, guid: ab09877e2e707104187f6f83e2f62510, type: 2}
+  - {fileID: -6288072647309666549, guid: ab09877e2e707104187f6f83e2f62510, type: 2}
+  - {fileID: 7518938298396184218, guid: ab09877e2e707104187f6f83e2f62510, type: 2}
+  - {fileID: -1410297666881709256, guid: ab09877e2e707104187f6f83e2f62510, type: 2}
+  - {fileID: 11400000, guid: 65bc7dbf4170f435aa868c779acfb082, type: 2}
+  - {fileID: 11400000, guid: 5e6cbd92db86f4b18aec3ed561671858, type: 2}
+  - {fileID: 11400000, guid: f288ae1f4751b564a96ac7587541f7a2, type: 2}
+  - {fileID: 7833122117494664109, guid: f288ae1f4751b564a96ac7587541f7a2, type: 2}
+  - {fileID: 11400000, guid: 4b83569d67af61e458304325a23e5dfd, type: 2}
+  - {fileID: 11400000, guid: 10fc4df2da32a41aaa32d77bc913491c, type: 2}
+  - {fileID: 849379129802519247, guid: 10fc4df2da32a41aaa32d77bc913491c, type: 2}
+  - {fileID: -7893295128165547882, guid: 10fc4df2da32a41aaa32d77bc913491c, type: 2}
+  - {fileID: 7391319092446245454, guid: 10fc4df2da32a41aaa32d77bc913491c, type: 2}
+  - {fileID: -3357603926938260329, guid: 10fc4df2da32a41aaa32d77bc913491c, type: 2}
+  - {fileID: 11400000, guid: 18dc0cd2c080841dea60987a38ce93fa, type: 2}
+  - {fileID: 11400000, guid: 2e498d1c8094910479dc3e1b768306a4, type: 2}
+  - {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  - {fileID: 11400000, guid: c41005c129ba4d66911b75229fd70b45, type: 2}
+  - {fileID: 11400000, guid: f952c082cb03451daed3ee968ac6c63e, type: 2}
+  - {fileID: 11400000, guid: 3f5b5dff67a942289a9defa416b206f3, type: 2}
+  - {fileID: 11400000, guid: d9e68ba3f8528bc4cbfd099ae712789c, type: 2}
+  _availableTypeNames:
+  - UnityEngine.ScriptableObject, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral,
+    PublicKeyToken=null
+  - UnityEditorInternal.AssemblyDefinitionAsset, UnityEditor.CoreModule, Version=0.0.0.0,
+    Culture=neutral, PublicKeyToken=null
+  - UnityEditor.Rendering.Universal.AssetVersion, Unity.RenderPipelines.Universal.Editor,
+    Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - UnityEngine.Behaviour, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral,
+    PublicKeyToken=null
+  - UnityEngine.Rendering.Universal.Bloom, Unity.RenderPipelines.Universal.Runtime,
+    Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - UnityEngine.BoxCollider, UnityEngine.PhysicsModule, Version=0.0.0.0, Culture=neutral,
+    PublicKeyToken=null
+  - UnityEngine.CapsuleCollider, UnityEngine.PhysicsModule, Version=0.0.0.0, Culture=neutral,
+    PublicKeyToken=null
+  - UnityEngine.Rendering.Universal.ChannelMixer, Unity.RenderPipelines.Universal.Runtime,
+    Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - UnityEngine.CharacterController, UnityEngine.PhysicsModule, Version=0.0.0.0,
+    Culture=neutral, PublicKeyToken=null
+  - UnityEngine.Rendering.Universal.ChromaticAberration, Unity.RenderPipelines.Universal.Runtime,
+    Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - UnityEngine.Collider, UnityEngine.PhysicsModule, Version=0.0.0.0, Culture=neutral,
+    PublicKeyToken=null
+  - UnityEngine.Rendering.Universal.ColorAdjustments, Unity.RenderPipelines.Universal.Runtime,
+    Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - UnityEngine.Rendering.Universal.ColorCurves, Unity.RenderPipelines.Universal.Runtime,
+    Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - UnityEngine.Rendering.Universal.ColorLookup, Unity.RenderPipelines.Universal.Runtime,
+    Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - UnityEngine.Component, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral,
+    PublicKeyToken=null
+  - UnityEngine.Rendering.Universal.DepthOfField, Unity.RenderPipelines.Universal.Runtime,
+    Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - UnityEngine.Rendering.Universal.FilmGrain, Unity.RenderPipelines.Universal.Runtime,
+    Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - UnityEngine.Font, UnityEngine.TextRenderingModule, Version=0.0.0.0, Culture=neutral,
+    PublicKeyToken=null
+  - UnityEngine.GameObject, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral,
+    PublicKeyToken=null
+  - UnityEngine.HingeJoint, UnityEngine.PhysicsModule, Version=0.0.0.0, Culture=neutral,
+    PublicKeyToken=null
+  - UnityEngine.InputSystem.InputActionAsset, Unity.InputSystem, Version=1.14.2.0,
+    Culture=neutral, PublicKeyToken=null
+  - UnityEngine.InputSystem.InputActionReference, Unity.InputSystem, Version=1.14.2.0,
+    Culture=neutral, PublicKeyToken=null
+  - UnityEngine.Joint, UnityEngine.PhysicsModule, Version=0.0.0.0, Culture=neutral,
+    PublicKeyToken=null
+  - UnityEngine.Rendering.Universal.LensDistortion, Unity.RenderPipelines.Universal.Runtime,
+    Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - UnityEngine.Rendering.Universal.LiftGammaGain, Unity.RenderPipelines.Universal.Runtime,
+    Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - UnityEngine.Material, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral,
+    PublicKeyToken=null
+  - UnityEngine.Mesh, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - UnityEngine.MeshFilter, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral,
+    PublicKeyToken=null
+  - UnityEngine.MeshRenderer, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral,
+    PublicKeyToken=null
+  - UnityEngine.MonoBehaviour, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral,
+    PublicKeyToken=null
+  - UnityEditor.MonoScript, UnityEditor.CoreModule, Version=0.0.0.0, Culture=neutral,
+    PublicKeyToken=null
+  - UnityEngine.Rendering.Universal.MotionBlur, Unity.RenderPipelines.Universal.Runtime,
+    Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - PurrNet.NetworkAssets, PurrNet.Runtime, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - PurrNet.NetworkIdentity, PurrNet.Runtime, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - PurrNet.NetworkRules, PurrNet.Runtime, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - UnityEngine.Object, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral,
+    PublicKeyToken=null
+  - UnityEngine.Rendering.Universal.PaniniProjection, Unity.RenderPipelines.Universal.Runtime,
+    Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - ParrelSync.ParrelSyncProjectSettings, ParrelSync, Version=0.0.0.0, Culture=neutral,
+    PublicKeyToken=null
+  - PurrNet.PlayerIdentity`1[[PurrDiction.Examples.PlayerIdentityTest, PurrDiction.Examples,
+    Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]], PurrNet.Runtime, Version=0.0.0.0,
+    Culture=neutral, PublicKeyToken=null
+  - PurrDiction.Examples.PlayerIdentityTest, PurrDiction.Examples, Version=0.0.0.0,
+    Culture=neutral, PublicKeyToken=null
+  - PurrNet.Prediction.PredictedIdentity, PurrNet.Prediction, Version=0.0.0.0, Culture=neutral,
+    PublicKeyToken=null
+  - PurrNet.Prediction.PredictedIdentity`1[[PurrNet.Prediction.PredictedTransformState,
+    PurrNet.Prediction, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]],
+    PurrNet.Prediction, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - PurrNet.Prediction.PredictedIdentity`1[[PurrNet.Prediction.UnityRigidbodyState,
+    PurrNet.Prediction, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]],
+    PurrNet.Prediction, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - PurrNet.Prediction.PredictedIdentity`1[[PurrNet.Prediction.Tests.SimpleCCState,
+    PurrDiction.Examples, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]],
+    PurrNet.Prediction, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - PurrNet.Prediction.PredictedIdentity`1[[PurrNet.Prediction.PredictedIdentitySpawnerState,
+    PurrNet.Prediction, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]],
+    PurrNet.Prediction, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - PurrNet.Prediction.PredictedIdentity`1[[PurrNet.Prediction.StateMachine.PredictedStateMachine+SMState,
+    PurrNet.Prediction, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]],
+    PurrNet.Prediction, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - PurrNet.Prediction.PredictedIdentity`1[[PurrDiction.Examples.TestStateNode+State,
+    PurrDiction.Examples, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]],
+    PurrNet.Prediction, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - PurrNet.Prediction.PredictedIdentity`1[[PurrNet.Prediction.Prebuilt.TopDownMovement_CC+State,
+    PurrNet.Prediction.Prebuilt, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]],
+    PurrNet.Prediction, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - PurrNet.Prediction.PredictedIdentity`1[[PurrNet.Prediction.Prebuilt.TopDownMovement_RB+State,
+    PurrNet.Prediction.Prebuilt, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]],
+    PurrNet.Prediction, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - PurrNet.Prediction.PredictedIdentity`1[[PurrNet.Prediction.Prebuilt.RigidbodyKnockback+KnockbackData,
+    PurrNet.Prediction.Prebuilt, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]],
+    PurrNet.Prediction, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - PurrNet.Prediction.PredictedIdentity`1[[PurrNet.Prediction.Prebuilt.RigidbodyJump+JumpData,
+    PurrNet.Prediction.Prebuilt, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]],
+    PurrNet.Prediction, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - PurrNet.Prediction.PredictedIdentity`1[[PurrNet.Prediction.Prebuilt.RigidbodyShooter+ShootData,
+    PurrNet.Prediction.Prebuilt, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]],
+    PurrNet.Prediction, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - PurrNet.Prediction.PredictedIdentity`1[[PurrNet.Prediction.Tests.FallingSandPlayerState,
+    PurrNet.Prediction.Tests, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]],
+    PurrNet.Prediction, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - PurrNet.Prediction.PredictedIdentity`2[[PurrNet.Prediction.Tests.SimpleWASDInput,
+    PurrDiction.Examples, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null],[PurrNet.Prediction.Tests.SimpleCCState,
+    PurrDiction.Examples, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]],
+    PurrNet.Prediction, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - PurrNet.Prediction.PredictedIdentity`2[[PurrNet.Prediction.Tests.SimpleWASDInput,
+    PurrDiction.Examples, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null],[PurrDiction.Examples.TestStateNode+State,
+    PurrDiction.Examples, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]],
+    PurrNet.Prediction, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - PurrNet.Prediction.PredictedIdentity`2[[PurrNet.Prediction.Prebuilt.TopDownMovement_CC+Input,
+    PurrNet.Prediction.Prebuilt, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null],[PurrNet.Prediction.Prebuilt.TopDownMovement_CC+State,
+    PurrNet.Prediction.Prebuilt, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]],
+    PurrNet.Prediction, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - PurrNet.Prediction.PredictedIdentity`2[[PurrNet.Prediction.Prebuilt.TopDownMovement_RB+Input,
+    PurrNet.Prediction.Prebuilt, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null],[PurrNet.Prediction.Prebuilt.TopDownMovement_RB+State,
+    PurrNet.Prediction.Prebuilt, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]],
+    PurrNet.Prediction, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - PurrNet.Prediction.PredictedIdentity`2[[PurrNet.Prediction.Prebuilt.RigidbodyJump+JumpInput,
+    PurrNet.Prediction.Prebuilt, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null],[PurrNet.Prediction.Prebuilt.RigidbodyJump+JumpData,
+    PurrNet.Prediction.Prebuilt, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]],
+    PurrNet.Prediction, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - PurrNet.Prediction.PredictedIdentity`2[[PurrNet.Prediction.Prebuilt.RigidbodyShooter+ShootInput,
+    PurrNet.Prediction.Prebuilt, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null],[PurrNet.Prediction.Prebuilt.RigidbodyShooter+ShootData,
+    PurrNet.Prediction.Prebuilt, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]],
+    PurrNet.Prediction, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - PurrNet.Prediction.PredictedIdentity`2[[PurrNet.Prediction.Tests.FallingSandInput,
+    PurrNet.Prediction.Tests, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null],[PurrNet.Prediction.Tests.FallingSandPlayerState,
+    PurrNet.Prediction.Tests, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]],
+    PurrNet.Prediction, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - PurrNet.Prediction.PredictedIdentitySpawner, PurrNet.Prediction, Version=0.0.0.0,
+    Culture=neutral, PublicKeyToken=null
+  - PurrNet.Prediction.PredictedPrefabs, PurrNet.Prediction, Version=0.0.0.0, Culture=neutral,
+    PublicKeyToken=null
+  - PurrNet.Prediction.PredictedRigidbody, PurrNet.Prediction, Version=0.0.0.0, Culture=neutral,
+    PublicKeyToken=null
+  - PurrNet.Prediction.StateMachine.PredictedStateMachine, PurrNet.Prediction, Version=0.0.0.0,
+    Culture=neutral, PublicKeyToken=null
+  - PurrNet.Prediction.StateMachine.PredictedStateNode`2[[PurrNet.Prediction.Tests.SimpleWASDInput,
+    PurrDiction.Examples, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null],[PurrDiction.Examples.TestStateNode+State,
+    PurrDiction.Examples, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]],
+    PurrNet.Prediction, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - PurrNet.Prediction.PredictedTransform, PurrNet.Prediction, Version=0.0.0.0, Culture=neutral,
+    PublicKeyToken=null
+  - UnityEngine.Rendering.ProbeVolumesOptions, Unity.RenderPipelines.Core.Runtime,
+    Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - UnityEngine.Renderer, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral,
+    PublicKeyToken=null
+  - UnityEngine.Rendering.RenderPipelineAsset, UnityEngine.CoreModule, Version=0.0.0.0,
+    Culture=neutral, PublicKeyToken=null
+  - UnityEngine.Rendering.RenderPipelineAsset`1[[UnityEngine.Rendering.Universal.UniversalRenderPipeline,
+    Unity.RenderPipelines.Universal.Runtime, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]],
+    UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - UnityEngine.Rendering.RenderPipelineGlobalSettings, UnityEngine.CoreModule, Version=0.0.0.0,
+    Culture=neutral, PublicKeyToken=null
+  - UnityEngine.Rendering.RenderPipelineGlobalSettings`2[[UnityEngine.Rendering.Universal.UniversalRenderPipelineGlobalSettings,
+    Unity.RenderPipelines.Universal.Runtime, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null],[UnityEngine.Rendering.Universal.UniversalRenderPipeline,
+    Unity.RenderPipelines.Universal.Runtime, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]],
+    Unity.RenderPipelines.Core.Runtime, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - UnityEngine.Rigidbody, UnityEngine.PhysicsModule, Version=0.0.0.0, Culture=neutral,
+    PublicKeyToken=null
+  - PurrNet.Prediction.Prebuilt.RigidbodyJump, PurrNet.Prediction.Prebuilt, Version=0.0.0.0,
+    Culture=neutral, PublicKeyToken=null
+  - PurrNet.Prediction.Prebuilt.RigidbodyKnockback, PurrNet.Prediction.Prebuilt,
+    Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - PurrNet.Prediction.Prebuilt.RigidbodyShooter, PurrNet.Prediction.Prebuilt, Version=0.0.0.0,
+    Culture=neutral, PublicKeyToken=null
+  - UnityEngine.Rendering.Universal.ScreenSpaceAmbientOcclusion, Unity.RenderPipelines.Universal.Runtime,
+    Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - UnityEngine.Rendering.Universal.ScreenSpaceLensFlare, Unity.RenderPipelines.Universal.Runtime,
+    Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - UnityEngine.Rendering.Universal.ScriptableRendererData, Unity.RenderPipelines.Universal.Runtime,
+    Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - UnityEngine.Rendering.Universal.ScriptableRendererFeature, Unity.RenderPipelines.Universal.Runtime,
+    Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - UnityEngine.Shader, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral,
+    PublicKeyToken=null
+  - UnityEditor.ShaderGraph.ShaderGraphMetadata, Unity.ShaderGraph.Editor, Version=0.0.0.0,
+    Culture=neutral, PublicKeyToken=null
+  - UnityEditor.ShaderInclude, UnityEditor.CoreModule, Version=0.0.0.0, Culture=neutral,
+    PublicKeyToken=null
+  - UnityEngine.Rendering.Universal.ShadowsMidtonesHighlights, Unity.RenderPipelines.Universal.Runtime,
+    Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - PurrNet.Prediction.Tests.SimpleCC, PurrDiction.Examples, Version=0.0.0.0, Culture=neutral,
+    PublicKeyToken=null
+  - UnityEngine.SphereCollider, UnityEngine.PhysicsModule, Version=0.0.0.0, Culture=neutral,
+    PublicKeyToken=null
+  - UnityEngine.Rendering.Universal.SplitToning, Unity.RenderPipelines.Universal.Runtime,
+    Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - PurrNet.Prediction.Tests.TestFallingSandPlayer, PurrNet.Prediction.Tests, Version=0.0.0.0,
+    Culture=neutral, PublicKeyToken=null
+  - PurrDiction.Examples.TestStateNode, PurrDiction.Examples, Version=0.0.0.0, Culture=neutral,
+    PublicKeyToken=null
+  - UnityEngine.TextAsset, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral,
+    PublicKeyToken=null
+  - UnityEngine.Texture, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral,
+    PublicKeyToken=null
+  - UnityEngine.Texture2D, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral,
+    PublicKeyToken=null
+  - TMPro.TMP_Asset, Unity.TextMeshPro, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - TMPro.TMP_FontAsset, Unity.TextMeshPro, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - TMPro.TMP_Settings, Unity.TextMeshPro, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - TMPro.TMP_SpriteAsset, Unity.TextMeshPro, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - TMPro.TMP_StyleSheet, Unity.TextMeshPro, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - UnityEngine.Rendering.Universal.Tonemapping, Unity.RenderPipelines.Universal.Runtime,
+    Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - PurrNet.Prediction.Prebuilt.TopDownMovement_CC, PurrNet.Prediction.Prebuilt,
+    Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - PurrNet.Prediction.Prebuilt.TopDownMovement_RB, PurrNet.Prediction.Prebuilt,
+    Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - UnityEngine.Transform, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral,
+    PublicKeyToken=null
+  - PurrNet.Prediction.TransformInterpolationSettings, PurrNet.Prediction, Version=0.0.0.0,
+    Culture=neutral, PublicKeyToken=null
+  - UnityEditor.Rendering.Universal.ShaderGraph.UniversalMetadata, Unity.RenderPipelines.Universal.Editor,
+    Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - UnityEngine.Rendering.Universal.UniversalRendererData, Unity.RenderPipelines.Universal.Runtime,
+    Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset, Unity.RenderPipelines.Universal.Runtime,
+    Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - UnityEngine.Rendering.Universal.UniversalRenderPipelineGlobalSettings, Unity.RenderPipelines.Universal.Runtime,
+    Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - UnityEngine.Rendering.Universal.Vignette, Unity.RenderPipelines.Universal.Runtime,
+    Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  - UnityEngine.Rendering.VolumeComponent, Unity.RenderPipelines.Core.Runtime, Version=0.0.0.0,
+    Culture=neutral, PublicKeyToken=null
+  - UnityEngine.Rendering.VolumeProfile, Unity.RenderPipelines.Core.Runtime, Version=0.0.0.0,
+    Culture=neutral, PublicKeyToken=null
+  - UnityEngine.Rendering.Universal.WhiteBalance, Unity.RenderPipelines.Universal.Runtime,
+    Version=0.0.0.0, Culture=neutral, PublicKeyToken=null
+  _bakedIds: 000000000100000002000000030000000400000005000000060000000700000008000000090000000a0000000b0000000c0000000d0000000e0000000f000000100000001100000012000000130000001400000015000000160000001700000018000000190000001a0000001b0000001c0000001d0000001e0000001f000000200000002100000022000000230000002400000025000000260000002700000028000000290000002a0000002b0000002c0000002d0000002e0000002f000000300000003100000032000000330000003400000035000000360000003700000038000000390000003a0000003b0000003c0000003d0000003e0000003f000000400000004100000042000000430000004400000045000000460000004700000048000000490000004a0000004b0000004c0000004d0000004e0000004f00000050000000
+  _bakedAssets:
+  - {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: 1120369429361536294, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: 7040659881675835329, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: 1781555164194001046, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: -2099379676528639254, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: -5630151704836100654, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: -1680190386980627800, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: 7476244043514120974, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: 2411907206095950430, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: -7471211009204490832, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: 7727032971491509709, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: 3001919216989983466, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: -2185481485913320682, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: -8784545083839296357, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: -1654692200621890270, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: -4090225696740746782, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: 6240969308177333660, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: 392368643174621059, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: 7970375526676320489, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: 6564999863303420839, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: -5548793354506133487, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: -2996187274519451318, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: -1967631576421560919, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: -1246895598473198080, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: 335763634227698153, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: 592073515761840383, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: 1025543830046995696, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: 1054132383583890850, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: 1903506563957944628, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: 2064916234097673511, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: 3279352641294131588, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: 3710738434707379630, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: 3837173908680883260, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: 4502412055082496612, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: 4754684134866288074, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: 5064262545289094806, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: 6940538419726410420, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: 7983440169816151513, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: 8056856818456041789, guid: 052faaac586de48259a63d0c4782560b, type: 3}
+  - {fileID: 11400000}
+  - {fileID: 11400000, guid: 8042f8e3fcc98c2408044db43190293c, type: 2}
+  - {fileID: 11400000, guid: 3bc69f3464f686748883b06b540e96d4, type: 2}
+  - {fileID: 11400000, guid: 4a8aa8e44e23cfd4a8d4387ef3f36173, type: 2}
+  - {fileID: 11400000, guid: 079cc261e29382d4d8d5fb2f904403a0, type: 2}
+  - {fileID: 11400000, guid: ab09877e2e707104187f6f83e2f62510, type: 2}
+  - {fileID: -9167874883656233139, guid: ab09877e2e707104187f6f83e2f62510, type: 2}
+  - {fileID: 1918650496244738858, guid: ab09877e2e707104187f6f83e2f62510, type: 2}
+  - {fileID: 853819529557874667, guid: ab09877e2e707104187f6f83e2f62510, type: 2}
+  - {fileID: 1052315754049611418, guid: ab09877e2e707104187f6f83e2f62510, type: 2}
+  - {fileID: -1170528603972255243, guid: ab09877e2e707104187f6f83e2f62510, type: 2}
+  - {fileID: -8270506406425502121, guid: ab09877e2e707104187f6f83e2f62510, type: 2}
+  - {fileID: -5520245016509672950, guid: ab09877e2e707104187f6f83e2f62510, type: 2}
+  - {fileID: 7173750748008157695, guid: ab09877e2e707104187f6f83e2f62510, type: 2}
+  - {fileID: 1666464333004379222, guid: ab09877e2e707104187f6f83e2f62510, type: 2}
+  - {fileID: 9001657382290151224, guid: ab09877e2e707104187f6f83e2f62510, type: 2}
+  - {fileID: -6335409530604852063, guid: ab09877e2e707104187f6f83e2f62510, type: 2}
+  - {fileID: -1216621516061285780, guid: ab09877e2e707104187f6f83e2f62510, type: 2}
+  - {fileID: 3959858460715838825, guid: ab09877e2e707104187f6f83e2f62510, type: 2}
+  - {fileID: -7743500325797982168, guid: ab09877e2e707104187f6f83e2f62510, type: 2}
+  - {fileID: 4644742534064026673, guid: ab09877e2e707104187f6f83e2f62510, type: 2}
+  - {fileID: -4463884970436517307, guid: ab09877e2e707104187f6f83e2f62510, type: 2}
+  - {fileID: -6288072647309666549, guid: ab09877e2e707104187f6f83e2f62510, type: 2}
+  - {fileID: 7518938298396184218, guid: ab09877e2e707104187f6f83e2f62510, type: 2}
+  - {fileID: -1410297666881709256, guid: ab09877e2e707104187f6f83e2f62510, type: 2}
+  - {fileID: 11400000, guid: 65bc7dbf4170f435aa868c779acfb082, type: 2}
+  - {fileID: 11400000, guid: 5e6cbd92db86f4b18aec3ed561671858, type: 2}
+  - {fileID: 11400000, guid: f288ae1f4751b564a96ac7587541f7a2, type: 2}
+  - {fileID: 7833122117494664109, guid: f288ae1f4751b564a96ac7587541f7a2, type: 2}
+  - {fileID: 11400000, guid: 4b83569d67af61e458304325a23e5dfd, type: 2}
+  - {fileID: 11400000, guid: 10fc4df2da32a41aaa32d77bc913491c, type: 2}
+  - {fileID: 849379129802519247, guid: 10fc4df2da32a41aaa32d77bc913491c, type: 2}
+  - {fileID: -7893295128165547882, guid: 10fc4df2da32a41aaa32d77bc913491c, type: 2}
+  - {fileID: 7391319092446245454, guid: 10fc4df2da32a41aaa32d77bc913491c, type: 2}
+  - {fileID: -3357603926938260329, guid: 10fc4df2da32a41aaa32d77bc913491c, type: 2}
+  - {fileID: 11400000, guid: 18dc0cd2c080841dea60987a38ce93fa, type: 2}
+  - {fileID: 11400000, guid: 2e498d1c8094910479dc3e1b768306a4, type: 2}
+  - {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  - {fileID: 11400000, guid: c41005c129ba4d66911b75229fd70b45, type: 2}
+  - {fileID: 11400000, guid: f952c082cb03451daed3ee968ac6c63e, type: 2}
+  - {fileID: 11400000, guid: 3f5b5dff67a942289a9defa416b206f3, type: 2}
+  - {fileID: 11400000, guid: d9e68ba3f8528bc4cbfd099ae712789c, type: 2}

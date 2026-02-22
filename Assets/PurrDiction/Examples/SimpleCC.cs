@@ -8,6 +8,7 @@ namespace PurrNet.Prediction.Tests
         [SerializeField] private Rigidbody _controller;
 #endif
         [SerializeField] private float _speed = 5;
+        [SerializeField] private Object _someAsset;
 
         protected override void SanitizeInput(ref SimpleWASDInput input)
         {
@@ -26,14 +27,15 @@ namespace PurrNet.Prediction.Tests
 
         protected override void Simulate(SimpleWASDInput input, ref SimpleCCState state, float delta)
         {
+            if (!isOwner && predictionManager.isVerified)
+                _someAsset = input.someAsset;
+
             var move = new Vector3(input.horizontal, 0, input.vertical);
             var moveVector = move * _speed;
 
             if (move != Vector3.zero)
                 state.rotation = Mathf.Atan2(move.x, move.z) * Mathf.Rad2Deg;
 
-            
-            
 #if UNITY_PHYSICS_3D
             _controller.rotation = Quaternion.Euler(0, state.rotation, 0);
 #if UNITY_6000
@@ -55,6 +57,7 @@ namespace PurrNet.Prediction.Tests
             input.horizontal = Input.GetAxisRaw("Horizontal");
             input.vertical = Input.GetAxisRaw("Vertical");
             input.dash = Input.GetKey(KeyCode.LeftShift);
+            input.someAsset = _someAsset;
         }
 
         protected override void UpdateInput(ref SimpleWASDInput input)
