@@ -8,10 +8,12 @@ namespace PurrNet.Prediction
         public float gravity;
         public float radius;
         public bool isTrigger;
-        
-        public void Dispose()
+
+        public override string ToString()
         {
-            
+            return $"Velocity: {velocity}\nGravity: {gravity}\nRadius: {radius}\nIsTrigger: {isTrigger}";
         }
+
+        public void Dispose() { }
     }
 }
