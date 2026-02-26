@@ -63,17 +63,11 @@ namespace PurrNet.Prediction
             };
         }
 
-        protected override void GetUnityState(ref ProjectileState3D state)
-        {
-            // We are the authority for velocity; don't overwrite from Unity. Position is owned by PredictedTransform.
-        }
-
         protected override void Simulate(ref ProjectileState3D state, float delta)
         {
             if (delta <= 0)
                 return;
 
-            // Apply gravity
             state.velocity.y += state.gravity * delta;
 
             float speed = state.velocity.magnitude;
@@ -86,9 +80,7 @@ namespace PurrNet.Prediction
             float safetyMargin = Mathf.Max(state.radius * SafetyMarginFactor, 0.001f);
             float totalDistance = castDistance + safetyMargin;
 
-            var queryTriggerInteraction = state.isTrigger
-                ? QueryTriggerInteraction.Collide
-                : QueryTriggerInteraction.Ignore;
+            var queryTriggerInteraction = QueryTriggerInteraction.Collide;
 
             if (Physics.SphereCast(pos, state.radius, direction, out var hit, totalDistance, _layerMask, queryTriggerInteraction))
             {
