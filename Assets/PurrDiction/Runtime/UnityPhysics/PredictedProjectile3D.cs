@@ -119,9 +119,18 @@ namespace PurrNet.Prediction
 #endif
                         }
 
-                        if (_eventMask.HasFlag(PhysicsEventMask.CollisionEnter))
-                            predictionManager.physics3d.RegisterEvent(PhysicsEventType.Enter, this, hit.collider.gameObject, false,
-                                hit.point, hit.normal, relativeVelocity);
+                        if (state.hasLastSolidContact && solidHitId.Equals(state.lastSolidContact))
+                        {
+                            if (_eventMask.HasFlag(PhysicsEventMask.CollisionStay))
+                                predictionManager.physics3d.RegisterEvent(PhysicsEventType.Stay, this, hit.collider.gameObject, false,
+                                    hit.point, hit.normal, relativeVelocity);
+                        }
+                        else
+                        {
+                            if (_eventMask.HasFlag(PhysicsEventMask.CollisionEnter))
+                                predictionManager.physics3d.RegisterEvent(PhysicsEventType.Enter, this, hit.collider.gameObject, false,
+                                    hit.point, hit.normal, relativeVelocity);
+                        }
                     }
                 }
 
