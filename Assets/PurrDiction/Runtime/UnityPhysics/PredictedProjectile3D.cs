@@ -1,3 +1,5 @@
+using PurrNet.Packing;
+using PurrNet.Pooling;
 using PurrNet.Utils;
 using UnityEngine;
 
@@ -44,6 +46,7 @@ namespace PurrNet.Prediction
         public event OnTriggerDelegate onTriggerStay;
 
         private float _bounciness;
+        private readonly Collider[] _overlapBuffer = new Collider[16];
 
         protected override void LateAwake()
         {
@@ -59,7 +62,8 @@ namespace PurrNet.Prediction
                 velocity = Vector3.zero,
                 gravity = _gravity,
                 radius = Mathf.Max(_radius, 0.001f),
-                isTrigger = _isTrigger
+                isTrigger = _isTrigger,
+                overlappingTriggers = DisposableList<PredictedComponentID>.Create(8)
             };
         }
 
@@ -80,23 +84,31 @@ namespace PurrNet.Prediction
             float safetyMargin = Mathf.Max(state.radius * SafetyMarginFactor, 0.001f);
             float totalDistance = castDistance + safetyMargin;
 
-            var queryTriggerInteraction = QueryTriggerInteraction.Collide;
+            bool solidHit = false;
+            PredictedComponentID solidHitId = default;
+            bool sphereCastTriggerHit = false;
+            PredictedComponentID sphereCastTriggerHitId = default;
+            Vector3 finalPos = pos + state.velocity * delta;
 
-            if (Physics.SphereCast(pos, state.radius, direction, out var hit, totalDistance, _layerMask, queryTriggerInteraction))
+            if (Physics.SphereCast(pos, state.radius, direction, out var hit, totalDistance, _layerMask, QueryTriggerInteraction.Collide))
             {
                 bool hitIsTrigger = hit.collider.isTrigger;
                 bool weAreTrigger = state.isTrigger;
 
-                if (PredictionManager.TryGetClosestPredictedID(hit.collider.gameObject, out _) &&
+                if (PredictionManager.TryGetClosestPredictedID(hit.collider.gameObject, out var hitId) &&
                     predictionManager.physics3d != null)
                 {
                     if (weAreTrigger || hitIsTrigger)
                     {
+                        sphereCastTriggerHit = true;
+                        sphereCastTriggerHitId = hitId;
                         if (_eventMask.HasFlag(PhysicsEventMask.TriggerEnter))
                             predictionManager.physics3d.RegisterEvent(PhysicsEventType.Enter, this, hit.collider.gameObject, true);
                     }
                     else
                     {
+                        solidHit = true;
+                        solidHitId = hitId;
                         Vector3 relativeVelocity = state.velocity;
                         if (hit.rigidbody != null && !hit.rigidbody.isKinematic)
                         {
@@ -115,20 +127,116 @@ namespace PurrNet.Prediction
 
                 if (!state.isTrigger && !hitIsTrigger)
                 {
-                    // Solid collision: move to hit point and bounce
-                    transform.position = hit.point + hit.normal * (state.radius + 0.001f);
-
+                    finalPos = hit.point + hit.normal * (state.radius + 0.001f);
                     float normalSpeed = Vector3.Dot(state.velocity, hit.normal);
                     if (normalSpeed < 0)
                     {
                         Vector3 reflected = state.velocity - (1f + _bounciness) * normalSpeed * hit.normal;
                         state.velocity = reflected;
                     }
-                    return;
                 }
             }
 
-            transform.position = pos + state.velocity * delta;
+            if (predictionManager.physics3d != null && state.hasLastSolidContact && (!solidHit || !solidHitId.Equals(state.lastSolidContact)))
+            {
+                if (_eventMask.HasFlag(PhysicsEventMask.CollisionExit))
+                {
+                    var otherGo = state.lastSolidContact.GetGameObject(predictionManager);
+                    if (otherGo != null)
+                        predictionManager.physics3d.RegisterEvent(PhysicsEventType.Exit, this, otherGo, false);
+                }
+                state.hasLastSolidContact = false;
+            }
+
+            if (solidHit)
+            {
+                state.lastSolidContact = solidHitId;
+                state.hasLastSolidContact = true;
+            }
+
+            transform.position = finalPos;
+
+            if (predictionManager.physics3d != null && _eventMask != PhysicsEventMask.None)
+            {
+                int overlapCount = Physics.OverlapSphereNonAlloc(finalPos, state.radius, _overlapBuffer, _layerMask, QueryTriggerInteraction.Collide);
+                var currentOverlaps = DisposableList<PredictedComponentID>.Create(8);
+
+                for (int i = 0; i < overlapCount; i++)
+                {
+                    var c = _overlapBuffer[i];
+                    if (!c.isTrigger || c.transform == transform || !PredictionManager.TryGetClosestPredictedID(c.gameObject, out var pid))
+                        continue;
+                    bool found = false;
+                    for (int j = 0; j < currentOverlaps.Count; j++)
+                    {
+                        if (currentOverlaps[j].Equals(pid)) { found = true; break; }
+                    }
+                    if (!found)
+                        currentOverlaps.Add(pid);
+                }
+
+                if (sphereCastTriggerHit)
+                {
+                    bool inCurrent = false;
+                    for (int j = 0; j < currentOverlaps.Count; j++)
+                    {
+                        if (currentOverlaps[j].Equals(sphereCastTriggerHitId)) { inCurrent = true; break; }
+                    }
+                    if (!inCurrent)
+                        currentOverlaps.Add(sphereCastTriggerHitId);
+                }
+
+                var prev = state.overlappingTriggers;
+                for (int i = 0; i < prev.Count; i++)
+                {
+                    var pid = prev[i];
+                    bool inCurrent = false;
+                    for (int j = 0; j < currentOverlaps.Count; j++)
+                    {
+                        if (currentOverlaps[j].Equals(pid)) { inCurrent = true; break; }
+                    }
+                    if (!inCurrent)
+                    {
+                        if (_eventMask.HasFlag(PhysicsEventMask.TriggerExit))
+                        {
+                            var otherGo = pid.GetGameObject(predictionManager);
+                            if (otherGo != null)
+                                predictionManager.physics3d.RegisterEvent(PhysicsEventType.Exit, this, otherGo, true);
+                        }
+                    }
+                    else
+                    {
+                        if (_eventMask.HasFlag(PhysicsEventMask.TriggerStay))
+                        {
+                            var otherGo = pid.GetGameObject(predictionManager);
+                            if (otherGo != null)
+                                predictionManager.physics3d.RegisterEvent(PhysicsEventType.Stay, this, otherGo, true);
+                        }
+                    }
+                }
+
+                for (int i = 0; i < currentOverlaps.Count; i++)
+                {
+                    var pid = currentOverlaps[i];
+                    bool inPrev = false;
+                    for (int j = 0; j < prev.Count; j++)
+                    {
+                        if (prev[j].Equals(pid)) { inPrev = true; break; }
+                    }
+                    if (!inPrev)
+                    {
+                        if (_eventMask.HasFlag(PhysicsEventMask.TriggerEnter) && !(sphereCastTriggerHit && pid.Equals(sphereCastTriggerHitId)))
+                        {
+                            var otherGo = pid.GetGameObject(predictionManager);
+                            if (otherGo != null)
+                                predictionManager.physics3d.RegisterEvent(PhysicsEventType.Enter, this, otherGo, true);
+                        }
+                    }
+                }
+
+                prev.Dispose();
+                state.overlappingTriggers = currentOverlaps;
+            }
         }
 
         public void AddImpulse(Vector3 impulse)
@@ -151,7 +259,10 @@ namespace PurrNet.Prediction
                 velocity = Vector3.Lerp(from.velocity, to.velocity, t),
                 gravity = to.gravity,
                 radius = to.radius,
-                isTrigger = to.isTrigger
+                isTrigger = to.isTrigger,
+                overlappingTriggers = DisposableList<PredictedComponentID>.Create(8),
+                lastSolidContact = default,
+                hasLastSolidContact = false
             };
         }
     }
