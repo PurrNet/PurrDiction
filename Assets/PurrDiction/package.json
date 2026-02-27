@@ -6,7 +6,7 @@
         "url": "https://purrnet.dev/"
     },
     "description": "An addon to PurrNet for CSP (client side prediction)",
-    "displayName": "Purrdiction",
+    "displayName": "PurrDiction",
     "documentationUrl": "https://purrnet.gitbook.io/docs/systems-and-modules/client-side-prediction",
     "hideInEditor": false,
     "keywords": [
