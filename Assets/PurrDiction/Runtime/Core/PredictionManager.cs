@@ -597,18 +597,36 @@ namespace PurrNet.Prediction
                     _systems[i].OnPrepareSimulationInputs(localTick, delta);
             }
 
-            using (SimulateMarker.Auto())
+            var simulateMarker = SimulateMarker.Auto();
+            try
             {
                 for (var i = 0; i < _systemsCount; i++)
                     _systems[i].RunSimulateTick(localTick, delta);
             }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+            }
+            finally
+            {
+                simulateMarker.Dispose();
+            }
 
             DoPhysicsPass();
 
-            using (LateSimulateMarker.Auto())
+            var lateSimulateMarker = LateSimulateMarker.Auto();
+            try
             {
                 for (var i = 0; i < _systemsCount; i++)
                     _systems[i].RunLateSimulateTick(delta);
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+            }
+            finally
+            {
+                lateSimulateMarker.Dispose();
             }
 
             using (SaveHistoryMarker.Auto())
@@ -1029,18 +1047,36 @@ namespace PurrNet.Prediction
                     _systems[i].OnPrepareSimulationInputs(verifiedTick, delta);
             }
 
-            using (SimulateMarker.Auto())
+            var simulateMarker = SimulateMarker.Auto();
+            try
             {
                 for (var j = 0; j < _systemsCount; j++)
                     _systems[j].RunSimulateTick(verifiedTick, delta);
             }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+            }
+            finally
+            {
+                simulateMarker.Dispose();
+            }
 
             DoPhysicsPass();
 
-            using (LateSimulateMarker.Auto())
+            var lateSimulateMarker = LateSimulateMarker.Auto();
+            try
             {
                 for (var j = 0; j < _systemsCount; j++)
                     _systems[j].RunLateSimulateTick(delta);
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+            }
+            finally
+            {
+                lateSimulateMarker.Dispose();
             }
 
             for (var i = 0; i < _systemsCount; i++)
@@ -1067,18 +1103,36 @@ namespace PurrNet.Prediction
                     _systems[i].OnPrepareSimulationInputs(inputTick, delta);
             }
 
-            using (SimulateMarker.Auto())
+            var simulateMarker = SimulateMarker.Auto();
+            try
             {
                 for (var j = 0; j < _systemsCount; j++)
                     _systems[j].RunSimulateTick(stateTick, delta);
             }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+            }
+            finally
+            {
+                simulateMarker.Dispose();
+            }
 
             DoPhysicsPass();
 
-            using (LateSimulateMarker.Auto())
+            var lateSimulateMarker = LateSimulateMarker.Auto();
+            try
             {
                 for (var j = 0; j < _systemsCount; j++)
                     _systems[j].RunLateSimulateTick(delta);
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+            }
+            finally
+            {
+                lateSimulateMarker.Dispose();
             }
 
             for (var i = 0; i < _systemsCount; i++)
@@ -1119,18 +1173,36 @@ namespace PurrNet.Prediction
                     _systems[i].OnPrepareSimulationInputs(verifiedTick, delta);
             }
 
-            using (SimulateMarker.Auto())
+            var simulateMarker = SimulateMarker.Auto();
+            try
             {
                 for (var j = 0; j < _systemsCount; j++)
                     _systems[j].RunSimulateTick(verifiedTick, delta);
             }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+            }
+            finally
+            {
+                simulateMarker.Dispose();
+            }
 
             DoPhysicsPass();
 
-            using (LateSimulateMarker.Auto())
+            var lateSimulateMarker = LateSimulateMarker.Auto();
+            try
             {
                 for (var j = 0; j < _systemsCount; j++)
                     _systems[j].RunLateSimulateTick(delta);
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+            }
+            finally
+            {
+                lateSimulateMarker.Dispose();
             }
 
             if (saveState)
@@ -1264,11 +1336,20 @@ namespace PurrNet.Prediction
 
         private void UpdateView()
         {
-            using (UpdateViewMarker.Auto())
+            var updateViewMarker = UpdateViewMarker.Auto();
+            try
             {
                 var dt = Time.unscaledDeltaTime;
                 for (var i = 0; i < _systemsCount; i++)
                     _systems[i].RunUpdateView(dt);
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+            }
+            finally
+            {
+                updateViewMarker.Dispose();
             }
 
             LateUpdateView();
@@ -1276,11 +1357,20 @@ namespace PurrNet.Prediction
 
         private void LateUpdateView()
         {
-            using (UpdateViewMarker.Auto())
+            var lateUpdateViewMarker = UpdateViewMarker.Auto();
+            try
             {
                 var dt = Time.unscaledDeltaTime;
                 for (var i = 0; i < _systemsCount; i++)
                     _systems[i].RunLateUpdateView(dt);
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+            }
+            finally
+            {
+                lateUpdateViewMarker.Dispose();
             }
         }
 
