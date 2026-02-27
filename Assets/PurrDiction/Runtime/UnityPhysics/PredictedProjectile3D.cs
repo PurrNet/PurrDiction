@@ -96,14 +96,12 @@ namespace PurrNet.Prediction
                 bool weAreTrigger = state.isTrigger;
 
                 if (PredictionManager.TryGetClosestPredictedID(hit.collider.gameObject, out var hitId) &&
-                    predictionManager.physics3d != null)
+                    predictionManager.physics3d != null && !hitId.Equals(id))
                 {
                     if (weAreTrigger || hitIsTrigger)
                     {
                         sphereCastTriggerHit = true;
                         sphereCastTriggerHitId = hitId;
-                        if (_eventMask.HasFlag(PhysicsEventMask.TriggerEnter))
-                            predictionManager.physics3d.RegisterEvent(PhysicsEventType.Enter, this, hit.collider.gameObject, true);
                     }
                     else
                     {
@@ -173,7 +171,7 @@ namespace PurrNet.Prediction
                 for (int i = 0; i < overlapCount; i++)
                 {
                     var c = _overlapBuffer[i];
-                    if (!c.isTrigger || c.transform == transform || !PredictionManager.TryGetClosestPredictedID(c.gameObject, out var pid))
+                    if (!c.isTrigger || !PredictionManager.TryGetClosestPredictedID(c.gameObject, out var pid) || pid.Equals(id))
                         continue;
                     bool found = false;
                     for (int j = 0; j < currentOverlaps.Count; j++)
@@ -232,14 +230,11 @@ namespace PurrNet.Prediction
                     {
                         if (prev[j].Equals(pid)) { inPrev = true; break; }
                     }
-                    if (!inPrev)
+                    if (!inPrev && _eventMask.HasFlag(PhysicsEventMask.TriggerEnter))
                     {
-                        if (_eventMask.HasFlag(PhysicsEventMask.TriggerEnter) && !(sphereCastTriggerHit && pid.Equals(sphereCastTriggerHitId)))
-                        {
-                            var otherGo = pid.GetGameObject(predictionManager);
-                            if (otherGo != null)
-                                predictionManager.physics3d.RegisterEvent(PhysicsEventType.Enter, this, otherGo, true);
-                        }
+                        var otherGo = pid.GetGameObject(predictionManager);
+                        if (otherGo != null)
+                            predictionManager.physics3d.RegisterEvent(PhysicsEventType.Enter, this, otherGo, true);
                     }
                 }
 
