@@ -107,8 +107,17 @@ namespace PurrNet.Prediction
         {
             if (isLocal)
             {
-                GetFinalInput(ref _nextInput);
-                SanitizeInput(ref _nextInput);
+                try
+                {
+                    GetFinalInput(ref _nextInput);
+                    SanitizeInput(ref _nextInput);
+                }
+                catch (System.Exception e)
+                {
+                    Debug.LogException(e);
+                    _nextInput = GetDefaultInput();
+                }
+
                 _lastInput?.Dispose();
                 _lastInput = _nextInput;
                 _inputHistory.Write(tick, Packer.Copy(_nextInput));
@@ -129,7 +138,18 @@ namespace PurrNet.Prediction
                 }
 
                 var input = _queuedInput.Value;
-                SanitizeInput(ref input);
+
+                try
+                {
+                    SanitizeInput(ref input);
+                }
+                catch (System.Exception e)
+                {
+                    Debug.LogException(e);
+                    input.Dispose();
+                    input = GetDefaultInput();
+                }
+
                 _lastInput?.Dispose();
                 _lastInput = input;
                 _inputHistory.Write(tick, Packer.Copy(input));
@@ -139,7 +159,7 @@ namespace PurrNet.Prediction
 
         protected virtual void Update()
         {
-            if(isController)
+            if (isController)
                 UpdateInput(ref _nextInput);
         }
 
