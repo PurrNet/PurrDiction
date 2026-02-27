@@ -265,7 +265,18 @@ namespace PurrNet.Prediction
                 else deltaModule.Read(packer, key, sender, ref input);
 
                 var sanitizedInput = input;
-                SanitizeInput(ref sanitizedInput);
+
+                try
+                {
+                    SanitizeInput(ref sanitizedInput);
+                }
+                catch (System.Exception e)
+                {
+                    Debug.LogException(e);
+                    sanitizedInput.Dispose();
+                    sanitizedInput = GetDefaultInput();
+                }
+
                 _queuedInput = sanitizedInput;
             }
             TickBandwidthProfiler.OnReadInput(myType, packer.positionInBits - pos, this);
