@@ -71,6 +71,7 @@ namespace PurrNet.Prediction
         {
             base.ResetState();
             ResetInterpolation();
+            fullPredictedState = default;
         }
 
         internal override void PrepareInput(bool isServer, bool isLocal, ulong tick, bool extrapolate) { }
