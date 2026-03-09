@@ -26,8 +26,10 @@ namespace PurrNet.Prediction
     {
         public PredictedIdentity identity { get; private set; }
         [Obsolete("Use predictionManager instead. This was a bad naming convention on me - Bobsi")]
-        public PredictionManager manager { get; private set; }
-        public PredictionManager predictionManager => manager;
+        public PredictionManager manager => predictionManager;
+#pragma warning disable CS0618 // Type or member is obsolete
+        public PredictionManager predictionManager { get; private set; }
+#pragma warning restore CS0618 // Type or member is obsolete
 
         /// <summary>
         /// The index of this module within the parent identity's module list.
@@ -38,7 +40,7 @@ namespace PurrNet.Prediction
         public PredictedModule(PredictedIdentity identity)
         {
             this.identity = identity;
-            this.manager = identity.predictionManager;
+            this.predictionManager = identity.predictionManager;
 
             identity.RegisterModule(this);
 
@@ -147,6 +149,7 @@ namespace PurrNet.Prediction
         /// <summary>
         /// Updates the interpolation state used for smooth visual rollback.
         /// </summary>
+        /// <param name="delta"></param>
         /// <param name="accumulateError">If true, the difference between predicted and actual state is added to an error accumulator for smoothing.</param>
         protected virtual void UpdateInterpolation(float delta, bool accumulateError) { }
         internal void ResetInterpolationInternal() => ResetInterpolation();
