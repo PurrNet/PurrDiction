@@ -54,12 +54,22 @@ namespace PurrNet.Prediction
 
         public void MovePositionAndRotation(Vector2 position, Quaternion rotation)
         {
+#if UNITY_6000
             _rigidbody.MovePositionAndRotation(position, rotation);
+#else
+            _rigidbody.MovePosition(position);
+            _rigidbody.MoveRotation(rotation);
+#endif
         }
 
         public void MovePositionAndRotation(Vector2 position, float angle)
         {
+#if UNITY_6000
             _rigidbody.MovePositionAndRotation(position, angle);
+#else
+            _rigidbody.MovePosition(position);
+            _rigidbody.MoveRotation(rotation);
+#endif
         }
 
         protected override void LateAwake()
@@ -96,18 +106,18 @@ namespace PurrNet.Prediction
         protected override void SetUnityState(UnityRigidbody2DState state)
         {
             _rigidbody.bodyType = (RigidbodyType2D) state.bodyType;
-            
+
             if( _rigidbody.bodyType != RigidbodyType2D.Static)
-            { 
+            {
                 linearVelocity = state.linearVelocity;
                 angularVelocity = state.angularVelocity;
             }
 
             if (_rigidbody.IsSleeping() != state.isSleeping)
-            { 
+            {
                 if ( state.isSleeping)
                     _rigidbody.Sleep();
-                else 
+                else
                     _rigidbody.WakeUp();
             }
 #if UNITY_6000
