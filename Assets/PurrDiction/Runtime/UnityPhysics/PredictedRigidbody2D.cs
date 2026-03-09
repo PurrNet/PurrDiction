@@ -68,7 +68,7 @@ namespace PurrNet.Prediction
             _rigidbody.MovePositionAndRotation(position, angle);
 #else
             _rigidbody.MovePosition(position);
-            _rigidbody.MoveRotation(rotation);
+            _rigidbody.MoveRotation(angle);
 #endif
         }
 
