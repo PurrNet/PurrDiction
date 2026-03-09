@@ -8,19 +8,19 @@ namespace PurrNet.Prediction
     public abstract class PredictedModule<TState> : PredictedModule where TState : struct, IPredictedData<TState>
     {
         internal FULL_STATE<TState> fullPredictedState;
-        
+
         /// <summary>
         /// The current simulation relevant state
         /// </summary>
         public ref TState currentState => ref fullPredictedState.state;
 
         private History<FULL_STATE<TState>> _history = new History<FULL_STATE<TState>>();
-        
+
         private InterpolatedWithDispose<FULL_STATE<TState>> _interpolatedState;
         private FULL_STATE<TState>? _viewState;
 
         public TState viewState;
-        
+
         /// <summary>
         /// The last fully verified state received from the server (or authoritative state if local).
         /// Returns null if no history exists yet.
@@ -34,13 +34,13 @@ namespace PurrNet.Prediction
 
         internal override void OnCoreInitialize()
         {
-            var tickRate = manager.tickRate;
+            var tickRate = predictionManager.tickRate;
             var bufferSize = (int)Math.Max(tickRate / 10f, 2);
-            
+
             _interpolatedState = new InterpolatedWithDispose<FULL_STATE<TState>>(
-                FULLInterpolate, 
-                1f / tickRate, 
-                fullPredictedState.DeepCopy(), 
+                FULLInterpolate,
+                1f / tickRate,
+                fullPredictedState.DeepCopy(),
                 bufferSize
             );
         }
@@ -57,10 +57,10 @@ namespace PurrNet.Prediction
 
             var result = _interpolatedState.Advance(delta);
             viewState = result.state;
-            
+
             UpdateView(viewState, verifiedState);
         }
-        
+
         /// <summary>
         /// Override this to apply visual updates based on the interpolated state.
         /// (e.g., transforming a GameObject based on viewState.position).
@@ -68,7 +68,7 @@ namespace PurrNet.Prediction
         /// <param name="viewState">The smooth, interpolated state for the current frame.</param>
         /// <param name="verifiedState">The latest authoritative state, useful for comparisons or error correction.</param>
         protected virtual void UpdateView(TState viewState, TState? verifiedState) { }
-        
+
         /// <summary>
         /// Override to handle interpolation between states manually
         /// </summary>
@@ -97,7 +97,7 @@ namespace PurrNet.Prediction
         {
             _interpolatedState?.Teleport(fullPredictedState.DeepCopy());
         }
-        
+
         protected override void UpdateInterpolation(float delta, bool accumulateError)
         {
             var copy = fullPredictedState.DeepCopy();
@@ -127,7 +127,7 @@ namespace PurrNet.Prediction
         /// Called exactly once before the very first simulation tick executes.
         /// </summary>
         protected virtual void SimulationStart() { }
-        
+
         /// <summary>
         /// Executes the simulation logic for this module.
         /// Modify the <paramref name="state"/> directly to advance the simulation. Or use the `currentState`
@@ -158,14 +158,13 @@ namespace PurrNet.Prediction
 
         protected override bool WriteState(PlayerID receiver, BitPacker packer, DeltaModule deltaModule)
         {
-            int pos = packer.positionInBits;
             int flagPos = packer.AdvanceBits(1);
 
             bool changed = deltaModule.WriteReliable(packer, receiver, predictionKey, fullPredictedState.prediction);
             changed |= deltaModule.WriteReliable(packer, receiver, stateKey, fullPredictedState.state);
 
             packer.WriteAt(flagPos, changed);
-            
+
             if (!changed)
                 packer.SetBitPosition(flagPos + 1);
 
@@ -180,19 +179,16 @@ namespace PurrNet.Prediction
             if (changed)
             {
                 deltaModule.ReadReliable(packer, predictionKey, ref fullPredictedState.prediction);
-                deltaModule.ReadReliable(packer, stateKey, ref fullPredictedState.state);
-                _history.Write(tick, fullPredictedState.DeepCopy());
             }
             else
             {
                 packer.SetBitPosition(pos);
                 deltaModule.ReadReliable(packer, predictionKey, ref fullPredictedState.prediction);
-                
                 packer.SetBitPosition(pos);
-                deltaModule.ReadReliable(packer, stateKey, ref fullPredictedState.state);
-                
-                _history.Write(tick, fullPredictedState.DeepCopy());
             }
+
+            deltaModule.ReadReliable(packer, stateKey, ref fullPredictedState.state);
+            _history.Write(tick, fullPredictedState.DeepCopy());
         }
 
         protected override void WriteFirstState(ulong tick, BitPacker packer)
