@@ -27,6 +27,7 @@ namespace PurrNet.Prediction
             linearDamping = rigidbody.linearDamping;
 #else
             linearVelocity = rigidbody.velocity;
+            linearDamping = default;
 #endif
             angularVelocity = rigidbody.angularVelocity;
             bodyType = (int) rigidbody.bodyType;
