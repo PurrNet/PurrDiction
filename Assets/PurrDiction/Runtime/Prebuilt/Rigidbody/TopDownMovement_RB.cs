@@ -31,7 +31,9 @@ namespace PurrNet.Prediction.Prebuilt
             if(!TryGetComponent(out _rigidbody))
                 _rigidbody = gameObject.AddComponent<Rigidbody>();
 
+#if UNITY_6000
             _rigidbody.linearDamping = 3;
+#endif
 
             // ReSharper disable once BitwiseOperatorOnEnumWithoutFlags
             _rigidbody.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
