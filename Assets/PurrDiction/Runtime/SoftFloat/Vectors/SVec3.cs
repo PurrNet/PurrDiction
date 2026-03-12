@@ -1,10 +1,11 @@
 using System.Runtime.CompilerServices;
+using PurrNet.Packing;
 using Real = PurrNet.Prediction.sfloat;
 
 namespace PurrNet.Prediction
 {
     [System.Serializable]
-    public partial struct SVec3
+    public partial struct SVec3 : IPackedAuto
     {
         public static readonly SVec3 zero = new SVec3(Real.zero);
         public static readonly SVec3 one = new SVec3(Real.one);

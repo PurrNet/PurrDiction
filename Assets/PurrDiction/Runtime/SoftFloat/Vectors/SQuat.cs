@@ -1,4 +1,5 @@
 ﻿using System.Runtime.CompilerServices;
+using PurrNet.Packing;
 using UnityEngine;
 using Real = PurrNet.Prediction.sfloat;
 using Math = PurrNet.Prediction.MathS;
@@ -6,7 +7,7 @@ using Math = PurrNet.Prediction.MathS;
 namespace PurrNet.Prediction
 {
     [System.Serializable]
-    public struct SQuat
+    public struct SQuat : IPackedAuto
     {
         public static readonly SQuat identity = new SQuat(0, 0, 0, 1);
 

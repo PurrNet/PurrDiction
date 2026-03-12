@@ -1,11 +1,12 @@
 ﻿using System.Runtime.CompilerServices;
+using PurrNet.Packing;
 using Real = PurrNet.Prediction.sfloat;
 
 namespace PurrNet.Prediction
 {
     [System.Serializable]
     // ReSharper disable once PartialTypeWithSinglePart
-    public partial struct SVec4
+    public partial struct SVec4 : IPackedAuto
     {
         public Real x;
         public Real y;

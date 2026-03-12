@@ -1,9 +1,10 @@
 ﻿using System.Runtime.CompilerServices;
+using PurrNet.Packing;
 
 namespace PurrNet.Prediction
 {
     [System.Serializable]
-    public partial struct FPVec2
+    public partial struct FPVec2 : IPackedAuto
     {
         public static readonly FPVec2 zero = new FPVec2(FP.zero, FP.zero);
         public static readonly FPVec2 one = new FPVec2(1, 1);

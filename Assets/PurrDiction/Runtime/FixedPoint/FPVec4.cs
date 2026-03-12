@@ -1,10 +1,11 @@
 ﻿using System.Runtime.CompilerServices;
+using PurrNet.Packing;
 
 namespace PurrNet.Prediction
 {
     [System.Serializable]
     // ReSharper disable once PartialTypeWithSinglePart
-    public partial struct FPVec4
+    public partial struct FPVec4 : IPackedAuto
     {
         public FP x;
         public FP y;
