@@ -3,7 +3,7 @@ using PurrNet.Packing;
 
 namespace PurrNet.Prediction
 {
-    public sealed class StaticPredictedIdentity : PredictedIdentity
+    public class StaticPredictedIdentity : PredictedIdentity
     {
         public override void WriteFirstInput(ulong localTick, BitPacker packer) { }
 
