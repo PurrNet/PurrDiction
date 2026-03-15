@@ -17,6 +17,32 @@ namespace PurrNet.Prediction
             extrapolateInput = false;
         }
 
+        public PlayerID? GetPlayer(ulong? id)
+        {
+            if (id == null) return null;
+            foreach (var p in players)
+                if (p.id == id) return p;
+            return null;
+        }
+
+        public bool TryGetPlayer(ulong? id, out PlayerID player)
+        {
+            player = default;
+
+            if (id == null) return false;
+
+            foreach (var p in players)
+            {
+                if (p.id == id)
+                {
+                    player = p;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         protected override PredictedPlayersState GetInitialState()
         {
             return new PredictedPlayersState
