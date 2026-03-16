@@ -13,6 +13,16 @@ namespace PurrNet.Prediction
             this.instanceId = instanceId;
         }
 
+        public static implicit operator uint(PredictedObjectID id)
+        {
+            return id.instanceId.value;
+        }
+
+        public static explicit operator PredictedObjectID(uint value)
+        {
+            return new PredictedObjectID(value);
+        }
+
         public GameObject GetGameObject(PredictionManager manager)
         {
             return manager.hierarchy.GetGameObject(this);
