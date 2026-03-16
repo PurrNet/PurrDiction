@@ -72,6 +72,7 @@ namespace PurrNet.Prediction
             base.ResetState();
             ResetInterpolation();
             fullPredictedState = default;
+            _firstViewUpdate = true;
         }
 
         internal override void PrepareInput(bool isServer, bool isLocal, ulong tick, bool extrapolate) { }
@@ -254,6 +255,8 @@ namespace PurrNet.Prediction
             LateUpdateView(viewState, verifiedState);
         }
 
+        private bool _firstViewUpdate = true;
+
         internal override void UpdateView(float deltaTime)
         {
             base.UpdateView(deltaTime);
@@ -268,8 +271,17 @@ namespace PurrNet.Prediction
             }
 
             viewState = _interpolatedState.Advance(deltaTime).state;
+
+            if (_firstViewUpdate)
+            {
+                ViewStart(viewState, verifiedState);
+                _firstViewUpdate = false;
+            }
+
             UpdateView(viewState, verifiedState);
         }
+
+        protected virtual void ViewStart(STATE viewState, STATE? verified) {}
 
         protected virtual void UpdateView(STATE viewState, STATE? verified) {}
 

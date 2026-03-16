@@ -71,6 +71,8 @@ namespace PurrNet.Prediction
         private History<FULL_STATE<STATE>> _stateHistory;
 
         protected TickManager tickModule { get; private set; }
+        private bool _firstViewUpdate = true;
+
 
         public override void ResetInterpolation()
         {
@@ -82,6 +84,7 @@ namespace PurrNet.Prediction
             base.ResetState();
             ResetInterpolation();
             fullPredictedState = default;
+            _firstViewUpdate = true;
         }
 
         internal override void PrepareInput(bool isServer, bool isLocal, ulong tick, bool extrapolate) { }
@@ -344,10 +347,19 @@ namespace PurrNet.Prediction
             }
 
             viewState = _interpolatedState.Advance(deltaTime).state;
+
+            if (_firstViewUpdate)
+            {
+                ViewStart(viewState, verifiedState);
+                _firstViewUpdate = false;
+            }
+
             UpdateView(viewState, verifiedState);
         }
 
         protected virtual void LateUpdateView(STATE viewState, STATE? verified) {}
+
+        protected virtual void ViewStart(STATE viewState, STATE? verified) {}
 
         protected virtual void UpdateView(STATE viewState, STATE? verified) {}
 

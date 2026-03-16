@@ -10,6 +10,11 @@ namespace PurrNet.Prediction.Tests
         [SerializeField] private float _speed = 5;
         [SerializeField] private Object _someAsset;
 
+        protected override void ViewStart(SimpleCCState viewState, SimpleCCState? verified)
+        {
+            Debug.Log("View Start: " + viewState.rotation);
+        }
+
         protected override void SanitizeInput(ref SimpleWASDInput input)
         {
             var move = new Vector2(input.horizontal, input.vertical);
