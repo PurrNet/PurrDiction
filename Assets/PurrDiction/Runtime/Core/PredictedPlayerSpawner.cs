@@ -191,5 +191,17 @@ namespace PurrNet.Prediction
             currentState[player] = newPlayer.Value;
             predictionManager.SetOwnership(newPlayer, player);
         }
-    }
+
+        public void RespawnPlayer(PlayerID player)
+        {
+            if (!enabled) return;
+
+            if (currentState.TryGetValue(player, out var playerID))
+            {
+                hierarchy.Delete(playerID);
+                currentState.Remove(player);
+            }
+
+            OnPlayerLoadedScene(player);
+        }
 }
