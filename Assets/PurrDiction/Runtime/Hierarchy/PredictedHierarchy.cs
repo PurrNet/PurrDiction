@@ -147,12 +147,14 @@ namespace PurrNet.Prediction
 
         public PredictedObjectID? Create(int prefabId, Transform transform, PlayerID? owner = null)
         {
-            return Create(prefabId, transform.position, transform.rotation, owner);
+            transform.GetPositionAndRotation(out var position, out var rotation);
+            return Create(prefabId, position, rotation, owner);
         }
 
         public PredictedObjectID? Create(GameObject prefab, Transform transform, PlayerID? owner = null)
         {
-            return Create(prefab, transform.position, transform.rotation, owner);
+            transform.GetPositionAndRotation(out var position, out var rotation);
+            return Create(prefab, position, rotation, owner);
         }
 
         public PredictedObjectID? Create(GameObject prefab, Vector3 position, Quaternion rotation, PlayerID? owner = null)
