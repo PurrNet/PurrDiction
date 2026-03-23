@@ -237,7 +237,7 @@ namespace PurrNet.Prediction
                 currentState.Remove(player);
             }
 
-            OnPlayerLoadedScene(player);
+            SpawnPlayerInternal(player);
         }
     }
 }
