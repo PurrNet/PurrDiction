@@ -9,9 +9,8 @@ namespace PurrNet.Prediction.Editor
         public override void OnGUI(Rect position, SerializedProperty property, GUIContent label)
         {
             var prefabProperty = property.FindPropertyRelative("prefab");
-            var poolingProperty = property.FindPropertyRelative("pooling");
-            var usePoolingProperty = poolingProperty.FindPropertyRelative("usePooling");
-            var initialSizeProperty = poolingProperty.FindPropertyRelative("initialSize");
+            var pooledProperty = property.FindPropertyRelative("pooled");
+            var warmupCountProperty = property.FindPropertyRelative("warmupCount");
 
             EditorGUI.BeginProperty(position, label, property);
 
@@ -19,29 +18,25 @@ namespace PurrNet.Prediction.Editor
 
             const float SPACING = 2.5f;
 
-            // same as above, but with spacing
             var prefabRect = new Rect(position.x, position.y, fieldWidth * 2f - SPACING, position.height);
             var sizeRect = new Rect(position.x + fieldWidth * 2f + SPACING, position.y, fieldWidth * 0.5f - SPACING, position.height);
             var toggleRect = new Rect(position.x + fieldWidth * 2f + SPACING * 2 + fieldWidth * 0.5f, position.y, fieldWidth * 0.5f - SPACING, position.height);
 
-            if (!usePoolingProperty.boolValue)
+            if (!pooledProperty.boolValue)
             {
-                /*prefabRect = new Rect(position.x, position.y, fieldWidth * 2.5f, position.height);
-                sizeRect = new Rect(position.x + fieldWidth * 2.5f, position.y, fieldWidth * 0.5f, position.height);*/
-
                 prefabRect = new Rect(position.x, position.y, fieldWidth * 2.5f - SPACING, position.height);
                 sizeRect = new Rect(position.x + fieldWidth * 2.5f + SPACING, position.y, fieldWidth * 0.5f - SPACING, position.height);
             }
 
             EditorGUI.PropertyField(prefabRect, prefabProperty, GUIContent.none);
-            usePoolingProperty.boolValue = EditorGUI.ToggleLeft(toggleRect, "Pool", usePoolingProperty.boolValue);
-            if (usePoolingProperty.boolValue)
+            pooledProperty.boolValue = EditorGUI.ToggleLeft(toggleRect, "Pool", pooledProperty.boolValue);
+            if (pooledProperty.boolValue)
             {
-                EditorGUI.PropertyField(sizeRect, initialSizeProperty, GUIContent.none);
+                EditorGUI.PropertyField(sizeRect, warmupCountProperty, GUIContent.none);
             }
             else
             {
-                initialSizeProperty.intValue = 0; // Reset size if pooling is not used
+                warmupCountProperty.intValue = 0;
             }
 
             EditorGUI.EndProperty();

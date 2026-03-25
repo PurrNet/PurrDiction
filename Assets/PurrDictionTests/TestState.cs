@@ -43,17 +43,11 @@ namespace PurrNet.Prediction.Tests
         {
             NextState();
         }
-        
+
         [ContextMenu("Force this state")]
-        private void ForceThisState() 
+        private void ForceThisState()
         {
             machine.SetState(this);
-        }
-
-        public override void Enter()
-        {
-            base.Enter();
-            Debug.Log($"Entered state: {gameObject.name}");
         }
 
         public struct StateData : IPredictedData<StateData>

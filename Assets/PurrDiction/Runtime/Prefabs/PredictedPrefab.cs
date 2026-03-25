@@ -1,8 +1,9 @@
-﻿using System;
+using System;
 using UnityEngine;
 
 namespace PurrNet.Prediction
 {
+    [Obsolete("Use PredictedPrefab instead.")]
     [Serializable]
     public struct PoolSettings
     {
@@ -13,7 +14,9 @@ namespace PurrNet.Prediction
     [Serializable]
     public struct PredictedPrefab
     {
+        public string guid;
         public GameObject prefab;
-        public PoolSettings pooling;
+        public bool pooled;
+        public int warmupCount;
     }
 }

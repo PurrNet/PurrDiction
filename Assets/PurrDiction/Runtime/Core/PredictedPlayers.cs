@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using PurrNet.Modules;
 using PurrNet.Pooling;
 
 namespace PurrNet.Prediction
@@ -12,9 +13,16 @@ namespace PurrNet.Prediction
 
         public IReadOnlyList<PlayerID> players => currentState.players;
 
+        private ScenePlayersModule _scenePlayersModule;
+
         private void Awake()
         {
             extrapolateInput = false;
+        }
+
+        protected override void LateAwake()
+        {
+            _scenePlayersModule = predictionManager.networkManager.scenePlayersModule;
         }
 
         protected override PredictedPlayersState GetInitialState()
@@ -35,8 +43,11 @@ namespace PurrNet.Prediction
             for (var i = 0; i < observers.Count; i++)
             {
                 var player = observers[i];
-                if (!currentState.players.Contains(player))
+                if (!currentState.players.Contains(player) &&
+                    _scenePlayersModule.IsPlayerLoadedInScene(player, predictionManager.sceneId))
+                {
                     toAdd.Add(player);
+                }
             }
 
             var playersCount = currentState.players.Count;

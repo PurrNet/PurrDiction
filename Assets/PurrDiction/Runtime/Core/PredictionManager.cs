@@ -144,8 +144,8 @@ namespace PurrNet.Prediction
             for (var i = 0; i < _predictedPrefabs.prefabs.Count; i++)
             {
                 var prefab = _predictedPrefabs.prefabs[i];
-                if (prefab.pooling.usePooling)
-                    _pools.Register(prefab.prefab, prefab.pooling.initialSize);
+                if (prefab.pooled)
+                    _pools.Register(prefab.prefab, prefab.warmupCount);
             }
         }
 
@@ -1469,7 +1469,7 @@ namespace PurrNet.Prediction
 
             var prefabsInfo = _predictedPrefabs.prefabs[pid];
 
-            if (!prefabsInfo.pooling.usePooling)
+            if (!prefabsInfo.pooled)
             {
                 UnregisterInstance(instance, false, true);
                 UnityProxy.DestroyImmediateDirectly(instance);

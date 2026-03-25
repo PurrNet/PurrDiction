@@ -49,10 +49,10 @@ namespace PurrNet.Prediction.Tests
 
         protected override void Simulate(ref State data, float delta)
         {
-            if (data.collisionCount < 5)
+            /*if (data.collisionCount < 5)
                 return;
 
-            predictionManager.hierarchy.Delete(gameObject);
+            predictionManager.hierarchy.Delete(gameObject);*/
         }
 
         private void OnUnityTriggerEnter(GameObject other)
@@ -62,6 +62,7 @@ namespace PurrNet.Prediction.Tests
 
         private void OnUnityCollisionEnter(GameObject other, PhysicsCollision collision)
         {
+            PurrLogger.Log($"Collided with {other} on {gameObject.name}");
             currentState.collisionCount += 1;
         }
     }
