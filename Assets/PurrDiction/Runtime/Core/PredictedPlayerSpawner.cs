@@ -96,6 +96,7 @@ namespace PurrNet.Prediction
         [SerializeField] private GameObject _playerPrefab;
         [SerializeField, PurrLock] private bool _destroyOnDisconnect;
         [SerializeField] private List<Transform> spawnPoints = new List<Transform>();
+        [SerializeField] private bool _waitForSpawnCall;
 
         private void Awake() => CleanupSpawnPoints();
 
@@ -167,9 +168,17 @@ namespace PurrNet.Prediction
             if (!enabled)
                 return;
 
+            if (_waitForSpawnCall)
+                return;
+
             if (currentState.ContainsKey(player))
                 return;
 
+            SpawnPlayerInternal(player);
+        }
+
+        private void SpawnPlayerInternal(PlayerID player)
+        {
             PredictedObjectID? newPlayer;
 
             CleanupSpawnPoints();
@@ -192,6 +201,32 @@ namespace PurrNet.Prediction
             predictionManager.SetOwnership(newPlayer, player);
         }
 
+        public void SpawnPlayer(PlayerID player)
+        {
+            if (!enabled) return;
+
+            if (currentState.ContainsKey(player))
+                return;
+
+            SpawnPlayerInternal(player);
+        }
+
+        public void SpawnAllPlayers()
+        {
+            if (!enabled || predictionManager.players == null)
+                return;
+
+            var players = predictionManager.players.players;
+
+            for (int i = 0; i < players.Count; i++)
+            {
+                var player = players[i];
+
+                if (!currentState.ContainsKey(player))
+                    SpawnPlayerInternal(player);
+            }
+        }
+
         public void RespawnPlayer(PlayerID player)
         {
             if (!enabled) return;
@@ -202,7 +237,7 @@ namespace PurrNet.Prediction
                 currentState.Remove(player);
             }
 
-            OnPlayerLoadedScene(player);
+            SpawnPlayerInternal(player);
         }
     }
 }
