@@ -226,7 +226,12 @@ namespace PurrNet.Prediction
         private void RegisterScene()
         {
             var identities = ListPool<PredictedIdentity>.Instantiate();
+
+#if HAS_DISCOVERY_RULE
+            SceneObjectsModule.GetScenePredictedIdentities(gameObject.scene, identities, networkManager.networkRules.ShouldIncludeInstantiatedSceneObjects());
+#else
             SceneObjectsModule.GetScenePredictedIdentities(gameObject.scene, identities);
+#endif
 
             int count = identities.Count;
             for (var i = 0; i < count; ++i)

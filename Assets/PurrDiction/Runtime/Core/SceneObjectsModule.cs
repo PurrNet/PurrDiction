@@ -26,12 +26,19 @@ namespace PurrNet.Prediction
         static void CacheScene(Scene scene)
         {
             var identities = ListPool<PredictedIdentity>.Instantiate();
+#if HAS_DISCOVERY_RULE
+            bool include = NetworkManager.main
+                ? NetworkManager.main.networkRules.ShouldIncludeInstantiatedSceneObjects()
+                : false;
+            GetScenePredictedIdentities(scene, identities, include);
+#else
             GetScenePredictedIdentities(scene, identities);
+#endif
             ListPool<PredictedIdentity>.Destroy(identities);
         }
 #endif
 
-        public static void GetScenePredictedIdentities(Scene scene, List<PredictedIdentity> pids)
+        public static void GetScenePredictedIdentities(Scene scene, List<PredictedIdentity> pids, bool includeInstantiated = false)
         {
             if (_cache.TryGetValue(scene, out var cached))
             {
@@ -61,7 +68,23 @@ namespace PurrNet.Prediction
             }
 
             if (sceneInfo)
-                rootGameObjects = sceneInfo.rootGameObjects.ToArray();
+            {
+                var orderedRoot = new List<GameObject>(sceneInfo.rootGameObjects);
+
+                if (includeInstantiated)
+                {
+                    var existing = new HashSet<GameObject>(orderedRoot);
+
+                    for (var i = 0; i < rootGameObjects.Length; i++)
+                    {
+                        var rootObject = rootGameObjects[i];
+                        if (rootObject && existing.Add(rootObject))
+                            orderedRoot.Add(rootObject);
+                    }
+                }
+
+                rootGameObjects = orderedRoot.ToArray();
+            }
 
             for (var i = 0; i < rootGameObjects.Length; i++)
             {

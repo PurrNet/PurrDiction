@@ -34,6 +34,11 @@
             "name": "com.unity.modules.physics2d",
             "expression": "",
             "define": "UNITY_PHYSICS_2D"
+        },
+        {
+            "name": "dev.purrnet.purrnet",
+            "expression": "1.20.0-beta.38",
+            "define": "HAS_DISCOVERY_RULE"
         }
     ],
     "noEngineReferences": false
