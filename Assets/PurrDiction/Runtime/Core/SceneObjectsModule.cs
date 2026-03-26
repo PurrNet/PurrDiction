@@ -27,9 +27,7 @@ namespace PurrNet.Prediction
         {
             var identities = ListPool<PredictedIdentity>.Instantiate();
 #if HAS_DISCOVERY_RULE
-            bool include = NetworkManager.main
-                ? NetworkManager.main.networkRules.ShouldIncludeInstantiatedSceneObjects()
-                : false;
+            bool include = NetworkManager.main && NetworkManager.main.networkRules.ShouldIncludeInstantiatedSceneObjects();
             GetScenePredictedIdentities(scene, identities, include);
 #else
             GetScenePredictedIdentities(scene, identities);
