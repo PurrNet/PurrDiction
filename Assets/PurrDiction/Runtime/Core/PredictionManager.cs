@@ -917,7 +917,11 @@ namespace PurrNet.Prediction
             Packer<PackedInt>.Read(frame, ref _count);
             int count = _count;
 
-            for (var i = 0; i < count; ++i)
+            // Guard against _systems shrinking mid-iteration.
+            // RunReadState can trigger hierarchy deletion (via SetUnityState applying
+            // OperationType.Delete), which calls UnregisterInstance and removes entries
+            // from _systems. Using Math.Min ensures we don't access stale indices.
+            for (var i = 0; i < count && i < _systems.Count; ++i)
             {
                 var system = _systems[i];
                 if (system.isEventHandler)
@@ -930,10 +934,10 @@ namespace PurrNet.Prediction
                 system.lastVerifiedTick = stateTick;
             }
 
-            for (var i = 0; i < count; ++i)
+            for (var i = 0; i < count && i < _systems.Count; ++i)
                 _systems[i].ReadInput(inputTick, default, frame, _deltaModuleState, true);
 
-            for (var i = 0; i < count; ++i)
+            for (var i = 0; i < count && i < _systems.Count; ++i)
             {
                 var system = _systems[i];
                 if (!system.isEventHandler)
