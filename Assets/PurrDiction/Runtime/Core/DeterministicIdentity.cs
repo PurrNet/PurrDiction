@@ -96,6 +96,12 @@ namespace PurrNet.Prediction
 
         internal Type myType;
 
+        private void ResetStateToInitialState()
+        {
+            fullPredictedState.prediction.wasOnSimulationStartCalled = false;
+            fullPredictedState.state = GetInitialState();
+        }
+
         internal override void Setup(NetworkManager manager, PredictionManager world, PredictedComponentID id, PlayerID? owner)
         {
             myType = GetType();
@@ -103,7 +109,7 @@ namespace PurrNet.Prediction
 
             if (!isFreshSpawn)
             {
-                fullPredictedState.state = GetInitialState();
+                ResetStateToInitialState();
                 GetLatestUnityState();
                 base.Setup(manager, world, id, owner);
                 return;
@@ -116,7 +122,7 @@ namespace PurrNet.Prediction
             if (tickModule == null)
                 return;
 
-            fullPredictedState.state = GetInitialState();
+            ResetStateToInitialState();
             GetLatestUnityState();
 
             // if TickRate is 30, then this should be 2
