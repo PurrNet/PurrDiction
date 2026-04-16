@@ -112,8 +112,6 @@ namespace PurrNet.Prediction
 
             try
             {
-                EditorUtility.DisplayProgressBar("Getting Predicted Prefabs", "Scanning...", 0.1f);
-
                 string resolvedPath = AssetScannerUtility.ResolveFolderPath(_folder, searchAllIfNoFolder);
 
                 if (string.IsNullOrEmpty(resolvedPath))
@@ -139,10 +137,6 @@ namespace PurrNet.Prediction
                     var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(assetPath);
                     if (!prefab) continue;
 
-                    EditorUtility.DisplayProgressBar("Getting Predicted Prefabs",
-                        $"Looking at {prefab.name}",
-                        0.1f + 0.6f * ((i + 1f) / guids.Length));
-
                     identities.Clear();
                     prefab.GetComponentsInChildren(true, identities);
                     if (identities.Count == 0) continue;
@@ -156,8 +150,6 @@ namespace PurrNet.Prediction
                 }
 
                 found.Sort(AssetScannerUtility.CompareByGuid);
-
-                EditorUtility.DisplayProgressBar("Getting Predicted Prefabs", "Syncing...", 0.8f);
 
                 // Update GUIDs on existing entries
                 for (int i = 0; i < prefabs.Count; i++)
@@ -200,7 +192,6 @@ namespace PurrNet.Prediction
             }
             finally
             {
-                EditorUtility.ClearProgressBar();
                 _generating = false;
             }
 #endif

@@ -14,7 +14,7 @@ namespace PurrNet.Prediction.Editor
 
             var all = AssetDatabase.FindAssets("t:PredictedPrefabs")
                 .Select(guid => AssetDatabase.LoadAssetAtPath<PredictedPrefabs>(AssetDatabase.GUIDToAssetPath(guid)))
-                .Where(n => n && n.autoGenerate)
+                .Where(n => n && n.autoGenerate && n.folder)
                 .ToArray();
 
             foreach (var predictedPrefabs in all)
@@ -33,10 +33,10 @@ namespace PurrNet.Prediction.Editor
         private static bool HasRelevantChange(string folderPath, string[] importedAssets, string[] deletedAssets,
             string[] movedAssets, string[] movedFromAssetPaths)
         {
-            return importedAssets.Any(p => p.StartsWith(folderPath)) ||
-                   deletedAssets.Any(p => p.StartsWith(folderPath)) ||
-                   movedAssets.Any(p => p.StartsWith(folderPath)) ||
-                   movedFromAssetPaths.Any(p => p.StartsWith(folderPath));
+            return importedAssets.Any(p => p.StartsWith(folderPath) && p.EndsWith(".prefab")) ||
+                   deletedAssets.Any(p => p.StartsWith(folderPath) && p.EndsWith(".prefab")) ||
+                   movedAssets.Any(p => p.StartsWith(folderPath) && p.EndsWith(".prefab")) ||
+                   movedFromAssetPaths.Any(p => p.StartsWith(folderPath) && p.EndsWith(".prefab"));
         }
     }
 }
