@@ -1,5 +1,6 @@
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace PurrNet.Prediction.Editor
 {
@@ -14,6 +15,11 @@ namespace PurrNet.Prediction.Editor
 #endif
     {
         static GUIStyle _box;
+
+        public override VisualElement CreateInspectorGUI()
+        {
+            return null;
+        }
 
         public override void OnInspectorGUI()
         {
