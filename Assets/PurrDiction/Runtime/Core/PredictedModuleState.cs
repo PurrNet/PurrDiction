@@ -14,7 +14,7 @@ namespace PurrNet.Prediction
         /// </summary>
         public ref TState currentState => ref fullPredictedState.state;
 
-        private History<FULL_STATE<TState>> _history = new History<FULL_STATE<TState>>();
+        private History<FULL_STATE<TState>> _history;
 
         private InterpolatedWithDispose<FULL_STATE<TState>> _interpolatedState;
         private FULL_STATE<TState>? _viewState;
@@ -36,6 +36,8 @@ namespace PurrNet.Prediction
         {
             var tickRate = predictionManager.tickRate;
             var bufferSize = (int)Math.Max(tickRate / 10f, 2);
+
+            _history = new History<FULL_STATE<TState>>(tickRate * 10);
 
             _interpolatedState = new InterpolatedWithDispose<FULL_STATE<TState>>(
                 FULLInterpolate,
