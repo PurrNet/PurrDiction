@@ -322,6 +322,24 @@ namespace PurrNet.Prediction
             return result.HasValue;
         }
 
+        public bool TryCreateAndGet<T>(int prefabId, out T component, PlayerID? owner = null) where T : Component
+        {
+            var id = Create(prefabId, owner);
+            return TryGetComponent(id, out component);
+        }
+
+        public bool TryCreateAndGet<T>(GameObject prefab, Vector3 position, Quaternion rotation, out T component, PlayerID? owner = null) where T : Component
+        {
+            var id = Create(prefab, position, rotation, owner);
+            return TryGetComponent(id, out component);
+        }
+
+        public bool TryCreateAndGet<T>(GameObject prefab, out T component, PlayerID? owner = null) where T : Component
+        {
+            var id = Create(prefab, owner);
+            return TryGetComponent(id, out component);
+        }
+
         public GameObject GetGameObject(PredictedObjectID? id)
         {
             if (!id.HasValue)
