@@ -32,6 +32,8 @@ namespace PurrNet.Prediction
 
         static readonly Dictionary<int, PredictionManager> _instances = new ();
 
+        public static event Action<int, PredictionManager> OnInstanceAdded;
+
         [SerializeField] private PredictionPhysicsProvider _physicsProvider;
         [SerializeField] private UpdateViewMode _updateViewMode = UpdateViewMode.Update;
         [SerializeField, PurrLock] private BuiltInSystems _builtInSystems =
@@ -102,6 +104,7 @@ namespace PurrNet.Prediction
         private void Awake()
         {
             _instances[gameObject.scene.handle] = this;
+            OnInstanceAdded?.Invoke(gameObject.scene.handle, this);
             _sessionSeed = (uint)UnityEngine.Random.Range(int.MinValue, int.MaxValue);
 
 #if UNITY_PHYSICS_2D
