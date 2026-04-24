@@ -307,6 +307,7 @@ namespace PurrNet.Prediction
             _clientFrames.Clear();
             localTick = 1;
             _lastVerifiedTick = 1;
+            _playedFirst = false;
             localTickInContext = 1;
             _deltas.Clear();
         }
@@ -503,6 +504,9 @@ namespace PurrNet.Prediction
         {
             isSimulating = true;
             _sessionSeed = randomSeed;
+
+            _lastVerifiedTick = 1;
+            _playedFirst = false;
 
             tickDelta = delta;
             this.tickRate = tickRate;
