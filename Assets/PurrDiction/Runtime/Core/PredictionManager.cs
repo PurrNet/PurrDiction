@@ -454,7 +454,7 @@ namespace PurrNet.Prediction
 
         protected override void OnPreObserverAdded(PlayerID player)
         {
-            if (player == localPlayer)
+            if (player == localPlayer || player.isBot)
                 return;
 
             if (localTick == 1)
@@ -470,7 +470,7 @@ namespace PurrNet.Prediction
 
         protected override void OnObserverAdded(PlayerID player)
         {
-            if (player == localPlayer)
+            if (player == localPlayer || player.isBot)
                 return;
 
             using var frame = BitPackerPool.Get();
