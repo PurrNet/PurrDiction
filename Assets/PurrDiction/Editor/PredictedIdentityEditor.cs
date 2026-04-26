@@ -15,6 +15,7 @@ namespace PurrNet.Prediction.Editor
 #endif
     {
         static GUIStyle _box;
+        bool _showPredictedModules = false;
 
         public override VisualElement CreateInspectorGUI()
         {
@@ -106,7 +107,14 @@ namespace PurrNet.Prediction.Editor
             if (modules == null || modules.Count == 0)
                 return;
 
-            bool drewAny = false;
+            GUILayout.Space(5);
+            _showPredictedModules = EditorGUILayout.Foldout(
+                _showPredictedModules,
+                $"Predicted Modules ({modules.Count})",
+                true);
+
+            if (!_showPredictedModules)
+                return;
 
             for (int i = 0; i < modules.Count; i++)
             {
@@ -118,13 +126,6 @@ namespace PurrNet.Prediction.Editor
                 var moduleName = module.GetType().Name;
                 if (string.IsNullOrEmpty(content) || string.IsNullOrEmpty(moduleName))
                     continue;
-
-                if (!drewAny)
-                {
-                    GUILayout.Space(10);
-                    GUILayout.Label("Predicted Modules", EditorStyles.boldLabel);
-                    drewAny = true;
-                }
 
                 EditorGUILayout.BeginVertical("box");
 
