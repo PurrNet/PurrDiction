@@ -7,6 +7,7 @@ namespace PurrNet.Prediction
     public abstract partial class PredictedIdentity
     {
         private readonly List<PredictedModule> _modules = new();
+        internal IReadOnlyList<PredictedModule> Modules => _modules;
 
         protected void ModuleSetup(NetworkManager manager, PredictionManager world, PredictedComponentID id, PlayerID? owner)
         {

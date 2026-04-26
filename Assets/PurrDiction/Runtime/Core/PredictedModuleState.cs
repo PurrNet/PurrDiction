@@ -32,6 +32,11 @@ namespace PurrNet.Prediction
         protected ModuleDeltaKey<PredictedIdentityState> predictionKey => new ModuleDeltaKey<PredictedIdentityState>(identity.id, moduleIndex);
         protected ModuleDeltaKey<TState> stateKey => new ModuleDeltaKey<TState>(identity.id, moduleIndex);
 
+        public override string ToString()
+        {
+            return $"State:\n{fullPredictedState.state}";
+        }
+
         internal override void OnCoreInitialize()
         {
             var tickRate = predictionManager.tickRate;
