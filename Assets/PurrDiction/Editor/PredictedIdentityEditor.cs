@@ -89,12 +89,50 @@ namespace PurrNet.Prediction.Editor
                 }
                 GUILayout.EndHorizontal();
 
+                DrawPredictedModules(predictedIdentity);
+
                 if (predictedIdentity.GetType().GetCustomAttributes(typeof(PredictionUnsafeAttribute), true).Length > 0)
                 {
                     EditorGUILayout.HelpBox("This identity is marked as PredictionUnsafe, which means use at your own risk.\n" +
                                             "It may not behave as expected or works against prediction.",
                         MessageType.Warning);
                 }
+            }
+        }
+
+        private void DrawPredictedModules(PredictedIdentity predictedIdentity)
+        {
+            var modules = predictedIdentity.Modules;
+            if (modules == null || modules.Count == 0)
+                return;
+
+            bool drewAny = false;
+
+            for (int i = 0; i < modules.Count; i++)
+            {
+                var module = modules[i];
+                if (module == null)
+                    continue;
+
+                var content = module.ToString();
+                var moduleName = module.GetType().Name;
+                if (string.IsNullOrEmpty(content) || string.IsNullOrEmpty(moduleName))
+                    continue;
+
+                if (!drewAny)
+                {
+                    GUILayout.Space(10);
+                    GUILayout.Label("Predicted Modules", EditorStyles.boldLabel);
+                    drewAny = true;
+                }
+
+                EditorGUILayout.BeginVertical("box");
+
+                var moduleDisplayName = $"{moduleName} [#{module.moduleIndex}]";
+                EditorGUILayout.LabelField(moduleDisplayName, EditorStyles.boldLabel);
+                GUILayout.Box(content, _box, GUILayout.ExpandWidth(true));
+
+                EditorGUILayout.EndVertical();
             }
         }
     }

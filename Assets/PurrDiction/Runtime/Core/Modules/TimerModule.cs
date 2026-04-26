@@ -134,5 +134,10 @@ namespace PurrNet.Prediction
         {
             timer = null;
         }
+
+        public override string ToString()
+        {
+            return $"Timer={(timer.HasValue ? timer.Value.ToString("F2") : "null")}";
+        }
     }
 }
