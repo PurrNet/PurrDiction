@@ -123,9 +123,9 @@ namespace PurrNet.Prediction
             {
                 if (!predictionManager)
                     return false;
-                if (owner.HasValue && predictionManager.isSpawned)
-                    return owner == predictionManager.localPlayer;
-                return predictionManager.cachedIsServer;
+
+                var player = predictionManager.isSpawned ? predictionManager.localPlayer ?? default : default;
+                return IsOwner(player, predictionManager.cachedIsServer);
             }
         }
 
