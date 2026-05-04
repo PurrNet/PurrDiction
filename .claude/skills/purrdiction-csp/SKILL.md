@@ -144,7 +144,33 @@ public void TakeDamage(int amount)
 
 The `isSimulating` guard drops calls from `UpdateView`, button handlers, or off-tick callbacks — correct because state mutated outside the sim pass cannot reconcile.
 
-## 8. Predicted spawn — exact parameter equality
+## 8. Unity component bridge — GetUnityState / SetUnityState
+
+For Unity component properties that impact prediction but live outside the state struct (physics properties, body type, sleep state), override these two methods:
+
+```csharp
+// Read Unity component → predicted state (called AFTER each sim tick)
+protected override void GetUnityState(ref MyState state)
+{
+    state.linearDamping = _rigidbody.linearDamping;
+}
+
+// Write predicted state → Unity component (called during ROLLBACK)
+protected override void SetUnityState(MyState state)
+{
+    _rigidbody.linearDamping = state.linearDamping;
+}
+```
+
+**Lifecycle:**
+- `GetUnityState` runs after `Simulate` + `LateSimulate` + physics pass (captures Unity's post-tick state into the history buffer)
+- `SetUnityState` runs when the framework restores a historic state during rollback (syncs Unity components to the rolled-back state before re-simulation)
+
+This pair bridges PurrDiction's immutable state history with Unity's mutable component state. The framework already uses this internally for `PredictedRigidbody2D` (velocity, bodyType, sleep), `PredictedTransform` (position, rotation), etc.
+
+**When to use:** When you modify a Unity property inside `Simulate()` that isn't automatically tracked by `PredictedRigidbody`/`PredictedTransform`. Without the bridge, the property won't roll back correctly.
+
+## 9. Predicted spawn — exact parameter equality
 
 `InstanceDetails.Equals` uses `Vector3.Equals` and `Quaternion.Equals` (exact, not approximate). Position/rotation passed to `hierarchy.Create(prefab, pos, rot)` must be **identical** between client and server calls.
 
@@ -153,18 +179,18 @@ Sub-pixel drift triggers destroy-and-recreate during reconciliation, resetting p
 ✅ Spawn from authoritative values: `rb.position + staticOffset` (rb is reconciled, offset is constant).
 ❌ Interpolated transforms, `_graphics` child positions, `Vector2.Lerp(...)` on spawn params.
 
-## 9. StateSimulate write-back
+## 10. StateSimulate write-back
 
 For `PredictedStateNode<T>.StateSimulate`: the framework copies `currentState` to a local, calls your override, writes it back. **Direct writes to `currentState` inside StateSimulate are silently overwritten.** Always mutate only the `ref state` parameter.
 
-## 10. History capacity
+## 11. History capacity
 
 - **State history**: `tickRate × 10` entries (300 at 30Hz)
 - **Input history**: `tickRate × 5` entries (150 at 30Hz)
 
 If rollback depth exceeds state history, the framework logs `"Failed to rollback to tick X"` and falls back to `default(STATE)` — silently corrupting the entity. Treat this log as a defect.
 
-## 11. Cross-platform determinism
+## 12. Cross-platform determinism
 
 For single-platform builds (same Unity version, same architecture), float math + the rules above is sufficient — reconciliation papers over residual rounding.
 
@@ -174,7 +200,7 @@ For cross-platform (IL2CPP vs Mono, ARM vs x86), PurrDiction ships:
 
 Reach for these only after measuring determinism failures that survive the basic rules.
 
-## 12. Prediction lifecycle (reference diagram)
+## 13. Prediction lifecycle (reference diagram)
 
 ```
                   ┌────────────── per tick (fixed timestep) ──────────────┐
