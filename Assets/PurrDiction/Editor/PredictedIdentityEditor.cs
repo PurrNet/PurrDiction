@@ -103,7 +103,7 @@ namespace PurrNet.Prediction.Editor
 
         private void DrawPredictedModules(PredictedIdentity predictedIdentity)
         {
-            var modules = predictedIdentity.Modules;
+            var modules = predictedIdentity.modules;
             if (modules == null || modules.Count == 0)
                 return;
 
