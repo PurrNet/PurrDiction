@@ -1,5 +1,12 @@
 {
   "dependencies": {
+    "com.dbrizov.naughtyattributes": {
+      "version": "https://github.com/dbrizov/NaughtyAttributes.git#upm",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "c46e45b61398d3c0ef4cff38c0f81ce40cf6d877"
+    },
     "com.unity.asset-store-tools": {
       "version": "file:com.unity.asset-store-tools",
       "depth": 0,
