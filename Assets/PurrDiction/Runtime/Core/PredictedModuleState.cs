@@ -220,5 +220,14 @@ namespace PurrNet.Prediction
         {
             _history.ClearFuture(tick);
         }
+
+        protected override void OnDisposed()
+        {
+            base.OnDisposed();
+            _history?.Clear();
+            _interpolatedState?.Teleport(default);
+            _interpolatedState = null;
+            fullPredictedState.Dispose();
+        }
     }
 }

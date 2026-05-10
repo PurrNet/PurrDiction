@@ -37,10 +37,13 @@ namespace PurrNet.Prediction
         /// </summary>
         public int moduleIndex { get; internal set; }
 
+        internal readonly uint typeHash;
+
         public PredictedModule(PredictedIdentity identity)
         {
             this.identity = identity;
             this.predictionManager = identity.predictionManager;
+            this.typeHash = Hasher.PrepareType(GetType());
 
             identity.RegisterModule(this);
 
@@ -159,5 +162,34 @@ namespace PurrNet.Prediction
         /// Typically called on teleport or spawn.
         /// </summary>
         protected virtual void ResetInterpolation() { }
+
+        /// <summary>
+        /// Removes this module from its parent identity.
+        /// Only valid for modules registered during simulation.
+        /// Modules created before the first simulation tick are not removable.
+        /// </summary>
+        public void Dispose()
+        {
+            if (identity != null)
+                identity.RemoveModuleInternal(this);
+        }
+
+        internal void OnRemovedInternal()
+        {
+            OnDisposed();
+            onDisposed?.Invoke();
+        }
+
+        /// <summary>
+        /// Invoked when the module is removed from its identity.
+        /// Use this to drop any external references to the module.
+        /// </summary>
+        public event Action onDisposed;
+
+        /// <summary>
+        /// Called when the module is being removed from the identity.
+        /// Override to release any owned resources.
+        /// </summary>
+        protected virtual void OnDisposed() { }
     }
 }

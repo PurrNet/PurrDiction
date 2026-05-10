@@ -110,6 +110,7 @@ namespace PurrNet.Prediction
         protected virtual void OnDestroy()
         {
             Destroyed();
+            TearDownAllModules();
 
             if (predictionManager)
                 predictionManager.UnregisterInstance(this);
