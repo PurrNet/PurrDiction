@@ -12,7 +12,41 @@ namespace PurrNet.Prediction
     public abstract partial class PredictedIdentity
     {
         private readonly List<PredictedModule> _modules = new();
-        internal IReadOnlyList<PredictedModule> Modules => _modules;
+
+        /// <summary>
+        /// The live, ordered list of modules attached to this identity.
+        /// Static modules come first, followed by dynamic modules in registration order.
+        /// </summary>
+        public IReadOnlyList<PredictedModule> modules => _modules;
+
+        /// <summary>
+        /// Returns the first module of type T attached to this identity, if any.
+        /// </summary>
+        public bool TryGetModule<T>(out T module) where T : PredictedModule
+        {
+            for (int i = 0; i < _modules.Count; i++)
+            {
+                if (_modules[i] is T match)
+                {
+                    module = match;
+                    return true;
+                }
+            }
+            module = null;
+            return false;
+        }
+
+        /// <summary>
+        /// Appends every module of type T attached to this identity to the given list, in registration order.
+        /// </summary>
+        public void GetModules<T>(List<T> results) where T : PredictedModule
+        {
+            for (int i = 0; i < _modules.Count; i++)
+            {
+                if (_modules[i] is T match)
+                    results.Add(match);
+            }
+        }
 
         private int _staticModuleCount = -1;
         private bool _isApplyingModuleDiff;
