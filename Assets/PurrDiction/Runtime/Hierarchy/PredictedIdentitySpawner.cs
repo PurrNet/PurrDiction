@@ -108,6 +108,19 @@ namespace PurrNet.Prediction
             }
         }
 
+        private void ForAll(Action<NetworkIdentity, PlayerID> action, PlayerID id)
+        {
+            for (int i = 0; i < _identitiesToSpawn.Length; i++)
+            {
+                var identity = _identitiesToSpawn[i];
+
+                if (!identity)
+                    continue;
+
+                action(identity, id);
+            }
+        }
+
         private void ForAll(Action<NetworkIdentity> action)
         {
             for (int i = 0; i < _identitiesToSpawn.Length; i++)
@@ -136,8 +149,10 @@ namespace PurrNet.Prediction
                 _serverHierarchy.ManualEarlySpawn(identity, reservedId);
             }
 
-            if (predictionManager.localPlayer.HasValue)
-                ForAll(AddLocalPlayerAsObserver);
+            var localPlayer = predictionManager.localPlayer;
+
+            if (localPlayer.HasValue && predictionManager.IsObserver(localPlayer.Value))
+                ForAll(AddLocalPlayerAsObserver, localPlayer.Value);
 
             if (owner.HasValue)
                 ForAll(GiveOwnershipToOwner);
@@ -150,9 +165,9 @@ namespace PurrNet.Prediction
 
         }
 
-        void AddLocalPlayerAsObserver(NetworkIdentity identity)
+        void AddLocalPlayerAsObserver(NetworkIdentity identity, PlayerID localPlayer)
         {
-            _serverHierarchy.ManualAddObserver(identity, predictionManager.localPlayer!.Value);
+            _serverHierarchy.ManualAddObserver(identity, localPlayer);
         }
 
         void GiveOwnershipToOwner(NetworkIdentity identity)
