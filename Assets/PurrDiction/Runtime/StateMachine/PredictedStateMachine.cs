@@ -12,6 +12,7 @@ namespace PurrNet.Prediction.StateMachine
             new List<SerializableInterface<IPredictedStateNodeBase>>();
         private List<IPredictedStateNodeBase> _states;
         public IReadOnlyList<IPredictedStateNodeBase> states => _states;
+        public event System.Action<int, IPredictedStateNodeBase> onStateEntered;
 
         public IPredictedStateNodeBase currentStateNode
         {
@@ -88,12 +89,14 @@ namespace PurrNet.Prediction.StateMachine
 
                 state.stateIndex = index;
                 _states[state.stateIndex].Enter();
+                onStateEntered?.Invoke(state.stateIndex, _states[state.stateIndex]);
                 state.lastEnteredStateIndex = state.stateIndex;
                 state.transition++;
             }
             else if (state.stateIndex > -1 && state.stateIndex != state.lastEnteredStateIndex)
             {
                 _states[state.stateIndex].Enter();
+                onStateEntered?.Invoke(state.stateIndex, _states[state.stateIndex]);
                 state.lastEnteredStateIndex = state.stateIndex;
                 _previousStateNode = null;
                 _currentStateNode = _states[state.stateIndex];
