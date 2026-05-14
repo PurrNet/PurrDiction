@@ -19,7 +19,7 @@ namespace PurrNet.Prediction.StateMachine
         {
             get
             {
-                if(currentState.stateIndex < 0 || currentState.stateIndex >= _states.Count)
+                if (_states == null || currentState.stateIndex < 0 || currentState.stateIndex >= _states.Count)
                     return null;
 
                 return _states[currentState.stateIndex];
