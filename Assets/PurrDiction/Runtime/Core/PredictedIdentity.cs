@@ -102,9 +102,16 @@ namespace PurrNet.Prediction
             predictionManager = world;
             sceneId = world.sceneId;
 
-            ModuleSetup(manager,world,id, owner);
-
-            LateAwake();
+            BeginInitialModuleSetup();
+            try
+            {
+                ModuleSetup(manager,world,id, owner);
+                LateAwake();
+            }
+            finally
+            {
+                EndInitialModuleSetup();
+            }
         }
 
         protected virtual void OnDestroy()

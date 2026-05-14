@@ -50,6 +50,7 @@ namespace PurrNet.Prediction
 
         private int _staticModuleCount = -1;
         private bool _isApplyingModuleDiff;
+        private bool _isRunningInitialModuleSetup;
         private History<DisposableList<uint>> _moduleHistory;
 
         private readonly struct DynamicModulesKey : IStableHashable
@@ -78,6 +79,16 @@ namespace PurrNet.Prediction
 
         private DynamicModulesKey DynamicKey => new(sceneId, id);
 
+        private void BeginInitialModuleSetup()
+        {
+            _isRunningInitialModuleSetup = true;
+        }
+
+        private void EndInitialModuleSetup()
+        {
+            _isRunningInitialModuleSetup = false;
+        }
+
         protected void ModuleSetup(NetworkManager manager, PredictionManager world, PredictedComponentID id, PlayerID? owner)
         {
             if (_moduleHistory == null)
@@ -92,7 +103,7 @@ namespace PurrNet.Prediction
             if (_isApplyingModuleDiff)
                 return module;
 
-            bool isDynamic = predictionManager && predictionManager.isSimulating;
+            bool isDynamic = predictionManager && predictionManager.isSimulating && !_isRunningInitialModuleSetup;
 
             if (isDynamic && _staticModuleCount < 0)
                 _staticModuleCount = _modules.Count;
