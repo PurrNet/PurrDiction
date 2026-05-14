@@ -169,13 +169,7 @@ namespace PurrNet.Prediction.StateMachine
 
         public void SetState(IPredictedStateNodeBase state)
         {
-            if (state == null)
-            {
-                SetState(-1);
-                return;
-            }
-
-            var index = _states?.IndexOf(state) ?? -1;
+            var index = _states.IndexOf(state);
             if (index == -1)
             {
                 PurrLogger.LogError($"Can't switch state. Either state ({state}) is invalid, or doesn't exist in states list!", this);
