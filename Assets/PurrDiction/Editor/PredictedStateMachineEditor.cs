@@ -32,7 +32,7 @@ namespace PurrNet.Prediction.Editor
         }
     }
     
-    [CustomEditor(typeof(PredictedStateMachine))]
+    [CustomEditor(typeof(PredictedStateMachine), true)]
     public class PredictedStateMachineEditor : UnityEditor.Editor
     {
         private PredictedStateMachine _stateMachine;
