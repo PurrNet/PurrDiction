@@ -31,7 +31,7 @@ namespace PurrNet.Prediction.StateMachine
         private int _previousViewStateIndex = -1;
         private int _previousVerifiedViewStateIndex = -1;
 
-        protected virtual void Awake()
+        private void Awake()
         {
             _states = _wrappedStates.Select(wrapped => wrapped.Value).ToList();
             _currentStateNode = _states.FirstOrDefault();
