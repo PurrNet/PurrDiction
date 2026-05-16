@@ -32,9 +32,16 @@ namespace PurrNet.Prediction.Editor
         }
     }
     
-    [CustomEditor(typeof(PredictedStateMachine))]
+    [CustomEditor(typeof(PredictedStateMachine), true)]
     public class PredictedStateMachineEditor : UnityEditor.Editor
     {
+        private static readonly string[] ExcludedProperties =
+        {
+            "m_Script",
+            "_defaultStateIndex",
+            "_wrappedStates"
+        };
+
         private PredictedStateMachine _stateMachine;
         private SerializedProperty _statesProperty;
         
@@ -176,6 +183,7 @@ namespace PurrNet.Prediction.Editor
                 EditorGUI.BeginDisabledGroup(true);
 
             EditorGUILayout.PropertyField(_statesProperty, new GUIContent("States"), true);
+            DrawPropertiesExcluding(serializedObject, ExcludedProperties);
 
             if (Application.isPlaying)
                 EditorGUI.EndDisabledGroup();
