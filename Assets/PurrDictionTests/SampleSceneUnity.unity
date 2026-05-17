@@ -732,6 +732,7 @@ MonoBehaviour:
   - {fileID: 367461690}
   - {fileID: 587401258}
   - {fileID: 946599082}
+  _waitForSpawnCall: 0
 --- !u!4 &457991333
 Transform:
   m_ObjectHideFlags: 0
@@ -885,6 +886,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 21d13622c5da2b14384a1c1abe0ea087, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _predictedMachine: {fileID: 1871079014}
 --- !u!4 &1179252127
 Transform:
   m_ObjectHideFlags: 0
@@ -1012,7 +1014,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _stopPlayingOnDisconnect: 0
   _startServerFlags: 9
-  _startClientFlags: 6
+  _startClientFlags: 7
   _cookieScope: 1
   _dontDestroyOnLoad: 1
   _transport: {fileID: 1793795283}
