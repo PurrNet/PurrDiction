@@ -8,6 +8,8 @@ namespace PurrNet.Prediction.StateMachine
     [AddComponentMenu("PurrDiction/Predicted State machine")]
     public class PredictedStateMachine : PredictedIdentity<PredictedStateMachine.SMState>
     {
+        [SerializeField, Min(-1)] private int _defaultStateIndex = 0;
+
         [SerializeField] private List<SerializableInterface<IPredictedStateNodeBase>> _wrappedStates =
             new List<SerializableInterface<IPredictedStateNodeBase>>();
         private List<IPredictedStateNodeBase> _states;
@@ -17,7 +19,7 @@ namespace PurrNet.Prediction.StateMachine
         {
             get
             {
-                if(currentState.stateIndex < 0 || currentState.stateIndex >= _states.Count)
+                if (_states == null || currentState.stateIndex < 0 || currentState.stateIndex >= _states.Count)
                     return null;
 
                 return _states[currentState.stateIndex];
@@ -34,7 +36,8 @@ namespace PurrNet.Prediction.StateMachine
         private void Awake()
         {
             _states = _wrappedStates.Select(wrapped => wrapped.Value).ToList();
-            _currentStateNode = _states.FirstOrDefault();
+            var defaultStateIndex = GetValidDefaultStateIndex();
+            _currentStateNode = defaultStateIndex > -1 ? _states[defaultStateIndex] : null;
 
             for (var i = 0; i < _states.Count; i++)
             {
@@ -43,6 +46,25 @@ namespace PurrNet.Prediction.StateMachine
                 var state = _states[i];
                 state.Setup(this);
             }
+        }
+
+        private int GetValidDefaultStateIndex()
+        {
+            if (_defaultStateIndex < 0)
+                return -1;
+
+            if (_states != null)
+            {
+                if (_defaultStateIndex >= _states.Count)
+                    return -1;
+
+                return _states[_defaultStateIndex] != null ? _defaultStateIndex : -1;
+            }
+
+            if (_defaultStateIndex >= _wrappedStates.Count)
+                return -1;
+
+            return _wrappedStates[_defaultStateIndex]?.Value != null ? _defaultStateIndex : -1;
         }
 
         private uint _prevViewTransition;
@@ -113,9 +135,10 @@ namespace PurrNet.Prediction.StateMachine
 
         protected override SMState GetInitialState()
         {
+            var defaultStateIndex = GetValidDefaultStateIndex();
             var state = new SMState()
             {
-                wantedState = 0,
+                wantedState = defaultStateIndex,
                 stateIndex = -1,
                 lastEnteredStateIndex = -1
             };
