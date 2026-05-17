@@ -43,6 +43,7 @@ namespace PurrNet.Prediction.Editor
         };
 
         private PredictedStateMachine _stateMachine;
+        private SerializedProperty _defaultStateIndexProperty;
         private SerializedProperty _statesProperty;
         
         private class StateCache
@@ -60,6 +61,7 @@ namespace PurrNet.Prediction.Editor
         private void OnEnable()
         {
             _stateMachine = target as PredictedStateMachine;
+            _defaultStateIndexProperty = serializedObject.FindProperty("_defaultStateIndex");
             _statesProperty = serializedObject.FindProperty("_wrappedStates");
             EditorApplication.update += OnEditorUpdate;
         }
@@ -182,6 +184,7 @@ namespace PurrNet.Prediction.Editor
             if (Application.isPlaying)
                 EditorGUI.BeginDisabledGroup(true);
 
+            EditorGUILayout.PropertyField(_defaultStateIndexProperty, new GUIContent("Default State Index"));
             EditorGUILayout.PropertyField(_statesProperty, new GUIContent("States"), true);
             DrawPropertiesExcluding(serializedObject, ExcludedProperties);
 
