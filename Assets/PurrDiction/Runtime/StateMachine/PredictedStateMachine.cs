@@ -159,14 +159,14 @@ namespace PurrNet.Prediction.StateMachine
             return state;
         }
 
-        public void Next()
+        public virtual void Next()
         {
             if (_states.Count == 0) return;
             var nextIndex = (currentState.stateIndex + 1) % _states.Count;
             SetState(nextIndex);
         }
 
-        public void Previous()
+        public virtual void Previous()
         {
             if (_states.Count == 0) return;
             var previousIndex = (currentState.stateIndex - 1 + _states.Count) % _states.Count;
