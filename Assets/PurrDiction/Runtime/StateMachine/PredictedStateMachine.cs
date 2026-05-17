@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using PurrNet.Logging;
 using UnityEngine;
 
@@ -14,6 +15,8 @@ namespace PurrNet.Prediction.StateMachine
             new List<SerializableInterface<IPredictedStateNodeBase>>();
         private List<IPredictedStateNodeBase> _states;
         public IReadOnlyList<IPredictedStateNodeBase> states => _states;
+        public event StateChangedDelegate onStateChanged;
+        public delegate void StateChangedDelegate(IPredictedStateNodeBase previousState, IPredictedStateNodeBase newState);
 
         public IPredictedStateNodeBase currentStateNode
         {
@@ -95,6 +98,7 @@ namespace PurrNet.Prediction.StateMachine
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected override void Simulate(ref SMState state, float delta)
         {
             base.Simulate(ref state, delta);
@@ -106,19 +110,28 @@ namespace PurrNet.Prediction.StateMachine
                 state.wantedState = -1;
 
                 if (state.stateIndex > -1)
-                    _states[state.stateIndex].Exit();
+                {
+                    var previousState = _states[state.stateIndex];
+                    previousState.Exit();
+                }
 
+                var oldState = state.stateIndex > -1 ? _states[state.stateIndex] : null;
                 state.stateIndex = index;
-                _states[state.stateIndex].Enter();
+                var newState = _states[state.stateIndex];
+                newState.Enter();
+                onStateChanged?.Invoke(oldState, newState);
                 state.lastEnteredStateIndex = state.stateIndex;
                 state.transition++;
             }
             else if (state.stateIndex > -1 && state.stateIndex != state.lastEnteredStateIndex)
             {
-                _states[state.stateIndex].Enter();
+                var newState = _states[state.stateIndex];
+                var oldState = ReferenceEquals(_currentStateNode, newState) ? null : _currentStateNode;
+                newState.Enter();
+                onStateChanged?.Invoke(oldState, newState);
                 state.lastEnteredStateIndex = state.stateIndex;
                 _previousStateNode = null;
-                _currentStateNode = _states[state.stateIndex];
+                _currentStateNode = newState;
                 _nextStateNode = _states[(state.stateIndex + 1) % _states.Count];
             }
 
@@ -177,6 +190,11 @@ namespace PurrNet.Prediction.StateMachine
             }
 
             SetState(index);
+        }
+
+        public int GetStateId(IPredictedStateNodeBase state)
+        {
+            return _states.IndexOf(state);
         }
 
         private void SetWantedStateIndex(int index)

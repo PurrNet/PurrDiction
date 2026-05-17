@@ -2,6 +2,7 @@ namespace PurrNet.Prediction.StateMachine
 {
     public interface IPredictedStateNodeBase
     {
+        int stateId { get; }
         void Setup(PredictedStateMachine stateMachine);
         void Enter();
         void ViewEnter(bool isVerified);
@@ -14,6 +15,7 @@ namespace PurrNet.Prediction.StateMachine
         where T : struct, IPredictedData<T>
     {
         protected PredictedStateMachine machine { get; private set; }
+        public int stateId => machine ? machine.GetStateId(this) : -1;
 
         public void Setup(PredictedStateMachine stateMachine)
         {
@@ -48,6 +50,8 @@ namespace PurrNet.Prediction.StateMachine
         where TInput : struct, IPredictedData
     {
         protected PredictedStateMachine machine { get; private set; }
+        public int stateId => machine ? machine.GetStateId(this) : -1;
+
         public void Setup(PredictedStateMachine stateMachine)
         {
             machine = stateMachine;
