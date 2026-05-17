@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using PurrNet.Logging;
 using UnityEngine;
 
@@ -75,6 +76,7 @@ namespace PurrNet.Prediction.StateMachine
             }
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected override void Simulate(ref SMState state, float delta)
         {
             base.Simulate(ref state, delta);
