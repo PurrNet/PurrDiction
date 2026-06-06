@@ -857,32 +857,50 @@ namespace PurrNet.Prediction
             get; private set;
         }
 
+        /// <summary>
+        /// Invoked immediately before PurrDiction simulates its configured physics scenes.
+        /// </summary>
+        public event Action onBeforePhysicsPass;
+
+        /// <summary>
+        /// Invoked immediately after PurrDiction simulates its configured physics scenes.
+        /// </summary>
+        public event Action onAfterPhysicsPass;
+
         private void DoPhysicsPass()
         {
-            isInPhysicsPass = true;
             // ReSharper disable once NotAccessedVariable
             var delta = tickDelta;
             if (time)
                 delta *= time.timeScale;
 
-#if UNITY_PHYSICS_2D
-            if ((_physicsProvider & PredictionPhysicsProvider.UnityPhysics2D) != 0)
+            onBeforePhysicsPass?.Invoke();
+
+            isInPhysicsPass = true;
+            try
             {
-                var physicsScene = gameObject.scene.GetPhysicsScene2D();
-                if (physicsScene.IsValid())
-                    physicsScene.Simulate(delta);
-            }
+#if UNITY_PHYSICS_2D
+                if ((_physicsProvider & PredictionPhysicsProvider.UnityPhysics2D) != 0)
+                {
+                    var physicsScene = gameObject.scene.GetPhysicsScene2D();
+                    if (physicsScene.IsValid())
+                        physicsScene.Simulate(delta);
+                }
 #endif
 #if UNITY_PHYSICS_3D
-            if ((_physicsProvider & PredictionPhysicsProvider.UnityPhysics3D) != 0)
-            {
-                var physicsScene = gameObject.scene.GetPhysicsScene();
-                if (physicsScene.IsValid())
-                    physicsScene.Simulate(delta);
-            }
+                if ((_physicsProvider & PredictionPhysicsProvider.UnityPhysics3D) != 0)
+                {
+                    var physicsScene = gameObject.scene.GetPhysicsScene();
+                    if (physicsScene.IsValid())
+                        physicsScene.Simulate(delta);
+                }
 #endif
-
-            isInPhysicsPass = false;
+            }
+            finally
+            {
+                isInPhysicsPass = false;
+                onAfterPhysicsPass?.Invoke();
+            }
         }
 
         struct FrameDelta : IDisposable
