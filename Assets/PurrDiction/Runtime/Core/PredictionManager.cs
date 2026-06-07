@@ -874,7 +874,14 @@ namespace PurrNet.Prediction
             if (time)
                 delta *= time.timeScale;
 
-            onBeforePhysicsPass?.Invoke();
+            try
+            {
+                onBeforePhysicsPass?.Invoke();
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+            }
 
             isInPhysicsPass = true;
             try
@@ -899,7 +906,15 @@ namespace PurrNet.Prediction
             finally
             {
                 isInPhysicsPass = false;
-                onAfterPhysicsPass?.Invoke();
+
+                try
+                {
+                    onAfterPhysicsPass?.Invoke();
+                }
+                catch (Exception e)
+                {
+                    Debug.LogException(e);
+                }
             }
         }
 
