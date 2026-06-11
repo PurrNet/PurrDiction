@@ -1,7 +1,9 @@
 {
   "dependencies": {
+    "com.cysharp.unitask": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
     "com.dbrizov.naughtyattributes": "https://github.com/dbrizov/NaughtyAttributes.git#upm",
     "com.unity.cinemachine": "3.1.4",
+    "com.unity.nuget.newtonsoft-json": "3.2.2",
     "com.unity.ide.rider": "3.0.39",
     "com.unity.inputsystem": "1.18.0",
     "com.unity.memoryprofiler": "1.1.9",
@@ -44,7 +46,7 @@
     "com.unity.modules.vr": "1.0.0",
     "com.unity.modules.wind": "1.0.0",
     "com.unity.modules.xr": "1.0.0",
-    "dev.purrnet.purrnet": "https://github.com/PurrNet/PurrNet.git?path=/Assets/PurrNet#v1.20.0-beta.209"
+    "dev.purrnet.purrnet": "https://github.com/PurrNet/PurrNet.git?path=/Assets/PurrNet#v1.20.0-beta.216"
   },
   "scopedRegistries": [
     {

@@ -1,11 +1,37 @@
 {
   "dependencies": {
+    "com.cysharp.unitask": {
+      "version": "https://github.com/Cysharp/UniTask.git?path=src/UniTask/Assets/Plugins/UniTask",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "e5acc106ee196bc5a32fb14cdf2987b0f96d11e0"
+    },
     "com.dbrizov.naughtyattributes": {
       "version": "https://github.com/dbrizov/NaughtyAttributes.git#upm",
       "depth": 0,
       "source": "git",
       "dependencies": {},
       "hash": "c46e45b61398d3c0ef4cff38c0f81ce40cf6d877"
+    },
+    "com.unity.2d.sprite": {
+      "version": "1.0.0",
+      "depth": 1,
+      "source": "builtin",
+      "dependencies": {}
+    },
+    "com.unity.ai.assistant": {
+      "version": "file:com.unity.ai.assistant",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.unity.nuget.newtonsoft-json": "3.2.1",
+        "com.unity.modules.unitywebrequest": "1.0.0",
+        "com.unity.modules.uielements": "1.0.0",
+        "com.unity.2d.sprite": "1.0.0",
+        "com.unity.cloud.gltfast": "6.14.1",
+        "com.unity.mathematics": "1.3.2"
+      }
     },
     "com.unity.asset-store-tools": {
       "version": "file:com.unity.asset-store-tools",
@@ -32,6 +58,19 @@
       "dependencies": {
         "com.unity.splines": "2.0.0",
         "com.unity.modules.imgui": "1.0.0"
+      },
+      "url": "https://packages.unity.com"
+    },
+    "com.unity.cloud.gltfast": {
+      "version": "6.14.1",
+      "depth": 1,
+      "source": "registry",
+      "dependencies": {
+        "com.unity.burst": "1.8.24",
+        "com.unity.collections": "1.2.4",
+        "com.unity.mathematics": "1.2.6",
+        "com.unity.modules.jsonserialize": "1.0.0",
+        "com.unity.modules.unitywebrequest": "1.0.0"
       },
       "url": "https://packages.unity.com"
     },
@@ -117,7 +156,7 @@
     },
     "com.unity.nuget.newtonsoft-json": {
       "version": "3.2.2",
-      "depth": 1,
+      "depth": 0,
       "source": "registry",
       "dependencies": {},
       "url": "https://packages.unity.com"
@@ -232,7 +271,7 @@
       "hash": "610157ad762084380380148ba8ce14e266a6da97"
     },
     "dev.purrnet.purrnet": {
-      "version": "https://github.com/PurrNet/PurrNet.git?path=/Assets/PurrNet#v1.20.0-beta.209",
+      "version": "https://github.com/PurrNet/PurrNet.git?path=/Assets/PurrNet#v1.20.0-beta.216",
       "depth": 0,
       "source": "git",
       "dependencies": {
@@ -240,7 +279,7 @@
         "com.unity.nuget.newtonsoft-json": "3.2.1",
         "com.unity.collections": "2.6.2"
       },
-      "hash": "12352dcfb254cc2b952e0942ae6975f00cf72167"
+      "hash": "14f325c47a5f9f72d19d5d19b86b113d529d64c2"
     },
     "com.unity.modules.accessibility": {
       "version": "1.0.0",

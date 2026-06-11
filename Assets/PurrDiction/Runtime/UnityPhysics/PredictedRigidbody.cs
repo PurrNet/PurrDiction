@@ -107,6 +107,8 @@ namespace PurrNet.Prediction
 
         private void Awake()
         {
+            if (!_rigidbody)
+                _rigidbody = GetComponent<Rigidbody>();
             _defaultKinematic = _rigidbody.isKinematic;
         }
 

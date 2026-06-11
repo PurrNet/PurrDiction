@@ -1,0 +1,292 @@
+name: Prediction Tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      clientCount:
+        description: "Total player count to exercise"
+        required: true
+        default: "3"
+      connectionDelaySeconds:
+        description: "Seconds to wait after server starts before launching clients"
+        required: true
+        default: "1"
+      timeoutMinutes:
+        description: "Hard timeout for the whole job, in minutes"
+        required: true
+        default: "30"
+  pull_request:
+    branches: [dev, release]
+    paths:
+      - "Assets/**"
+      - "Packages/**"
+      - "ProjectSettings/**"
+      - ".github/workflows/prediction-tests.yml"
+  push:
+    branches: [dev]
+    paths:
+      - "Assets/**"
+      - "Packages/**"
+      - "ProjectSettings/**"
+      - ".github/workflows/prediction-tests.yml"
+
+jobs:
+  prediction-tests:
+    name: ${{ matrix.mode }} mode
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ fromJSON(inputs.timeoutMinutes || '30') }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # "server" runs a pure server process + N client processes.
+        # "host" runs a host (server+client in one process) + N-1 client processes.
+        mode: [server, host]
+
+    env:
+      CLIENT_COUNT: ${{ inputs.clientCount || '3' }}
+      CONNECT_DELAY: ${{ inputs.connectionDelaySeconds || '1' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Restore Library cache
+        id: cache-library
+        uses: actions/cache/restore@v4
+        with:
+          path: Library
+          key: Library-PurrDiction-IL2CPP-${{ hashFiles('Assets/**', 'Packages/**', 'ProjectSettings/**') }}
+          restore-keys: |
+            Library-PurrDiction-IL2CPP-
+
+      - name: Build StandaloneLinux64 player (IL2CPP)
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          UNITY_SERIAL: ${{ secrets.UNITY_SERIAL }}
+        with:
+          targetPlatform: StandaloneLinux64
+          buildName: PurrDictionTests
+          buildsPath: build
+          unityVersion: auto
+          # IL2CPP also exercises the FP/prediction IL post-processors through the
+          # IL -> C++ converter, which surfaces codegen issues Mono tolerates.
+          customParameters: -standaloneBuildSubtarget Player -scriptingBackend IL2CPP
+
+      - name: Save Library cache
+        if: always() && steps.cache-library.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: Library
+          key: ${{ steps.cache-library.outputs.cache-primary-key }}
+
+      - name: Inspect build output
+        run: ls -la build/StandaloneLinux64/
+
+      - name: Run scenarios
+        env:
+          MODE: ${{ matrix.mode }}
+        run: |
+          set -u
+          BIN="$PWD/build/StandaloneLinux64/PurrDictionTests"
+          sudo chmod +x "$BIN" || chmod +x "$BIN" || true
+          RESULTS_DIR="$PWD/test-results"
+          LOGS_DIR="$PWD/test-logs"
+          mkdir -p "$RESULTS_DIR" "$LOGS_DIR"
+
+          TOTAL_COUNT="$CLIENT_COUNT"
+
+          if [ "$MODE" = "host" ]; then
+            EXTERNAL_CLIENTS=$((TOTAL_COUNT - 1))
+            if [ "$EXTERNAL_CLIENTS" -lt 1 ]; then
+              echo "::error::Host mode needs at least 1 external client (clientCount must be >= 2). Got $TOTAL_COUNT"
+              exit 1
+            fi
+          else
+            EXTERNAL_CLIENTS="$TOTAL_COUNT"
+          fi
+
+          RUN=(xvfb-run -a --server-args="-screen 0 1024x768x24")
+
+          echo "::group::Launching $MODE process"
+          "${RUN[@]}" "$BIN" -batchmode -nographics \
+            -role "$MODE" -count "$TOTAL_COUNT" \
+            -results "$RESULTS_DIR/$MODE.json" \
+            -logFile "$LOGS_DIR/$MODE.log" &
+          SERVER_PID=$!
+          echo "$MODE PID: $SERVER_PID"
+          echo "::endgroup::"
+
+          sleep "$CONNECT_DELAY"
+
+          if ! kill -0 "$SERVER_PID" 2>/dev/null; then
+            echo "::error::$MODE process died before clients could start"
+            tail -n 200 "$LOGS_DIR/$MODE.log" || true
+            exit 1
+          fi
+
+          CLIENT_PIDS=()
+          for i in $(seq 1 "$EXTERNAL_CLIENTS"); do
+            echo "::group::Launching client $i"
+            "${RUN[@]}" "$BIN" -batchmode -nographics \
+              -role client \
+              -results "$RESULTS_DIR/client-$i.json" \
+              -logFile "$LOGS_DIR/client-$i.log" &
+            PID=$!
+            CLIENT_PIDS+=("$PID")
+            echo "Client $i PID: $PID"
+            echo "::endgroup::"
+          done
+
+          FAIL=0
+
+          for pid in "${CLIENT_PIDS[@]}"; do
+            if wait "$pid"; then
+              echo "Client PID $pid exited 0"
+            else
+              code=$?
+              echo "::error::Client PID $pid exited $code"
+              FAIL=1
+            fi
+          done
+
+          if wait "$SERVER_PID"; then
+            echo "$MODE process exited 0"
+          else
+            code=$?
+            echo "::error::$MODE process exited $code"
+            FAIL=1
+          fi
+
+          echo "::group::Result files"
+          for f in "$RESULTS_DIR"/*.json; do
+            [ -e "$f" ] || continue
+            echo "----- $f -----"
+            cat "$f"
+            echo
+          done
+          echo "::endgroup::"
+
+          if command -v jq >/dev/null 2>&1; then
+            for f in "$RESULTS_DIR"/*.json; do
+              [ -e "$f" ] || continue
+              if jq -e 'any(.[]; .result.success == false)' "$f" >/dev/null; then
+                echo "::error::$f contains a failed scenario"
+                FAIL=1
+              fi
+            done
+          fi
+
+          exit $FAIL
+
+      - name: Render results to job summary
+        if: always()
+        env:
+          MODE: ${{ matrix.mode }}
+        run: |
+          set -u
+          shopt -s nullglob
+          files=(test-results/*.json)
+          if [ ${#files[@]} -eq 0 ]; then
+            {
+              echo "## Prediction Test Results"
+              echo ""
+              echo "_No result files were produced._"
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          JQ_LIB='
+            def humanBytes:
+              if . < 1024 then "\(.) B"
+              elif . < 1048576 then "\(((. * 10) / 1024 | floor) / 10) KB"
+              else "\(((. * 100) / 1048576 | floor) / 100) MB" end;
+            def humanDuration:
+              if . < 1000 then "\(((. * 10) | floor) / 10)ms"
+              else "\(((. * 100) / 1000 | floor) / 100)s" end;
+            def statusIcon:
+              if . then ":white_check_mark:" else ":x:" end;
+          '
+
+          total=0
+          passed=0
+          for f in "${files[@]}"; do
+            count=$(jq 'length' "$f")
+            pass=$(jq '[.[] | select(.result.success == true)] | length' "$f")
+            total=$((total + count))
+            passed=$((passed + pass))
+          done
+          failed=$((total - passed))
+
+          {
+            echo "## Prediction Test Results — ${MODE} mode"
+            echo ""
+            if [ "$failed" -eq 0 ]; then
+              echo "### :white_check_mark: All scenarios passed (${passed}/${total})"
+            else
+              echo "### :x: ${failed} failure(s) — ${passed}/${total} passed"
+            fi
+            echo ""
+
+            for f in "${files[@]}"; do
+              proc=$(basename "$f" .json)
+              pcount=$(jq 'length' "$f")
+              ppass=$(jq '[.[] | select(.result.success == true)] | length' "$f")
+              pfail=$((pcount - ppass))
+
+              case "$proc" in
+                client-*) is_client=1 ;;
+                *)        is_client=0 ;;
+              esac
+
+              if [ "$is_client" -eq 1 ]; then
+                if [ "$pfail" -eq 0 ]; then
+                  echo "#### \`${proc}\` — ${ppass}/${pcount} passed :white_check_mark:"
+                  echo ""
+                  echo "_All scenarios passed; rows omitted._"
+                  echo ""
+                  continue
+                fi
+                echo "#### \`${proc}\` — ${pfail} failed (${ppass}/${pcount} passed)"
+              else
+                echo "#### \`${proc}\` — ${ppass}/${pcount} passed"
+              fi
+              echo ""
+              echo "| # | Scenario | Status | Duration | Sent | Received | Message |"
+              echo "|---|---|---|---|---|---|---|"
+
+              FILTER='to_entries[]'
+              if [ "$is_client" -eq 1 ]; then
+                FILTER='to_entries[] | select(.value.result.success == false)'
+              fi
+
+              jq -r "$JQ_LIB"'
+                '"$FILTER"' |
+                "| \(.key) | \(.value.name // "?") | \(.value.result.success | statusIcon) | \(.value.durationInMs | humanDuration) | \(.value.dataSent | humanBytes) | \(.value.dataReceived | humanBytes) | \((.value.result.message // "") | gsub("\\|"; "&#124;") | gsub("[\\r\\n]+"; " ")) |"
+              ' "$f"
+              echo ""
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Tail logs on failure
+        if: failure()
+        run: |
+          for f in test-logs/*.log; do
+            [ -e "$f" ] || continue
+            echo "::group::$f (last 200 lines)"
+            tail -n 200 "$f"
+            echo "::endgroup::"
+          done
+
+      - name: Upload test results and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prediction-test-artifacts-${{ matrix.mode }}
+          path: |
+            test-results/
+            test-logs/
+          if-no-files-found: warn
+          retention-days: 14

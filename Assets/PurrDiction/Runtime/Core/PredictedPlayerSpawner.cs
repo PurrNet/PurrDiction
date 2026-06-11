@@ -98,6 +98,15 @@ namespace PurrNet.Prediction
         [SerializeField] private List<Transform> spawnPoints = new List<Transform>();
         [SerializeField] private bool _waitForSpawnCall;
 
+        /// <summary>
+        /// Prefab instantiated for each player. Assign before the network starts to configure the spawner at runtime.
+        /// </summary>
+        public GameObject playerPrefab
+        {
+            get => _playerPrefab;
+            set => _playerPrefab = value;
+        }
+
         private void Awake() => CleanupSpawnPoints();
 
         protected override void LateAwake()
