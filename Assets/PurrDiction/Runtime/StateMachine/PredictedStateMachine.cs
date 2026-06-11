@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.CompilerServices;
 using PurrNet.Logging;
 using UnityEngine;
@@ -38,7 +37,9 @@ namespace PurrNet.Prediction.StateMachine
 
         private void Awake()
         {
-            _states = _wrappedStates.Select(wrapped => wrapped.Value).ToList();
+            _states = new List<IPredictedStateNodeBase>(_wrappedStates.Count);
+            for (var i = 0; i < _wrappedStates.Count; i++)
+                _states.Add(_wrappedStates[i].Value);
             var defaultStateIndex = GetValidDefaultStateIndex();
             _currentStateNode = defaultStateIndex > -1 ? _states[defaultStateIndex] : null;
 

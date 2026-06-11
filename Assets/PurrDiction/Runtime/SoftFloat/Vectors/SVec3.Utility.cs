@@ -72,28 +72,28 @@ namespace PurrNet.Prediction
         }
 
         // --- To FPVec2 ---
-        public SVec2 xy => new SVec2(x, y);
-        public SVec2 yx => new SVec2(y, x);
-        public SVec2 xx => new SVec2(x, x);
-        public SVec2 yy => new SVec2(y, y);
+        public SVec2 xy { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new SVec2(x, y); }
+        public SVec2 yx { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new SVec2(y, x); }
+        public SVec2 xx { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new SVec2(x, x); }
+        public SVec2 yy { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new SVec2(y, y); }
 
-        public SVec2 xz => new SVec2(x, z);
-        public SVec2 yz => new SVec2(y, z);
-        public SVec2 zx => new SVec2(z, x);
-        public SVec2 zy => new SVec2(z, y);
-        public SVec2 zz => new SVec2(z, z);
+        public SVec2 xz { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new SVec2(x, z); }
+        public SVec2 yz { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new SVec2(y, z); }
+        public SVec2 zx { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new SVec2(z, x); }
+        public SVec2 zy { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new SVec2(z, y); }
+        public SVec2 zz { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new SVec2(z, z); }
 
         // --- Duplicate Components ---
-        public SVec3 xxx => new SVec3(x, x, x);
-        public SVec3 yyy => new SVec3(y, y, y);
-        public SVec3 zzz => new SVec3(z, z, z);
+        public SVec3 xxx { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new SVec3(x, x, x); }
+        public SVec3 yyy { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new SVec3(y, y, y); }
+        public SVec3 zzz { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new SVec3(z, z, z); }
 
         // --- Full Reorderings ---
-        public SVec3 xyz => new SVec3(x, y, z);
-        public SVec3 xzy => new SVec3(x, z, y);
-        public SVec3 yxz => new SVec3(y, x, z);
-        public SVec3 yzx => new SVec3(y, z, x);
-        public SVec3 zxy => new SVec3(z, x, y);
-        public SVec3 zyx => new SVec3(z, y, x);
+        public SVec3 xyz { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new SVec3(x, y, z); }
+        public SVec3 xzy { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new SVec3(x, z, y); }
+        public SVec3 yxz { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new SVec3(y, x, z); }
+        public SVec3 yzx { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new SVec3(y, z, x); }
+        public SVec3 zxy { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new SVec3(z, x, y); }
+        public SVec3 zyx { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new SVec3(z, y, x); }
     }
 }

@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using PurrNet.Modules;
 using PurrNet.Packing;
 using Unity.Profiling;
@@ -16,9 +18,16 @@ namespace PurrNet.Prediction
 
         protected readonly ProfilerMarker simulateMarker;
 
+        private static readonly Dictionary<Type, ProfilerMarker> _simulateMarkers = new ();
+
         protected PredictedIdentity()
         {
-            simulateMarker = new ProfilerMarker($"{GetType().Name}.Simulate");
+            var type = GetType();
+            if (!_simulateMarkers.TryGetValue(type, out simulateMarker))
+            {
+                simulateMarker = new ProfilerMarker($"{type.Name}.Simulate");
+                _simulateMarkers.Add(type, simulateMarker);
+            }
         }
 
         public PredictionManager predictionManager { get; protected set; }

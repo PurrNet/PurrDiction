@@ -439,6 +439,7 @@ namespace PurrNet.Prediction
         protected override void OnObserverRemoved(PlayerID player)
         {
             _clientTicks.Remove(player);
+            _pendingFullSync.Remove(player);
 
             var frames = _clientFrames.Count;
             for (var i = 0; i < frames; i++)
@@ -459,43 +460,56 @@ namespace PurrNet.Prediction
 
             if (localTick == 1)
                 OnPreTick();
-
-            _clientTicks[player] = new InputQueue();
-            _clientFrames.Add(new PlayerPacker
-            {
-                player = player,
-                packer = BitPackerPool.Get()
-            });
         }
+
+        readonly List<PlayerID> _pendingFullSync = new ();
 
         protected override void OnObserverAdded(PlayerID player)
         {
             if (player == localPlayer || player.isBot)
                 return;
 
-            using var frame = BitPackerPool.Get();
+            _pendingFullSync.Add(player);
+        }
+
+        private void FlushPendingFullSyncs()
+        {
             var tick = localTick - 1;
-            RollbackToFrame(tick);
 
-            Packer<Size>.Write(frame, _systemsCount);
-
-            for (var i = 0; i < _systemsCount; i++)
+            for (var p = 0; p < _pendingFullSync.Count; p++)
             {
-                if (!_systems[i].isEventHandler)
-                    _systems[i].RunWriteFirstState(tick, frame);
+                var player = _pendingFullSync[p];
+
+                _clientTicks[player] = new InputQueue();
+                _clientFrames.Add(new PlayerPacker
+                {
+                    player = player,
+                    packer = BitPackerPool.Get()
+                });
+
+                using var frame = BitPackerPool.Get();
+
+                Packer<Size>.Write(frame, _systemsCount);
+
+                for (var i = 0; i < _systemsCount; i++)
+                {
+                    if (!_systems[i].isEventHandler)
+                        _systems[i].RunWriteFirstState(tick, frame);
+                }
+
+                for (var i = 0; i < _systemsCount; i++)
+                    _systems[i].WriteFirstInput(tick, frame);
+
+                for (var i = 0; i < _systemsCount; i++)
+                {
+                    if (_systems[i].isEventHandler)
+                        _systems[i].RunWriteFirstState(tick, frame);
+                }
+
+                SyncFullState(player, tickRate, tickDelta, _sessionSeed, frame);
             }
 
-            for (var i = 0; i < _systemsCount; i++)
-                _systems[i].WriteFirstInput(tick, frame);
-
-            for (var i = 0; i < _systemsCount; i++)
-            {
-                if (_systems[i].isEventHandler)
-                    _systems[i].RunWriteFirstState(tick, frame);
-            }
-
-            SimulateFrameInitial(localTick, tick);
-            SyncFullState(player, tickRate, tickDelta, _sessionSeed, frame);
+            _pendingFullSync.Clear();
         }
 
         [TargetRpc(compressionLevel: CompressionLevel.Best)]
@@ -505,6 +519,9 @@ namespace PurrNet.Prediction
             _sessionSeed = randomSeed;
 
             _lastVerifiedTick = 1;
+
+            while (_deltas.Count > 0)
+                _deltas.Dequeue().Dispose();
 
             tickDelta = delta;
             this.tickRate = tickRate;
@@ -591,6 +608,8 @@ namespace PurrNet.Prediction
             {
                 using (WriteFrameOnServerMarker.Auto())
                 {
+                    if (_pendingFullSync.Count > 0)
+                        FlushPendingFullSyncs();
                     ResetAllPackers();
                     WriteInitialFrameToOthers();
                 }
@@ -838,11 +857,22 @@ namespace PurrNet.Prediction
         }
 
         /// <summary>
-        /// True while re-simulating already-verified ticks to realign local state
-        /// before applying a jumped or in-place frame. Events restored or detected
-        /// during this pass were already delivered and must not fire again.
+        /// True while the simulation is re-running an already-verified tick purely to rebuild
+        /// state (client catch-up before a jumped or in-place frame, server full-state rebuild
+        /// when a new observer joins). Deterministic simulation code — including physics event
+        /// handlers that mutate predicted state — still runs and must not be skipped.
+        /// Gate one-shot side effects (VFX, SFX, scoring, notifications) on this flag to avoid
+        /// reacting twice to the same tick.
         /// </summary>
         public bool isCatchingUpFrames { get; private set; }
+
+        /// <summary>
+        /// True when one-shot, user-facing reactions (VFX, SFX, scoring, UI) should run for
+        /// the tick being simulated: the tick is verified and this is its first delivery,
+        /// not a state-rebuilding catch-up pass. Prefer this over checking
+        /// <see cref="isVerified"/> directly for visual/audio feedback.
+        /// </summary>
+        public bool isVerifiedView => isVerified && !isCatchingUpFrames;
 
 
         /// <summary>
@@ -868,16 +898,28 @@ namespace PurrNet.Prediction
         /// <summary>
         /// Invoked immediately before PurrDiction simulates its configured physics scenes.
         /// This is also fired during resimulation after a rollback, before each replayed physics pass.
-        /// This occurs after <see cref="PredictedIdentity.Simulate()"/> and before
-        /// <see cref="PredictedIdentity.LateSimulate()"/>.
+        /// This occurs after <see>
+        ///     <cref>PredictedIdentity.Simulate()</cref>
+        /// </see>
+        /// and before
+        /// <see>
+        ///     <cref>PredictedIdentity.LateSimulate()</cref>
+        /// </see>
+        /// .
         /// </summary>
         public event Action onBeforePhysicsPass;
 
         /// <summary>
         /// Invoked immediately after PurrDiction simulates its configured physics scenes.
         /// This is also fired during resimulation after a rollback, after each replayed physics pass.
-        /// This occurs after <see cref="PredictedIdentity.Simulate()"/> and before
-        /// <see cref="PredictedIdentity.LateSimulate()"/>.
+        /// This occurs after <see>
+        ///     <cref>PredictedIdentity.Simulate()</cref>
+        /// </see>
+        /// and before
+        /// <see>
+        ///     <cref>PredictedIdentity.LateSimulate()</cref>
+        /// </see>
+        /// .
         /// </summary>
         public event Action onAfterPhysicsPass;
 
@@ -1136,63 +1178,6 @@ namespace PurrNet.Prediction
 
             for (var i = 0; i < _systemsCount; i++)
                 _systems[i].PostSimulate();
-            for (var j = 0; j < _systemsCount; j++)
-                _systems[j].GetLatestUnityState();
-
-            isSimulating = false;
-            localTickInContext = localTick;
-        }
-
-        private void SimulateFrameInitial(ulong stateTick, ulong inputTick)
-        {
-            var delta = tickDelta;
-            if (time)
-                delta *= time.timeScale;
-
-            isSimulating = true;
-            localTickInContext = stateTick;
-
-            using (SimulateInputsMarker.Auto())
-            {
-                for (var i = 0; i < _systemsCount; i++)
-                    _systems[i].OnPrepareSimulationInputs(inputTick, delta);
-            }
-
-            var simulateMarker = SimulateMarker.Auto();
-            try
-            {
-                for (var j = 0; j < _systemsCount; j++)
-                    _systems[j].RunSimulateTick(stateTick, delta);
-            }
-            catch (Exception e)
-            {
-                Debug.LogException(e);
-            }
-            finally
-            {
-                simulateMarker.Dispose();
-            }
-
-            DoPhysicsPass();
-
-            var lateSimulateMarker = LateSimulateMarker.Auto();
-            try
-            {
-                for (var j = 0; j < _systemsCount; j++)
-                    _systems[j].RunLateSimulateTick(delta);
-            }
-            catch (Exception e)
-            {
-                Debug.LogException(e);
-            }
-            finally
-            {
-                lateSimulateMarker.Dispose();
-            }
-
-            for (var i = 0; i < _systemsCount; i++)
-                _systems[i].PostSimulate();
-
             for (var j = 0; j < _systemsCount; j++)
                 _systems[j].GetLatestUnityState();
 

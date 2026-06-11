@@ -116,23 +116,6 @@ namespace PurrNet.Prediction
 
             Apply(_spawnedPrefabs, actions);
 
-#if UNITY_EDITOR
-            if (_spawnedPrefabs.Count != state.spawnedPrefabs.Count)
-            {
-                PurrLogger.LogError($"Rollback: Mismatch in spawned prefab count: {_spawnedPrefabs.Count} != {state.spawnedPrefabs.Count}");
-            }
-            else
-            {
-                int c = _spawnedPrefabs.Count;
-                for (int i = 0; i < c; i++)
-                {
-                    var a = _spawnedPrefabs[i];
-                    var b = state.spawnedPrefabs[i];
-                    if (!a.Equals(b))
-                        PurrLogger.LogError($"Rollback: Mismatch at index {i}: {a} != {b}");
-                }
-            }
-#endif
             _nextInstanceId = state.nextInstanceId;
             _isRollingBack = false;
         }
@@ -324,20 +307,20 @@ namespace PurrNet.Prediction
 
         public bool TryCreateAndGet<T>(int prefabId, out T component, PlayerID? owner = null) where T : Component
         {
-            var id = Create(prefabId, owner);
-            return TryGetComponent(id, out component);
+            var objId = Create(prefabId, owner);
+            return TryGetComponent(objId, out component);
         }
 
         public bool TryCreateAndGet<T>(GameObject prefab, Vector3 position, Quaternion rotation, out T component, PlayerID? owner = null) where T : Component
         {
-            var id = Create(prefab, position, rotation, owner);
-            return TryGetComponent(id, out component);
+            var objId = Create(prefab, position, rotation, owner);
+            return TryGetComponent(objId, out component);
         }
 
         public bool TryCreateAndGet<T>(GameObject prefab, out T component, PlayerID? owner = null) where T : Component
         {
-            var id = Create(prefab, owner);
-            return TryGetComponent(id, out component);
+            var objId = Create(prefab, owner);
+            return TryGetComponent(objId, out component);
         }
 
         public GameObject GetGameObject(PredictedObjectID? id)

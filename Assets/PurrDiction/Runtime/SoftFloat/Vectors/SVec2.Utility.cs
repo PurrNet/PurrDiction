@@ -49,9 +49,9 @@ namespace PurrNet.Prediction
             return a + (b - a) * t;
         }
 
-        public SVec2 xy => new SVec2(x, y);
-        public SVec2 yx => new SVec2(y, x);
-        public SVec2 xx => new SVec2(x, x);
-        public SVec2 yy => new SVec2(y, y);
+        public SVec2 xy { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new SVec2(x, y); }
+        public SVec2 yx { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new SVec2(y, x); }
+        public SVec2 xx { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new SVec2(x, x); }
+        public SVec2 yy { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new SVec2(y, y); }
     }
 }

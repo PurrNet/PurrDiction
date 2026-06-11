@@ -32,6 +32,9 @@ namespace PurrNet.Prediction
 
         public void Invoke()
         {
+            if (_world.isCatchingUpFrames)
+                return;
+
             if (_world.cachedIsServer)
             {
                 onInvoke?.Invoke();
@@ -81,6 +84,9 @@ namespace PurrNet.Prediction
 
         public void Invoke(T value)
         {
+            if (_world.isCatchingUpFrames)
+                return;
+
             if (_world.cachedIsServer)
             {
                 onInvoke?.Invoke(value);

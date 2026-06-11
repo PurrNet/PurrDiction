@@ -70,28 +70,28 @@ namespace PurrNet.Prediction
         }
 
         // --- To FPVec2 ---
-        public FPVec2 xy => new FPVec2(x, y);
-        public FPVec2 yx => new FPVec2(y, x);
-        public FPVec2 xx => new FPVec2(x, x);
-        public FPVec2 yy => new FPVec2(y, y);
+        public FPVec2 xy { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new FPVec2(x, y); }
+        public FPVec2 yx { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new FPVec2(y, x); }
+        public FPVec2 xx { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new FPVec2(x, x); }
+        public FPVec2 yy { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new FPVec2(y, y); }
 
-        public FPVec2 xz => new FPVec2(x, z);
-        public FPVec2 yz => new FPVec2(y, z);
-        public FPVec2 zx => new FPVec2(z, x);
-        public FPVec2 zy => new FPVec2(z, y);
-        public FPVec2 zz => new FPVec2(z, z);
+        public FPVec2 xz { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new FPVec2(x, z); }
+        public FPVec2 yz { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new FPVec2(y, z); }
+        public FPVec2 zx { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new FPVec2(z, x); }
+        public FPVec2 zy { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new FPVec2(z, y); }
+        public FPVec2 zz { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new FPVec2(z, z); }
 
         // --- Duplicate Components ---
-        public FPVec3 xxx => new FPVec3(x, x, x);
-        public FPVec3 yyy => new FPVec3(y, y, y);
-        public FPVec3 zzz => new FPVec3(z, z, z);
+        public FPVec3 xxx { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new FPVec3(x, x, x); }
+        public FPVec3 yyy { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new FPVec3(y, y, y); }
+        public FPVec3 zzz { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new FPVec3(z, z, z); }
 
         // --- Full Reorderings ---
-        public FPVec3 xyz => new FPVec3(x, y, z);
-        public FPVec3 xzy => new FPVec3(x, z, y);
-        public FPVec3 yxz => new FPVec3(y, x, z);
-        public FPVec3 yzx => new FPVec3(y, z, x);
-        public FPVec3 zxy => new FPVec3(z, x, y);
-        public FPVec3 zyx => new FPVec3(z, y, x);
+        public FPVec3 xyz { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new FPVec3(x, y, z); }
+        public FPVec3 xzy { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new FPVec3(x, z, y); }
+        public FPVec3 yxz { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new FPVec3(y, x, z); }
+        public FPVec3 yzx { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new FPVec3(y, z, x); }
+        public FPVec3 zxy { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new FPVec3(z, x, y); }
+        public FPVec3 zyx { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new FPVec3(z, y, x); }
     }
 }

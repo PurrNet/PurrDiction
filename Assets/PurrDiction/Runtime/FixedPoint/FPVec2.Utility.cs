@@ -47,9 +47,9 @@ namespace PurrNet.Prediction
             return a + (b - a) * t;
         }
 
-        public FPVec2 xy => new FPVec2(x, y);
-        public FPVec2 yx => new FPVec2(y, x);
-        public FPVec2 xx => new FPVec2(x, x);
-        public FPVec2 yy => new FPVec2(y, y);
+        public FPVec2 xy { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new FPVec2(x, y); }
+        public FPVec2 yx { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new FPVec2(y, x); }
+        public FPVec2 xx { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new FPVec2(x, x); }
+        public FPVec2 yy { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new FPVec2(y, y); }
     }
 }

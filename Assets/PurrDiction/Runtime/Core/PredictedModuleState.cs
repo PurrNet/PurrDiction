@@ -153,10 +153,11 @@ namespace PurrNet.Prediction
 
         protected override void SaveState(ulong tick)
         {
-            if (RuntimeHelpers.IsReferenceOrContainsReferences<TState>() && _history.Count > 0)
+            if (_history.Count > 0)
             {
-                var lastIdx = _history.Count - 1;
-                if (Packer.AreEqual(_history[lastIdx].state, fullPredictedState.state))
+                var last = _history[^1];
+                if (Packer.AreEqualRef(ref last.prediction, ref fullPredictedState.prediction) &&
+                    Packer.AreEqualRef(ref last.state, ref fullPredictedState.state))
                     return;
             }
 

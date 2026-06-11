@@ -154,6 +154,27 @@ namespace PurrNet.Prediction
                 return;
 
             int dynamicCount = _staticModuleCount < 0 ? 0 : _modules.Count - _staticModuleCount;
+
+            if (_moduleHistory.Count > 0)
+            {
+                var last = _moduleHistory[^1];
+                if (!last.isDisposed && last.Count == dynamicCount)
+                {
+                    bool unchanged = true;
+                    for (int i = 0; i < dynamicCount; i++)
+                    {
+                        if (last[i] != _modules[_staticModuleCount + i].typeHash)
+                        {
+                            unchanged = false;
+                            break;
+                        }
+                    }
+
+                    if (unchanged)
+                        return;
+                }
+            }
+
             var snapshot = DisposableList<uint>.Create(dynamicCount);
             for (int i = 0; i < dynamicCount; i++)
                 snapshot.Add(_modules[_staticModuleCount + i].typeHash);

@@ -48,7 +48,7 @@ public class BounceProbe : PredictedIdentity<BounceProbe.ProbeState>
 
     private void OnBounce(GameObject other, PhysicsCollision collision)
     {
-        if (!predictionManager.isVerified)
+        if (!predictionManager.isVerifiedView)
             return;
 
         var tick = predictionManager.time.tick;
