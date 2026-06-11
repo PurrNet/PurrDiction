@@ -837,6 +837,13 @@ namespace PurrNet.Prediction
             get => isVerified && isReplaying;
         }
 
+        /// <summary>
+        /// True while re-simulating already-verified ticks to realign local state
+        /// before applying a jumped or in-place frame. Events restored or detected
+        /// during this pass were already delivered and must not fire again.
+        /// </summary>
+        public bool isCatchingUpFrames { get; private set; }
+
 
         /// <summary>
         /// Is the prediction manager currently simulating a frame?
@@ -1004,9 +1011,11 @@ namespace PurrNet.Prediction
 
                 if (inPlace || isJump)
                 {
+                    isCatchingUpFrames = true;
                     RollbackToFrame(inPlaceTick);
                     SimulateFrameInPlace(inPlaceTick);
                     SimulateFrame(inPlaceTick, true);
+                    isCatchingUpFrames = false;
                 }
 
                 RollbackToFrame(previousFrame.packer, inPlaceTick, verifiedTick);

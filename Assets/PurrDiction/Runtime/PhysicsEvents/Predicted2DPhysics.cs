@@ -97,7 +97,7 @@ namespace PurrNet.Prediction
             ref var state = ref currentState;
             var pm = predictionManager;
 
-            if (pm.isVerifiedAndReplaying)
+            if (pm.isVerifiedAndReplaying && !pm.isCatchingUpFrames)
             {
                 for (var i = 0; i < state.events.Count; i++)
                 {
