@@ -99,6 +99,7 @@ namespace PurrNet.Prediction
         private void ResetStateToInitialState()
         {
             fullPredictedState.prediction.wasOnSimulationStartCalled = false;
+            fullPredictedState.state.Dispose();
             fullPredictedState.state = GetInitialState();
         }
 

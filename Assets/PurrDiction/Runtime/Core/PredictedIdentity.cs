@@ -89,8 +89,14 @@ namespace PurrNet.Prediction
         /// </summary>
         protected virtual void Destroyed() {}
 
+        private bool _destroyedFired;
+
         internal void TriggerDestroyedEvent()
         {
+            if (_destroyedFired)
+                return;
+
+            _destroyedFired = true;
             Destroyed();
             TriggerModuleDestroyedEvents();
         }
@@ -104,6 +110,7 @@ namespace PurrNet.Prediction
             isServer = manager.isServer;
             this.owner = owner;
             this.id = id;
+            _destroyedFired = false;
 
             if (!isFreshSpawn)
                 return;
@@ -126,8 +133,7 @@ namespace PurrNet.Prediction
 
         protected virtual void OnDestroy()
         {
-            Destroyed();
-            TriggerModuleDestroyedEvents();
+            TriggerDestroyedEvent();
             TearDownAllModules();
 
             if (predictionManager)

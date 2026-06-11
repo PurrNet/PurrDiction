@@ -40,6 +40,7 @@ namespace PurrNet.Prediction
         private void ResetStateToInitialState()
         {
             fullPredictedState.prediction.wasOnSimulationStartCalled = false;
+            fullPredictedState.state.Dispose();
             fullPredictedState.state = GetInitialState();
         }
 
@@ -152,7 +153,10 @@ namespace PurrNet.Prediction
         protected virtual void SimulationStart() { }
 
         /// <summary>
-        /// Called when the module is first created.
+        /// Provides the starting state of the module.
+        /// Called every time the module is set up, including when a pooled object is reused.
+        /// For modules created after the identity is set up, this runs during the base constructor,
+        /// before the derived constructor body executes, so avoid reading fields assigned there.
         /// Future updates will come only through Simulate.
         /// </summary>
         /// <returns>The initial state of the module.</returns>

@@ -318,7 +318,7 @@ namespace PurrNet.Prediction
 
         private void TriggerModuleDestroyedEvents()
         {
-            for (int i = 0; i < _modules.Count; i++)
+            for (int i = _modules.Count - 1; i >= 0; i--)
                 _modules[i].TriggerDestroyedEvent();
         }
 
