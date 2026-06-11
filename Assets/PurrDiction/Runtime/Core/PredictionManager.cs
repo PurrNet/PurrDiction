@@ -307,7 +307,6 @@ namespace PurrNet.Prediction
             _clientFrames.Clear();
             localTick = 1;
             _lastVerifiedTick = 1;
-            _playedFirst = false;
             localTickInContext = 1;
             _deltas.Clear();
         }
@@ -506,7 +505,6 @@ namespace PurrNet.Prediction
             _sessionSeed = randomSeed;
 
             _lastVerifiedTick = 1;
-            _playedFirst = false;
 
             tickDelta = delta;
             this.tickRate = tickRate;
@@ -684,6 +682,9 @@ namespace PurrNet.Prediction
                     queue.waitForInput = true;
                     continue;
                 }
+
+                if (queue.waitForInput)
+                    continue;
 
                 var dequeued = queue.inputQueue.Peek();
                 HandleIncomingInput(dequeued.inputPacket, dequeued.count, player);
@@ -970,7 +971,6 @@ namespace PurrNet.Prediction
         public event Action onRollbackFinished;
 
         private ulong _lastVerifiedTick = 1;
-        private bool _playedFirst;
 
         private void OnPostTick()
         {
@@ -1004,14 +1004,9 @@ namespace PurrNet.Prediction
 
                 if (inPlace || isJump)
                 {
-                    if (_playedFirst)
-                    {
-                        RollbackToFrame(inPlaceTick);
-                        SimulateFrameInPlace(inPlaceTick);
-                        SimulateFrame(inPlaceTick, true);
-                    }
-
-                    _playedFirst = true;
+                    RollbackToFrame(inPlaceTick);
+                    SimulateFrameInPlace(inPlaceTick);
+                    SimulateFrame(inPlaceTick, true);
                 }
 
                 RollbackToFrame(previousFrame.packer, inPlaceTick, verifiedTick);

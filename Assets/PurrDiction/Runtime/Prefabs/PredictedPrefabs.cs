@@ -36,7 +36,9 @@ namespace PurrNet.Prediction
         private struct LegacyPredictedPrefab
         {
             public GameObject prefab;
+#pragma warning disable CS0618 // Type or member is obsolete
             public PoolSettings pooling;
+#pragma warning restore CS0618 // Type or member is obsolete
         }
 
         [SerializeField, HideInInspector, Obsolete, UsedImplicitly] private List<LegacyPredictedPrefab> _newPrefabs = new();
