@@ -37,6 +37,12 @@ namespace PurrNet.Prediction
             return $"State:\n{fullPredictedState.state}";
         }
 
+        private void ResetStateToInitialState()
+        {
+            fullPredictedState.prediction.wasOnSimulationStartCalled = false;
+            fullPredictedState.state = GetInitialState();
+        }
+
         internal override void OnCoreInitialize()
         {
             var tickRate = predictionManager.tickRate;
@@ -50,6 +56,16 @@ namespace PurrNet.Prediction
                 fullPredictedState.DeepCopy(),
                 bufferSize
             );
+        }
+
+        protected override void Setup(PredictedIdentity parent, PredictionManager world)
+        {
+            base.Setup(parent, world);
+            ResetStateToInitialState();
+            _history?.Clear();
+            _viewState?.Dispose();
+            _viewState = null;
+            _interpolatedState?.Teleport(fullPredictedState.DeepCopy());
         }
 
         protected sealed override void UpdateView(float delta)
@@ -134,6 +150,13 @@ namespace PurrNet.Prediction
         /// Called exactly once before the very first simulation tick executes.
         /// </summary>
         protected virtual void SimulationStart() { }
+
+        /// <summary>
+        /// Called when the module is first created.
+        /// Future updates will come only through Simulate.
+        /// </summary>
+        /// <returns>The initial state of the module.</returns>
+        protected virtual TState GetInitialState() => default;
 
         /// <summary>
         /// Executes the simulation logic for this module.

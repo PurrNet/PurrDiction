@@ -92,6 +92,7 @@ namespace PurrNet.Prediction
         internal void TriggerDestroyedEvent()
         {
             Destroyed();
+            TriggerModuleDestroyedEvents();
         }
 
         public bool isServer { get; private set; }
@@ -126,6 +127,7 @@ namespace PurrNet.Prediction
         protected virtual void OnDestroy()
         {
             Destroyed();
+            TriggerModuleDestroyedEvents();
             TearDownAllModules();
 
             if (predictionManager)
