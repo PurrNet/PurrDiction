@@ -40,6 +40,7 @@ public class BounceScenario : Scenario
 
         PredictionTestUtils.RegisterPrefab(ctx, ball);
         _rig.ballPrefab = ball;
+        _rig.requiredPlayers = ctx.expectedConnections;
         BounceProbe.ResetCounters();
     }
 

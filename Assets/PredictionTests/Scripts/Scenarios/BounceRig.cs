@@ -7,6 +7,8 @@ public class BounceRig : DeterministicIdentity<BounceRig.RigState>
 
     public GameObject ballPrefab { get; set; }
 
+    public int requiredPlayers { get; set; }
+
     public bool hasSpawned => currentState.spawned;
 
     public struct RigState : IPredictedData<RigState>
@@ -29,6 +31,9 @@ public class BounceRig : DeterministicIdentity<BounceRig.RigState>
     protected override void Simulate(ref RigState state, sfloat delta)
     {
         if (state.spawned || !ballPrefab)
+            return;
+
+        if (predictionManager.players.players.Count < requiredPlayers)
             return;
 
         state.timer -= delta;
