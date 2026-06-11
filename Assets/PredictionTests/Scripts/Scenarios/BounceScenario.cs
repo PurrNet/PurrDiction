@@ -19,6 +19,7 @@ public class BounceScenario : Scenario
         var floorCollider = floor.AddComponent<BoxCollider>();
         floorCollider.size = new Vector3(50f, 1f, 50f);
         floor.transform.position = new Vector3(0f, -0.5f, 0f);
+        floor.AddComponent<PredictedTransform>();
 
         var ball = new GameObject("BouncyBall");
         ball.SetActive(false);
