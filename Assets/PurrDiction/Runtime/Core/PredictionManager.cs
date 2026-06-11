@@ -859,11 +859,17 @@ namespace PurrNet.Prediction
 
         /// <summary>
         /// Invoked immediately before PurrDiction simulates its configured physics scenes.
+        /// This is also fired during resimulation after a rollback, before each replayed physics pass.
+        /// This occurs after <see cref="PredictedIdentity.Simulate()"/> and before
+        /// <see cref="PredictedIdentity.LateSimulate()"/>.
         /// </summary>
         public event Action onBeforePhysicsPass;
 
         /// <summary>
         /// Invoked immediately after PurrDiction simulates its configured physics scenes.
+        /// This is also fired during resimulation after a rollback, after each replayed physics pass.
+        /// This occurs after <see cref="PredictedIdentity.Simulate()"/> and before
+        /// <see cref="PredictedIdentity.LateSimulate()"/>.
         /// </summary>
         public event Action onAfterPhysicsPass;
 
