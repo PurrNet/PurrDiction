@@ -257,7 +257,7 @@ MonoBehaviour:
   _directChildren: []
   _networkRules: {fileID: 0}
   _visitiblityRules: {fileID: 0}
-  _physicsProvider: 1
+  _physicsProvider: 255
   _updateViewMode: 1
   _builtInSystems: 63
   _predictedPrefabs: {fileID: 0}
@@ -420,6 +420,8 @@ MonoBehaviour:
   _simulateLatency: 1
   _minLatencyMs: 100
   _maxLatencyMs: 150
+  _simulatePacketLoss: 0
+  _packetLossChance: 0
 --- !u!114 &130003
 MonoBehaviour:
   m_ObjectHideFlags: 0

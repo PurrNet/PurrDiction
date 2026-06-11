@@ -21,6 +21,7 @@ public class BounceScenario : Scenario
         floor.transform.position = new Vector3(0f, -0.5f, 0f);
 
         var ball = new GameObject("BouncyBall");
+        ball.SetActive(false);
         var rb = ball.AddComponent<Rigidbody>();
         rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
 
@@ -34,7 +35,7 @@ public class BounceScenario : Scenario
         ball.AddComponent<PredictedTransform>();
         ball.AddComponent<PredictedRigidbody>();
         ball.AddComponent<BounceProbe>();
-        UnityEngine.Object.DontDestroyOnLoad(ball);
+        DontDestroyOnLoad(ball);
 
         PredictionTestUtils.RegisterPrefab(ctx, ball);
         _rig.ballPrefab = ball;

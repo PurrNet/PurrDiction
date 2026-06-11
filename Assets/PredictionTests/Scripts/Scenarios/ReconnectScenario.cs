@@ -9,6 +9,7 @@ public static class ReconnectSignals
     public static ulong victimId;
     public static bool victimReceived;
     public static bool victimRejoined;
+    public static bool cycleComplete;
 
     [ObserversRpc(runLocally: true)]
     public static void BroadcastVictim(ulong playerId)
@@ -21,6 +22,12 @@ public static class ReconnectSignals
     public static void ReportVictimRejoined()
     {
         victimRejoined = true;
+    }
+
+    [ObserversRpc(runLocally: true)]
+    public static void BroadcastCycleComplete()
+    {
+        cycleComplete = true;
     }
 }
 
@@ -71,6 +78,7 @@ public class ReconnectScenario : Scenario
                 $"(still connected: {IsPlayerConnected(ctx, victimId)})");
         }
 
+        ReconnectSignals.BroadcastCycleComplete();
         return ScenarioResult.Ok();
     }
 
@@ -126,6 +134,18 @@ public class ReconnectScenario : Scenario
             ReconnectSignals.ReportVictimRejoined();
         }
 
+        try
+        {
+            await UniTaskUtils.WaitWithTimeout(
+                () => ReconnectSignals.cycleComplete,
+                _reconnectTimeout + _stayDisconnectedSeconds,
+                ctx.cancellationToken);
+        }
+        catch (TimeoutException)
+        {
+            return ScenarioResult.Fail("cycle-complete broadcast never arrived");
+        }
+
         return ScenarioResult.Ok();
     }
 
@@ -142,6 +162,11 @@ public class ReconnectScenario : Scenario
                 ctx.cancellationToken);
 
             await UniTaskUtils.WaitWithTimeout(
+                () => PredictionTestUtils.CountInstances(pm, pawnPrefabId) >= ctx.expectedConnections,
+                _timeout,
+                ctx.cancellationToken);
+
+            await UniTaskUtils.WaitWithTimeout(
                 () => PawnIdentity.AllStable(pm, pawnPrefabId),
                 _timeout,
                 ctx.cancellationToken);
@@ -149,7 +174,7 @@ public class ReconnectScenario : Scenario
         catch (TimeoutException)
         {
             return ScenarioResult.Fail(
-                $"quiesce timeout: spawned={_spawner.spawnedCount}/{_spawner.totalSpawns} pawnsStable={PawnIdentity.AllStable(pm, pawnPrefabId)}");
+                $"quiesce timeout: spawned={_spawner.spawnedCount}/{_spawner.totalSpawns} pawns={PredictionTestUtils.CountInstances(pm, pawnPrefabId)}/{ctx.expectedConnections} pawnsStable={PawnIdentity.AllStable(pm, pawnPrefabId)}");
         }
 
         await UniTask.WaitForSeconds(_settleSeconds, cancellationToken: ctx.cancellationToken);

@@ -1452,12 +1452,16 @@ namespace PurrNet.Prediction
                 var trs = go.transform;
                 ProperlySetPosAndRot(trs, position, rotation);
                 trs.SetParent(null);
+                if (!go.activeSelf)
+                    go.SetActive(true);
                 RegisterInstance(go, objectId, owner, true, true);
                 return go;
             }
             else
             {
                 var go = UnityProxy.InstantiateDirectly(prefab, position, rotation, gameObject.scene);
+                if (!go.activeSelf)
+                    go.SetActive(true);
                 RegisterInstance(go, objectId, owner, false, false);
                 return go;
             }

@@ -18,6 +18,7 @@ public static class PredictionTestUtils
     public static GameObject CreatePrefab<T>(string name) where T : PredictedIdentity
     {
         var go = new GameObject(name);
+        go.SetActive(false);
         go.AddComponent<T>();
         Object.DontDestroyOnLoad(go);
         return go;
