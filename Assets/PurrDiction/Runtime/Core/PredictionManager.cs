@@ -865,32 +865,71 @@ namespace PurrNet.Prediction
             get; private set;
         }
 
+        /// <summary>
+        /// Invoked immediately before PurrDiction simulates its configured physics scenes.
+        /// This is also fired during resimulation after a rollback, before each replayed physics pass.
+        /// This occurs after <see cref="PredictedIdentity.Simulate()"/> and before
+        /// <see cref="PredictedIdentity.LateSimulate()"/>.
+        /// </summary>
+        public event Action onBeforePhysicsPass;
+
+        /// <summary>
+        /// Invoked immediately after PurrDiction simulates its configured physics scenes.
+        /// This is also fired during resimulation after a rollback, after each replayed physics pass.
+        /// This occurs after <see cref="PredictedIdentity.Simulate()"/> and before
+        /// <see cref="PredictedIdentity.LateSimulate()"/>.
+        /// </summary>
+        public event Action onAfterPhysicsPass;
+
         private void DoPhysicsPass()
         {
-            isInPhysicsPass = true;
             // ReSharper disable once NotAccessedVariable
             var delta = tickDelta;
             if (time)
                 delta *= time.timeScale;
 
-#if UNITY_PHYSICS_2D
-            if ((_physicsProvider & PredictionPhysicsProvider.UnityPhysics2D) != 0)
+            try
             {
-                var physicsScene = gameObject.scene.GetPhysicsScene2D();
-                if (physicsScene.IsValid())
-                    physicsScene.Simulate(delta);
+                onBeforePhysicsPass?.Invoke();
             }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+            }
+
+            isInPhysicsPass = true;
+            try
+            {
+#if UNITY_PHYSICS_2D
+                if ((_physicsProvider & PredictionPhysicsProvider.UnityPhysics2D) != 0)
+                {
+                    var physicsScene = gameObject.scene.GetPhysicsScene2D();
+                    if (physicsScene.IsValid())
+                        physicsScene.Simulate(delta);
+                }
 #endif
 #if UNITY_PHYSICS_3D
-            if ((_physicsProvider & PredictionPhysicsProvider.UnityPhysics3D) != 0)
-            {
-                var physicsScene = gameObject.scene.GetPhysicsScene();
-                if (physicsScene.IsValid())
-                    physicsScene.Simulate(delta);
-            }
+                if ((_physicsProvider & PredictionPhysicsProvider.UnityPhysics3D) != 0)
+                {
+                    var physicsScene = gameObject.scene.GetPhysicsScene();
+                    if (physicsScene.IsValid())
+                        physicsScene.Simulate(delta);
+                }
 #endif
+            }
+            finally
+            {
+                isInPhysicsPass = false;
 
-            isInPhysicsPass = false;
+                try
+                {
+                    onAfterPhysicsPass?.Invoke();
+                }
+                catch (Exception e)
+                {
+                    Debug.LogException(e);
+                }
+            }
         }
 
         struct FrameDelta : IDisposable
