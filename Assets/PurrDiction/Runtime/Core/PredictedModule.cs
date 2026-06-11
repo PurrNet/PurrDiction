@@ -180,6 +180,11 @@ namespace PurrNet.Prediction
             onDisposed?.Invoke();
         }
 
+        internal void TriggerDestroyedEvent()
+        {
+            Destroyed();
+        }
+
         /// <summary>
         /// Invoked when the module is removed from its identity.
         /// Use this to drop any external references to the module.
@@ -191,5 +196,11 @@ namespace PurrNet.Prediction
         /// Override to release any owned resources.
         /// </summary>
         protected virtual void OnDisposed() { }
+
+        /// <summary>
+        /// Invoked when the owning identity is being despawned and cleaned up.
+        /// Allows for any necessary teardown or resource release to be handled.
+        /// </summary>
+        protected virtual void Destroyed() { }
     }
 }

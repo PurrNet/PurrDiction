@@ -316,6 +316,12 @@ namespace PurrNet.Prediction
             _moduleHistory?.Clear();
         }
 
+        private void TriggerModuleDestroyedEvents()
+        {
+            for (int i = 0; i < _modules.Count; i++)
+                _modules[i].TriggerDestroyedEvent();
+        }
+
         private void TearDownAllDynamic()
         {
             if (_staticModuleCount < 0) return;
