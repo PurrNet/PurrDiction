@@ -392,15 +392,13 @@ namespace PurrNet.Prediction
 
         public bool TryGetIdentity(PredictedComponentID id, out PredictedIdentity instance)
         {
-            return _instanceMap.TryGetValue(id, out instance);
+            if (_instanceMap.TryGetValue(id, out instance))
+                return true;
+
+            return _deletingInstanceMap.TryGetValue(id, out instance);
         }
 
         public PredictedIdentity GetIdentity(PredictedComponentID id)
-        {
-            return _instanceMap.GetValueOrDefault(id);
-        }
-
-        internal PredictedIdentity GetIdentityIncludingDeleting(PredictedComponentID id)
         {
             if (_instanceMap.TryGetValue(id, out var identity))
                 return identity;
