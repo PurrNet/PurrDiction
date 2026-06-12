@@ -22,7 +22,7 @@ namespace PurrNet.Prediction
 
         public GameObject GetGameObject(PredictionManager manager)
         {
-            var id = manager.GetIdentity(this);
+            var id = manager.GetIdentityIncludingDeleting(this);
             if (!id) return null;
             return id.gameObject;
         }
