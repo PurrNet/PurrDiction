@@ -30,9 +30,17 @@ namespace PurrNet.Prediction
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterAssembliesLoaded)]
         static void Initialize() => _instances.Clear();
 
+#if UNITY_6000_3_OR_NEWER
+        static readonly Dictionary<SceneHandle, PredictionManager> _instances = new ();
+#else
         static readonly Dictionary<int, PredictionManager> _instances = new ();
+#endif
 
+#if UNITY_6000_3_OR_NEWER
+        public static event Action<SceneHandle, PredictionManager> OnInstanceAdded;
+#else
         public static event Action<int, PredictionManager> OnInstanceAdded;
+#endif
 
         [SerializeField] private PredictionPhysicsProvider _physicsProvider;
         [SerializeField] private UpdateViewMode _updateViewMode = UpdateViewMode.Update;
@@ -80,7 +88,11 @@ namespace PurrNet.Prediction
         GameObjectPoolCollection _pools;
 
         [UsedImplicitly]
+#if UNITY_6000_3_OR_NEWER
+        public static bool TryGetInstance(SceneHandle sceneHandle, out PredictionManager world)
+#else
         public static bool TryGetInstance(int sceneHandle, out PredictionManager world)
+#endif
         {
             return _instances.TryGetValue(sceneHandle, out world);
         }
@@ -103,8 +115,9 @@ namespace PurrNet.Prediction
 
         private void Awake()
         {
-            _instances[gameObject.scene.handle] = this;
-            OnInstanceAdded?.Invoke(gameObject.scene.handle, this);
+            var sceneHandle = gameObject.scene.handle;
+            _instances[sceneHandle] = this;
+            OnInstanceAdded?.Invoke(sceneHandle, this);
             _sessionSeed = (uint)UnityEngine.Random.Range(int.MinValue, int.MaxValue);
 
 #if UNITY_PHYSICS_2D
