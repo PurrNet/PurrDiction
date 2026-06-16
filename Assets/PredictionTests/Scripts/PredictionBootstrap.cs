@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -13,6 +14,9 @@ using UnityEngine.Assertions;
 
 public class PredictionBootstrap : Scenario
 {
+    private const int MaxUnexpectedLogsPerScenario = 8;
+    private const int MaxUnexpectedLogLength = 700;
+
     [SerializeField] private NetworkManager _networkManager;
     [SerializeField] private PredictionManager _predictionManager;
     [SerializeField] private float _connectionTimeout = 30f;
@@ -35,6 +39,8 @@ public class PredictionBootstrap : Scenario
 
     private Scenario[] _scenarios;
     private ScenarioDetails?[] _results;
+    private readonly List<string> _unexpectedLogs = new();
+    private int _activeScenarioIndex = -1;
 
     private CancellationTokenSource _runCts;
 
@@ -49,6 +55,16 @@ public class PredictionBootstrap : Scenario
 
         _scenarios = GetComponentsInChildren<Scenario>();
         _results = new ScenarioDetails?[_scenarios.Length];
+    }
+
+    private void OnEnable()
+    {
+        Application.logMessageReceived += OnLogMessageReceived;
+    }
+
+    private void OnDisable()
+    {
+        Application.logMessageReceived -= OnLogMessageReceived;
     }
 
     private void Start()
@@ -390,10 +406,15 @@ public class PredictionBootstrap : Scenario
     {
         _dataSent = 0;
         _dataReceived = 0;
+        _unexpectedLogs.Clear();
+        _activeScenarioIndex = i;
 
         var scenario = _scenarios[i];
         long startTick = DateTime.Now.Ticks;
         var result = await GetResult(scenario, ctx, i);
+        _activeScenarioIndex = -1;
+
+        result = IncludeUnexpectedLogs(result);
         var elapsedTick = DateTime.Now.Ticks - startTick;
         var elapsedMs = elapsedTick / (double)TimeSpan.TicksPerMillisecond;
 
@@ -407,6 +428,44 @@ public class PredictionBootstrap : Scenario
         };
 
         return !result.success;
+    }
+
+    private void OnLogMessageReceived(string condition, string stackTrace, LogType type)
+    {
+        if (_activeScenarioIndex < 0)
+            return;
+
+        if (type is not (LogType.Error or LogType.Assert or LogType.Exception))
+            return;
+
+        if (_unexpectedLogs.Count >= MaxUnexpectedLogsPerScenario)
+            return;
+
+        var text = condition ?? string.Empty;
+        if (!string.IsNullOrEmpty(stackTrace))
+        {
+            var lineEnd = stackTrace.IndexOf('\n');
+            var firstStackLine = lineEnd >= 0 ? stackTrace[..lineEnd] : stackTrace;
+            text += $" at {firstStackLine.Trim()}";
+        }
+
+        text = text.Replace('\r', ' ').Replace('\n', ' ');
+        if (text.Length > MaxUnexpectedLogLength)
+            text = text[..MaxUnexpectedLogLength] + "...";
+
+        _unexpectedLogs.Add($"{type}: {text}");
+    }
+
+    private ScenarioResult IncludeUnexpectedLogs(ScenarioResult result)
+    {
+        if (_unexpectedLogs.Count == 0)
+            return result;
+
+        var message = "unexpected logs: " + string.Join(" | ", _unexpectedLogs);
+
+        return result.success
+            ? ScenarioResult.Fail(message)
+            : ScenarioResult.Fail($"{result.message} | {message}");
     }
 
     private static async Task<ScenarioResult> GetResult(Scenario scenario, ScenarioContext ctx, int i)

@@ -308,6 +308,19 @@ namespace PurrNet.Prediction
             _moduleHistory?.ClearFuture(tick);
         }
 
+        private void ResetModulesForReuse(NetworkManager manager, PredictionManager world, PredictedComponentID id, PlayerID? owner)
+        {
+            ResetModulesForPool();
+            ModuleSetup(manager, world, id, owner);
+        }
+
+        private void ResetModulesForPool()
+        {
+            TearDownAllDynamic();
+            _moduleHistory?.Clear();
+            _staticModuleCount = -1;
+        }
+
         private void TearDownAllModules()
         {
             for (int i = _modules.Count - 1; i >= 0; i--)

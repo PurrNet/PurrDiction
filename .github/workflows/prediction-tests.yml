@@ -92,9 +92,6 @@ jobs:
           set -u
           BIN="$PWD/build/StandaloneLinux64/PurrDictionTests"
           sudo chmod +x "$BIN" || chmod +x "$BIN" || true
-          RESULTS_DIR="$PWD/test-results"
-          LOGS_DIR="$PWD/test-logs"
-          mkdir -p "$RESULTS_DIR" "$LOGS_DIR"
 
           TOTAL_COUNT="$CLIENT_COUNT"
 
@@ -109,75 +106,92 @@ jobs:
           fi
 
           RUN=(xvfb-run -a --server-args="-screen 0 1024x768x24")
-
-          echo "::group::Launching $MODE process"
-          "${RUN[@]}" "$BIN" -batchmode -nographics \
-            -role "$MODE" -count "$TOTAL_COUNT" \
-            -results "$RESULTS_DIR/$MODE.json" \
-            -logFile "$LOGS_DIR/$MODE.log" &
-          SERVER_PID=$!
-          echo "$MODE PID: $SERVER_PID"
-          echo "::endgroup::"
-
-          sleep "$CONNECT_DELAY"
-
-          if ! kill -0 "$SERVER_PID" 2>/dev/null; then
-            echo "::error::$MODE process died before clients could start"
-            tail -n 200 "$LOGS_DIR/$MODE.log" || true
-            exit 1
-          fi
-
-          CLIENT_PIDS=()
-          for i in $(seq 1 "$EXTERNAL_CLIENTS"); do
-            echo "::group::Launching client $i"
-            "${RUN[@]}" "$BIN" -batchmode -nographics \
-              -role client \
-              -results "$RESULTS_DIR/client-$i.json" \
-              -logFile "$LOGS_DIR/client-$i.log" &
-            PID=$!
-            CLIENT_PIDS+=("$PID")
-            echo "Client $i PID: $PID"
-            echo "::endgroup::"
-          done
-
           FAIL=0
 
-          for pid in "${CLIENT_PIDS[@]}"; do
-            if wait "$pid"; then
-              echo "Client PID $pid exited 0"
-            else
-              code=$?
-              echo "::error::Client PID $pid exited $code"
+          run_profile() {
+            PROFILE="$1"
+            PORT="$2"
+            shift 2
+            LATENCY_ARGS=("$@")
+
+            RESULTS_DIR="$PWD/test-results/$PROFILE"
+            LOGS_DIR="$PWD/test-logs/$PROFILE"
+            mkdir -p "$RESULTS_DIR" "$LOGS_DIR"
+
+            echo "::group::Launching $MODE process ($PROFILE)"
+            "${RUN[@]}" "$BIN" -batchmode -nographics \
+              -role "$MODE" -count "$TOTAL_COUNT" -port "$PORT" \
+              "${LATENCY_ARGS[@]}" \
+              -results "$RESULTS_DIR/$MODE.json" \
+              -logFile "$LOGS_DIR/$MODE.log" &
+            SERVER_PID=$!
+            echo "$MODE PID: $SERVER_PID"
+            echo "::endgroup::"
+
+            sleep "$CONNECT_DELAY"
+
+            if ! kill -0 "$SERVER_PID" 2>/dev/null; then
+              echo "::error::$MODE process died before clients could start ($PROFILE)"
+              tail -n 200 "$LOGS_DIR/$MODE.log" || true
               FAIL=1
+              return
             fi
-          done
 
-          if wait "$SERVER_PID"; then
-            echo "$MODE process exited 0"
-          else
-            code=$?
-            echo "::error::$MODE process exited $code"
-            FAIL=1
-          fi
+            CLIENT_PIDS=()
+            for i in $(seq 1 "$EXTERNAL_CLIENTS"); do
+              echo "::group::Launching client $i ($PROFILE)"
+              "${RUN[@]}" "$BIN" -batchmode -nographics \
+                -role client -port "$PORT" \
+                "${LATENCY_ARGS[@]}" \
+                -results "$RESULTS_DIR/client-$i.json" \
+                -logFile "$LOGS_DIR/client-$i.log" &
+              PID=$!
+              CLIENT_PIDS+=("$PID")
+              echo "Client $i PID: $PID"
+              echo "::endgroup::"
+            done
 
-          echo "::group::Result files"
-          for f in "$RESULTS_DIR"/*.json; do
-            [ -e "$f" ] || continue
-            echo "----- $f -----"
-            cat "$f"
-            echo
-          done
-          echo "::endgroup::"
-
-          if command -v jq >/dev/null 2>&1; then
-            for f in "$RESULTS_DIR"/*.json; do
-              [ -e "$f" ] || continue
-              if jq -e 'any(.[]; .result.success == false)' "$f" >/dev/null; then
-                echo "::error::$f contains a failed scenario"
+            for pid in "${CLIENT_PIDS[@]}"; do
+              if wait "$pid"; then
+                echo "Client PID $pid exited 0 ($PROFILE)"
+              else
+                code=$?
+                echo "::error::Client PID $pid exited $code ($PROFILE)"
                 FAIL=1
               fi
             done
-          fi
+
+            if wait "$SERVER_PID"; then
+              echo "$MODE process exited 0 ($PROFILE)"
+            else
+              code=$?
+              echo "::error::$MODE process exited $code ($PROFILE)"
+              FAIL=1
+            fi
+
+            echo "::group::Result files ($PROFILE)"
+            for f in "$RESULTS_DIR"/*.json; do
+              [ -e "$f" ] || continue
+              echo "----- $f -----"
+              cat "$f"
+              echo
+            done
+            echo "::endgroup::"
+
+            if command -v jq >/dev/null 2>&1; then
+              for f in "$RESULTS_DIR"/*.json; do
+                [ -e "$f" ] || continue
+                if jq -e 'any(.[]; .result.success == false)' "$f" >/dev/null; then
+                  echo "::error::$f contains a failed scenario"
+                  FAIL=1
+                fi
+              done
+            fi
+          }
+
+          run_profile default 37001 -latencyMin 40 -latencyMax 80
+          run_profile no-latency 37002 -latencyMax 0
+          run_profile high-jitter 37003 -latencyMin 120 -latencyMax 250
 
           exit $FAIL
 
@@ -187,8 +201,8 @@ jobs:
           MODE: ${{ matrix.mode }}
         run: |
           set -u
-          shopt -s nullglob
-          files=(test-results/*.json)
+          shopt -s globstar nullglob
+          files=(test-results/**/*.json)
           if [ ${#files[@]} -eq 0 ]; then
             {
               echo "## Prediction Test Results"
@@ -231,13 +245,14 @@ jobs:
             echo ""
 
             for f in "${files[@]}"; do
-              proc=$(basename "$f" .json)
+              proc="${f#test-results/}"
+              proc="${proc%.json}"
               pcount=$(jq 'length' "$f")
               ppass=$(jq '[.[] | select(.result.success == true)] | length' "$f")
               pfail=$((pcount - ppass))
 
               case "$proc" in
-                client-*) is_client=1 ;;
+                */client-*) is_client=1 ;;
                 *)        is_client=0 ;;
               esac
 
@@ -273,7 +288,8 @@ jobs:
       - name: Tail logs on failure
         if: failure()
         run: |
-          for f in test-logs/*.log; do
+          shopt -s globstar nullglob
+          for f in test-logs/**/*.log; do
             [ -e "$f" ] || continue
             echo "::group::$f (last 200 lines)"
             tail -n 200 "$f"

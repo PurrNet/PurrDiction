@@ -378,6 +378,9 @@ GameObject:
   - component: {fileID: 130004}
   - component: {fileID: 130005}
   - component: {fileID: 130007}
+  - component: {fileID: 130008}
+  - component: {fileID: 130009}
+  - component: {fileID: 130010}
   m_Layer: 0
   m_Name: Bootstrap
   m_TagString: Untagged
@@ -504,6 +507,53 @@ MonoBehaviour:
   _counter: {fileID: 120002}
   _timeout: 90
   _settleSeconds: 2
+--- !u!114 &130008
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 130000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e3f8a1c20d934b6e8a51f0c4d7b21021, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  _counter: {fileID: 120002}
+  _timeout: 90
+  _settleSeconds: 2
+--- !u!114 &130009
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 130000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e3f8a1c20d934b6e8a51f0c4d7b21022, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  _counter: {fileID: 120002}
+  _timeout: 90
+  _settleSeconds: 2
+--- !u!114 &130010
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 130000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e3f8a1c20d934b6e8a51f0c4d7b21023, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  _counter: {fileID: 120002}
+  _timeout: 120
+  _reconnectTimeout: 30
+  _stayDisconnectedSeconds: 1
+  _settleSeconds: 3
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

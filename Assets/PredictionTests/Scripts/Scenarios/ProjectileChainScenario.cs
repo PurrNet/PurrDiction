@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Text;
 using Cysharp.Threading.Tasks;
 using PurrNet;
@@ -28,15 +27,15 @@ public class ProjectileChainScenario : Scenario
     {
         _hitPrefab = PredictionTestUtils.CreatePrefab<ProjectileChainEffect>("ProjectileChainHit");
         _hitPrefab.GetComponent<ProjectileChainEffect>().lifetimeTicks = 12;
-        PredictionTestUtils.RegisterPrefab(ctx, _hitPrefab, true, 24);
+        PredictionTestUtils.RegisterPrefab(ctx, _hitPrefab, true, 1);
 
         _muzzlePrefab = PredictionTestUtils.CreatePrefab<ProjectileChainEffect>("ProjectileChainMuzzle");
         _muzzlePrefab.GetComponent<ProjectileChainEffect>().lifetimeTicks = 4;
-        PredictionTestUtils.RegisterPrefab(ctx, _muzzlePrefab, true, 24);
+        PredictionTestUtils.RegisterPrefab(ctx, _muzzlePrefab, true, 1);
 
         _projectilePrefab = PredictionTestUtils.CreatePrefab<ProjectileChainProjectile>("ProjectileChainProjectile");
         _projectilePrefab.GetComponent<ProjectileChainProjectile>().hitPrefab = _hitPrefab;
-        PredictionTestUtils.RegisterPrefab(ctx, _projectilePrefab, true, 24);
+        PredictionTestUtils.RegisterPrefab(ctx, _projectilePrefab, true, 1);
 
         _driverPrefab = PredictionTestUtils.CreatePrefab<ProjectileChainDriver>("ProjectileChainDriver");
         var driver = _driverPrefab.GetComponent<ProjectileChainDriver>();
@@ -102,34 +101,10 @@ public class ProjectileChainScenario : Scenario
         var pm = ctx.predictionManager;
         var sb = new StringBuilder();
         sb.Append(PredictionTestUtils.WorldDigest(ctx, _counter));
-        AppendIdentities<ProjectileChainDriver>(pm, _driverPrefabId, sb, driver => driver.Digest());
-        AppendIdentities<ProjectileChainProjectile>(pm, _projectilePrefabId, sb, projectile => projectile.Digest());
-        AppendIdentities<ProjectileChainEffect>(pm, _muzzlePrefabId, sb, effect => effect.Digest());
-        AppendIdentities<ProjectileChainEffect>(pm, _hitPrefabId, sb, effect => effect.Digest());
+        PredictionTestUtils.AppendIdentities<ProjectileChainDriver>(pm, _driverPrefabId, sb, driver => driver.Digest());
+        PredictionTestUtils.AppendIdentities<ProjectileChainProjectile>(pm, _projectilePrefabId, sb, projectile => projectile.Digest());
+        PredictionTestUtils.AppendIdentities<ProjectileChainEffect>(pm, _muzzlePrefabId, sb, effect => effect.Digest());
+        PredictionTestUtils.AppendIdentities<ProjectileChainEffect>(pm, _hitPrefabId, sb, effect => effect.Digest());
         return sb.ToString();
-    }
-
-    private static void AppendIdentities<T>(PredictionManager pm, int prefabId, StringBuilder sb, Func<T, string> digest)
-        where T : Component
-    {
-        ref var state = ref pm.hierarchy.currentState;
-        var entries = new List<InstanceDetails>();
-        for (var i = 0; i < state.spawnedPrefabs.Count; i++)
-        {
-            var details = state.spawnedPrefabs[i];
-            if (details.prefabId == prefabId)
-                entries.Add(details);
-        }
-
-        entries.Sort((a, b) => a.instanceId.instanceId.value.CompareTo(b.instanceId.instanceId.value));
-
-        sb.Append('|').Append(typeof(T).Name).Append('=');
-        for (var i = 0; i < entries.Count; i++)
-        {
-            if (entries[i].instanceId.TryGetComponent<T>(pm, out var instance))
-                sb.Append('[').Append(digest(instance)).Append(']');
-            else
-                sb.Append("[missing:").Append(entries[i].instanceId.instanceId.value).Append(']');
-        }
     }
 }

@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class ProjectileChainDriver : PredictedIdentity<ProjectileChainDriver.DriverState>
 {
-    public const int TotalShots = 48;
+    public const int TotalShots = 160;
 
     public GameObject projectilePrefab;
     public GameObject muzzlePrefab;
@@ -24,8 +24,8 @@ public class ProjectileChainDriver : PredictedIdentity<ProjectileChainDriver.Dri
         state.ticks += 1;
 
         var shot = state.shots;
-        var lane = shot % 8;
-        var wave = shot / 8;
+        var lane = shot % 16;
+        var wave = shot / 16;
         var position = new Vector3(lane, wave * 0.25f, 0f);
 
         hierarchy.Create(projectilePrefab, position, Quaternion.identity, owner);

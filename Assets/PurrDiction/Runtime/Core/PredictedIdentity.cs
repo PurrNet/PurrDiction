@@ -66,6 +66,7 @@ namespace PurrNet.Prediction
             isFreshSpawn = true;
             owner = null;
             id = default;
+            ResetModulesForPool();
             OnRemovedFromPool();
         }
 
@@ -111,13 +112,16 @@ namespace PurrNet.Prediction
             this.owner = owner;
             this.id = id;
             _destroyedFired = false;
-
-            if (!isFreshSpawn)
-                return;
-
-            isFreshSpawn = false;
             predictionManager = world;
             sceneId = world.sceneId;
+
+            if (!isFreshSpawn)
+            {
+                ResetModulesForReuse(manager, world, id, owner);
+                return;
+            }
+
+            isFreshSpawn = false;
 
             BeginInitialModuleSetup();
             try

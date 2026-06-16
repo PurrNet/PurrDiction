@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Text;
 using PurrNet.Prediction;
@@ -23,7 +24,7 @@ public static class PredictionTestUtils
         var go = new GameObject(name);
         go.SetActive(false);
         go.AddComponent<T>();
-        Object.DontDestroyOnLoad(go);
+        UnityEngine.Object.DontDestroyOnLoad(go);
         return go;
     }
 
@@ -78,5 +79,29 @@ public static class PredictionTestUtils
         }
 
         return sb.ToString();
+    }
+
+    public static void AppendIdentities<T>(PredictionManager pm, int prefabId, StringBuilder sb, Func<T, string> digest)
+        where T : Component
+    {
+        ref var state = ref pm.hierarchy.currentState;
+        var entries = new List<InstanceDetails>();
+        for (var i = 0; i < state.spawnedPrefabs.Count; i++)
+        {
+            var details = state.spawnedPrefabs[i];
+            if (details.prefabId == prefabId)
+                entries.Add(details);
+        }
+
+        entries.Sort((a, b) => a.instanceId.instanceId.value.CompareTo(b.instanceId.instanceId.value));
+
+        sb.Append('|').Append(typeof(T).Name).Append('=');
+        for (var i = 0; i < entries.Count; i++)
+        {
+            if (entries[i].instanceId.TryGetComponent<T>(pm, out var instance))
+                sb.Append('[').Append(digest(instance)).Append(']');
+            else
+                sb.Append("[missing:").Append(entries[i].instanceId.instanceId.value).Append(']');
+        }
     }
 }
