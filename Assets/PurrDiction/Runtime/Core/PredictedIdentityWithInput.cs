@@ -43,7 +43,22 @@ namespace PurrNet.Prediction
         {
             base.Setup(manager, world, id, owner);
 
-            _inputHistory = new History<INPUT>(world.tickRate * 5);
+            if (_inputHistory == null)
+                _inputHistory = new History<INPUT>(world.tickRate * 5);
+            else _inputHistory.Clear();
+
+            _currentInput.Dispose();
+            _currentInput = default;
+            _nextInput.Dispose();
+            _nextInput = default;
+            _lastInput?.Dispose();
+            _lastInput = null;
+            if (_queuedInput.HasValue)
+            {
+                var queuedInput = _queuedInput.Value;
+                queuedInput.Dispose();
+                _queuedInput = null;
+            }
         }
 
         internal override void OnPrepareSimulationInputs(ulong tick, float delta)

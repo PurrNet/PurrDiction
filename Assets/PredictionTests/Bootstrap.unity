@@ -377,6 +377,7 @@ GameObject:
   - component: {fileID: 130003}
   - component: {fileID: 130004}
   - component: {fileID: 130005}
+  - component: {fileID: 130007}
   m_Layer: 0
   m_Name: Bootstrap
   m_TagString: Untagged
@@ -488,6 +489,21 @@ MonoBehaviour:
   _minBounces: 3
   _restSeconds: 4
   _timeout: 60
+--- !u!114 &130007
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 130000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e3f8a1c20d934b6e8a51f0c4d7b21020, type: 3}
+  m_Name:
+  m_EditorClassIdentifier:
+  _counter: {fileID: 120002}
+  _timeout: 90
+  _settleSeconds: 2
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

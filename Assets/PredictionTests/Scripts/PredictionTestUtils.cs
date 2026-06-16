@@ -5,14 +5,17 @@ using UnityEngine;
 
 public static class PredictionTestUtils
 {
-    public static void RegisterPrefab(ScenarioContext ctx, GameObject prefab)
+    public static void RegisterPrefab(ScenarioContext ctx, GameObject prefab, bool pooled = false, int warmupCount = 0)
     {
         ctx.predictionManager.predictedPrefabs.prefabs.Add(new PredictedPrefab
         {
             prefab = prefab,
-            pooled = false,
-            warmupCount = 0
+            pooled = pooled,
+            warmupCount = warmupCount
         });
+
+        if (pooled)
+            ctx.predictionManager.predictedPrefabs = ctx.predictionManager.predictedPrefabs;
     }
 
     public static GameObject CreatePrefab<T>(string name) where T : PredictedIdentity

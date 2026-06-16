@@ -108,14 +108,6 @@ namespace PurrNet.Prediction
             myType = GetType();
             hierarchy = world.hierarchy;
 
-            if (!isFreshSpawn)
-            {
-                ResetStateToInitialState();
-                GetLatestUnityState();
-                base.Setup(manager, world, id, owner);
-                return;
-            }
-
             base.Setup(manager, world, id, owner);
 
             tickModule = manager.tickModule;

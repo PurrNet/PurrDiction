@@ -11,6 +11,7 @@ Multi-process end-to-end tests for the prediction pipeline, modeled after PurrNe
 | `DeterministicAlignmentScenario` | Deterministic identities stay tick-aligned with synced state across the join seam; timed deterministic spawns produce identical instance ids everywhere (PurrNet v1.20.0-beta.160 regression class) |
 | `PredictedPawnScenario` | Input round-trip, per-player owned identities, input-driven hierarchy spawns converge |
 | `ReconnectScenario` | Disconnect/reconnect mid-simulation: rejoined client re-syncs and stays converged through new deterministic spawns |
+| `ProjectileChainScenario` | One predicted shot creates a predicted projectile and muzzle effect, then the projectile creates a predicted hit effect before despawning; pooled effects and list-backed projectile state stress rollback reuse |
 
 All scenarios run with simulated latency (40–80ms by default, configurable on the `Bootstrap` object or via `-latencyMin`/`-latencyMax`; `-latencyMax 0` disables) so rollback depth resembles real conditions instead of a clean localhost.
 
