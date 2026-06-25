@@ -574,7 +574,7 @@ namespace PurrNet.Prediction
 
             isSimulating = false;
 
-            ReplayToLatestTick(1, true);
+            ReplayToLatestTick(1, HistorySaveMode.Full);
         }
 
         readonly List<PlayerPacker> _clientFrames = new (16);
@@ -1108,17 +1108,17 @@ namespace PurrNet.Prediction
                     isCatchingUpFrames = true;
                     RollbackToFrame(inPlaceTick);
                     SimulateFrameInPlace(inPlaceTick);
-                    SimulateFrame(inPlaceTick, true);
+                    SimulateFrame(inPlaceTick, HistorySaveMode.Full);
                     isCatchingUpFrames = false;
                 }
 
                 RollbackToFrame(previousFrame.packer, inPlaceTick, verifiedTick);
-                SimulateFrame(verifiedTick, true);
+                SimulateFrame(verifiedTick, HistorySaveMode.EventHandlersOnly);
                 isVerified = false;
             }
 
-            SimulateFrame(_lastVerifiedTick + 1, true);
-            ReplayToLatestTick(_lastVerifiedTick + 2, false);
+            SimulateFrame(_lastVerifiedTick + 1, HistorySaveMode.Full);
+            ReplayToLatestTick(_lastVerifiedTick + 2, HistorySaveMode.None);
 
             SyncTransforms();
             UpdateInterpolation(true);
@@ -1136,10 +1136,17 @@ namespace PurrNet.Prediction
                 _systems[j].RunUpdateRollbackInterpolation(tickDelta, accumulateError);
         }
 
-        private void ReplayToLatestTick(ulong verifiedTick, bool saveState)
+        private enum HistorySaveMode
+        {
+            None,
+            Full,
+            EventHandlersOnly
+        }
+
+        private void ReplayToLatestTick(ulong verifiedTick, HistorySaveMode saveMode)
         {
             for (ulong simTick = verifiedTick; simTick < localTick; simTick++)
-                SimulateFrame(simTick, saveState);
+                SimulateFrame(simTick, saveMode);
         }
 
         private void SimulateFrameInPlace(ulong verifiedTick)
@@ -1198,7 +1205,7 @@ namespace PurrNet.Prediction
             localTickInContext = localTick;
         }
 
-        private void SimulateFrame(ulong verifiedTick, bool saveState)
+        private void SimulateFrame(ulong verifiedTick, HistorySaveMode saveMode)
         {
             var delta = tickDelta;
             if (time)
@@ -1207,7 +1214,7 @@ namespace PurrNet.Prediction
             isSimulating = true;
             localTickInContext = verifiedTick;
 
-            if (saveState)
+            if (saveMode == HistorySaveMode.Full)
             {
                 using (SaveHistoryMarker.Auto())
                 {
@@ -1258,7 +1265,7 @@ namespace PurrNet.Prediction
                 lateSimulateMarker.Dispose();
             }
 
-            if (saveState)
+            if (saveMode is HistorySaveMode.Full or HistorySaveMode.EventHandlersOnly)
             {
                 using (SaveHistoryMarker.Auto())
                 {

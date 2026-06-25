@@ -185,14 +185,6 @@ namespace PurrNet.Prediction
 
         internal override void SaveStateInHistory(ulong tick)
         {
-            if (_stateHistory.Count > 0)
-            {
-                var last = _stateHistory[^1];
-                if (Packer.AreEqualRef(ref last.prediction, ref fullPredictedState.prediction) &&
-                    Packer.AreEqualRef(ref last.state, ref fullPredictedState.state))
-                    return;
-            }
-
             _stateHistory.Write(tick, fullPredictedState.DeepCopy());
         }
 

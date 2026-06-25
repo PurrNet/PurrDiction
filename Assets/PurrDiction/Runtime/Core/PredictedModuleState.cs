@@ -180,14 +180,6 @@ namespace PurrNet.Prediction
 
         protected override void SaveState(ulong tick)
         {
-            if (_history.Count > 0)
-            {
-                var last = _history[^1];
-                if (Packer.AreEqualRef(ref last.prediction, ref fullPredictedState.prediction) &&
-                    Packer.AreEqualRef(ref last.state, ref fullPredictedState.state))
-                    return;
-            }
-
             _history.Write(tick, fullPredictedState.DeepCopy());
         }
 
