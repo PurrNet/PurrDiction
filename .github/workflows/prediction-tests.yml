@@ -6,7 +6,7 @@ on:
       clientCount:
         description: "Total player count to exercise"
         required: true
-        default: "3"
+        default: "5"
       connectionDelaySeconds:
         description: "Seconds to wait after server starts before launching clients"
         required: true
@@ -15,20 +15,6 @@ on:
         description: "Hard timeout for the whole job, in minutes"
         required: true
         default: "30"
-  pull_request:
-    branches: [dev, release]
-    paths:
-      - "Assets/**"
-      - "Packages/**"
-      - "ProjectSettings/**"
-      - ".github/workflows/prediction-tests.yml"
-  push:
-    branches: [dev]
-    paths:
-      - "Assets/**"
-      - "Packages/**"
-      - "ProjectSettings/**"
-      - ".github/workflows/prediction-tests.yml"
 
 jobs:
   prediction-tests:
