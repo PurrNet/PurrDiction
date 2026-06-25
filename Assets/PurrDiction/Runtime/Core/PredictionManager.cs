@@ -1113,7 +1113,7 @@ namespace PurrNet.Prediction
                 }
 
                 RollbackToFrame(previousFrame.packer, inPlaceTick, verifiedTick);
-                SimulateFrame(verifiedTick, HistorySaveMode.EventHandlersOnly);
+                SimulateFrame(verifiedTick, HistorySaveMode.VerifiedFrame);
                 isVerified = false;
             }
 
@@ -1140,7 +1140,7 @@ namespace PurrNet.Prediction
         {
             None,
             Full,
-            EventHandlersOnly
+            VerifiedFrame
         }
 
         private void ReplayToLatestTick(ulong verifiedTick, HistorySaveMode saveMode)
@@ -1214,14 +1214,14 @@ namespace PurrNet.Prediction
             isSimulating = true;
             localTickInContext = verifiedTick;
 
-            if (saveMode == HistorySaveMode.Full)
+            if (saveMode is HistorySaveMode.Full or HistorySaveMode.VerifiedFrame)
             {
                 using (SaveHistoryMarker.Auto())
                 {
                     for (var i = 0; i < _systemsCount; i++)
                     {
                         var system = _systems[i];
-                        if (!system.isEventHandler)
+                        if (!system.isEventHandler && (saveMode == HistorySaveMode.Full || system.isDeterministic))
                             system.RunSaveState(verifiedTick);
                     }
                 }
@@ -1265,7 +1265,7 @@ namespace PurrNet.Prediction
                 lateSimulateMarker.Dispose();
             }
 
-            if (saveMode is HistorySaveMode.Full or HistorySaveMode.EventHandlersOnly)
+            if (saveMode is HistorySaveMode.Full or HistorySaveMode.VerifiedFrame)
             {
                 using (SaveHistoryMarker.Auto())
                 {
