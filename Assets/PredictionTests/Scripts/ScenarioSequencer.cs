@@ -5,7 +5,7 @@ using PurrNet;
 
 public static class ScenarioSequencer
 {
-    private const float SCENARIO_TIMEOUT_SECONDS = 24f * 60f * 60f;
+    private const float SCENARIO_TIMEOUT_SECONDS = 4f * 60f;
     private const float END_OF_RUN_HANDSHAKE_TIMEOUT_SECONDS = 10f;
 
     private static readonly Dictionary<int, HashSet<PlayerID>> _acksByIndex = new();
@@ -23,10 +23,20 @@ public static class ScenarioSequencer
 
     public static async UniTask WaitForStart(ScenarioContext ctx, int index)
     {
-        await UniTaskUtils.WaitWithTimeout(
-            () => _latestStartedIndex >= index || _sequenceComplete,
-            SCENARIO_TIMEOUT_SECONDS,
-            ctx.cancellationToken);
+        try
+        {
+            await UniTaskUtils.WaitWithTimeout(
+                () => _latestStartedIndex >= index || _sequenceComplete,
+                SCENARIO_TIMEOUT_SECONDS,
+                ctx.cancellationToken);
+        }
+        catch (TimeoutException e)
+        {
+            throw new TimeoutException(
+                $"Timed out waiting for scenario {index} start " +
+                $"(latestStarted={_latestStartedIndex}, sequenceComplete={_sequenceComplete})",
+                e);
+        }
     }
 
     public static async UniTask WaitForAllAcks(ScenarioContext ctx, int index)
@@ -34,10 +44,21 @@ public static class ScenarioSequencer
         var localId = ctx.networkManager.localPlayer;
         bool isHost = ctx.role == NetworkRole.Host;
 
-        await UniTaskUtils.WaitWithTimeout(
-            () => AllConnectedClientsAcked(ctx, index, localId, isHost),
-            SCENARIO_TIMEOUT_SECONDS,
-            ctx.cancellationToken);
+        try
+        {
+            await UniTaskUtils.WaitWithTimeout(
+                () => AllConnectedClientsAcked(ctx, index, localId, isHost),
+                SCENARIO_TIMEOUT_SECONDS,
+                ctx.cancellationToken);
+        }
+        catch (TimeoutException e)
+        {
+            _acksByIndex.TryGetValue(index, out var acks);
+            throw new TimeoutException(
+                $"Timed out waiting for scenario {index} client acks " +
+                $"({acks?.Count ?? 0}/{ExpectedAckCount(ctx, localId, isHost)} received)",
+                e);
+        }
 
         _acksByIndex.Remove(index);
     }
@@ -55,6 +76,20 @@ public static class ScenarioSequencer
                 return false;
         }
         return true;
+    }
+
+    private static int ExpectedAckCount(ScenarioContext ctx, PlayerID localId, bool isHost)
+    {
+        int expected = 0;
+        var connected = ctx.networkManager.players;
+        for (int i = 0; i < connected.Count; i++)
+        {
+            var p = connected[i];
+            if (isHost && p == localId)
+                continue;
+            expected++;
+        }
+        return expected;
     }
 
     public static void AckLocalDone(ScenarioContext ctx, int index)

@@ -91,6 +91,7 @@ public class PredictionBootstrap : Scenario
             _scenarios[i].Setup(ctx, _networkManager);
 
         SubscribeToDataSent(_networkManager.transport.transport);
+        Debug.Log($"[PredictionTests] Starting {_role} run with {_scenarios.Length} scenarios; expectedConnections={_expectedConnections}");
 
         RunScenarios();
     }
@@ -256,6 +257,9 @@ public class PredictionBootstrap : Scenario
         try
         {
             await UniTaskUtils.WaitWithTimeout(IsConnected, _connectionTimeout, ctx.cancellationToken);
+            Debug.Log(
+                $"[PredictionTests] {_role} local connection ready " +
+                $"(server={_networkManager.isServer}, client={_networkManager.isClient}, players={_networkManager.playerCount}/{_expectedConnections})");
         }
         catch (TimeoutException)
         {
@@ -288,6 +292,7 @@ public class PredictionBootstrap : Scenario
         try
         {
             await UniTaskUtils.WaitWithTimeout(AllConnected, _connectionTimeout, ctx.cancellationToken);
+            Debug.Log($"[PredictionTests] {_role} all players connected ({_networkManager.playerCount}/{_expectedConnections})");
         }
         catch (TimeoutException)
         {
@@ -430,6 +435,8 @@ public class PredictionBootstrap : Scenario
         _activeScenarioIndex = i;
 
         var scenario = _scenarios[i];
+        Debug.Log($"[PredictionTests] {_role} starting scenario {i}: {scenario.GetType().Name}");
+
         long startTick = DateTime.Now.Ticks;
         ScenarioPerformanceDetails performance = default;
         ScenarioPerformanceSampler sampler = null;
@@ -471,6 +478,12 @@ public class PredictionBootstrap : Scenario
             dataReceived = _dataReceived,
             performance = performance
         };
+
+        Debug.Log(
+            $"[PredictionTests] {_role} finished scenario {i}: {scenario.GetType().Name} " +
+            $"{(result.success ? "PASS" : "FAIL")} ({elapsedMs:F0} ms)");
+        if (!result.success)
+            Debug.LogWarning($"[PredictionTests] {scenario.GetType().Name} failed: {result.message}");
 
         return !result.success;
     }

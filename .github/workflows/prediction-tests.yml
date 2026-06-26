@@ -15,6 +15,10 @@ on:
         description: "Hard timeout for the whole job, in minutes"
         required: true
         default: "30"
+      profileTimeoutSeconds:
+        description: "Seconds before one profile is treated as hung"
+        required: true
+        default: "420"
 
 jobs:
   prediction-tests:
@@ -31,6 +35,7 @@ jobs:
     env:
       CLIENT_COUNT: ${{ inputs.clientCount || '3' }}
       CONNECT_DELAY: ${{ inputs.connectionDelaySeconds || '1' }}
+      PROFILE_TIMEOUT_SECONDS: ${{ inputs.profileTimeoutSeconds || '420' }}
 
     steps:
       - name: Checkout
@@ -91,8 +96,31 @@ jobs:
             EXTERNAL_CLIENTS="$TOTAL_COUNT"
           fi
 
+          if ! [[ "$PROFILE_TIMEOUT_SECONDS" =~ ^[0-9]+$ ]] || [ "$PROFILE_TIMEOUT_SECONDS" -lt 30 ]; then
+            echo "::error::profileTimeoutSeconds must be an integer >= 30. Got '$PROFILE_TIMEOUT_SECONDS'"
+            exit 1
+          fi
+
           RUN=(xvfb-run -a --server-args="-screen 0 1024x768x24")
           FAIL=0
+
+          terminate_process_tree() {
+            local pid="$1"
+            local child
+            for child in $(pgrep -P "$pid" 2>/dev/null || true); do
+              terminate_process_tree "$child"
+            done
+            kill -TERM "$pid" 2>/dev/null || true
+          }
+
+          force_kill_process_tree() {
+            local pid="$1"
+            local child
+            for child in $(pgrep -P "$pid" 2>/dev/null || true); do
+              force_kill_process_tree "$child"
+            done
+            kill -KILL "$pid" 2>/dev/null || true
+          }
 
           run_profile() {
             PROFILE="$1"
@@ -103,6 +131,8 @@ jobs:
             RESULTS_DIR="$PWD/test-results/$PROFILE"
             LOGS_DIR="$PWD/test-logs/$PROFILE"
             mkdir -p "$RESULTS_DIR" "$LOGS_DIR"
+            TIMEOUT_MARKER="$RESULTS_DIR/.timed-out"
+            rm -f "$TIMEOUT_MARKER"
 
             echo "::group::Launching $MODE process ($PROFILE)"
             "${RUN[@]}" "$BIN" -batchmode -nographics \
@@ -137,6 +167,21 @@ jobs:
               echo "::endgroup::"
             done
 
+            ALL_PIDS=("$SERVER_PID" "${CLIENT_PIDS[@]}")
+            (
+              sleep "$PROFILE_TIMEOUT_SECONDS"
+              echo "::error::$MODE profile '$PROFILE' exceeded ${PROFILE_TIMEOUT_SECONDS}s; terminating test processes"
+              date -u > "$TIMEOUT_MARKER"
+              for pid in "${ALL_PIDS[@]}"; do
+                terminate_process_tree "$pid"
+              done
+              sleep 10
+              for pid in "${ALL_PIDS[@]}"; do
+                force_kill_process_tree "$pid"
+              done
+            ) &
+            WATCHDOG_PID=$!
+
             for pid in "${CLIENT_PIDS[@]}"; do
               if wait "$pid"; then
                 echo "Client PID $pid exited 0 ($PROFILE)"
@@ -153,6 +198,23 @@ jobs:
               code=$?
               echo "::error::$MODE process exited $code ($PROFILE)"
               FAIL=1
+            fi
+
+            if kill -0 "$WATCHDOG_PID" 2>/dev/null; then
+              kill "$WATCHDOG_PID" 2>/dev/null || true
+            fi
+            wait "$WATCHDOG_PID" 2>/dev/null || true
+
+            if [ -f "$TIMEOUT_MARKER" ]; then
+              echo "::error::$MODE profile '$PROFILE' timed out after ${PROFILE_TIMEOUT_SECONDS}s"
+              FAIL=1
+              echo "::group::Logs at timeout ($PROFILE)"
+              for f in "$LOGS_DIR"/*.log; do
+                [ -e "$f" ] || continue
+                echo "----- $f (last 200 lines) -----"
+                tail -n 200 "$f" || true
+              done
+              echo "::endgroup::"
             fi
 
             echo "::group::Result files ($PROFILE)"
