@@ -36,11 +36,13 @@ public class PredictionBootstrap : Scenario
     private string _resultsPath;
     private string _serverHost;
     private ushort? _port;
+    private bool _profileScenarios;
 
     private Scenario[] _scenarios;
     private ScenarioDetails?[] _results;
     private readonly List<string> _unexpectedLogs = new();
     private int _activeScenarioIndex = -1;
+    private ScenarioPerformanceSampler _activePerformanceSampler;
 
     private CancellationTokenSource _runCts;
 
@@ -52,6 +54,9 @@ public class PredictionBootstrap : Scenario
         _predictionManager.predictedPrefabs = prefabs;
 
         LoadArgs();
+
+        if (CommandLineUtils.HasFlag("-includeHistoryStressScenario"))
+            gameObject.AddComponent<HistoryStressScenario>();
 
         _scenarios = GetComponentsInChildren<Scenario>();
         _results = new ScenarioDetails?[_scenarios.Length];
@@ -182,6 +187,8 @@ public class PredictionBootstrap : Scenario
             _maxLatencyMs = parsedLatencyMax;
             _simulateLatency = parsedLatencyMax > 0;
         }
+
+        _profileScenarios = CommandLineUtils.HasFlag("-profileScenarios");
     }
 
     private void ConfigureTransport()
@@ -365,10 +372,18 @@ public class PredictionBootstrap : Scenario
                     await UniTask.WaitForSeconds(_timeBetweenScenarios);
                 }
 
-                await UniTaskUtils.WaitWithTimeout(
-                    () => ScenarioSequencer.SequenceComplete,
-                    90f,
-                    ctx.cancellationToken);
+                try
+                {
+                    await UniTaskUtils.WaitWithTimeout(
+                        () => ScenarioSequencer.SequenceComplete,
+                        90f,
+                        ctx.cancellationToken);
+                }
+                catch (TimeoutException e)
+                {
+                    Debug.LogWarning($"Timed out waiting for scenario sequence cleanup after all local scenarios completed: {e.Message}");
+                }
+
                 ScenarioSequencer.AckEndOfRun(ctx);
                 await UniTask.NextFrame();
                 await UniTask.NextFrame();
@@ -402,6 +417,11 @@ public class PredictionBootstrap : Scenario
         }
     }
 
+    private void Update()
+    {
+        _activePerformanceSampler?.SampleFrame(_predictionManager);
+    }
+
     private async UniTask<bool> RunOne(int i, ScenarioContext ctx)
     {
         _dataSent = 0;
@@ -411,8 +431,32 @@ public class PredictionBootstrap : Scenario
 
         var scenario = _scenarios[i];
         long startTick = DateTime.Now.Ticks;
-        var result = await GetResult(scenario, ctx, i);
-        _activeScenarioIndex = -1;
+        ScenarioPerformanceDetails performance = default;
+        ScenarioPerformanceSampler sampler = null;
+        ScenarioResult result;
+
+        if (_profileScenarios)
+        {
+            sampler = ScenarioPerformanceSampler.StartDefault();
+            _activePerformanceSampler = sampler;
+        }
+
+        try
+        {
+            result = await GetResult(scenario, ctx, i);
+        }
+        finally
+        {
+            if (sampler != null)
+            {
+                performance = sampler.Stop(_predictionManager);
+                sampler.Dispose();
+                if (ReferenceEquals(_activePerformanceSampler, sampler))
+                    _activePerformanceSampler = null;
+            }
+
+            _activeScenarioIndex = -1;
+        }
 
         result = IncludeUnexpectedLogs(result);
         var elapsedTick = DateTime.Now.Ticks - startTick;
@@ -424,7 +468,8 @@ public class PredictionBootstrap : Scenario
             result = result,
             durationInMs = elapsedMs,
             dataSent = _dataSent,
-            dataReceived = _dataReceived
+            dataReceived = _dataReceived,
+            performance = performance
         };
 
         return !result.success;

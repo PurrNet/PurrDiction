@@ -487,94 +487,76 @@ namespace PurrNet.Prediction
 
         private void FlushPendingFullSyncs()
         {
-            var tick = localTick - 1;
-
             for (var p = 0; p < _pendingFullSync.Count; p++)
             {
                 var player = _pendingFullSync[p];
 
                 _clientTicks[player] = new InputQueue();
+
+                var found = false;
+                for (var i = 0; i < _clientFrames.Count; i++)
+                {
+                    var clientFrame = _clientFrames[i];
+                    if (!clientFrame.player.Equals(player))
+                        continue;
+
+                    clientFrame.fullFrame = true;
+                    _clientFrames[i] = clientFrame;
+                    found = true;
+                    break;
+                }
+
+                if (found)
+                    continue;
+
                 _clientFrames.Add(new PlayerPacker
                 {
                     player = player,
-                    packer = BitPackerPool.Get()
+                    packer = BitPackerPool.Get(),
+                    fullFrame = true
                 });
-
-                using var frame = BitPackerPool.Get();
-
-                Packer<Size>.Write(frame, _systemsCount);
-
-                for (var i = 0; i < _systemsCount; i++)
-                {
-                    if (!_systems[i].isEventHandler)
-                        _systems[i].RunWriteFirstState(tick, frame);
-                }
-
-                for (var i = 0; i < _systemsCount; i++)
-                    _systems[i].WriteFirstInput(tick, frame);
-
-                for (var i = 0; i < _systemsCount; i++)
-                {
-                    if (_systems[i].isEventHandler)
-                        _systems[i].RunWriteFirstState(tick, frame);
-                }
-
-                SyncFullState(player, tickRate, tickDelta, _sessionSeed, frame);
             }
 
             _pendingFullSync.Clear();
         }
 
-        [TargetRpc(compressionLevel: CompressionLevel.Best)]
-        private void SyncFullState([UsedImplicitly] PlayerID target, int tickRate, float delta, uint randomSeed, BitPacker data)
+        private void ReadFullFrame(BitPacker frame, ulong stateTick, ulong inputTick)
         {
-            isSimulating = true;
-            _sessionSeed = randomSeed;
+            frame.ResetPositionAndMode(true);
 
-            _lastVerifiedTick = 1;
+            tickRate = Packer<PackedInt>.Read(frame);
+            tickDelta = Packer<float>.Read(frame);
+            _sessionSeed = Packer<uint>.Read(frame);
 
-            while (_deltas.Count > 0)
-                _deltas.Dequeue().Dispose();
+            int count = Packer<PackedInt>.Read(frame);
 
-            tickDelta = delta;
-            this.tickRate = tickRate;
-
-            Size _count = default;
-            Packer<Size>.Read(data, ref _count);
-            int count = _count;
-
-            for (var i = 0; i < count; i++)
+            for (var i = 0; i < count; ++i)
             {
                 var system = _systems[i];
                 if (system.isEventHandler)
                     continue;
-                system.RunReadFirstState(1, data);
-                system.RunRollback(1);
+                system.RunClearFuture(stateTick);
+                system.RunReadFirstState(stateTick, frame);
+                system.RunRollback(stateTick);
                 system.RunResetInterpolation();
+                system.lastVerifiedTick = stateTick;
             }
 
-            for (var i = 0; i < count; i++)
-                _systems[i].ReadFirstInput(1, data);
+            for (var i = 0; i < count; ++i)
+                _systems[i].ReadFirstInput(inputTick, frame);
 
-            for (var i = 0; i < count; i++)
+            for (var i = 0; i < count; ++i)
             {
                 var system = _systems[i];
-                if (system.isEventHandler)
-                    system.RunReadFirstState(1, data);
-            }
-
-            for (var i = 0; i < count; i++)
-            {
-                var system = _systems[i];
-                system.RunSaveState(1);
-                system.lastVerifiedTick = 1;
+                if (!system.isEventHandler)
+                    continue;
+                system.RunClearFuture(stateTick);
+                system.RunReadFirstState(stateTick, frame);
+                system.RunRollback(stateTick);
+                system.lastVerifiedTick = stateTick;
             }
 
             SyncTransforms();
-
-            isSimulating = false;
-
-            ReplayToLatestTick(1, HistorySaveMode.Full);
         }
 
         readonly List<PlayerPacker> _clientFrames = new (16);
@@ -613,7 +595,10 @@ namespace PurrNet.Prediction
                 {
                     var system = _systems[i];
                     if (!system.isEventHandler)
+                    {
+                        PredictionHistoryTelemetry.RecordSave(false);
                         system.RunSaveState(localTick);
+                    }
                 }
             }
 
@@ -677,7 +662,10 @@ namespace PurrNet.Prediction
                 {
                     var system = _systems[i];
                     if (system.isEventHandler)
+                    {
+                        PredictionHistoryTelemetry.RecordSave(true);
                         system.RunSaveState(localTick);
+                    }
                 }
             }
 
@@ -785,8 +773,17 @@ namespace PurrNet.Prediction
 
             for (var j = 0; j < fCount; j++)
             {
-                var frame = _clientFrames[j].packer;
-                var player = _clientFrames[j].player;
+                var clientFrame = _clientFrames[j];
+                var frame = clientFrame.packer;
+                var player = clientFrame.player;
+                var fullFrame = clientFrame.fullFrame;
+
+                if (fullFrame)
+                {
+                    Packer<PackedInt>.Write(frame, tickRate);
+                    Packer<float>.Write(frame, tickDelta);
+                    Packer<uint>.Write(frame, _sessionSeed);
+                }
 
                 Packer<PackedInt>.Write(frame, _systemsCount);
 
@@ -795,11 +792,17 @@ namespace PurrNet.Prediction
                     if (_systems[i].isEventHandler)
                         continue;
 
-                    _systems[i].RunWriteCurrentState(player, frame, _deltaModuleState);
+                    if (fullFrame)
+                        _systems[i].RunWriteFirstState(localTick, frame);
+                    else _systems[i].RunWriteCurrentState(player, frame, _deltaModuleState);
                 }
 
                 for (var i = 0; i < _systemsCount; i++)
-                    _systems[i].WriteInput(localTick, player, frame, _deltaModuleState, true);
+                {
+                    if (fullFrame)
+                        _systems[i].WriteFirstInput(localTick, frame);
+                    else _systems[i].WriteInput(localTick, player, frame, _deltaModuleState, true);
+                }
             }
         }
 
@@ -818,7 +821,9 @@ namespace PurrNet.Prediction
                 {
                     var frame = _clientFrames[j];
                     var packer = frame.packer;
-                    system.RunWriteCurrentState(frame.player, packer, _deltaModuleState);
+                    if (frame.fullFrame)
+                        system.RunWriteFirstState(localTick, packer);
+                    else system.RunWriteCurrentState(frame.player, packer, _deltaModuleState);
                 }
             }
         }
@@ -829,13 +834,20 @@ namespace PurrNet.Prediction
 
             for (var j = 0; j < fCount; j++)
             {
-                var player = _clientFrames[j].player;
-                var packer = _clientFrames[j].packer;
+                var clientFrame = _clientFrames[j];
+                var player = clientFrame.player;
+                var packer = clientFrame.packer;
                 var deltaLen = packer.ToByteData().length;
+                var fullFrame = clientFrame.fullFrame;
 
                 if (!_clientTicks.TryGetValue(player, out var queue))
                 {
-                    SendFrameToRemote(player, 0, new BitPackerWithLength(deltaLen, packer));
+                    SendFrameToRemote(player, 0, fullFrame, new BitPackerWithLength(deltaLen, packer));
+                    if (fullFrame)
+                    {
+                        clientFrame.fullFrame = false;
+                        _clientFrames[j] = clientFrame;
+                    }
                     continue;
                 }
 
@@ -848,7 +860,12 @@ namespace PurrNet.Prediction
                     dequeued.inputPacket.Dispose();
                 }
 
-                SendFrameToRemote(player, tick, new BitPackerWithLength(deltaLen, packer));
+                SendFrameToRemote(player, tick, fullFrame, new BitPackerWithLength(deltaLen, packer));
+                if (fullFrame)
+                {
+                    clientFrame.fullFrame = false;
+                    _clientFrames[j] = clientFrame;
+                }
             }
         }
 
@@ -991,6 +1008,7 @@ namespace PurrNet.Prediction
         {
             public BitPacker packer;
             public ulong clientTick;
+            public bool fullFrame;
 
             public void Dispose()
             {
@@ -1001,13 +1019,22 @@ namespace PurrNet.Prediction
         readonly Queue<FrameDelta> _deltas = new ();
 
         [TargetRpc(compressionLevel: CompressionLevel.Best)]
-        private void SendFrameToRemote([UsedImplicitly] PlayerID player, ulong localTick, BitPackerWithLength delta)
+        private void SendFrameToRemote([UsedImplicitly] PlayerID player, ulong localTick, bool fullFrame, BitPackerWithLength delta)
         {
             delta.packer.SkipBytes(delta.originalLength);
+
+            if (fullFrame)
+            {
+                _lastVerifiedTick = 1;
+                while (_deltas.Count > 0)
+                    _deltas.Dequeue().Dispose();
+            }
+
             _deltas.Enqueue(new FrameDelta
             {
                 packer = delta.packer,
-                clientTick = localTick
+                clientTick = localTick,
+                fullFrame = fullFrame
             });
         }
 
@@ -1103,7 +1130,7 @@ namespace PurrNet.Prediction
 
                 var inPlaceTick = isJump ? lastTick : verifiedTick;
 
-                if (inPlace || isJump)
+                if (!previousFrame.fullFrame && (inPlace || isJump))
                 {
                     isCatchingUpFrames = true;
                     RollbackToFrame(inPlaceTick);
@@ -1112,7 +1139,10 @@ namespace PurrNet.Prediction
                     isCatchingUpFrames = false;
                 }
 
-                RollbackToFrame(previousFrame.packer, inPlaceTick, verifiedTick);
+                if (previousFrame.fullFrame)
+                    ReadFullFrame(previousFrame.packer, inPlaceTick, verifiedTick);
+                else RollbackToFrame(previousFrame.packer, inPlaceTick, verifiedTick);
+
                 SimulateFrame(verifiedTick, HistorySaveMode.VerifiedFrame);
                 isVerified = false;
             }
@@ -1222,7 +1252,10 @@ namespace PurrNet.Prediction
                     {
                         var system = _systems[i];
                         if (!system.isEventHandler && (saveMode == HistorySaveMode.Full || system.isDeterministic))
+                        {
+                            PredictionHistoryTelemetry.RecordSave(false);
                             system.RunSaveState(verifiedTick);
+                        }
                     }
                 }
             }
@@ -1273,7 +1306,10 @@ namespace PurrNet.Prediction
                     {
                         var system = _systems[i];
                         if (system.isEventHandler)
+                        {
+                            PredictionHistoryTelemetry.RecordSave(true);
                             system.RunSaveState(verifiedTick);
+                        }
                     }
                 }
             }
