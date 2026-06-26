@@ -27,6 +27,11 @@ namespace PurrNet.Prediction
             return id.gameObject;
         }
 
+        internal PredictedIdentity GetIdentityIncludingDeleting(PredictionManager manager)
+        {
+            return manager.GetIdentityIncludingDeleting(this);
+        }
+
         public T GetIdentity<T>(PredictionManager manager) where T : PredictedIdentity
         {
             return (T)manager.GetIdentity(this);
