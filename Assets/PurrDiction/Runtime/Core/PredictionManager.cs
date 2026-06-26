@@ -401,15 +401,22 @@ namespace PurrNet.Prediction
         }
 
         readonly Dictionary<PredictedComponentID, PredictedIdentity> _instanceMap = new ();
+        readonly Dictionary<PredictedComponentID, PredictedIdentity> _deletingInstanceMap = new ();
 
         public bool TryGetIdentity(PredictedComponentID id, out PredictedIdentity instance)
         {
-            return _instanceMap.TryGetValue(id, out instance);
+            if (_instanceMap.TryGetValue(id, out instance))
+                return true;
+
+            return _deletingInstanceMap.TryGetValue(id, out instance);
         }
 
         public PredictedIdentity GetIdentity(PredictedComponentID id)
         {
-            return _instanceMap.GetValueOrDefault(id);
+            if (_instanceMap.TryGetValue(id, out var identity))
+                return identity;
+
+            return _deletingInstanceMap.GetValueOrDefault(id);
         }
 
         private void RegisterInstance(PredictedIdentity system, PredictedObjectID objectId, uint componentId, PlayerID? owner)
@@ -692,8 +699,7 @@ namespace PurrNet.Prediction
                 }
             }
 
-            for (var i = 0; i < _systemsCount; i++)
-                _systems[i].PostSimulate();
+            PostSimulateAll();
 
             if (cachedIsServer)
                 FinalizeTickOnServer(cachedIsClient);
@@ -1196,8 +1202,7 @@ namespace PurrNet.Prediction
                 lateSimulateMarker.Dispose();
             }
 
-            for (var i = 0; i < _systemsCount; i++)
-                _systems[i].PostSimulate();
+            PostSimulateAll();
             for (var j = 0; j < _systemsCount; j++)
                 _systems[j].GetLatestUnityState();
 
@@ -1278,8 +1283,7 @@ namespace PurrNet.Prediction
                 }
             }
 
-            for (var i = 0; i < _systemsCount; i++)
-                _systems[i].PostSimulate();
+            PostSimulateAll();
 
             for (var j = 0; j < _systemsCount; j++)
                 _systems[j].GetLatestUnityState();
@@ -1522,34 +1526,84 @@ namespace PurrNet.Prediction
 
         internal void InternalDelete(PackedInt prefabId, GameObject instance)
         {
-            int pid = prefabId;
-
-            if (!_predictedPrefabs || pid < 0 || pid >= _predictedPrefabs.prefabs.Count)
+            var deletingIds = BeginDeletingInstance(instance);
+            try
             {
-                UnregisterInstance(instance, false, true);
-                UnityProxy.DestroyImmediateDirectly(instance);
-                return;
+                int pid = prefabId;
+
+                if (!_predictedPrefabs || pid < 0 || pid >= _predictedPrefabs.prefabs.Count)
+                {
+                    UnregisterInstance(instance, false, true);
+                    UnityProxy.DestroyImmediateDirectly(instance);
+                    return;
+                }
+
+                var prefabsInfo = _predictedPrefabs.prefabs[pid];
+
+                if (!prefabsInfo.pooled)
+                {
+                    UnregisterInstance(instance, false, true);
+                    UnityProxy.DestroyImmediateDirectly(instance);
+                    return;
+                }
+
+                if (_pools != null && _pools.TryGetPool(prefabsInfo.prefab, out var pool))
+                {
+                    UnregisterPooledInstance(instance);
+                    pool.Delete(instance);
+                }
+                else
+                {
+                    UnregisterInstance(instance, false, true);
+                    UnityProxy.DestroyImmediateDirectly(instance);
+                }
+            }
+            finally
+            {
+                if (!isSimulating)
+                    EndDeletingInstance(deletingIds);
+            }
+        }
+
+        private List<PredictedComponentID> BeginDeletingInstance(GameObject instance)
+        {
+            var deletingIds = new List<PredictedComponentID>();
+
+            if (!instance)
+                return deletingIds;
+
+            var identities = ListPool<PredictedIdentity>.Instantiate();
+            instance.GetComponentsInChildren(true, identities);
+
+            for (int i = 0; i < identities.Count; i++)
+            {
+                var identity = identities[i];
+                var id = identity.id;
+                _deletingInstanceMap[id] = identity;
+                deletingIds.Add(id);
             }
 
-            var prefabsInfo = _predictedPrefabs.prefabs[pid];
+            ListPool<PredictedIdentity>.Destroy(identities);
+            return deletingIds;
+        }
 
-            if (!prefabsInfo.pooled)
-            {
-                UnregisterInstance(instance, false, true);
-                UnityProxy.DestroyImmediateDirectly(instance);
-                return;
-            }
+        private void EndDeletingInstance(List<PredictedComponentID> deletingIds)
+        {
+            for (int i = 0; i < deletingIds.Count; i++)
+                _deletingInstanceMap.Remove(deletingIds[i]);
+        }
 
-            if (_pools != null && _pools.TryGetPool(prefabsInfo.prefab, out var pool))
-            {
-                UnregisterPooledInstance(instance);
-                pool.Delete(instance);
-            }
-            else
-            {
-                UnregisterInstance(instance, false, true);
-                UnityProxy.DestroyImmediateDirectly(instance);
-            }
+        private void ClearDeletingInstanceMap()
+        {
+            _deletingInstanceMap.Clear();
+        }
+
+        private void PostSimulateAll()
+        {
+            for (var i = 0; i < _systemsCount; i++)
+                _systems[i].PostSimulate();
+
+            ClearDeletingInstanceMap();
         }
 
         public void SetOwnership(PredictedObjectID? root, PlayerID? player)
