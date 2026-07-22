@@ -109,6 +109,9 @@ namespace PurrNet.Prediction
         private PredictionPolicy _lastRegisteredPredictionPolicy;
         private bool _hasLastRegisteredPredictionPolicy;
         private bool _hasPendingSetupPolicyChange;
+        private PredictionPolicy _resolvedConfiguredPolicy;
+        private PredictionPolicy? _interestPolicyOverride;
+        private PredictionPolicy _pendingSetupOldConfiguredPolicy;
         private PredictionPolicy _pendingSetupOldPolicy;
         private PredictionPolicy _pendingSetupNewPolicy;
         private bool _isResolvingSetupPredictionPolicy;
@@ -212,7 +215,19 @@ namespace PurrNet.Prediction
         }
 
         internal PredictionPolicy ResolvePredictionPolicyForSetup()
-            => ResolveSetupPredictionPolicy();
+            => ResolveAppliedPredictionPolicy(ResolveSetupPredictionPolicy());
+
+        internal void PrepareInterestPolicyForRegistration(bool preserve)
+        {
+            if (preserve)
+                return;
+
+            _interestSendIntervalTicks = 1;
+            if (!_interestPolicyOverride.HasValue)
+                return;
+
+            _interestPolicyOverride = null;
+        }
 
         internal PredictionPolicy previousRegisteredPredictionPolicy
             => _hasLastRegisteredPredictionPolicy
@@ -285,11 +300,36 @@ namespace PurrNet.Prediction
 
             CancelPendingPredictionPolicySetup();
 
+            _resolvedConfiguredPolicy = policy;
+            ApplyResolvedPredictionPolicy();
+        }
+
+        internal void SetInterestPolicyOverride(PredictionPolicy? policy)
+        {
+            if (_interestPolicyOverride == policy)
+                return;
+
+            CancelPendingPredictionPolicySetup();
+            _interestPolicyOverride = policy;
+            ApplyResolvedPredictionPolicy();
+        }
+
+        private PredictionPolicy ResolveAppliedPredictionPolicy(PredictionPolicy configuredPolicy)
+        {
+            var selected = _interestPolicyOverride ?? configuredPolicy;
+            return NormalizePredictionPolicy(selected, false);
+        }
+
+        private void ApplyResolvedPredictionPolicy()
+        {
+            var policy = ResolveAppliedPredictionPolicy(_resolvedConfiguredPolicy);
+
             if (predictionPolicy == policy)
                 return;
 
             var oldPolicy = predictionPolicy;
             predictionPolicy = policy;
+            SyncInterestInterpolationWindow();
             OnPredictionPolicyChanged(oldPolicy, policy);
             if (predictionManager)
                 predictionManager.HandlePredictionPolicyChanged(this, oldPolicy, policy);
@@ -300,12 +340,11 @@ namespace PurrNet.Prediction
             CancelPendingPredictionPolicySetup();
             policy = NormalizePredictionPolicy(policy, true);
 
-            if (predictionPolicy == policy)
-                return;
-
+            _pendingSetupOldConfiguredPolicy = _resolvedConfiguredPolicy;
             _pendingSetupOldPolicy = predictionPolicy;
-            _pendingSetupNewPolicy = policy;
-            predictionPolicy = policy;
+            _resolvedConfiguredPolicy = policy;
+            _pendingSetupNewPolicy = ResolveAppliedPredictionPolicy(policy);
+            predictionPolicy = _pendingSetupNewPolicy;
             _hasPendingSetupPolicyChange = true;
         }
 
@@ -317,12 +356,17 @@ namespace PurrNet.Prediction
             var oldPolicy = _pendingSetupOldPolicy;
             var newPolicy = _pendingSetupNewPolicy;
             _hasPendingSetupPolicyChange = false;
+            _pendingSetupOldConfiguredPolicy = default;
             _pendingSetupOldPolicy = default;
             _pendingSetupNewPolicy = default;
 
-            OnPredictionPolicyChanged(oldPolicy, newPolicy);
-            if (predictionManager)
-                predictionManager.HandlePredictionPolicyChanged(this, oldPolicy, newPolicy);
+            if (oldPolicy != newPolicy)
+            {
+                SyncInterestInterpolationWindow();
+                OnPredictionPolicyChanged(oldPolicy, newPolicy);
+                if (predictionManager)
+                    predictionManager.HandlePredictionPolicyChanged(this, oldPolicy, newPolicy);
+            }
         }
 
         internal void CancelPendingPredictionPolicySetup()
@@ -330,8 +374,10 @@ namespace PurrNet.Prediction
             if (!_hasPendingSetupPolicyChange)
                 return;
 
+            _resolvedConfiguredPolicy = _pendingSetupOldConfiguredPolicy;
             predictionPolicy = _pendingSetupOldPolicy;
             _hasPendingSetupPolicyChange = false;
+            _pendingSetupOldConfiguredPolicy = default;
             _pendingSetupOldPolicy = default;
             _pendingSetupNewPolicy = default;
         }
@@ -428,6 +474,36 @@ namespace PurrNet.Prediction
 
         internal virtual void SyncLocalRelevanceSideEffects(bool relevant) { }
 
+        private int _interestSendIntervalTicks = 1;
+
+        internal int interestSendIntervalTicks => _interestSendIntervalTicks;
+
+        internal bool UsesSparseInterestInterpolation()
+        {
+            return !isDeterministic && _interestSendIntervalTicks > 1 && UsesServerRelayTimeline();
+        }
+
+        internal void SetInterestSendIntervalTicks(int sendIntervalTicks)
+        {
+            sendIntervalTicks = Math.Max(1, sendIntervalTicks);
+            if (_interestSendIntervalTicks == sendIntervalTicks)
+                return;
+
+            _interestSendIntervalTicks = sendIntervalTicks;
+            SyncInterestInterpolationWindow();
+        }
+
+        private void SyncInterestInterpolationWindow()
+        {
+            bool sparse = UsesSparseInterestInterpolation();
+            SyncInterestInterpolationWindow(_interestSendIntervalTicks, sparse);
+
+            for (var i = 0; i < _modules.Count; i++)
+                _modules[i].SetInterestInterpolationWindowInternal(_interestSendIntervalTicks, sparse);
+        }
+
+        internal virtual void SyncInterestInterpolationWindow(int sendIntervalTicks, bool sparse) { }
+
         internal void UpdateLocalRelevance(bool relevant)
         {
             _locallyDormant = !relevant;
@@ -461,6 +537,8 @@ namespace PurrNet.Prediction
             _simulateSoftCorrectionDuringReplay = false;
             _skipReplaySpawnInitialization = false;
             _locallyDormant = false;
+            _interestSendIntervalTicks = 1;
+            _interestPolicyOverride = null;
             _hasCachedRootObjectId = false;
             owner = null;
             id = default;
@@ -485,11 +563,21 @@ namespace PurrNet.Prediction
 
         internal void SetOwner(PlayerID? player, bool syncPolicySideEffects = true)
         {
+            bool changed = owner != player;
             owner = player;
             OnOwnerAssigned(player);
 
             if (syncPolicySideEffects)
-                SyncEffectivePolicySideEffects();
+            {
+                if (changed && predictionManager && predictionManager.interest != null)
+                {
+                    predictionManager.HandleLocalOwnershipChanged(this);
+                    SyncInterestInterpolationWindow();
+                    SyncEffectivePolicySideEffects();
+                }
+                else
+                    SyncEffectivePolicySideEffects();
+            }
         }
 
         protected virtual void OnOwnerAssigned(PlayerID? player) { }
@@ -602,7 +690,7 @@ namespace PurrNet.Prediction
             _metadataVerified = null;
             _moduleSetVerified = null;
             SetOwner(owner, false);
-            PreparePredictionPolicyForSetup(ResolvePredictionPolicyForSetup());
+            PreparePredictionPolicyForSetup(ResolveSetupPredictionPolicy());
 
             if (!isFreshSpawn)
             {

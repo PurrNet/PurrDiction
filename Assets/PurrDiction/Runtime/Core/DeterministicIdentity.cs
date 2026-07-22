@@ -92,6 +92,7 @@ namespace PurrNet.Prediction
 
         private InterpolatedWithDispose<FULL_STATE<STATE>> _interpolatedState;
         private History<FULL_STATE<STATE>> _stateHistory;
+        private int _defaultInterpolationBufferSize;
 
         protected TickManager tickModule { get; private set; }
 
@@ -188,14 +189,20 @@ namespace PurrNet.Prediction
             GetLatestUnityState();
 
             var interpolationBuffer = (int)Mathf.Max(world.tickRate / (float)10, 2);
+            _defaultInterpolationBufferSize = interpolationBuffer;
 
             if (_interpolatedState == null)
             {
                 _interpolatedState = new InterpolatedWithDispose<FULL_STATE<STATE>>(
-                    FULLInterpolate, 1f / world.tickRate, fullPredictedState.DeepCopy(), interpolationBuffer);
+                    FULLInterpolate,
+                    1f / world.tickRate,
+                    fullPredictedState.DeepCopy(),
+                    Math.Max(interpolationBuffer, interestSendIntervalTicks));
             }
             else
                 _interpolatedState.Teleport(fullPredictedState.DeepCopy());
+
+            SyncInterestInterpolationWindow(interestSendIntervalTicks, false);
 
             _viewState?.Dispose();
             _viewState = null;
@@ -275,6 +282,12 @@ namespace PurrNet.Prediction
 
             _viewState?.Dispose();
             _viewState = copy;
+        }
+
+        internal override void SyncInterestInterpolationWindow(int sendIntervalTicks, bool sparse)
+        {
+            if (_interpolatedState != null)
+                _interpolatedState.maxBufferSize = Math.Max(_defaultInterpolationBufferSize, sendIntervalTicks);
         }
 
         protected virtual void ModifyRollbackViewState(ref STATE state, float delta, bool accumulateError) { }

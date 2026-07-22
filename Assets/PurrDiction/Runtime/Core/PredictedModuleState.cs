@@ -25,6 +25,9 @@ namespace PurrNet.Prediction
 
         private InterpolatedWithDispose<MODULE_STATE<TState>> _interpolatedState;
         private MODULE_STATE<TState>? _viewState;
+        private float _baseInterpolationTickDelta;
+        private int _defaultInterpolationBufferSize;
+        private ulong? _lastSparseInterpolationTick;
 
         public TState viewState;
 
@@ -73,15 +76,21 @@ namespace PurrNet.Prediction
         {
             var tickRate = predictionManager.tickRate;
             var bufferSize = (int)Math.Max(tickRate / 10f, 2);
+            _baseInterpolationTickDelta = 1f / tickRate;
+            _defaultInterpolationBufferSize = bufferSize;
 
             _history = new History<MODULE_STATE<TState>>(tickRate * 10);
 
             _interpolatedState = new InterpolatedWithDispose<MODULE_STATE<TState>>(
                 FULLInterpolate,
-                1f / tickRate,
+                _baseInterpolationTickDelta,
                 fullPredictedState.DeepCopy(),
-                bufferSize
+                Math.Max(bufferSize, identity.interestSendIntervalTicks)
             );
+
+            SetInterestInterpolationWindowInternal(
+                identity.interestSendIntervalTicks,
+                identity.UsesSparseInterestInterpolation());
         }
 
         private History<MODULE_STATE<TState>> _verifiedHistory;
@@ -145,6 +154,7 @@ namespace PurrNet.Prediction
             _history?.Clear();
             _viewState?.Dispose();
             _viewState = null;
+            _lastSparseInterpolationTick = null;
 
             _interpolatedState?.Teleport(fullPredictedState.DeepCopy());
         }
@@ -191,15 +201,41 @@ namespace PurrNet.Prediction
         protected override void ResetInterpolation()
         {
             _interpolatedState?.Teleport(fullPredictedState.DeepCopy());
+            _lastSparseInterpolationTick = null;
         }
 
         protected override void UpdateInterpolation(float delta, bool accumulateError)
         {
+            if (identity.UsesSparseInterestInterpolation())
+            {
+                if (!identity.lastVerifiedTick.HasValue ||
+                    _lastSparseInterpolationTick == identity.lastVerifiedTick.Value)
+                    return;
+
+                _lastSparseInterpolationTick = identity.lastVerifiedTick.Value;
+            }
+            else
+            {
+                _lastSparseInterpolationTick = null;
+            }
+
             var copy = fullPredictedState.DeepCopy();
             ModifyRollbackViewState(ref copy.state, delta, accumulateError);
 
             _viewState?.Dispose();
             _viewState = copy;
+        }
+
+        internal override void SetInterestInterpolationWindowInternal(int sendIntervalTicks, bool sparse)
+        {
+            if (_interpolatedState == null)
+                return;
+
+            _interpolatedState.maxBufferSize = Math.Max(_defaultInterpolationBufferSize, sendIntervalTicks);
+            _interpolatedState.tickDelta = sparse
+                ? _baseInterpolationTickDelta * sendIntervalTicks
+                : _baseInterpolationTickDelta;
+            _lastSparseInterpolationTick = null;
         }
 
         protected virtual void ModifyRollbackViewState(ref TState state, float delta, bool accumulateError) { }
@@ -380,6 +416,7 @@ namespace PurrNet.Prediction
             _viewState?.Dispose();
             _viewState = null;
             _interpolatedState?.Teleport(default);
+            _lastSparseInterpolationTick = null;
             _verifiedHistory = null;
             _verifiedHistoryIndex = -1;
             fullPredictedState.Dispose();

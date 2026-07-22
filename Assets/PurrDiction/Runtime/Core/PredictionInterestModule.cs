@@ -85,10 +85,7 @@ namespace PurrNet.Prediction
             public void NotifyRemoved()
             {
                 foreach (var pair in _effectiveTiers)
-                {
-                    if (pair.Value == NetworkLODProfile.CulledTier)
-                        _module.AdjustCulledCount(pair.Key, -1);
-                }
+                    _module.AdjustTierCounts(pair.Key, pair.Value, 0);
             }
 
             private void ApplyEffectiveTier(PlayerID player)
@@ -108,6 +105,12 @@ namespace PurrNet.Prediction
         {
             public PlayerID player;
             public int seenVersion;
+        }
+
+        private struct PlayerTierCounts
+        {
+            public int serializationAffecting;
+            public int culled;
         }
 
         private readonly struct PendingLocalTier
@@ -135,7 +138,7 @@ namespace PurrNet.Prediction
         readonly List<PredictedTransform> _anchorScratch = new ();
         readonly Dictionary<PredictedObjectID, byte> _localTiers = new ();
         readonly Dictionary<PredictedObjectID, PendingLocalTier> _pendingLocalTiers = new ();
-        readonly Dictionary<PlayerID, int> _culledCounts = new ();
+        readonly Dictionary<PlayerID, PlayerTierCounts> _tierCounts = new ();
         readonly List<(PlayerID, PredictedObjectID)> _pinScratch = new ();
         int _refreshVersion;
 
@@ -152,6 +155,8 @@ namespace PurrNet.Prediction
         public event Action<PredictedObjectID, byte, byte> OnLocalRelevanceChanged;
 
         public IPredictionInterestProvider provider { get; set; }
+
+        public ILODScheduler scheduler { get; set; }
 
         public PredictionLODProfile profile => _profile;
 
@@ -215,9 +220,47 @@ namespace PurrNet.Prediction
             return !enabled || !TryGetTier(player, root, out var tier) || tier != NetworkLODProfile.CulledTier;
         }
 
+        internal bool ShouldSerializeState(PlayerID player, PredictedObjectID root, ulong tick, bool force)
+        {
+            if (!enabled || !_roots.TryGetValue(root, out var target))
+                return true;
+
+            byte tier = target.GetTier(player);
+            if (tier == NetworkLODProfile.CulledTier)
+                return false;
+            if (force)
+                return true;
+
+            var activeScheduler = scheduler ?? LODIntervalScheduler.instance;
+            return activeScheduler.ShouldSendThisTick(
+                target,
+                _profile.networkProfile,
+                player,
+                tier,
+                unchecked((uint)tick));
+        }
+
         internal bool IsLocallyRelevant(PredictedObjectID root)
         {
             return !_localTiers.TryGetValue(root, out var tier) || tier != NetworkLODProfile.CulledTier;
+        }
+
+        internal int GetLocalSendIntervalTicks(PredictedObjectID root)
+        {
+            if (!enabled)
+                return 1;
+
+            byte tier = _localTiers.GetValueOrDefault(root, (byte)0);
+            return _profile.networkProfile.GetSendIntervalTicks(tier);
+        }
+
+        internal PredictionPolicy? GetLocalSuggestedPolicy(PredictedObjectID root)
+        {
+            if (!enabled)
+                return null;
+
+            byte tier = _localTiers.GetValueOrDefault(root, (byte)0);
+            return _profile.TryGetSuggestedPolicy(tier, out var policy) ? policy : null;
         }
 
         internal bool CanApplyLocalAbsolute(PredictedObjectID root, ulong serverTick)
@@ -236,16 +279,31 @@ namespace PurrNet.Prediction
 
         internal bool HasCulledRoots(PlayerID player)
         {
-            return enabled && _culledCounts.TryGetValue(player, out var count) && count > 0;
+            return enabled && _tierCounts.TryGetValue(player, out var counts) && counts.culled > 0;
         }
 
-        private void AdjustCulledCount(PlayerID player, int delta)
+        internal bool HasSerializationAffectingRoots(PlayerID player)
         {
-            int count = _culledCounts.GetValueOrDefault(player) + delta;
-            if (count > 0)
-                _culledCounts[player] = count;
+            return enabled && _tierCounts.TryGetValue(player, out var counts) &&
+                   counts.serializationAffecting > 0;
+        }
+
+        private void AdjustTierCounts(PlayerID player, byte previous, byte next)
+        {
+            var counts = _tierCounts.GetValueOrDefault(player);
+            if (previous != 0)
+                counts.serializationAffecting--;
+            if (next != 0)
+                counts.serializationAffecting++;
+            if (previous == NetworkLODProfile.CulledTier)
+                counts.culled--;
+            if (next == NetworkLODProfile.CulledTier)
+                counts.culled++;
+
+            if (counts.serializationAffecting > 0 || counts.culled > 0)
+                _tierCounts[player] = counts;
             else
-                _culledCounts.Remove(player);
+                _tierCounts.Remove(player);
         }
 
         internal void RefreshServerTargets(List<PredictedIdentity> systems, int systemCount)
@@ -355,7 +413,7 @@ namespace PurrNet.Prediction
         internal void RemovePlayer(PlayerID player)
         {
             _players.Remove(player);
-            _culledCounts.Remove(player);
+            _tierCounts.Remove(player);
 
             foreach (var target in _roots.Values)
                 target.RemovePlayer(player);
@@ -484,10 +542,7 @@ namespace PurrNet.Prediction
 
         private void OnServerTierChanged(PlayerID player, PredictedObjectID root, byte previous, byte next)
         {
-            bool wasCulled = previous == NetworkLODProfile.CulledTier;
-            bool isCulled = next == NetworkLODProfile.CulledTier;
-            if (wasCulled != isCulled)
-                AdjustCulledCount(player, isCulled ? 1 : -1);
+            AdjustTierCounts(player, previous, next);
 
             _manager.QueueInterestTierChange(player, root, next);
         }
@@ -541,7 +596,7 @@ namespace PurrNet.Prediction
             _anchors.Clear();
             _localTiers.Clear();
             _pendingLocalTiers.Clear();
-            _culledCounts.Clear();
+            _tierCounts.Clear();
         }
     }
 }

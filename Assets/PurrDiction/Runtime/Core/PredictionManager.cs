@@ -372,6 +372,9 @@ namespace PurrNet.Prediction
             interest?.Dispose();
             interest = null;
 
+            if (!isServer)
+                ClearAllLocalInterestSideEffects();
+
             if (!_predictionLODProfile)
                 return;
 
@@ -387,6 +390,9 @@ namespace PurrNet.Prediction
                 factory,
                 lodModule,
                 isServer);
+
+            if (!isServer)
+                SyncAllLocalInterestSideEffects();
 
             if (isServer)
             {
@@ -462,6 +468,7 @@ namespace PurrNet.Prediction
                 {
                     var componentId = new PredictedComponentID(objectID, i);
                     bool preserveState = !reset && !component.isFreshSpawn && component.id.Equals(componentId);
+                    component.PrepareInterestPolicyForRegistration(preserveState);
                     var incomingPolicy = component.ResolvePredictionPolicyForSetup();
                     bool preserveSoftState = preserveState &&
                                              component.previousRegisteredPredictionPolicy == PredictionPolicy.SoftCorrection &&
@@ -574,8 +581,13 @@ namespace PurrNet.Prediction
             ++_systemsCount;
             InvalidateInputBlockCache();
 
-            if (!cachedIsServer)
-                system.UpdateLocalRelevance(IsLocallyRelevant(system));
+            if (!isServer)
+            {
+                if (_ownedRootsCacheValid && _ownedRootsCachePlayer.HasValue &&
+                    system.owner == _ownedRootsCachePlayer)
+                    _ownedRootsCache.Add(system.rootObjectId);
+                SyncLocalInterestSideEffects(system);
+            }
 
             if (isReplaying && system.UsesSoftCorrectionTimeline() && !preserveState)
             {
@@ -590,6 +602,7 @@ namespace PurrNet.Prediction
 
         public void UnregisterInstance(PredictedIdentity predictedIdentity)
         {
+            InvalidateLocallyOwnedRoots();
             RemoveSpeculativeRelayLock(predictedIdentity);
             var id = predictedIdentity.id;
             if (_instanceMap.TryGetValue(id, out var registeredIdentity) &&
@@ -723,13 +736,14 @@ namespace PurrNet.Prediction
             SyncTransforms();
         }
 
-        private void WriteFilteredFirstInputEntries(BitPacker frame, BitPacker scratch)
+        private void WriteFilteredFirstInputEntries(PlayerID receiver, BitPacker frame, BitPacker scratch)
         {
+            FillInputSerializeFlags(receiver);
             int count = 0;
 
             for (var i = 0; i < _systemsCount; i++)
             {
-                if (_serializeFlags[i] && _systems[i].hasInput)
+                if (_inputSerializeFlags[i] && _systems[i].hasInput)
                     count++;
             }
 
@@ -738,7 +752,7 @@ namespace PurrNet.Prediction
             for (var i = 0; i < _systemsCount; i++)
             {
                 var system = _systems[i];
-                if (!system.hasInput || !_serializeFlags[i])
+                if (!system.hasInput || !_inputSerializeFlags[i])
                     continue;
 
                 scratch.ResetPositionAndMode(false);
@@ -1071,7 +1085,7 @@ namespace PurrNet.Prediction
 
                 bool filtered = RequiresFilteredStateEntries(player, interestControls);
                 if (fullFrame || filtered)
-                    FillSerializeFlags(player);
+                    FillSerializeFlags(player, interestControls, baselineTick, fullFrame);
 
                 if (fullFrame)
                 {
@@ -1092,7 +1106,7 @@ namespace PurrNet.Prediction
                         false);
 
                     if (interest != null && interest.HasCulledRoots(player))
-                        WriteFilteredFirstInputEntries(frame, inputScratch);
+                        WriteFilteredFirstInputEntries(player, frame, inputScratch);
                     else
                     {
                         Packer<PackedInt>.Write(frame, packedInputSystemCount);
@@ -1141,7 +1155,7 @@ namespace PurrNet.Prediction
         {
             if (interest == null)
                 return false;
-            return interest.HasCulledRoots(player) ||
+            return interest.HasSerializationAffectingRoots(player) ||
                    interestControls != null && interestControls.hasUnackedReentries;
         }
 
@@ -1207,7 +1221,7 @@ namespace PurrNet.Prediction
 
             for (var i = 0; i < _systemsCount; i++)
             {
-                if (!_serializeFlags[i])
+                if (!_stateSerializeFlags[i])
                     continue;
 
                 requiresHierarchyBarrier |= identityEstablishment.Prepare(_systems[i].id, ackedTick, localTick);
@@ -1222,7 +1236,7 @@ namespace PurrNet.Prediction
 
             for (var i = 0; i < _systemsCount; i++)
             {
-                if (_serializeFlags[i] && _systems[i].isEventHandler == eventHandlers)
+                if (_stateSerializeFlags[i] && _systems[i].isEventHandler == eventHandlers)
                     count++;
             }
 
@@ -1242,7 +1256,7 @@ namespace PurrNet.Prediction
             for (var i = 0; i < _systemsCount; i++)
             {
                 var system = _systems[i];
-                if (system.isEventHandler != eventHandlers || !_serializeFlags[i])
+                if (system.isEventHandler != eventHandlers || !_stateSerializeFlags[i])
                     continue;
 
                 var root = system.rootObjectId;
@@ -1272,7 +1286,7 @@ namespace PurrNet.Prediction
             for (var i = 0; i < _systemsCount; i++)
             {
                 var system = _systems[i];
-                if (system.isEventHandler != eventHandlers || !_serializeFlags[i])
+                if (system.isEventHandler != eventHandlers || !_stateSerializeFlags[i])
                     continue;
 
                 var root = system.rootObjectId;
@@ -1611,6 +1625,8 @@ namespace PurrNet.Prediction
             Packer<PackedUInt>.Write(frame, (PackedUInt)(uint)(localTick - from));
 
             bool filtered = interest != null && interest.HasCulledRoots(receiver);
+            if (filtered)
+                FillInputSerializeFlags(receiver);
 
             for (ulong t = from + 1; t <= localTick; t++)
             {
@@ -1629,7 +1645,7 @@ namespace PurrNet.Prediction
 
             for (var i = 0; i < entries.Count; i++)
             {
-                if (_serializeFlags[entries[i].systemIndex])
+                if (_inputSerializeFlags[entries[i].systemIndex])
                     entryCount++;
             }
 
@@ -1638,7 +1654,7 @@ namespace PurrNet.Prediction
             for (var i = 0; i < entries.Count; i++)
             {
                 var entry = entries[i];
-                if (_serializeFlags[entry.systemIndex])
+                if (_inputSerializeFlags[entry.systemIndex])
                     frame.WriteBitsWithoutConsumingIt(block, entry.bitOrigin, entry.bitCount);
             }
         }
@@ -1700,10 +1716,17 @@ namespace PurrNet.Prediction
             for (var j = 0; j < fCount; j++)
             {
                 var clientFrame = _clientFrames[j];
+                ulong baselineTick = 0;
+                if (_clientTicks.TryGetValue(clientFrame.player, out var ackQueue))
+                    baselineTick = ackQueue.ackedServerTick;
 
                 if (clientFrame.fullFrame)
                 {
-                    FillSerializeFlags(clientFrame.player);
+                    FillSerializeFlags(
+                        clientFrame.player,
+                        clientFrame.interestControls,
+                        baselineTick,
+                        true);
                     WriteFirstStateEntries(
                         clientFrame.packer,
                         stateScratch,
@@ -1714,16 +1737,16 @@ namespace PurrNet.Prediction
                     continue;
                 }
 
-                ulong baselineTick = 0;
-                if (_clientTicks.TryGetValue(clientFrame.player, out var ackQueue))
-                    baselineTick = ackQueue.ackedServerTick;
-
                 bool filtered = RequiresFilteredStateEntries(clientFrame.player, clientFrame.interestControls);
                 Packer<bool>.Write(clientFrame.packer, filtered);
 
                 if (filtered)
                 {
-                    FillSerializeFlags(clientFrame.player);
+                    FillSerializeFlags(
+                        clientFrame.player,
+                        clientFrame.interestControls,
+                        baselineTick,
+                        false);
                     WriteCurrentStateEntries(
                         clientFrame.player,
                         clientFrame.packer,
@@ -2087,13 +2110,26 @@ namespace PurrNet.Prediction
 
         private void SyncAllLocalInterestSideEffects()
         {
-            if (cachedIsServer || interest == null)
+            if (isServer || interest == null)
                 return;
+
+            var ownedRoots = GetLocallyOwnedRoots();
 
             for (var i = 0; i < _systemsCount; i++)
             {
                 var system = _systems[i];
-                system.UpdateLocalRelevance(IsLocallyRelevant(system));
+                SyncLocalInterestSideEffects(system, ownedRoots.Contains(system.rootObjectId));
+            }
+        }
+
+        private void ClearAllLocalInterestSideEffects()
+        {
+            for (var i = 0; i < _systemsCount; i++)
+            {
+                var system = _systems[i];
+                system.UpdateLocalRelevance(true);
+                system.SetInterestPolicyOverride(null);
+                system.SetInterestSendIntervalTicks(1);
             }
         }
 
@@ -2871,7 +2907,72 @@ namespace PurrNet.Prediction
             return interest == null || interest.IsLocallyRelevant(system.rootObjectId);
         }
 
-        private bool ShouldSerializeIdentity(PlayerID player, PredictedIdentity system)
+        private readonly HashSet<PredictedObjectID> _ownedRootsCache = new ();
+        private bool _ownedRootsCacheValid;
+        private PlayerID? _ownedRootsCachePlayer;
+
+        private HashSet<PredictedObjectID> GetLocallyOwnedRoots()
+        {
+            var player = isSpawned ? localPlayer : null;
+            if (_ownedRootsCacheValid && Nullable.Equals(_ownedRootsCachePlayer, player))
+                return _ownedRootsCache;
+
+            _ownedRootsCache.Clear();
+            _ownedRootsCachePlayer = player;
+            _ownedRootsCacheValid = true;
+
+            if (player.HasValue)
+            {
+                for (var i = 0; i < _systemsCount; i++)
+                {
+                    var system = _systems[i];
+                    if (system.owner == player)
+                        _ownedRootsCache.Add(system.rootObjectId);
+                }
+            }
+
+            return _ownedRootsCache;
+        }
+
+        private void InvalidateLocallyOwnedRoots()
+        {
+            _ownedRootsCacheValid = false;
+        }
+
+        internal void SyncLocalInterestSideEffects(PredictedIdentity system)
+        {
+            if (!system)
+                return;
+
+            SyncLocalInterestSideEffects(system, IsRootLocallyOwned(system.rootObjectId));
+        }
+
+        private void SyncLocalInterestSideEffects(PredictedIdentity system, bool rootOwned)
+        {
+            var root = system.rootObjectId;
+            bool exempt = isServer || root.instanceId.value == 1 || rootOwned;
+            bool relevant = exempt || interest == null || interest.IsLocallyRelevant(root);
+            system.UpdateLocalRelevance(relevant);
+            PredictionPolicy? policyOverride = null;
+            if (!exempt && interest != null)
+                policyOverride = interest.GetLocalSuggestedPolicy(root);
+            system.SetInterestPolicyOverride(policyOverride);
+            system.SetInterestSendIntervalTicks(exempt || interest == null
+                ? 1
+                : interest.GetLocalSendIntervalTicks(root));
+        }
+
+        private bool IsRootLocallyOwned(PredictedObjectID root)
+        {
+            return GetLocallyOwnedRoots().Contains(root);
+        }
+
+        private bool ShouldSerializeIdentity(
+            PlayerID player,
+            PredictedIdentity system,
+            InterestControlState interestControls,
+            ulong baselineTick,
+            bool forceAllRelevant)
         {
             if (interest == null || system.owner == player)
                 return true;
@@ -2880,18 +2981,44 @@ namespace PurrNet.Prediction
             if (root.instanceId.value == 1)
                 return true;
 
-            return interest.IsRelevant(player, root);
+            bool force = forceAllRelevant ||
+                         interestControls != null && interestControls.RequiresAbsolute(root, baselineTick);
+            return interest.ShouldSerializeState(player, root, localTick, force);
         }
 
-        private bool[] _serializeFlags = Array.Empty<bool>();
+        private bool[] _stateSerializeFlags = Array.Empty<bool>();
+        private bool[] _inputSerializeFlags = Array.Empty<bool>();
 
-        private void FillSerializeFlags(PlayerID receiver)
+        private void FillSerializeFlags(
+            PlayerID receiver,
+            InterestControlState interestControls,
+            ulong baselineTick,
+            bool forceAllRelevant)
         {
-            if (_serializeFlags.Length < _systemsCount)
-                _serializeFlags = new bool[Mathf.NextPowerOfTwo(_systemsCount)];
+            if (_stateSerializeFlags.Length < _systemsCount)
+                _stateSerializeFlags = new bool[Mathf.NextPowerOfTwo(_systemsCount)];
 
             for (var i = 0; i < _systemsCount; i++)
-                _serializeFlags[i] = ShouldSerializeIdentity(receiver, _systems[i]);
+                _stateSerializeFlags[i] = ShouldSerializeIdentity(
+                    receiver,
+                    _systems[i],
+                    interestControls,
+                    baselineTick,
+                    forceAllRelevant);
+        }
+
+        private void FillInputSerializeFlags(PlayerID receiver)
+        {
+            if (_inputSerializeFlags.Length < _systemsCount)
+                _inputSerializeFlags = new bool[Mathf.NextPowerOfTwo(_systemsCount)];
+
+            for (var i = 0; i < _systemsCount; i++)
+            {
+                var system = _systems[i];
+                _inputSerializeFlags[i] = interest == null || system.owner == receiver ||
+                                          system.rootObjectId.instanceId.value == 1 ||
+                                          interest.IsRelevant(receiver, system.rootObjectId);
+            }
         }
 
         internal void QueueInterestTierChange(PlayerID player, PredictedObjectID root, byte tier)
@@ -2921,12 +3048,22 @@ namespace PurrNet.Prediction
 
         internal void HandleLocalInterestChanged(PredictedObjectID root)
         {
+            bool rootOwned = IsRootLocallyOwned(root);
             for (var i = 0; i < _systemsCount; i++)
             {
                 var system = _systems[i];
                 if (system.rootObjectId.Equals(root))
-                    system.UpdateLocalRelevance(IsLocallyRelevant(system));
+                    SyncLocalInterestSideEffects(system, rootOwned);
             }
+        }
+
+        internal void HandleLocalOwnershipChanged(PredictedIdentity system)
+        {
+            if (!system)
+                return;
+
+            InvalidateLocallyOwnedRoots();
+            HandleLocalInterestChanged(system.rootObjectId);
         }
 
         internal void InternalDelete(PackedInt prefabId, GameObject instance)

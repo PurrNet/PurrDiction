@@ -155,6 +155,8 @@ namespace PurrNet.Prediction
         protected virtual void LateUpdateView(float delta) { }
         internal void UpdateInterpolationInternal(float delta, bool accumulateError) => UpdateInterpolation(delta, accumulateError);
 
+        internal virtual void SetInterestInterpolationWindowInternal(int sendIntervalTicks, bool sparse) { }
+
         /// <summary>
         /// Updates the interpolation state used for smooth visual rollback.
         /// </summary>
