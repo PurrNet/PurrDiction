@@ -50,18 +50,27 @@ namespace PurrNet.Prediction
 
         internal void RunUpdateView(float deltaTime)
         {
+            if (IsLocallyDormant())
+                return;
+
             UpdateView(deltaTime);
             UpdateModuleView(deltaTime);
         }
 
         internal void RunLateUpdateView(float deltaTime)
         {
+            if (IsLocallyDormant())
+                return;
+
             LateUpdateView(deltaTime);
             LateUpdateModuleView(deltaTime);
         }
 
-        internal void RunRollback(ulong tick)
+        internal void RunRollback(ulong tick, bool allowDormant = false)
         {
+            if (!allowDormant && IsLocallyDormant())
+                return;
+
             RollbackDynamicModules(tick);
             RollbackModules(tick);
             Rollback(tick);
@@ -77,6 +86,9 @@ namespace PurrNet.Prediction
 
         internal void RunSaveStateUnchecked(ulong tick)
         {
+            if (IsLocallyDormant())
+                return;
+
             PredictionHistoryTelemetry.RecordSave(isEventHandler);
             SaveModulesState(tick);
             SaveStateInHistory(tick);
@@ -85,6 +97,9 @@ namespace PurrNet.Prediction
 
         internal void RunUpdateRollbackInterpolation(float delta, bool accumulateError)
         {
+            if (IsLocallyDormant())
+                return;
+
             bool shouldAccumulateError = accumulateError && AccumulatesRollbackInterpolationError();
             UpdateModulesInterpolation(delta, shouldAccumulateError);
             UpdateRollbackInterpolationState(delta, shouldAccumulateError);
@@ -117,6 +132,20 @@ namespace PurrNet.Prediction
             WriteFirstDynamicModuleSnapshot(tick, packer);
             WriteFirstStateModules(tick, packer);
             WriteFirstState(tick, packer);
+        }
+
+        internal void RunWriteAbsoluteState(ulong tick, BitPacker packer)
+        {
+            WriteFirstDynamicModuleSnapshot(tick, packer);
+            WriteFirstStateModules(tick, packer);
+            WriteAbsoluteState(tick, packer);
+        }
+
+        internal void RunReadAbsoluteState(ulong tick, BitPacker packer, ulong serverTick)
+        {
+            ReadFirstDynamicModuleSnapshot(tick, packer, serverTick);
+            ReadFirstStateModules(tick, packer, serverTick);
+            ReadAbsoluteState(tick, packer, serverTick);
         }
 
         internal void RunReadFirstState(ulong tick, BitPacker packer, ulong serverTick)

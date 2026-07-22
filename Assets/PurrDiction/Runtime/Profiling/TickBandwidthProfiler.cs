@@ -9,11 +9,13 @@ namespace PurrNet.Prediction.Profiler
         static readonly List<PackingInfo> _readStates = new List<PackingInfo>(256);
         static readonly List<PackingInfo> _wroteInputs = new List<PackingInfo>(256);
         static readonly List<PackingInfo> _readInputs = new List<PackingInfo>(256);
+        static readonly List<FramePackingInfo> _wroteFrames = new List<FramePackingInfo>(16);
 
         public static IReadOnlyList<PackingInfo> wroteStates => _wroteStates;
         public static IReadOnlyList<PackingInfo> readStates => _readStates;
         public static IReadOnlyList<PackingInfo> wroteInputs => _wroteInputs;
         public static IReadOnlyList<PackingInfo> readInputs => _readInputs;
+        public static IReadOnlyList<FramePackingInfo> wroteFrames => _wroteFrames;
 
         public static event Action onTickEnded;
 
@@ -37,6 +39,11 @@ namespace PurrNet.Prediction.Profiler
             _readInputs.Add(new PackingInfo { parent = parent, bitCount = bitCount, reference = reference });
         }
 
+        public static void OnWroteFrame(PlayerID player, int bitCount)
+        {
+            _wroteFrames.Add(new FramePackingInfo(player, bitCount));
+        }
+
         public static void MarkEndOfTick()
         {
             onTickEnded?.Invoke();
@@ -45,6 +52,7 @@ namespace PurrNet.Prediction.Profiler
             _readStates.Clear();
             _wroteInputs.Clear();
             _readInputs.Clear();
+            _wroteFrames.Clear();
         }
     }
 }

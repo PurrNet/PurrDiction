@@ -4,6 +4,7 @@ using System.Text;
 using Cysharp.Threading.Tasks;
 using PurrNet;
 using PurrNet.Prediction;
+using PurrNet.Prediction.Profiler;
 using UnityEngine;
 
 public class ServerLoadBenchmarkScenario : Scenario
@@ -119,6 +120,7 @@ public class ServerLoadBenchmarkScenario : Scenario
         await UniTask.WaitForSeconds(_settleSeconds, cancellationToken: ctx.cancellationToken);
 
         var sampler = ScenarioPerformanceSampler.StartDefault();
+        using var bandwidth = new BandwidthSampler();
         var startTick = pm.localTick;
         double lagSum = 0;
         ulong lagMax = 0;
@@ -141,7 +143,7 @@ public class ServerLoadBenchmarkScenario : Scenario
 
             var elapsedTicks = pm.localTick - startTick;
             var perf = sampler.Stop(pm);
-            return ScenarioResult.Ok(BuildReport(perf, elapsedTicks, lagSum, lagMax, lagSamples));
+            return ScenarioResult.Ok(BuildReport(perf, bandwidth, elapsedTicks, lagSum, lagMax, lagSamples));
         }
         finally
         {
@@ -151,6 +153,7 @@ public class ServerLoadBenchmarkScenario : Scenario
 
     private string BuildReport(
         ScenarioPerformanceDetails perf,
+        BandwidthSampler bandwidth,
         ulong elapsedTicks,
         double lagSum,
         ulong lagMax,
@@ -164,6 +167,12 @@ public class ServerLoadBenchmarkScenario : Scenario
         sb.Append(" ticks=").Append(elapsedTicks);
         sb.Append(" ackLagAvg=").Append((lagSamples > 0 ? lagSum / lagSamples : 0).ToString("0.##", CultureInfo.InvariantCulture));
         sb.Append(" ackLagMax=").Append(lagMax);
+        sb.Append(" bandwidthTicks=").Append(bandwidth.tickCount);
+        sb.Append(" bandwidthClients=").Append(bandwidth.clientCount);
+        sb.Append(" bandwidthFrames=").Append(bandwidth.frameCount);
+        sb.Append(" bandwidthBytes=").Append(bandwidth.byteCount);
+        sb.Append(" bytesPerClientTick=").Append(
+            bandwidth.bytesPerClientTick.ToString("0.##", CultureInfo.InvariantCulture));
 
         if (perf.markers != null)
         {
@@ -187,5 +196,46 @@ public class ServerLoadBenchmarkScenario : Scenario
         }
 
         return sb.ToString();
+    }
+
+    private sealed class BandwidthSampler : IDisposable
+    {
+        private readonly System.Collections.Generic.HashSet<PlayerID> _players = new();
+        private long _bitCount;
+
+        public int tickCount { get; private set; }
+        public int frameCount { get; private set; }
+        public int clientCount => _players.Count;
+        public long byteCount => _bitCount / 8;
+        public double bytesPerClientTick => tickCount > 0 && clientCount > 0
+            ? _bitCount / 8.0 / tickCount / clientCount
+            : 0;
+
+        public BandwidthSampler()
+        {
+            TickBandwidthProfiler.onTickEnded += OnTickEnded;
+        }
+
+        public void Dispose()
+        {
+            TickBandwidthProfiler.onTickEnded -= OnTickEnded;
+        }
+
+        private void OnTickEnded()
+        {
+            var frames = TickBandwidthProfiler.wroteFrames;
+            if (frames.Count == 0)
+                return;
+
+            tickCount++;
+
+            for (var i = 0; i < frames.Count; i++)
+            {
+                var frame = frames[i];
+                _players.Add(frame.player);
+                _bitCount += frame.bitCount;
+                frameCount++;
+            }
+        }
     }
 }

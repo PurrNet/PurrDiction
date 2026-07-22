@@ -8,11 +8,21 @@ namespace PurrNet.Prediction
         private PredictionManager _manager;
         private Rigidbody[] _rigidbodies;
         private UnityRigidbodyState[] _state;
+        private bool[] _relevance;
+        private PredictedIdentity[] _identities;
 
         private void Awake()
         {
             _rigidbodies = GetComponentsInChildren<Rigidbody>();
             _state = new UnityRigidbodyState[_rigidbodies.Length];
+            _relevance = new bool[_rigidbodies.Length];
+            _identities = new PredictedIdentity[_rigidbodies.Length];
+
+            for (var i = 0; i < _rigidbodies.Length; i++)
+            {
+                if (!_rigidbodies[i].TryGetComponent(out _identities[i]))
+                    _identities[i] = _rigidbodies[i].GetComponentInParent<PredictedIdentity>();
+            }
         }
 
         private void Start()
@@ -48,6 +58,7 @@ namespace PurrNet.Prediction
         {
             for (int i = 0; i < _rigidbodies.Length; i++)
             {
+                _relevance[i] = IsLocallyRelevant(i);
                 _state[i] = new UnityRigidbodyState(_rigidbodies[i]);
                 _rigidbodies[i].isKinematic = true;
             }
@@ -59,6 +70,8 @@ namespace PurrNet.Prediction
             {
                 var state = _state[i];
                 var rb = _rigidbodies[i];
+                if (_relevance[i] != IsLocallyRelevant(i))
+                    continue;
                 rb.isKinematic = state.isKinematic;
                 if (state.isKinematic)
                     continue;
@@ -73,6 +86,12 @@ namespace PurrNet.Prediction
                     rb.Sleep();
                 else rb.WakeUp();
             }
+        }
+
+        private bool IsLocallyRelevant(int index)
+        {
+            var identity = _identities[index];
+            return !identity || _manager.IsLocallyRelevant(identity);
         }
 #endif
     }

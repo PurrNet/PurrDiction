@@ -36,9 +36,18 @@ namespace PurrNet.Prediction
 #if UNITY_PHYSICS_3D
         private Rigidbody _unityRigidbody;
         private CharacterController _unityCtrler;
+        private bool _rawRigidbodyDormant;
+        private bool _rawRigidbodyKinematic;
+        private CollisionDetectionMode _rawRigidbodyCollisionMode;
+        private Vector3 _rawRigidbodyLinearVelocity;
+        private Vector3 _rawRigidbodyAngularVelocity;
 #endif
 #if UNITY_PHYSICS_2D
         private Rigidbody2D _unity2dRigidbody;
+        private bool _rawRigidbody2dDormant;
+        private RigidbodyType2D _rawRigidbody2dBodyType;
+        private Vector2 _rawRigidbody2dLinearVelocity;
+        private float _rawRigidbody2dAngularVelocity;
 #endif
 
         private bool _hasController;
@@ -56,6 +65,7 @@ namespace PurrNet.Prediction
         public override void ResetState()
         {
             base.ResetState();
+            RestoreRawPhysicsDormancy();
             ClearSoftCorrection();
 
             _viewParent = null;
@@ -393,6 +403,133 @@ namespace PurrNet.Prediction
             ClearSoftCorrection();
         }
 
+        internal override void SyncLocalRelevanceSideEffects(bool relevant)
+        {
+            if (!relevant)
+                ApplyRawPhysicsDormancy();
+            else
+                RestoreRawPhysicsDormancy();
+        }
+
+        private void ApplyRawPhysicsDormancy()
+        {
+            if (isServer)
+                return;
+
+#if UNITY_PHYSICS_3D
+            if (_hasRigidbody && !_rawRigidbodyDormant &&
+                !_unityRigidbody.TryGetComponent<PredictedRigidbody>(out _))
+            {
+                _rawRigidbodyKinematic = _unityRigidbody.isKinematic;
+                _rawRigidbodyCollisionMode = _unityRigidbody.collisionDetectionMode;
+                _rawRigidbodyLinearVelocity = GetRawLinearVelocity(_unityRigidbody);
+                _rawRigidbodyAngularVelocity = _unityRigidbody.angularVelocity;
+
+                if (!_rawRigidbodyKinematic)
+                {
+                    SetRawLinearVelocity(_unityRigidbody, default);
+                    _unityRigidbody.angularVelocity = default;
+                }
+
+                if (_unityRigidbody.collisionDetectionMode is CollisionDetectionMode.Continuous or
+                    CollisionDetectionMode.ContinuousDynamic)
+                    _unityRigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
+                _unityRigidbody.isKinematic = true;
+                _rawRigidbodyDormant = true;
+            }
+#endif
+#if UNITY_PHYSICS_2D
+            if (_hasRigidbody2d && !_rawRigidbody2dDormant &&
+                !_unity2dRigidbody.TryGetComponent<PredictedRigidbody2D>(out _))
+            {
+                _rawRigidbody2dBodyType = _unity2dRigidbody.bodyType;
+                _rawRigidbody2dLinearVelocity = GetRawLinearVelocity(_unity2dRigidbody);
+                _rawRigidbody2dAngularVelocity = _unity2dRigidbody.angularVelocity;
+                _unity2dRigidbody.bodyType = RigidbodyType2D.Kinematic;
+                SetRawLinearVelocity(_unity2dRigidbody, default);
+                _unity2dRigidbody.angularVelocity = 0f;
+                _rawRigidbody2dDormant = true;
+            }
+#endif
+        }
+
+        private void RestoreRawPhysicsDormancy()
+        {
+#if UNITY_PHYSICS_3D
+            if (_rawRigidbodyDormant)
+            {
+                if (_unityRigidbody)
+                {
+                    _unityRigidbody.isKinematic = _rawRigidbodyKinematic;
+                    _unityRigidbody.collisionDetectionMode = _rawRigidbodyCollisionMode;
+                    if (!_rawRigidbodyKinematic)
+                    {
+                        SetRawLinearVelocity(_unityRigidbody, _rawRigidbodyLinearVelocity);
+                        _unityRigidbody.angularVelocity = _rawRigidbodyAngularVelocity;
+                    }
+                }
+
+                _rawRigidbodyDormant = false;
+            }
+#endif
+#if UNITY_PHYSICS_2D
+            if (_rawRigidbody2dDormant)
+            {
+                if (_unity2dRigidbody)
+                {
+                    _unity2dRigidbody.bodyType = _rawRigidbody2dBodyType;
+                    if (_rawRigidbody2dBodyType != RigidbodyType2D.Static)
+                    {
+                        SetRawLinearVelocity(_unity2dRigidbody, _rawRigidbody2dLinearVelocity);
+                        _unity2dRigidbody.angularVelocity = _rawRigidbody2dAngularVelocity;
+                    }
+                }
+
+                _rawRigidbody2dDormant = false;
+            }
+#endif
+        }
+
+#if UNITY_PHYSICS_2D
+        private static Vector2 GetRawLinearVelocity(Rigidbody2D body)
+        {
+#if UNITY_6000
+            return body.linearVelocity;
+#else
+            return body.velocity;
+#endif
+        }
+
+        private static void SetRawLinearVelocity(Rigidbody2D body, Vector2 velocity)
+        {
+#if UNITY_6000
+            body.linearVelocity = velocity;
+#else
+            body.velocity = velocity;
+#endif
+        }
+#endif
+
+#if UNITY_PHYSICS_3D
+        private static Vector3 GetRawLinearVelocity(Rigidbody body)
+        {
+#if UNITY_6000
+            return body.linearVelocity;
+#else
+            return body.velocity;
+#endif
+        }
+
+        private static void SetRawLinearVelocity(Rigidbody body, Vector3 velocity)
+        {
+#if UNITY_6000
+            body.linearVelocity = velocity;
+#else
+            body.velocity = velocity;
+#endif
+        }
+#endif
+
         private void ClearSoftCorrection()
         {
             _softPositionError = default;
@@ -510,6 +647,7 @@ namespace PurrNet.Prediction
 
         protected override void OnDestroy()
         {
+            RestoreRawPhysicsDormancy();
             base.OnDestroy();
             if (_hasView && _unparentGraphics && _graphics)
                 Destroy(_graphics.gameObject);
@@ -656,7 +794,7 @@ namespace PurrNet.Prediction
         {
             if (predictionManager != null)
             {
-                UpdateView(deltaTime);
+                RunUpdateView(deltaTime);
 
                 if (_viewWorldPass == predictionManager.viewPassId)
                 {

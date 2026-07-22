@@ -36,6 +36,7 @@ namespace PurrNet.Prediction
 
         private RigidbodyType2D _defaultBodyType;
         private PredictionPolicy _appliedKinematicPolicy = PredictionPolicy.FullPrediction;
+        private bool _appliedLocallyDormant;
         private bool _replayFrozen;
         private RigidbodyType2D _frozenBodyType;
         private bool _constraintsFrozen;
@@ -113,17 +114,20 @@ namespace PurrNet.Prediction
                 return;
 
             var effective = EffectivePolicy();
-            if (effective == _appliedKinematicPolicy)
+            bool dormant = IsLocallyDormant();
+            if (effective == _appliedKinematicPolicy && dormant == _appliedLocallyDormant)
                 return;
             var previous = _appliedKinematicPolicy;
+            bool wasDormant = _appliedLocallyDormant;
             _appliedKinematicPolicy = effective;
+            _appliedLocallyDormant = dormant;
 
             if (_replayFrozen)
                 return;
 
-            if (effective == PredictionPolicy.ServerRelay)
+            if (dormant || effective == PredictionPolicy.ServerRelay)
                 ForceRelayKinematic();
-            else if (previous == PredictionPolicy.ServerRelay)
+            else if (wasDormant || previous == PredictionPolicy.ServerRelay)
                 RestoreAuthoritativePhysicsState();
         }
 
@@ -131,6 +135,11 @@ namespace PurrNet.Prediction
         {
             if (TracksEffectivePolicyChanges())
                 ApplyEffectiveKinematic();
+        }
+
+        internal override void SyncLocalRelevanceSideEffects(bool relevant)
+        {
+            ApplyEffectiveKinematic();
         }
 
         private void ForceRelayKinematic()
@@ -229,7 +238,7 @@ namespace PurrNet.Prediction
                 _constraintsFrozen = false;
             }
 
-            if (!isServer && UsesServerRelayTimeline())
+            if (!isServer && (IsLocallyDormant() || UsesServerRelayTimeline()))
             {
                 ForceRelayKinematic();
                 return;
@@ -318,6 +327,7 @@ namespace PurrNet.Prediction
             base.ResetState();
             ClearSoftVelocityCorrection();
             _replayFrozen = false;
+            _appliedLocallyDormant = false;
             if (_rigidbody)
             {
                 if (_constraintsFrozen)

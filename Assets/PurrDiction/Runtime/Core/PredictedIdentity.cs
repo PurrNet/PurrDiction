@@ -56,12 +56,23 @@ namespace PurrNet.Prediction
         {
             get
             {
+                if (_hasCachedRootObjectId)
+                    return _cachedRootObjectId;
+
                 var manager = predictionManager;
                 if (manager && manager.hierarchy && manager.hierarchy.TryGetRootId(id.objectId, out var rootId))
+                {
+                    _cachedRootObjectId = rootId;
+                    _hasCachedRootObjectId = true;
                     return rootId;
+                }
+
                 return id.objectId;
             }
         }
+
+        private PredictedObjectID _cachedRootObjectId;
+        private bool _hasCachedRootObjectId;
 
         internal bool isFreshSpawn = true;
         internal bool preservesStateOnSetup { get; private set; }
@@ -397,6 +408,9 @@ namespace PurrNet.Prediction
             if (manager.cachedIsServer)
                 return false;
 
+            if (IsLocallyDormant())
+                return true;
+
             if (UsesFullPredictionTimeline())
                 return false;
 
@@ -411,6 +425,22 @@ namespace PurrNet.Prediction
         internal virtual void OnReplayEnd() { }
 
         internal virtual void SyncEffectivePolicySideEffects() { }
+
+        internal virtual void SyncLocalRelevanceSideEffects(bool relevant) { }
+
+        internal void UpdateLocalRelevance(bool relevant)
+        {
+            _locallyDormant = !relevant;
+            SyncLocalRelevanceSideEffects(relevant);
+        }
+
+        private bool _locallyDormant;
+
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        internal bool IsLocallyDormant()
+        {
+            return _locallyDormant;
+        }
 
         [UsedByIL]
         public bool IsSimulating()
@@ -430,6 +460,8 @@ namespace PurrNet.Prediction
             preservesStateOnSetup = false;
             _simulateSoftCorrectionDuringReplay = false;
             _skipReplaySpawnInitialization = false;
+            _locallyDormant = false;
+            _hasCachedRootObjectId = false;
             owner = null;
             id = default;
             ResetModulesForPool();
@@ -562,6 +594,7 @@ namespace PurrNet.Prediction
         {
             isServer = manager.isServer;
             this.id = id;
+            _hasCachedRootObjectId = false;
             _destroyedFired = false;
             predictionManager = world;
             sceneId = world.sceneId;
@@ -628,6 +661,8 @@ namespace PurrNet.Prediction
         }
 
         public bool isOwner => IsOwner();
+
+        public bool isRelevant => !IsLocallyDormant();
 
         public bool isController
         {
@@ -709,6 +744,16 @@ namespace PurrNet.Prediction
         internal abstract void GetLatestUnityState();
 
         internal abstract void WriteFirstState(ulong tick, BitPacker packer);
+
+        internal virtual void WriteAbsoluteState(ulong tick, BitPacker packer)
+        {
+            WriteFirstState(tick, packer);
+        }
+
+        internal virtual void ReadAbsoluteState(ulong tick, BitPacker packer, ulong serverTick)
+        {
+            ReadFirstState(tick, packer, serverTick);
+        }
 
         internal abstract bool WriteCurrentState(PlayerID receiver, BitPacker packer, ulong baselineTick);
 

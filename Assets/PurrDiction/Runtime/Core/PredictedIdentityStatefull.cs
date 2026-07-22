@@ -317,6 +317,29 @@ namespace PurrNet.Prediction
             WriteOwnedStateIfChanged(tick, ref newState);
         }
 
+        internal override void WriteAbsoluteState(ulong tick, BitPacker packer)
+        {
+            RefreshVerifiedFromLive(tick);
+
+            int pos = packer.positionInBits;
+            FULL_STATE<STATE> baseline = default;
+            DeltaPacker<PredictedIdentityState>.Write(packer, baseline.prediction, fullPredictedState.prediction);
+            WriteDeltaState(packer, in baseline.state, in fullPredictedState.state);
+            TickBandwidthProfiler.OnWroteState(myType, packer.positionInBits - pos, this);
+        }
+
+        internal override void ReadAbsoluteState(ulong tick, BitPacker packer, ulong serverTick)
+        {
+            int pos = packer.positionInBits;
+            FULL_STATE<STATE> baseline = default;
+            FULL_STATE<STATE> newState = default;
+            DeltaPacker<PredictedIdentityState>.Read(packer, baseline.prediction, ref newState.prediction);
+            ReadDeltaState(packer, in baseline.state, ref newState.state);
+            StoreVerified(serverTick, ref newState);
+            WriteOwnedStateIfChanged(tick, ref newState);
+            TickBandwidthProfiler.OnReadState(myType, packer.positionInBits - pos, this);
+        }
+
         internal override bool WriteCurrentState(PlayerID target, BitPacker packer, ulong baselineTick)
         {
             RefreshVerifiedFromLive(predictionManager.localTick);

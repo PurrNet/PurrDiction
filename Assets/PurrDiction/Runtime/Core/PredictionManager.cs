@@ -51,6 +51,7 @@ namespace PurrNet.Prediction
             BuiltInSystems.Players |
             BuiltInSystems.Random;
         [SerializeField] private PredictedPrefabs _predictedPrefabs;
+        [SerializeField] private PredictionLODProfile _predictionLODProfile;
         [SerializeField] private InputQueueSettings _inputQueueSettings = new()
         {
             extrapolateForMissing = true
@@ -70,6 +71,19 @@ namespace PurrNet.Prediction
         }
 
         public bool validateDeterministicData => _validateDeterministicData;
+
+        public PredictionLODProfile predictionLODProfile
+        {
+            get => _predictionLODProfile;
+            set
+            {
+                _predictionLODProfile = value;
+                if (isSpawned)
+                    InitializeInterest();
+            }
+        }
+
+        public PredictionInterestModule interest { get; private set; }
 
         static readonly ProfilerMarker SimulateMarker = new("PredictionManager.Simulate");
         static readonly ProfilerMarker SimulateInputsMarker = new("PredictionManager.PrepareSimulationInputs");
@@ -311,6 +325,7 @@ namespace PurrNet.Prediction
             _tickManager = networkManager.tickModule;
             _tickManager.onPreTick += OnPreTick;
             _tickManager.onPostTick += OnPostTick;
+            InitializeInterest();
         }
 
         protected override void OnDespawned()
@@ -322,12 +337,18 @@ namespace PurrNet.Prediction
                 _tickManager = null;
             }
 
+            interest?.Dispose();
+            interest = null;
+
             CleanupAllSystems();
         }
 
         protected override void OnDestroy()
         {
             base.OnDestroy();
+
+            interest?.Dispose();
+            interest = null;
 
             foreach (var packer in _clientFrames)
                 packer.Dispose();
@@ -343,6 +364,34 @@ namespace PurrNet.Prediction
             {
                 _pools.Dispose();
                 _pools = null;
+            }
+        }
+
+        private void InitializeInterest()
+        {
+            interest?.Dispose();
+            interest = null;
+
+            if (!_predictionLODProfile)
+                return;
+
+            NetworkLODFactory factory = null;
+            NetworkLODModule lodModule = null;
+
+            if (isServer && networkManager.TryGetModule<NetworkLODFactory>(true, out factory))
+                factory.TryGetModule(sceneId, out lodModule);
+
+            interest = new PredictionInterestModule(
+                this,
+                _predictionLODProfile,
+                factory,
+                lodModule,
+                isServer);
+
+            if (isServer)
+            {
+                for (var i = 0; i < _clientFrames.Count; i++)
+                    interest.InitializePlayer(_clientFrames[i].player);
             }
         }
 
@@ -370,6 +419,8 @@ namespace PurrNet.Prediction
                 queue.Clear();
             _clientTicks.Clear();
             _clientFrames.Clear();
+            _pendingStateRepairs.Clear();
+            _stateRepairScratch.Clear();
             localTick = 1;
             localTickInContext = 1;
             _verifiedServerTick = 0;
@@ -491,6 +542,7 @@ namespace PurrNet.Prediction
 
             var pid = new PredictedComponentID(objectId, componentId);
             _instanceMap[pid] = system;
+            _pendingStateRepairs.Remove(pid);
             system.SetSoftCorrectionReplaySimulation(false);
             system.SetSkipReplaySpawnInitialization(false);
             system.SetPreserveStateOnSetup(preserveState);
@@ -522,6 +574,9 @@ namespace PurrNet.Prediction
             ++_systemsCount;
             InvalidateInputBlockCache();
 
+            if (!cachedIsServer)
+                system.UpdateLocalRelevance(IsLocallyRelevant(system));
+
             if (isReplaying && system.UsesSoftCorrectionTimeline() && !preserveState)
             {
                 system.OnReplayEnd();
@@ -536,7 +591,17 @@ namespace PurrNet.Prediction
         public void UnregisterInstance(PredictedIdentity predictedIdentity)
         {
             RemoveSpeculativeRelayLock(predictedIdentity);
-            _instanceMap.Remove(predictedIdentity.id);
+            var id = predictedIdentity.id;
+            if (_instanceMap.TryGetValue(id, out var registeredIdentity) &&
+                ReferenceEquals(registeredIdentity, predictedIdentity))
+            {
+                _instanceMap.Remove(id);
+                _pendingStateRepairs.Remove(id);
+
+                for (var i = 0; i < _clientFrames.Count; i++)
+                    _clientFrames[i].identityEstablishment?.Remove(id);
+            }
+
             if (_systems.Remove(predictedIdentity))
             {
                 --_systemsCount;
@@ -549,6 +614,7 @@ namespace PurrNet.Prediction
         {
             _clientTicks.Remove(player);
             _pendingFullSync.Remove(player);
+            interest?.RemovePlayer(player);
 
             var frames = _clientFrames.Count;
             for (var i = 0; i < frames; i++)
@@ -597,7 +663,14 @@ namespace PurrNet.Prediction
                         continue;
 
                     clientFrame.fullFrame = true;
+                    clientFrame.identityEstablishment ??= new IdentityEstablishmentState();
+                    clientFrame.identityEstablishment.Clear();
+                    clientFrame.sendBaselines ??= new RootSendBaselineState();
+                    clientFrame.sendBaselines.Clear();
+                    clientFrame.interestControls ??= new InterestControlState();
+                    clientFrame.interestControls.Clear();
                     _clientFrames[i] = clientFrame;
+                    interest?.InitializePlayer(player);
                     found = true;
                     break;
                 }
@@ -609,8 +682,13 @@ namespace PurrNet.Prediction
                 {
                     player = player,
                     packer = BitPackerPool.Get(),
-                    fullFrame = true
+                    fullFrame = true,
+                    identityEstablishment = new IdentityEstablishmentState(),
+                    sendBaselines = new RootSendBaselineState(),
+                    interestControls = new InterestControlState()
                 });
+
+                interest?.InitializePlayer(player);
             }
 
             _pendingFullSync.Clear();
@@ -619,43 +697,78 @@ namespace PurrNet.Prediction
         private void ReadFullFrame(BitPacker frame, ulong stateTick, ulong inputTick, ulong serverTick)
         {
             frame.ResetPositionAndMode(true);
+            _pendingStateRepairs.Clear();
+            _stateRepairScratch.Clear();
 
             tickRate = Packer<PackedInt>.Read(frame);
             tickDelta = Packer<float>.Read(frame);
             _sessionSeed = Packer<uint>.Read(frame);
 
-            int count = Packer<PackedInt>.Read(frame);
+            ReadFirstStateEntries(frame, stateTick, serverTick, false);
 
-            for (var i = 0; i < count; ++i)
+            int inputCount = Packer<PackedInt>.Read(frame);
+            if (inputCount >= 0)
             {
-                var system = _systems[i];
-                if (system.isEventHandler)
-                    continue;
-                system.RunClearFuture(stateTick);
-                system.RunReadFirstState(stateTick, frame, serverTick);
-                system.RunRollback(stateTick);
-                system.RunResetInterpolation();
-                system.lastVerifiedTick = stateTick;
+                for (var i = 0; i < inputCount; ++i)
+                    _systems[i].ReadFirstInput(inputTick, frame);
+            }
+            else
+            {
+                ReadFilteredFirstInputEntries(frame, inputTick, -inputCount - 1);
             }
 
-            for (var i = 0; i < count; ++i)
-                _systems[i].ReadFirstInput(inputTick, frame);
+            ReadFirstStateEntries(frame, stateTick, serverTick, true);
 
-            for (var i = 0; i < count; ++i)
-            {
-                var system = _systems[i];
-                if (!system.isEventHandler)
-                    continue;
-                system.RunClearFuture(stateTick);
-                system.RunReadFirstState(stateTick, frame, serverTick);
-                system.RunRollback(stateTick);
-                system.lastVerifiedTick = stateTick;
-            }
-
+            SyncAllLocalInterestSideEffects();
             SyncTransforms();
         }
 
+        private void WriteFilteredFirstInputEntries(BitPacker frame, BitPacker scratch)
+        {
+            int count = 0;
+
+            for (var i = 0; i < _systemsCount; i++)
+            {
+                if (_serializeFlags[i] && _systems[i].hasInput)
+                    count++;
+            }
+
+            Packer<PackedInt>.Write(frame, -(count + 1));
+
+            for (var i = 0; i < _systemsCount; i++)
+            {
+                var system = _systems[i];
+                if (!system.hasInput || !_serializeFlags[i])
+                    continue;
+
+                scratch.ResetPositionAndMode(false);
+                system.WriteFirstInput(localTick, scratch);
+                Packer<PredictedComponentID>.Write(frame, system.id);
+                Packer<PackedUInt>.Write(frame, (PackedUInt)(uint)scratch.positionInBits);
+                frame.WriteBitsWithoutConsumingIt(scratch, scratch.positionInBits);
+            }
+        }
+
+        private void ReadFilteredFirstInputEntries(BitPacker frame, ulong inputTick, int count)
+        {
+            for (var i = 0; i < count; i++)
+            {
+                PredictedComponentID id = default;
+                Packer<PredictedComponentID>.Read(frame, ref id);
+                PackedUInt payloadBits = default;
+                Packer<PackedUInt>.Read(frame, ref payloadBits);
+                int payloadEnd = frame.positionInBits + (int)payloadBits.value;
+
+                if (_instanceMap.TryGetValue(id, out var system) && CanApplyLocalInput(system, inputTick))
+                    system.ReadFirstInput(inputTick, frame);
+
+                CompleteStateEntry(frame, payloadEnd);
+            }
+        }
+
         readonly List<PlayerPacker> _clientFrames = new (16);
+        readonly Dictionary<PredictedComponentID, ulong> _pendingStateRepairs = new ();
+        readonly List<PredictedComponentID> _stateRepairScratch = new ();
 
         public bool cachedIsServer { get; private set; }
 
@@ -663,6 +776,16 @@ namespace PurrNet.Prediction
         {
             cachedIsServer = isServer;
             localTickInContext = localTick;
+
+            if (cachedIsServer)
+                interest?.RefreshServerTargets(_systems, _systemsCount);
+
+            if (!cachedIsServer)
+            {
+                PruneStateEntryRepairs();
+                if (interest != null && localTick % (ulong)Math.Max(1, tickRate) == 0)
+                    interest.PruneStaleLocalTiers();
+            }
 
             if (!cachedIsServer && _pauseAdvanceTicks > 0)
             {
@@ -690,7 +813,8 @@ namespace PurrNet.Prediction
                 bool controller = system.IsOwner(myPlayer, cachedIsServer);
                 if (controller)
                     ownedIdentities.Add(system);
-                system.PrepareInput(cachedIsServer, controller, localTick, _inputQueueSettings.extrapolateForMissing);
+                if (cachedIsServer || IsLocallyRelevant(system))
+                    system.PrepareInput(cachedIsServer, controller, localTick, _inputQueueSettings.extrapolateForMissing);
             }
 
             if (!cachedIsServer)
@@ -907,10 +1031,12 @@ namespace PurrNet.Prediction
         {
             var fCount = _clientFrames.Count;
 
-            PackedInt packedSysCount = _systemsCount;
+            PackedInt packedInputSystemCount = _systemsCount;
             PackedInt packedTickRate = tickRate;
 
             ulong maxAckLag = 0;
+            using var stateScratch = BitPackerPool.Get();
+            using var inputScratch = BitPackerPool.Get();
 
             for (var j = 0; j < fCount; j++)
             {
@@ -936,40 +1062,73 @@ namespace PurrNet.Prediction
                 }
 
                 var fullFrame = clientFrame.fullFrame;
+                var identityEstablishment = clientFrame.identityEstablishment;
+                var sendBaselines = clientFrame.sendBaselines;
+                var interestControls = clientFrame.interestControls;
+                interestControls?.PrepareForFrame(localTick);
+                if (localTick > (ulong)(tickRate * 10) && localTick % (ulong)Math.Max(1, tickRate) == 0)
+                    sendBaselines.PruneBefore(localTick - (ulong)(tickRate * 10));
+
+                bool filtered = RequiresFilteredStateEntries(player, interestControls);
+                if (fullFrame || filtered)
+                    FillSerializeFlags(player);
 
                 if (fullFrame)
                 {
                     using var _ = WriteFullFrameMarker.Auto();
 
+                    identityEstablishment.Reset();
+                    sendBaselines.Clear();
+
                     Packer<PackedInt>.Write(frame, packedTickRate);
                     Packer<float>.Write(frame, tickDelta);
                     Packer<uint>.Write(frame, _sessionSeed);
-                    Packer<PackedInt>.Write(frame, packedSysCount);
+                    WriteFirstStateEntries(
+                        frame,
+                        stateScratch,
+                        identityEstablishment,
+                        sendBaselines,
+                        interestControls,
+                        false);
 
-                    for (var i = 0; i < _systemsCount; i++)
+                    if (interest != null && interest.HasCulledRoots(player))
+                        WriteFilteredFirstInputEntries(frame, inputScratch);
+                    else
                     {
-                        var sys = _systems[i];
-                        if (!sys.isEventHandler)
-                            sys.RunWriteFirstState(localTick, frame);
+                        Packer<PackedInt>.Write(frame, packedInputSystemCount);
+                        for (var i = 0; i < _systemsCount; i++)
+                            _systems[i].WriteFirstInput(localTick, frame);
                     }
-
-                    for (var i = 0; i < _systemsCount; i++)
-                        _systems[i].WriteFirstInput(localTick, frame);
                 }
                 else
                 {
-                    Packer<PackedInt>.Write(frame, packedSysCount);
+                    bool forceHierarchyAbsolute = filtered && PrepareIdentityEstablishment(
+                        identityEstablishment,
+                        baselineTick);
 
                     using (WriteInputHistoryMarker.Auto())
-                        WriteInputHistory(frame, baselineTick);
+                        WriteInputHistory(player, frame, baselineTick);
 
                     using (WriteStateDeltasMarker.Auto())
                     {
-                        for (var i = 0; i < _systemsCount; i++)
+                        Packer<bool>.Write(frame, filtered);
+
+                        if (filtered)
                         {
-                            var sys = _systems[i];
-                            if (!sys.isEventHandler)
-                                sys.RunWriteCurrentState(player, frame, baselineTick);
+                            WriteCurrentStateEntries(
+                                player,
+                                frame,
+                                stateScratch,
+                                identityEstablishment,
+                                sendBaselines,
+                                interestControls,
+                                baselineTick,
+                                forceHierarchyAbsolute,
+                                false);
+                        }
+                        else
+                        {
+                            WritePositionalStateEntries(player, frame, sendBaselines, baselineTick, false);
                         }
                     }
                 }
@@ -978,17 +1137,383 @@ namespace PurrNet.Prediction
             lastMaxAckLagTicks = maxAckLag;
         }
 
+        private bool RequiresFilteredStateEntries(PlayerID player, InterestControlState interestControls)
+        {
+            if (interest == null)
+                return false;
+            return interest.HasCulledRoots(player) ||
+                   interestControls != null && interestControls.hasUnackedReentries;
+        }
+
+        private void WritePositionalStateEntries(
+            PlayerID receiver,
+            BitPacker frame,
+            RootSendBaselineState sendBaselines,
+            ulong ackedTick,
+            bool eventHandlers)
+        {
+            PackedInt count = _systemsCount;
+            Packer<PackedInt>.Write(frame, count);
+
+            for (var i = 0; i < _systemsCount; i++)
+            {
+                var system = _systems[i];
+                if (system.isEventHandler != eventHandlers)
+                    continue;
+
+                var root = system.rootObjectId;
+                system.RunWriteCurrentState(receiver, frame, sendBaselines.GetBaseline(root, ackedTick));
+                sendBaselines.MarkSent(root, localTick);
+            }
+        }
+
+        private void ReadPositionalStateEntries(
+            BitPacker frame,
+            ulong stateTick,
+            ulong baselineTick,
+            ulong serverTick,
+            bool eventHandlers)
+        {
+            PackedInt packedCount = default;
+            Packer<PackedInt>.Read(frame, ref packedCount);
+            int count = packedCount;
+
+            for (var i = 0; i < count; i++)
+            {
+                if (i >= _systemsCount)
+                    break;
+
+                var system = _systems[i];
+                if (system.isEventHandler != eventHandlers)
+                    continue;
+
+                if (!eventHandlers && _validateDeterministicData && system.isDeterministic)
+                    system.RunRollback(stateTick);
+                bool softCorrected = system.UsesSoftCorrectionTimeline();
+                if (!softCorrected)
+                    system.RunClearFuture(stateTick);
+                system.RunReadState(stateTick, frame, baselineTick, serverTick);
+                if (!softCorrected)
+                    system.RunRollback(stateTick);
+                system.lastVerifiedTick = stateTick;
+            }
+        }
+
+        private bool PrepareIdentityEstablishment(
+            IdentityEstablishmentState identityEstablishment,
+            ulong ackedTick)
+        {
+            bool requiresHierarchyBarrier = false;
+
+            for (var i = 0; i < _systemsCount; i++)
+            {
+                if (!_serializeFlags[i])
+                    continue;
+
+                requiresHierarchyBarrier |= identityEstablishment.Prepare(_systems[i].id, ackedTick, localTick);
+            }
+
+            return requiresHierarchyBarrier;
+        }
+
+        private uint CountStateEntries(bool eventHandlers)
+        {
+            uint count = 0;
+
+            for (var i = 0; i < _systemsCount; i++)
+            {
+                if (_serializeFlags[i] && _systems[i].isEventHandler == eventHandlers)
+                    count++;
+            }
+
+            return count;
+        }
+
+        private void WriteFirstStateEntries(
+            BitPacker frame,
+            BitPacker scratch,
+            IdentityEstablishmentState identityEstablishment,
+            RootSendBaselineState sendBaselines,
+            InterestControlState interestControls,
+            bool eventHandlers)
+        {
+            Packer<PackedUInt>.Write(frame, (PackedUInt)CountStateEntries(eventHandlers));
+
+            for (var i = 0; i < _systemsCount; i++)
+            {
+                var system = _systems[i];
+                if (system.isEventHandler != eventHandlers || !_serializeFlags[i])
+                    continue;
+
+                var root = system.rootObjectId;
+                scratch.ResetPositionAndMode(false);
+                if (interestControls != null && interestControls.ConsumeBaselineReset(root))
+                    sendBaselines.Reset(root);
+                system.RunWriteFirstState(localTick, scratch);
+                WriteStateEntry(frame, scratch, system.id, true);
+                identityEstablishment.MarkSent(system.id, localTick);
+                sendBaselines.MarkSent(root, localTick);
+            }
+        }
+
+        private void WriteCurrentStateEntries(
+            PlayerID receiver,
+            BitPacker frame,
+            BitPacker scratch,
+            IdentityEstablishmentState identityEstablishment,
+            RootSendBaselineState sendBaselines,
+            InterestControlState interestControls,
+            ulong baselineTick,
+            bool forceHierarchyAbsolute,
+            bool eventHandlers)
+        {
+            Packer<PackedUInt>.Write(frame, (PackedUInt)CountStateEntries(eventHandlers));
+
+            for (var i = 0; i < _systemsCount; i++)
+            {
+                var system = _systems[i];
+                if (system.isEventHandler != eventHandlers || !_serializeFlags[i])
+                    continue;
+
+                var root = system.rootObjectId;
+                scratch.ResetPositionAndMode(false);
+                bool reentering = interestControls != null &&
+                                   interestControls.RequiresAbsolute(root, baselineTick);
+                bool absolute = identityEstablishment.RequiresAbsolute(system.id) ||
+                                forceHierarchyAbsolute && system == hierarchy ||
+                                reentering;
+
+                if (absolute)
+                {
+                    if (reentering && interestControls.ConsumeBaselineReset(root))
+                        sendBaselines.Reset(root);
+                    system.RunWriteAbsoluteState(localTick, scratch);
+                }
+                else
+                {
+                    ulong identityBaseline = sendBaselines.GetBaseline(root, baselineTick);
+                    system.RunWriteCurrentState(receiver, scratch, identityBaseline);
+                }
+
+                WriteStateEntry(frame, scratch, system.id, absolute);
+                sendBaselines.MarkSent(root, localTick);
+            }
+        }
+
+        private static void WriteStateEntry(
+            BitPacker frame,
+            BitPacker payload,
+            PredictedComponentID id,
+            bool absolute)
+        {
+            Packer<PredictedComponentID>.Write(frame, id);
+            Packer<bool>.Write(frame, absolute);
+            Packer<PackedUInt>.Write(frame, (PackedUInt)(uint)payload.positionInBits);
+            frame.WriteBitsWithoutConsumingIt(payload, payload.positionInBits);
+        }
+
+        private void ReadFirstStateEntries(
+            BitPacker frame,
+            ulong stateTick,
+            ulong serverTick,
+            bool eventHandlers)
+        {
+            PackedUInt entryCount = default;
+            Packer<PackedUInt>.Read(frame, ref entryCount);
+
+            for (uint i = 0; i < entryCount.value; i++)
+            {
+                if (!TryReadStateEntry(
+                        frame,
+                        eventHandlers,
+                        out var system,
+                        out _,
+                        out var payloadEnd))
+                    continue;
+
+                if (interest != null && !interest.CanApplyLocalAbsolute(system.rootObjectId, serverTick))
+                {
+                    CompleteStateEntry(frame, payloadEnd);
+                    continue;
+                }
+
+                ReadAbsoluteStateEntry(system, frame, stateTick, serverTick, eventHandlers, true);
+                CompleteStateEntry(frame, payloadEnd);
+            }
+        }
+
+        private void ReadCurrentStateEntries(
+            BitPacker frame,
+            ulong stateTick,
+            ulong baselineTick,
+            ulong serverTick,
+            bool eventHandlers)
+        {
+            PackedUInt entryCount = default;
+            Packer<PackedUInt>.Read(frame, ref entryCount);
+
+            for (uint i = 0; i < entryCount.value; i++)
+            {
+                if (!TryReadStateEntry(
+                        frame,
+                        eventHandlers,
+                        out var system,
+                        out var absolute,
+                        out var payloadEnd))
+                    continue;
+
+                if (absolute)
+                {
+                    if (interest != null && !interest.CanApplyLocalAbsolute(system.rootObjectId, serverTick))
+                    {
+                        CompleteStateEntry(frame, payloadEnd);
+                        continue;
+                    }
+
+                    ReadAbsoluteStateEntry(system, frame, stateTick, serverTick, eventHandlers, false);
+                    CompleteStateEntry(frame, payloadEnd);
+                    continue;
+                }
+
+                if (system.IsLocallyDormant())
+                {
+                    CompleteStateEntry(frame, payloadEnd);
+                    continue;
+                }
+
+                if (!eventHandlers && _validateDeterministicData && system.isDeterministic)
+                    system.RunRollback(stateTick);
+                bool softCorrected = system.UsesSoftCorrectionTimeline();
+                if (!softCorrected)
+                    system.RunClearFuture(stateTick);
+                system.RunReadState(stateTick, frame, baselineTick, serverTick);
+                if (!softCorrected)
+                    system.RunRollback(stateTick);
+                system.lastVerifiedTick = stateTick;
+                CompleteStateEntry(frame, payloadEnd);
+            }
+        }
+
+        private void ReadAbsoluteStateEntry(
+            PredictedIdentity system,
+            BitPacker frame,
+            ulong stateTick,
+            ulong serverTick,
+            bool eventHandlers,
+            bool firstState)
+        {
+            system.RunClearFuture(stateTick);
+            if (firstState)
+                system.RunReadFirstState(stateTick, frame, serverTick);
+            else
+                system.RunReadAbsoluteState(stateTick, frame, serverTick);
+            system.RunRollback(stateTick, true);
+            if (!eventHandlers)
+                system.RunResetInterpolation();
+            system.lastVerifiedTick = stateTick;
+            interest?.ConfirmLocalAbsolute(system.rootObjectId, serverTick);
+        }
+
+        private bool TryReadStateEntry(
+            BitPacker frame,
+            bool eventHandlers,
+            out PredictedIdentity system,
+            out bool absolute,
+            out int payloadEnd)
+        {
+            PredictedComponentID id = default;
+            Packer<PredictedComponentID>.Read(frame, ref id);
+            absolute = Packer<bool>.Read(frame);
+            PackedUInt payloadBits = default;
+            Packer<PackedUInt>.Read(frame, ref payloadBits);
+            payloadEnd = frame.positionInBits + (int)payloadBits.value;
+
+            if (_instanceMap.TryGetValue(id, out system))
+            {
+                _pendingStateRepairs.Remove(id);
+
+                if (system.isEventHandler == eventHandlers)
+                    return true;
+
+                frame.SkipBits((int)payloadBits.value);
+                system = null;
+                return false;
+            }
+
+            if (absolute)
+                _pendingStateRepairs.Remove(id);
+            else
+                TryRequestStateEntryRepair(id);
+
+            frame.SkipBits((int)payloadBits.value);
+            system = null;
+            return false;
+        }
+
+        private void TryRequestStateEntryRepair(PredictedComponentID id)
+        {
+            ulong retryTicks = (ulong)Math.Max(1, tickRate);
+
+            if (_pendingStateRepairs.TryGetValue(id, out var requestTick) &&
+                localTick >= requestTick && localTick - requestTick < retryTicks)
+                return;
+
+            _pendingStateRepairs[id] = localTick;
+            RequestStateEntryRepair(id);
+        }
+
+        private void PruneStateEntryRepairs()
+        {
+            if (_pendingStateRepairs.Count == 0)
+                return;
+
+            ulong interval = (ulong)Math.Max(1, tickRate);
+            if (localTick % interval != 0)
+                return;
+
+            ulong lifetime = interval * 10;
+            _stateRepairScratch.Clear();
+
+            foreach (var repair in _pendingStateRepairs)
+            {
+                if (localTick < repair.Value || localTick - repair.Value >= lifetime)
+                    _stateRepairScratch.Add(repair.Key);
+            }
+
+            for (var i = 0; i < _stateRepairScratch.Count; i++)
+                _pendingStateRepairs.Remove(_stateRepairScratch[i]);
+
+            _stateRepairScratch.Clear();
+        }
+
+        private static void CompleteStateEntry(BitPacker frame, int payloadEnd)
+        {
+            int remainingBits = payloadEnd - frame.positionInBits;
+            if (remainingBits < 0)
+                throw new InvalidOperationException("State entry payload exceeded its declared bit length.");
+            if (remainingBits > 0)
+                frame.SkipBits(remainingBits);
+        }
+
         /// <summary>
         /// Largest gap, in ticks, between the current server tick and any connected client's
         /// last acked frame at the time the previous server frame was written. Diagnostic only.
         /// </summary>
         public ulong lastMaxAckLagTicks { get; private set; }
 
+        private struct InputBlockEntry
+        {
+            public int systemIndex;
+            public int bitOrigin;
+            public int bitCount;
+        }
+
         private struct CachedInputBlock
         {
             public ulong tick;
             public uint version;
             public BitPacker packer;
+            public List<InputBlockEntry> entries;
         }
 
         private CachedInputBlock[] _inputBlockCache;
@@ -1013,7 +1538,7 @@ namespace PurrNet.Prediction
             _inputBlockCache = null;
         }
 
-        private BitPacker GetInputBlockForTick(ulong tick)
+        private BitPacker GetInputBlockForTick(ulong tick, out List<InputBlockEntry> entries)
         {
             _inputBlockCache ??= new CachedInputBlock[(int)MaxInputWindow + 1];
 
@@ -1021,14 +1546,20 @@ namespace PurrNet.Prediction
             ref var slot = ref _inputBlockCache[index];
 
             if (slot.packer != null && slot.tick == tick && slot.version == _inputBlockVersion)
+            {
+                entries = slot.entries;
                 return slot.packer;
+            }
 
             slot.packer ??= BitPackerPool.Get();
+            slot.entries ??= new List<InputBlockEntry>(16);
             slot.tick = tick;
             slot.version = _inputBlockVersion;
 
             var block = slot.packer;
             block.ResetPositionAndMode(false);
+            entries = slot.entries;
+            entries.Clear();
 
             uint entryCount = 0;
             for (var i = 0; i < _systemsCount; i++)
@@ -1051,18 +1582,25 @@ namespace PurrNet.Prediction
                 if (!sys.hasInput || !sys.HasInputAt(tick))
                     continue;
 
+                int entryOrigin = block.positionInBits;
                 Packer<PredictedComponentID>.Write(block, sys.id);
                 entryScratch.ResetPositionAndMode(false);
                 sys.WriteFirstInput(tick, entryScratch);
                 int bits = entryScratch.positionInBits;
                 Packer<PackedUInt>.Write(block, (PackedUInt)(uint)bits);
                 block.WriteBitsWithoutConsumingIt(entryScratch, bits);
+                entries.Add(new InputBlockEntry
+                {
+                    systemIndex = i,
+                    bitOrigin = entryOrigin,
+                    bitCount = block.positionInBits - entryOrigin
+                });
             }
 
             return block;
         }
 
-        private void WriteInputHistory(BitPacker frame, ulong baselineTick)
+        private void WriteInputHistory(PlayerID receiver, BitPacker frame, ulong baselineTick)
         {
             ulong from = baselineTick;
             if (localTick > MaxInputWindow && from < localTick - MaxInputWindow)
@@ -1072,10 +1610,36 @@ namespace PurrNet.Prediction
 
             Packer<PackedUInt>.Write(frame, (PackedUInt)(uint)(localTick - from));
 
+            bool filtered = interest != null && interest.HasCulledRoots(receiver);
+
             for (ulong t = from + 1; t <= localTick; t++)
             {
-                var block = GetInputBlockForTick(t);
-                frame.WriteBitsWithoutConsumingIt(block, block.positionInBits);
+                var block = GetInputBlockForTick(t, out var entries);
+
+                if (filtered)
+                    WriteFilteredInputBlock(frame, block, entries);
+                else
+                    frame.WriteBitsWithoutConsumingIt(block, block.positionInBits);
+            }
+        }
+
+        private void WriteFilteredInputBlock(BitPacker frame, BitPacker block, List<InputBlockEntry> entries)
+        {
+            uint entryCount = 0;
+
+            for (var i = 0; i < entries.Count; i++)
+            {
+                if (_serializeFlags[entries[i].systemIndex])
+                    entryCount++;
+            }
+
+            Packer<PackedUInt>.Write(frame, (PackedUInt)entryCount);
+
+            for (var i = 0; i < entries.Count; i++)
+            {
+                var entry = entries[i];
+                if (_serializeFlags[entry.systemIndex])
+                    frame.WriteBitsWithoutConsumingIt(block, entry.bitOrigin, entry.bitCount);
             }
         }
 
@@ -1100,12 +1664,19 @@ namespace PurrNet.Prediction
                     PackedUInt bits = default;
                     Packer<PackedUInt>.Read(frame, ref bits);
 
-                    if (_instanceMap.TryGetValue(pid, out var system))
+                    if (_instanceMap.TryGetValue(pid, out var system) && CanApplyLocalInput(system, t))
                         system.ReadFirstInput(t, frame);
                     else
                         frame.SkipBits((int)bits.value);
                 }
             }
+        }
+
+        private bool CanApplyLocalInput(PredictedIdentity system, ulong inputTick)
+        {
+            if (IsLocallyRelevant(system))
+                return true;
+            return interest != null && interest.CanApplyLocalInput(system.rootObjectId, inputTick);
         }
 
         private void RollbackAllToVerified(ulong tick)
@@ -1124,27 +1695,54 @@ namespace PurrNet.Prediction
             using var _ = WriteEventHandlesMarker.Auto();
 
             var fCount = _clientFrames.Count;
+            using var stateScratch = BitPackerPool.Get();
 
-            for (var i = 0; i < _systemsCount; i++)
+            for (var j = 0; j < fCount; j++)
             {
-                if (!_systems[i].isEventHandler)
-                    continue;
+                var clientFrame = _clientFrames[j];
 
-                var system = _systems[i];
-
-                for (var j = 0; j < fCount; j++)
+                if (clientFrame.fullFrame)
                 {
-                    var frame = _clientFrames[j];
-                    var packer = frame.packer;
-                    if (frame.fullFrame)
-                        system.RunWriteFirstState(localTick, packer);
-                    else
-                    {
-                        ulong baselineTick = 0;
-                        if (_clientTicks.TryGetValue(frame.player, out var ackQueue))
-                            baselineTick = ackQueue.ackedServerTick;
-                        system.RunWriteCurrentState(frame.player, packer, baselineTick);
-                    }
+                    FillSerializeFlags(clientFrame.player);
+                    WriteFirstStateEntries(
+                        clientFrame.packer,
+                        stateScratch,
+                        clientFrame.identityEstablishment,
+                        clientFrame.sendBaselines,
+                        clientFrame.interestControls,
+                        true);
+                    continue;
+                }
+
+                ulong baselineTick = 0;
+                if (_clientTicks.TryGetValue(clientFrame.player, out var ackQueue))
+                    baselineTick = ackQueue.ackedServerTick;
+
+                bool filtered = RequiresFilteredStateEntries(clientFrame.player, clientFrame.interestControls);
+                Packer<bool>.Write(clientFrame.packer, filtered);
+
+                if (filtered)
+                {
+                    FillSerializeFlags(clientFrame.player);
+                    WriteCurrentStateEntries(
+                        clientFrame.player,
+                        clientFrame.packer,
+                        stateScratch,
+                        clientFrame.identityEstablishment,
+                        clientFrame.sendBaselines,
+                        clientFrame.interestControls,
+                        baselineTick,
+                        false,
+                        true);
+                }
+                else
+                {
+                    WritePositionalStateEntries(
+                        clientFrame.player,
+                        clientFrame.packer,
+                        clientFrame.sendBaselines,
+                        baselineTick,
+                        true);
                 }
             }
         }
@@ -1154,6 +1752,7 @@ namespace PurrNet.Prediction
             using var _ = SendFrameMarker.Auto();
 
             var fCount = _clientFrames.Count;
+            using var controlPacker = BitPackerPool.Get();
 
             for (var j = 0; j < fCount; j++)
             {
@@ -1162,6 +1761,11 @@ namespace PurrNet.Prediction
                 var packer = clientFrame.packer;
                 var deltaLen = packer.ToByteData().length;
                 var fullFrame = clientFrame.fullFrame;
+                var interestControls = clientFrame.interestControls;
+                bool hasInterestControls = interestControls != null && interestControls.count > 0;
+                bool hasUnackedReentries = interestControls != null && interestControls.hasUnackedReentries;
+
+                TickBandwidthProfiler.OnWroteFrame(player, deltaLen * 8);
 
                 ulong inputAck = 0;
                 ulong baselineTick = 0;
@@ -1186,7 +1790,24 @@ namespace PurrNet.Prediction
                     }
                 }
 
-                if (fullFrame)
+                if (hasInterestControls)
+                {
+                    controlPacker.ResetPositionAndMode(false);
+                    WriteInterestControls(controlPacker, interestControls);
+                    int controlLength = controlPacker.ToByteData().length;
+                    SendFrameToRemoteWithInterest(
+                        player,
+                        localTick,
+                        baselineTick,
+                        inputAck,
+                        fullFrame,
+                        hasInputMargin,
+                        inputMargin,
+                        new BitPackerWithLength(controlLength, controlPacker),
+                        new BitPackerWithLength(deltaLen, packer));
+                    interestControls.MarkDelivered();
+                }
+                else if (fullFrame || hasUnackedReentries)
                     SendFrameToRemoteReliable(player, localTick, baselineTick, inputAck, fullFrame, hasInputMargin, inputMargin, new BitPackerWithLength(deltaLen, packer));
                 else SendFrameToRemote(player, localTick, baselineTick, inputAck, fullFrame, hasInputMargin, inputMargin, new BitPackerWithLength(deltaLen, packer));
                 if (fullFrame)
@@ -1194,6 +1815,18 @@ namespace PurrNet.Prediction
                     clientFrame.fullFrame = false;
                     _clientFrames[j] = clientFrame;
                 }
+            }
+        }
+
+        private static void WriteInterestControls(BitPacker packer, InterestControlState controls)
+        {
+            Packer<PackedUInt>.Write(packer, (PackedUInt)(uint)controls.count);
+
+            for (var i = 0; i < controls.count; i++)
+            {
+                var change = controls[i];
+                Packer<PredictedObjectID>.Write(packer, change.root);
+                Packer<byte>.Write(packer, change.tier);
             }
         }
 
@@ -1359,6 +1992,33 @@ namespace PurrNet.Prediction
             HandleFrameFromServer(serverTick, baselineTick, inputAck, fullFrame, hasInputMargin, inputMargin, delta);
         }
 
+        [TargetRpc(compressionLevel: CompressionLevel.Best)]
+        private void SendFrameToRemoteWithInterest([UsedImplicitly] PlayerID player, ulong serverTick,
+            ulong baselineTick, ulong inputAck, bool fullFrame, bool hasInputMargin, PackedInt inputMargin,
+            BitPackerWithLength controls, BitPackerWithLength delta)
+        {
+            HandleInterestControls(serverTick, controls);
+            HandleFrameFromServer(serverTick, baselineTick, inputAck, fullFrame, hasInputMargin, inputMargin, delta);
+        }
+
+        private void HandleInterestControls(ulong serverTick, BitPackerWithLength controls)
+        {
+            controls.packer.SkipBytes(controls.originalLength);
+            controls.packer.ResetPositionAndMode(true);
+            PackedUInt count = default;
+            Packer<PackedUInt>.Read(controls.packer, ref count);
+
+            for (uint i = 0; i < count.value; i++)
+            {
+                PredictedObjectID root = default;
+                Packer<PredictedObjectID>.Read(controls.packer, ref root);
+                byte tier = Packer<byte>.Read(controls.packer);
+                interest?.ReceiveLocalTier(root, tier, serverTick);
+            }
+
+            controls.packer.Dispose();
+        }
+
         private void HandleFrameFromServer(ulong serverTick, ulong baselineTick, ulong inputAck, bool fullFrame, bool hasInputMargin, PackedInt inputMargin, BitPackerWithLength delta)
         {
             delta.packer.SkipBytes(delta.originalLength);
@@ -1399,10 +2059,6 @@ namespace PurrNet.Prediction
         {
             frame.ResetPositionAndMode(true);
 
-            PackedInt _count = default;
-            Packer<PackedInt>.Read(frame, ref _count);
-            int count = _count;
-
             ReadInputHistory(frame, serverTick);
 
             if (_verifiedServerTick > 0 && serverTick > _verifiedServerTick + 1)
@@ -1415,37 +2071,30 @@ namespace PurrNet.Prediction
                 SaveEnteringState(serverTick);
             }
 
-            for (var i = 0; i < count; ++i)
-            {
-                var system = _systems[i];
-                if (system.isEventHandler)
-                    continue;
-                if (_validateDeterministicData && system.isDeterministic)
-                    system.RunRollback(stateTick);
-                bool softCorrected = system.UsesSoftCorrectionTimeline();
-                if (!softCorrected)
-                    system.RunClearFuture(stateTick);
-                system.RunReadState(stateTick, frame, baselineTick, serverTick);
-                if (!softCorrected)
-                    system.RunRollback(stateTick);
-                system.lastVerifiedTick = stateTick;
-            }
+            if (Packer<bool>.Read(frame))
+                ReadCurrentStateEntries(frame, stateTick, baselineTick, serverTick, false);
+            else
+                ReadPositionalStateEntries(frame, stateTick, baselineTick, serverTick, false);
 
-            for (var i = 0; i < count; ++i)
-            {
-                var system = _systems[i];
-                if (!system.isEventHandler)
-                    continue;
-                bool softCorrected = system.UsesSoftCorrectionTimeline();
-                if (!softCorrected)
-                    system.RunClearFuture(stateTick);
-                system.RunReadState(stateTick, frame, baselineTick, serverTick);
-                if (!softCorrected)
-                    system.RunRollback(stateTick);
-                system.lastVerifiedTick = stateTick;
-            }
+            if (Packer<bool>.Read(frame))
+                ReadCurrentStateEntries(frame, stateTick, baselineTick, serverTick, true);
+            else
+                ReadPositionalStateEntries(frame, stateTick, baselineTick, serverTick, true);
 
+            SyncAllLocalInterestSideEffects();
             SyncTransforms();
+        }
+
+        private void SyncAllLocalInterestSideEffects()
+        {
+            if (cachedIsServer || interest == null)
+                return;
+
+            for (var i = 0; i < _systemsCount; i++)
+            {
+                var system = _systems[i];
+                system.UpdateLocalRelevance(IsLocallyRelevant(system));
+            }
         }
 
         private void SyncTransforms()
@@ -1582,7 +2231,7 @@ namespace PurrNet.Prediction
                         {
                             for (var i = 0; i < _systemsCount; i++)
                             {
-                                if (_systems[i].isDeterministic)
+                                if (_systems[i].isDeterministic && IsLocallyRelevant(_systems[i]))
                                     _systems[i].ValidateDeterministicState(frame.serverTick);
                             }
                         }
@@ -1661,7 +2310,9 @@ namespace PurrNet.Prediction
             for (var i = 0; i < _systemsCount; i++)
             {
                 var system = _systems[i];
-                if (!system.UsesServerRelayTimeline() || !system.SkipsCurrentSimulationPhase())
+                if (system.IsLocallyDormant() ||
+                    !system.UsesServerRelayTimeline() ||
+                    !system.SkipsCurrentSimulationPhase())
                     continue;
                 if (HasSpeculativeRelayLock(system))
                     continue;
@@ -1933,6 +2584,34 @@ namespace PurrNet.Prediction
 
         readonly Dictionary<PlayerID, InputQueue> _clientTicks = new ();
 
+        [ServerRpc(requireOwnership: false)]
+        private void RequestStateEntryRepair(PredictedComponentID id, RPCInfo info = default)
+        {
+            if (!_instanceMap.TryGetValue(id, out var requestedIdentity))
+                return;
+
+            for (var i = 0; i < _clientFrames.Count; i++)
+            {
+                var clientFrame = _clientFrames[i];
+                if (clientFrame.player != info.sender)
+                    continue;
+
+                var identityEstablishment = clientFrame.identityEstablishment;
+                if (!identityEstablishment.Invalidate(id))
+                    return;
+
+                var rootObjectId = requestedIdentity.rootObjectId;
+                for (var systemIndex = 0; systemIndex < _systemsCount; systemIndex++)
+                {
+                    var system = _systems[systemIndex];
+                    if (!system.id.Equals(id) && system.rootObjectId.Equals(rootObjectId))
+                        identityEstablishment.Invalidate(system.id);
+                }
+
+                return;
+            }
+        }
+
         [ServerRpc(requireOwnership: false, channel: Channel.Unreliable, mtuExceeded: MTUBehaviour.Fragment)]
         private void SendInputToServerFragmented(ulong firstTick, uint tickCount, ulong frameAck, BitPacker payload, RPCInfo info = default)
         {
@@ -2180,6 +2859,73 @@ namespace PurrNet.Prediction
                     go.SetActive(true);
                 fromPool = false;
                 return go;
+            }
+        }
+
+        internal bool IsLocallyRelevant(PredictedIdentity system)
+        {
+            if (cachedIsServer || !system || system.rootObjectId.instanceId.value == 1)
+                return true;
+            if (isSpawned && system.owner == localPlayer)
+                return true;
+            return interest == null || interest.IsLocallyRelevant(system.rootObjectId);
+        }
+
+        private bool ShouldSerializeIdentity(PlayerID player, PredictedIdentity system)
+        {
+            if (interest == null || system.owner == player)
+                return true;
+
+            var root = system.rootObjectId;
+            if (root.instanceId.value == 1)
+                return true;
+
+            return interest.IsRelevant(player, root);
+        }
+
+        private bool[] _serializeFlags = Array.Empty<bool>();
+
+        private void FillSerializeFlags(PlayerID receiver)
+        {
+            if (_serializeFlags.Length < _systemsCount)
+                _serializeFlags = new bool[Mathf.NextPowerOfTwo(_systemsCount)];
+
+            for (var i = 0; i < _systemsCount; i++)
+                _serializeFlags[i] = ShouldSerializeIdentity(receiver, _systems[i]);
+        }
+
+        internal void QueueInterestTierChange(PlayerID player, PredictedObjectID root, byte tier)
+        {
+            for (var i = 0; i < _clientFrames.Count; i++)
+            {
+                var frame = _clientFrames[i];
+                if (frame.player != player)
+                    continue;
+
+                frame.interestControls ??= new InterestControlState();
+                frame.interestControls.Queue(root, tier);
+                _clientFrames[i] = frame;
+                return;
+            }
+        }
+
+        internal void RemoveInterestRoot(PredictedObjectID root)
+        {
+            for (var i = 0; i < _clientFrames.Count; i++)
+            {
+                var frame = _clientFrames[i];
+                frame.sendBaselines?.Reset(root);
+                frame.interestControls?.Remove(root);
+            }
+        }
+
+        internal void HandleLocalInterestChanged(PredictedObjectID root)
+        {
+            for (var i = 0; i < _systemsCount; i++)
+            {
+                var system = _systems[i];
+                if (system.rootObjectId.Equals(root))
+                    system.UpdateLocalRelevance(IsLocallyRelevant(system));
             }
         }
 

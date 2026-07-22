@@ -8,11 +8,21 @@ namespace PurrNet.Prediction
         private PredictionManager _manager;
         private Rigidbody2D[] _rigidbodies;
         private UnityRigidbody2DState[] _state;
+        private bool[] _relevance;
+        private PredictedIdentity[] _identities;
 
         private void Awake()
         {
             _rigidbodies = GetComponentsInChildren<Rigidbody2D>();
             _state = new UnityRigidbody2DState[_rigidbodies.Length];
+            _relevance = new bool[_rigidbodies.Length];
+            _identities = new PredictedIdentity[_rigidbodies.Length];
+
+            for (var i = 0; i < _rigidbodies.Length; i++)
+            {
+                if (!_rigidbodies[i].TryGetComponent(out _identities[i]))
+                    _identities[i] = _rigidbodies[i].GetComponentInParent<PredictedIdentity>();
+            }
         }
 
         private void Start()
@@ -40,6 +50,7 @@ namespace PurrNet.Prediction
             {
                 var rb = _rigidbodies[i];
 
+                _relevance[i] = IsLocallyRelevant(i);
                 _state[i] = new UnityRigidbody2DState(rb);
 
                 rb.bodyType = RigidbodyType2D.Kinematic;
@@ -60,6 +71,8 @@ namespace PurrNet.Prediction
             {
                 var state = _state[i];
                 var rb = _rigidbodies[i];
+                if (_relevance[i] != IsLocallyRelevant(i))
+                    continue;
                 rb.bodyType = (RigidbodyType2D) state.bodyType;
                 //Rigidbody2D can have velocity even when Kinematic. We only skip when bodyType is Static
                 if (rb.bodyType == RigidbodyType2D.Static)
@@ -75,6 +88,12 @@ namespace PurrNet.Prediction
                     rb.Sleep();
                 else rb.WakeUp();
             }
+        }
+
+        private bool IsLocallyRelevant(int index)
+        {
+            var identity = _identities[index];
+            return !identity || _manager.IsLocallyRelevant(identity);
         }
 #endif
     }

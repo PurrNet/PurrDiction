@@ -44,7 +44,8 @@ namespace PurrNet.Prediction
 
         private static void TriggerEvent(PredictionManager predictionManager, PhysicsEvent ev)
         {
-            if (ev.me.TryGetIdentity<IPredictedPhysicsCallbacks>(predictionManager, out var me))
+            if (ev.me.TryGetIdentity(predictionManager, out PredictedIdentity identity) &&
+                !identity.IsLocallyDormant() && identity is IPredictedPhysicsCallbacks me)
             {
                 var otherGo = ev.other.GetGameObject(predictionManager);
                 if (ev.isTrigger)
@@ -84,6 +85,9 @@ namespace PurrNet.Prediction
 
         public void RegisterEvent(PhysicsEventType type, PredictedIdentity caller, Collision other)
         {
+            if (caller.IsLocallyDormant())
+                return;
+
             if (PredictionManager.TryGetClosestPredictedID(other.gameObject, out var otherId))
             {
                 var state = currentState;
@@ -113,6 +117,9 @@ namespace PurrNet.Prediction
 
         public void RegisterEvent(PhysicsEventType type, PredictedIdentity caller, Collider other)
         {
+            if (caller.IsLocallyDormant())
+                return;
+
             if (PredictionManager.TryGetClosestPredictedID(other.gameObject, out var otherId))
             {
                 var state = currentState;
@@ -146,6 +153,9 @@ namespace PurrNet.Prediction
         public void RegisterEvent(PhysicsEventType type, PredictedIdentity caller, GameObject other, bool isTrigger,
             Vector3 contactPoint = default, Vector3 contactNormal = default, Vector3 relativeVelocity = default)
         {
+            if (caller.IsLocallyDormant())
+                return;
+
             if (!PredictionManager.TryGetClosestPredictedID(other, out var otherId))
                 return;
 
