@@ -286,11 +286,41 @@ namespace PurrNet.Prediction
         }
     }
 
+    internal struct ReliableFrameDeliveryState
+    {
+        private ulong _sentTick;
+
+        public bool ShouldSuppress(ulong acknowledgedTick)
+        {
+            if (_sentTick == 0)
+                return false;
+
+            if (acknowledgedTick < _sentTick)
+                return true;
+
+            _sentTick = 0;
+            return false;
+        }
+
+        public void MarkSent(ulong sentTick)
+        {
+            _sentTick = sentTick;
+        }
+
+        public void Clear()
+        {
+            _sentTick = 0;
+        }
+    }
+
     internal struct PlayerPacker
     {
         public PlayerID player;
         public BitPacker packer;
         public bool fullFrame;
+        public ulong preparedFrameTick;
+        public int maxUnreliableFrameBytes;
+        public ReliableFrameDeliveryState reliableFrame;
         public IdentityEstablishmentState identityEstablishment;
         public RootSendBaselineState sendBaselines;
         public InterestControlState interestControls;
@@ -298,6 +328,8 @@ namespace PurrNet.Prediction
         public void Dispose()
         {
             packer?.Dispose();
+            preparedFrameTick = 0;
+            reliableFrame.Clear();
             identityEstablishment?.Clear();
             sendBaselines?.Clear();
             interestControls?.Clear();
