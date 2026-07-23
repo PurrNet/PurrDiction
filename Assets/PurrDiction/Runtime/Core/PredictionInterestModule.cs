@@ -5,6 +5,9 @@ using UnityEngine;
 
 namespace PurrNet.Prediction
 {
+    /// <summary>
+    /// Overrides interest resolution for one player and predicted root.
+    /// </summary>
     public enum PredictionInterestPin : byte
     {
         Default,
@@ -12,14 +15,23 @@ namespace PurrNet.Prediction
         Culled
     }
 
+    /// <summary>
+    /// Customizes the distance-resolved interest tier for each player and predicted root.
+    /// </summary>
     public interface IPredictionInterestProvider
     {
+        /// <summary>
+        /// Returns the tier to pass to pin and ownership resolution.
+        /// </summary>
         byte ResolveTier(PredictionManager manager, PlayerID player, PredictedObjectID root, byte computedTier);
     }
 
+    /// <summary>
+    /// Provides per-player prediction interest queries, overrides, scheduling, and relevance events.
+    /// </summary>
     public sealed class PredictionInterestModule : IDisposable
     {
-        private sealed class RootTarget : ILODTarget
+        internal sealed class RootTarget : ILODTarget
         {
             readonly PredictionInterestModule _module;
             readonly Dictionary<PlayerID, byte> _computedTiers = new ();
@@ -27,13 +39,15 @@ namespace PurrNet.Prediction
             readonly HashSet<PlayerID> _knownPlayers = new ();
 
             public readonly PredictedObjectID root;
+            public readonly byte minimumInterestTier;
             public int seenVersion;
             public PlayerID? observedOwner;
 
-            public RootTarget(PredictionInterestModule module, PredictedObjectID root)
+            internal RootTarget(PredictionInterestModule module, PredictedObjectID root, byte minimumInterestTier)
             {
                 _module = module;
                 this.root = root;
+                this.minimumInterestTier = minimumInterestTier;
             }
 
             public Vector3 position
@@ -97,7 +111,7 @@ namespace PurrNet.Prediction
                 _effectiveTiers[player] = next;
 
                 if (previous != next)
-                    _module.OnServerTierChanged(player, root, previous, next);
+                    _module.HandleServerTierChanged(player, root, previous, next);
             }
         }
 
@@ -125,6 +139,20 @@ namespace PurrNet.Prediction
             }
         }
 
+        private readonly struct QueuedLocalTier
+        {
+            public readonly PredictedObjectID root;
+            public readonly byte tier;
+            public readonly ulong serverTick;
+
+            public QueuedLocalTier(PredictedObjectID root, byte tier, ulong serverTick)
+            {
+                this.root = root;
+                this.tier = tier;
+                this.serverTick = serverTick;
+            }
+        }
+
         readonly PredictionManager _manager;
         readonly PredictionLODProfile _profile;
         readonly NetworkLODFactory _factory;
@@ -138,6 +166,7 @@ namespace PurrNet.Prediction
         readonly List<PredictedTransform> _anchorScratch = new ();
         readonly Dictionary<PredictedObjectID, byte> _localTiers = new ();
         readonly Dictionary<PredictedObjectID, PendingLocalTier> _pendingLocalTiers = new ();
+        readonly List<QueuedLocalTier> _queuedLocalTiers = new ();
         readonly Dictionary<PlayerID, PlayerTierCounts> _tierCounts = new ();
         readonly List<(PlayerID, PredictedObjectID)> _pinScratch = new ();
         int _refreshVersion;
@@ -152,16 +181,55 @@ namespace PurrNet.Prediction
             _asServer = asServer;
         }
 
+        /// <summary>
+        /// Raised on a client after a root's local tier changes. The arguments are the root,
+        /// previous tier, and current tier. Re-entry is reported after absolute state is applied.
+        /// </summary>
         public event Action<PredictedObjectID, byte, byte> OnLocalRelevanceChanged;
 
+        /// <summary>
+        /// Raised on the server after a root's effective tier changes for a player.
+        /// The arguments are the player, root, previous tier, and current tier. This includes
+        /// changes between two visible tiers as well as transitions across the culled boundary.
+        /// </summary>
+        public event Action<PlayerID, PredictedObjectID, byte, byte> OnServerTierChanged;
+
+        /// <summary>
+        /// Raised on the server when a root leaves the culled tier for a player.
+        /// The arguments are the player and root. Visible-tier changes do not raise this event.
+        /// </summary>
+        public event Action<PlayerID, PredictedObjectID> OnServerBecameRelevant;
+
+        /// <summary>
+        /// Raised on the server when a root enters the culled tier for a player.
+        /// The arguments are the player and root. Visible-tier changes do not raise this event.
+        /// </summary>
+        public event Action<PlayerID, PredictedObjectID> OnServerBecameIrrelevant;
+
+        /// <summary>
+        /// Gets or sets the server-side tier provider applied after the prefab tier floor.
+        /// </summary>
         public IPredictionInterestProvider provider { get; set; }
 
+        /// <summary>
+        /// Gets or sets the server-side send scheduler. A null value uses the interval scheduler.
+        /// </summary>
         public ILODScheduler scheduler { get; set; }
 
+        /// <summary>
+        /// Gets the prediction LOD profile used by this module.
+        /// </summary>
         public PredictionLODProfile profile => _profile;
 
+        /// <summary>
+        /// Gets whether this module has an active network LOD profile.
+        /// </summary>
         public bool enabled => _profile && _profile.networkProfile;
 
+        /// <summary>
+        /// Sets or clears the interest override for one player and root.
+        /// </summary>
+        /// <returns>True when the stored pin changed.</returns>
         public bool SetPin(PlayerID player, PredictedObjectID root, PredictionInterestPin pin)
         {
             var key = (player, root);
@@ -189,6 +257,9 @@ namespace PurrNet.Prediction
             return changed;
         }
 
+        /// <summary>
+        /// Gets the server's effective tier for one player and root.
+        /// </summary>
         public bool TryGetTier(PlayerID player, PredictedObjectID root, out byte tier)
         {
             if (root.instanceId.value == 1)
@@ -207,6 +278,9 @@ namespace PurrNet.Prediction
             return false;
         }
 
+        /// <summary>
+        /// Gets a client's received nonzero tier for a root. Tier zero is implicit when false.
+        /// </summary>
         public bool TryGetLocalRelevance(PredictedObjectID root, out byte tier)
         {
             if (_localTiers.TryGetValue(root, out tier))
@@ -277,6 +351,23 @@ namespace PurrNet.Prediction
             return _pendingLocalTiers.TryGetValue(root, out var pending) && pending.serverTick <= inputTick;
         }
 
+        internal bool CanMaterializeLocalRoot(PredictedObjectID root, ulong serverTick)
+        {
+            return !IsLocallyRelevant(root) &&
+                   _pendingLocalTiers.TryGetValue(root, out var pending) &&
+                   pending.serverTick <= serverTick;
+        }
+
+        internal bool HasPendingLocalAbsolute(PredictedObjectID root, ulong serverTick)
+        {
+            return _pendingLocalTiers.TryGetValue(root, out var pending) && pending.serverTick <= serverTick;
+        }
+
+        internal bool IsIntentionallyUnmaterialized(PredictedObjectID root)
+        {
+            return !IsLocallyRelevant(root);
+        }
+
         internal bool HasCulledRoots(PlayerID player)
         {
             return enabled && _tierCounts.TryGetValue(player, out var counts) && counts.culled > 0;
@@ -322,7 +413,7 @@ namespace PurrNet.Prediction
                 {
                     if (!_roots.TryGetValue(root, out var target))
                     {
-                        target = new RootTarget(this, root);
+                        target = new RootTarget(this, root, ResolveRootMinimumInterestTier(root));
                         _roots.Add(root, target);
                         _lodModule.Register(target, _profile.networkProfile);
 
@@ -444,6 +535,29 @@ namespace PurrNet.Prediction
                 _pins.Remove((player, _rootScratch[i]));
         }
 
+        internal void QueueLocalTier(PredictedObjectID root, byte tier, ulong serverTick)
+        {
+            int index = _queuedLocalTiers.Count;
+            while (index > 0 && _queuedLocalTiers[index - 1].serverTick > serverTick)
+                index--;
+            _queuedLocalTiers.Insert(index, new QueuedLocalTier(root, tier, serverTick));
+        }
+
+        internal void ApplyQueuedLocalTiers(ulong serverTick)
+        {
+            int count = 0;
+
+            while (count < _queuedLocalTiers.Count && _queuedLocalTiers[count].serverTick <= serverTick)
+            {
+                var queued = _queuedLocalTiers[count];
+                ReceiveLocalTier(queued.root, queued.tier, queued.serverTick);
+                count++;
+            }
+
+            if (count > 0)
+                _queuedLocalTiers.RemoveRange(0, count);
+        }
+
         internal void ReceiveLocalTier(PredictedObjectID root, byte tier, ulong serverTick)
         {
             byte current = _localTiers.GetValueOrDefault(root, (byte)0);
@@ -458,13 +572,14 @@ namespace PurrNet.Prediction
             ApplyLocalTier(root, tier);
         }
 
-        internal void ConfirmLocalAbsolute(PredictedObjectID root, ulong serverTick)
+        internal bool ConfirmLocalAbsolute(PredictedObjectID root, ulong serverTick)
         {
             if (!_pendingLocalTiers.TryGetValue(root, out var pending) || pending.serverTick > serverTick)
-                return;
+                return false;
 
             _pendingLocalTiers.Remove(root);
             ApplyLocalTier(root, pending.tier);
+            return true;
         }
 
         internal void PruneStaleLocalTiers()
@@ -481,7 +596,7 @@ namespace PurrNet.Prediction
             _rootScratch.Clear();
             foreach (var pair in _localTiers)
             {
-                if (pair.Key.instanceId.value < spawnedThrough && !hierarchy.TryGetGameObject(pair.Key, out _))
+                if (pair.Key.instanceId.value < spawnedThrough && !hierarchy.HasRootRecords(pair.Key))
                     _rootScratch.Add(pair.Key);
             }
 
@@ -491,7 +606,7 @@ namespace PurrNet.Prediction
             _rootScratch.Clear();
             foreach (var pair in _pendingLocalTiers)
             {
-                if (pair.Key.instanceId.value < spawnedThrough && !hierarchy.TryGetGameObject(pair.Key, out _))
+                if (pair.Key.instanceId.value < spawnedThrough && !hierarchy.HasRootRecords(pair.Key))
                     _rootScratch.Add(pair.Key);
             }
 
@@ -522,9 +637,12 @@ namespace PurrNet.Prediction
             });
         }
 
-        private byte ResolveTier(RootTarget target, PlayerID player, byte computedTier)
+        internal byte ResolveTier(RootTarget target, PlayerID player, byte computedTier)
         {
-            byte tier = provider?.ResolveTier(_manager, player, target.root, computedTier) ?? computedTier;
+            byte tier = computedTier >= target.minimumInterestTier
+                ? computedTier
+                : target.minimumInterestTier;
+            tier = provider?.ResolveTier(_manager, player, target.root, tier) ?? tier;
 
             if (_pins.TryGetValue((player, target.root), out var pin))
             {
@@ -540,18 +658,71 @@ namespace PurrNet.Prediction
             return tier;
         }
 
-        private void OnServerTierChanged(PlayerID player, PredictedObjectID root, byte previous, byte next)
+        private byte ResolveRootMinimumInterestTier(PredictedObjectID root)
+        {
+            var prefabs = _manager.predictedPrefabs;
+            var hierarchy = _manager.hierarchy;
+            if (!prefabs || !hierarchy)
+                return 0;
+
+            var records = hierarchy.currentState.spawnedPrefabs;
+            for (var i = 0; i < records.Count; i++)
+            {
+                var record = records[i];
+                if (!record.isRootRecord || !record.instanceId.Equals(root))
+                    continue;
+
+                int prefabId = record.prefabId;
+                if (prefabId < 0 || prefabId >= prefabs.prefabs.Count)
+                    return 0;
+
+                return ClampMinimumInterestTier(prefabs.prefabs[prefabId].minimumInterestTier);
+            }
+
+            return 0;
+        }
+
+        internal byte ClampMinimumInterestTier(byte tier)
+        {
+            if (tier == NetworkLODProfile.CulledTier)
+                return tier;
+
+            int tierCount = _profile && _profile.networkProfile
+                ? _profile.networkProfile.tierCount
+                : 0;
+            if (tierCount <= 0)
+                return 0;
+
+            return (byte)Mathf.Min(tier, tierCount - 1);
+        }
+
+        private void HandleServerTierChanged(PlayerID player, PredictedObjectID root, byte previous, byte next)
         {
             AdjustTierCounts(player, previous, next);
 
             _manager.QueueInterestTierChange(player, root, next);
+            OnServerTierChanged?.Invoke(player, root, previous, next);
+
+            bool wasRelevant = previous != NetworkLODProfile.CulledTier;
+            bool isRelevant = next != NetworkLODProfile.CulledTier;
+            if (wasRelevant == isRelevant)
+                return;
+
+            if (isRelevant)
+                OnServerBecameRelevant?.Invoke(player, root);
+            else
+                OnServerBecameIrrelevant?.Invoke(player, root);
         }
 
         private void ApplyLocalTier(PredictedObjectID root, byte tier)
         {
             byte previous = _localTiers.GetValueOrDefault(root, (byte)0);
             if (previous == tier)
+            {
+                if (tier == NetworkLODProfile.CulledTier)
+                    _manager.DematerializeLocalInterestRoot(root);
                 return;
+            }
 
             if (tier == 0)
                 _localTiers.Remove(root);
@@ -559,10 +730,20 @@ namespace PurrNet.Prediction
                 _localTiers[root] = tier;
 
             _manager.HandleLocalInterestChanged(root);
+            if (tier == NetworkLODProfile.CulledTier)
+                _manager.DematerializeLocalInterestRoot(root);
             OnLocalRelevanceChanged?.Invoke(root, previous, tier);
         }
 
+        /// <summary>
+        /// Releases interest registrations and restores locally culled roots.
+        /// </summary>
         public void Dispose()
+        {
+            Dispose(true);
+        }
+
+        internal void Dispose(bool restoreLocalRoots)
         {
             _rootScratch.Clear();
             foreach (var pair in _localTiers)
@@ -572,7 +753,12 @@ namespace PurrNet.Prediction
             {
                 var root = _rootScratch[i];
                 _localTiers.Remove(root);
-                _manager.HandleLocalInterestChanged(root);
+                _pendingLocalTiers.Remove(root);
+                if (restoreLocalRoots)
+                {
+                    _manager.MaterializeLocalInterestRoot(root);
+                    _manager.HandleLocalInterestChanged(root);
+                }
             }
 
             if (_lodModule != null)
@@ -596,6 +782,7 @@ namespace PurrNet.Prediction
             _anchors.Clear();
             _localTiers.Clear();
             _pendingLocalTiers.Clear();
+            _queuedLocalTiers.Clear();
             _tierCounts.Clear();
         }
     }

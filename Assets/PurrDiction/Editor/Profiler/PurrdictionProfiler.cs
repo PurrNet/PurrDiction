@@ -45,6 +45,7 @@ namespace PurrNet.Prediction.Editor
         private static readonly Color ColorReadStates = new Color(0.25f, 0.55f, 0.90f, 1f);
         private static readonly Color ColorWroteInputs = new Color(0.95f, 0.60f, 0.20f, 1f);
         private static readonly Color ColorReadInputs = new Color(0.80f, 0.30f, 0.80f, 1f);
+        private static GUIStyle _tierBadgeStyle;
         private readonly Dictionary<string, bool> _foldoutStates = new Dictionary<string, bool>();
 
         private void OnEnable()
@@ -325,6 +326,7 @@ namespace PurrNet.Prediction.Editor
 		private void DrawPackingList(DisposableList<PackingInfo> list)
         {
 			const float BitsColWidth = 70f;
+			const float TierColWidth = 54f;
 			const float ReferenceColWidth = 240f;
 			const float PingColWidth = 44f;
 			float rowHeight = EditorGUIUtility.singleLineHeight + 4f;
@@ -355,11 +357,13 @@ namespace PurrNet.Prediction.Editor
 				EditorGUI.DrawRect(headerRect, new Color(0.18f, 0.18f, 0.18f, 1f));
 				EditorGUI.DrawRect(new Rect(headerRect.x, headerRect.yMax - 1f, headerRect.width, 1f), new Color(0f, 0f, 0f, 0.35f));
 
-				float parentColWidth = Mathf.Max(80f, headerRect.width - BitsColWidth - ReferenceColWidth - PingColWidth);
+				float parentColWidth = Mathf.Max(80f, headerRect.width - BitsColWidth - TierColWidth - ReferenceColWidth - PingColWidth);
 				float x = headerRect.x;
 				GUI.Label(new Rect(x + 6f, headerRect.y + 2f, BitsColWidth - 8f, rowHeight - 4f), "Bits", EditorStyles.boldLabel);
 				x += BitsColWidth;
 				GUI.Label(new Rect(x + 6f, headerRect.y + 2f, parentColWidth - 8f, rowHeight - 4f), "Parent", EditorStyles.boldLabel);
+				x += parentColWidth;
+				GUI.Label(new Rect(x + 6f, headerRect.y + 2f, TierColWidth - 8f, rowHeight - 4f), new GUIContent("Tier", "Current local interest tier. Server samples have no single receiver tier."), EditorStyles.boldLabel);
 				x = headerRect.x + headerRect.width - (ReferenceColWidth + PingColWidth);
 				GUI.Label(new Rect(x + 6f, headerRect.y + 2f, ReferenceColWidth - 8f, rowHeight - 4f), "Reference", EditorStyles.boldLabel);
 
@@ -372,16 +376,19 @@ namespace PurrNet.Prediction.Editor
 					if ((visibleRowIndex & 1) == 0)
 						EditorGUI.DrawRect(rowRect, new Color(1f, 1f, 1f, 0.035f));
 
-					float rowParentWidth = Mathf.Max(80f, rowRect.width - BitsColWidth - ReferenceColWidth - PingColWidth);
+					float rowParentWidth = Mathf.Max(80f, rowRect.width - BitsColWidth - TierColWidth - ReferenceColWidth - PingColWidth);
 					float xBits = rowRect.x;
 					float xParent = xBits + BitsColWidth;
+					float xTier = xParent + rowParentWidth;
 					float xRef = rowRect.x + rowRect.width - (ReferenceColWidth + PingColWidth);
 
 					EditorGUI.DrawRect(new Rect(xParent, rowRect.y, 1f, rowHeight), new Color(0f, 0f, 0f, 0.2f));
+					EditorGUI.DrawRect(new Rect(xTier, rowRect.y, 1f, rowHeight), new Color(0f, 0f, 0f, 0.2f));
 					EditorGUI.DrawRect(new Rect(xRef, rowRect.y, 1f, rowHeight), new Color(0f, 0f, 0f, 0.2f));
 
 					GUI.Label(new Rect(xBits + 6f, rowRect.y + 2f, BitsColWidth - 8f, rowHeight - 4f), info.bitCount.ToString());
 					GUI.Label(new Rect(xParent + 6f, rowRect.y + 2f, rowParentWidth - 8f, rowHeight - 4f), info.parent != null ? info.parent.Name : "<null>");
+					DrawTierBadge(new Rect(xTier + 5f, rowRect.y + 3f, TierColWidth - 10f, rowHeight - 6f), info);
 
 					EditorGUI.BeginDisabledGroup(true);
 					var obj = info.reference;
@@ -440,11 +447,13 @@ namespace PurrNet.Prediction.Editor
 				var headerRect = EditorGUILayout.GetControlRect(false, rowHeight);
 				EditorGUI.DrawRect(headerRect, new Color(0.18f, 0.18f, 0.18f, 1f));
 				EditorGUI.DrawRect(new Rect(headerRect.x, headerRect.yMax - 1f, headerRect.width, 1f), new Color(0f, 0f, 0f, 0.35f));
-				float parentColWidth = Mathf.Max(80f, headerRect.width - BitsColWidth - ReferenceColWidth - PingColWidth);
+				float parentColWidth = Mathf.Max(80f, headerRect.width - BitsColWidth - TierColWidth - ReferenceColWidth - PingColWidth);
 				float x = headerRect.x;
 				GUI.Label(new Rect(x + 6f, headerRect.y + 2f, BitsColWidth - 8f, rowHeight - 4f), "Bits", EditorStyles.boldLabel);
 				x += BitsColWidth;
 				GUI.Label(new Rect(x + 6f, headerRect.y + 2f, parentColWidth - 8f, rowHeight - 4f), "Parent", EditorStyles.boldLabel);
+				x += parentColWidth;
+				GUI.Label(new Rect(x + 6f, headerRect.y + 2f, TierColWidth - 8f, rowHeight - 4f), new GUIContent("Tier", "Current local interest tier. Server samples have no single receiver tier."), EditorStyles.boldLabel);
 				x = headerRect.x + headerRect.width - (ReferenceColWidth + PingColWidth);
 				GUI.Label(new Rect(x + 6f, headerRect.y + 2f, ReferenceColWidth - 8f, rowHeight - 4f), "Reference", EditorStyles.boldLabel);
 
@@ -459,16 +468,19 @@ namespace PurrNet.Prediction.Editor
 					if ((visibleRowIndex & 1) == 0)
 						EditorGUI.DrawRect(rowRect, new Color(1f, 1f, 1f, 0.035f));
 
-					float rowParentWidth = Mathf.Max(80f, rowRect.width - BitsColWidth - ReferenceColWidth - PingColWidth);
+					float rowParentWidth = Mathf.Max(80f, rowRect.width - BitsColWidth - TierColWidth - ReferenceColWidth - PingColWidth);
 					float xBits = rowRect.x;
 					float xParent = xBits + BitsColWidth;
+					float xTier = xParent + rowParentWidth;
 					float xRef = rowRect.x + rowRect.width - (ReferenceColWidth + PingColWidth);
 
 					EditorGUI.DrawRect(new Rect(xParent, rowRect.y, 1f, rowHeight), new Color(0f, 0f, 0f, 0.2f));
+					EditorGUI.DrawRect(new Rect(xTier, rowRect.y, 1f, rowHeight), new Color(0f, 0f, 0f, 0.2f));
 					EditorGUI.DrawRect(new Rect(xRef, rowRect.y, 1f, rowHeight), new Color(0f, 0f, 0f, 0.2f));
 
 					GUI.Label(new Rect(xBits + 6f, rowRect.y + 2f, BitsColWidth - 8f, rowHeight - 4f), info.bitCount.ToString());
 					GUI.Label(new Rect(xParent + 6f, rowRect.y + 2f, rowParentWidth - 8f, rowHeight - 4f), info.parent != null ? info.parent.Name : "<null>");
+					DrawTierBadge(new Rect(xTier + 5f, rowRect.y + 3f, TierColWidth - 10f, rowHeight - 6f), info);
 
 					EditorGUI.BeginDisabledGroup(true);
 					var obj = info.reference;
@@ -484,6 +496,51 @@ namespace PurrNet.Prediction.Editor
 					visibleRowIndex++;
 				}
 			}
+		}
+
+		private static void DrawTierBadge(Rect rect, PackingInfo info)
+		{
+			_tierBadgeStyle ??= new GUIStyle(EditorStyles.miniLabel)
+			{
+				alignment = TextAnchor.MiddleCenter,
+				fontStyle = FontStyle.Bold
+			};
+
+			if (!TryGetLocalTier(info, out var tier))
+			{
+				GUI.Label(rect, "—", _tierBadgeStyle);
+				return;
+			}
+
+			if (tier == NetworkLODProfile.CulledTier)
+			{
+				EditorGUI.DrawRect(rect, new Color(0.35f, 0.35f, 0.35f, 0.65f));
+				GUI.Label(rect, "Cull", _tierBadgeStyle);
+				return;
+			}
+
+			float blend = Mathf.Clamp01(tier / 3f);
+			EditorGUI.DrawRect(rect, Color.Lerp(
+				new Color(0.20f, 0.62f, 0.32f, 0.65f),
+				new Color(0.82f, 0.48f, 0.16f, 0.65f),
+				blend));
+			GUI.Label(rect, $"T{tier}", _tierBadgeStyle);
+		}
+
+		private static bool TryGetLocalTier(PackingInfo info, out byte tier)
+		{
+			tier = 0;
+			if (info.reference is not PredictedIdentity identity || !identity)
+				return false;
+
+			var manager = identity.predictionManager;
+			var interest = manager ? manager.interest : null;
+			if (interest == null || !interest.enabled || manager.cachedIsServer)
+				return false;
+
+			if (!interest.TryGetLocalRelevance(identity.rootObjectId, out tier))
+				tier = 0;
+			return true;
 		}
 
 		private struct GroupRow

@@ -114,7 +114,9 @@ namespace PurrNet.Prediction
                 return;
             }
 
-            if (!_hasPendingParent || !PredictedHierarchy.SameAttach(_pendingParent, state.parent))
+            if ((!_hasPendingParent || !PredictedHierarchy.SameAttach(_pendingParent, state.parent)) &&
+                (!state.parent.HasValue || !manager || !manager.hierarchy ||
+                 !manager.hierarchy.IsUnavailableDueToLocalInterest(state.parent.Value)))
                 PurrLogger.LogWarning($"'{name}' could not reattach to {(state.parent.HasValue ? state.parent.Value.ToString() : "root")}; keeping the target pending until it resolves.", this);
 
             _pendingParent = state.parent;

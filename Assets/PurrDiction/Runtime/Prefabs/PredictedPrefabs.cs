@@ -65,7 +65,8 @@ namespace PurrNet.Prediction
                     {
                         prefab = _prefabs[i],
                         pooled = poolByDefault,
-                        warmupCount = 5
+                        warmupCount = 5,
+                        minimumInterestTier = 0
                     });
                 }
                 _prefabs.Clear();
@@ -82,7 +83,8 @@ namespace PurrNet.Prediction
                     {
                         prefab = legacy.prefab,
                         pooled = legacy.pooling.usePooling,
-                        warmupCount = legacy.pooling.initialSize
+                        warmupCount = legacy.pooling.initialSize,
+                        minimumInterestTier = 0
                     });
                 }
                 _newPrefabs.Clear();
@@ -178,7 +180,8 @@ namespace PurrNet.Prediction
                         prefab = (GameObject)scan.asset,
                         pooled = poolByDefault,
                         warmupCount = 5,
-                        guid = scan.guid
+                        guid = scan.guid,
+                        minimumInterestTier = 0
                     },
                     e => e.prefab);
 

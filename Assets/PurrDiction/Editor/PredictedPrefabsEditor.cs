@@ -38,37 +38,50 @@ namespace PurrNet.Prediction.Editor
             _reorderableList.drawHeaderCallback = (Rect rect) =>
             {
                 float fullWidth = rect.width - REORDERABLE_LIST_BUTTON_WIDTH;
-                CalculateWidths(fullWidth, out float prefabWidth, out float poolWidth, out float warmupWidth);
+                CalculateWidths(fullWidth, out float prefabWidth, out float minimumTierWidth,
+                    out float poolWidth, out float warmupWidth);
 
                 EditorGUI.LabelField(new Rect(rect.x, rect.y, prefabWidth, rect.height), "Prefab");
-                EditorGUI.LabelField(
-                    new Rect(rect.x + prefabWidth + SPACING, rect.y, poolWidth + warmupWidth, rect.height), "Pool");
+                float x = rect.x + prefabWidth + SPACING;
+                EditorGUI.LabelField(new Rect(x, rect.y, minimumTierWidth, rect.height),
+                    new GUIContent("Min Tier", "Distance-based tier floor. 0 allows full detail; 255 starts culled."));
+                x += minimumTierWidth + SPACING;
+                EditorGUI.LabelField(new Rect(x, rect.y, poolWidth, rect.height), "Pool");
+                x += poolWidth + SPACING;
+                EditorGUI.LabelField(new Rect(x, rect.y, warmupWidth, rect.height), "Warmup");
             };
 
             _reorderableList.drawElementCallback = (Rect rect, int index, bool isActive, bool isFocused) =>
             {
                 SerializedProperty element = _prefabs.GetArrayElementAtIndex(index);
                 SerializedProperty prefabProp = element.FindPropertyRelative("prefab");
+                SerializedProperty minimumTierProp = element.FindPropertyRelative("minimumInterestTier");
                 SerializedProperty poolProp = element.FindPropertyRelative("pooled");
                 SerializedProperty warmupCountProp = element.FindPropertyRelative("warmupCount");
 
                 float fullWidth = rect.width - REORDERABLE_LIST_BUTTON_WIDTH;
-                CalculateWidths(fullWidth, out float prefabWidth, out float poolWidth, out float warmupWidth);
+                CalculateWidths(fullWidth, out float prefabWidth, out float minimumTierWidth,
+                    out float poolWidth, out float warmupWidth);
 
                 EditorGUI.BeginDisabledGroup(_target.autoGenerate);
                 EditorGUI.PropertyField(new Rect(rect.x, rect.y, prefabWidth, rect.height), prefabProp,
                     GUIContent.none);
                 EditorGUI.EndDisabledGroup();
 
+                float x = rect.x + prefabWidth + SPACING;
+                EditorGUI.PropertyField(new Rect(x, rect.y, minimumTierWidth, rect.height),
+                    minimumTierProp, GUIContent.none);
+                x += minimumTierWidth + SPACING;
+
                 poolProp.boolValue =
-                    EditorGUI.Toggle(new Rect(rect.x + prefabWidth + SPACING, rect.y, poolWidth, rect.height),
-                        poolProp.boolValue);
+                    EditorGUI.Toggle(new Rect(x, rect.y, poolWidth, rect.height), poolProp.boolValue);
+
+                x += poolWidth + SPACING;
 
                 if (poolProp.boolValue)
                 {
-                    EditorGUI.PropertyField(
-                        new Rect(rect.x + prefabWidth + poolWidth + (SPACING * 2), rect.y, warmupWidth, rect.height),
-                        warmupCountProp, GUIContent.none);
+                    EditorGUI.PropertyField(new Rect(x, rect.y, warmupWidth, rect.height), warmupCountProp,
+                        GUIContent.none);
                 }
             };
 
@@ -83,6 +96,7 @@ namespace PurrNet.Prediction.Editor
                     element.FindPropertyRelative("prefab").objectReferenceValue = null;
                     element.FindPropertyRelative("pooled").boolValue = _target.poolByDefault;
                     element.FindPropertyRelative("warmupCount").intValue = 5;
+                    element.FindPropertyRelative("minimumInterestTier").intValue = 0;
                     element.FindPropertyRelative("guid").stringValue = string.Empty;
                     serializedObject.ApplyModifiedProperties();
                 });
@@ -101,6 +115,7 @@ namespace PurrNet.Prediction.Editor
                             element.FindPropertyRelative("prefab").objectReferenceValue = obj;
                             element.FindPropertyRelative("pooled").boolValue = _target.poolByDefault;
                             element.FindPropertyRelative("warmupCount").intValue = 5;
+                            element.FindPropertyRelative("minimumInterestTier").intValue = 0;
                             element.FindPropertyRelative("guid").stringValue =
                                 AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(obj));
                         }
@@ -116,11 +131,13 @@ namespace PurrNet.Prediction.Editor
             };
         }
 
-        private void CalculateWidths(float fullWidth, out float prefabWidth, out float poolWidth, out float warmupWidth)
+        private void CalculateWidths(float fullWidth, out float prefabWidth, out float minimumTierWidth,
+            out float poolWidth, out float warmupWidth)
         {
-            poolWidth = 20f;
+            minimumTierWidth = 55f;
+            poolWidth = 30f;
             warmupWidth = 60f;
-            prefabWidth = fullWidth - poolWidth - warmupWidth - (SPACING * 2);
+            prefabWidth = fullWidth - minimumTierWidth - poolWidth - warmupWidth - (SPACING * 3);
         }
 
         public override void OnInspectorGUI()

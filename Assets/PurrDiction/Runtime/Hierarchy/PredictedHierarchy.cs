@@ -33,6 +33,8 @@ namespace PurrNet.Prediction
         readonly HashSet<PredictedObjectID> _removedRecordScratch = new ();
         readonly Dictionary<PredictedObjectID, PredictedObjectID> _cascadeParentScratch = new ();
         readonly Dictionary<PredictedObjectID, bool> _cascadeReachScratch = new ();
+        readonly List<InstanceDetails> _localInterestRecordsScratch = new ();
+        readonly HashSet<PredictedObjectID> _localInterestMembersScratch = new ();
 
         private uint _nextInstanceId = 2;
 
@@ -93,6 +95,16 @@ namespace PurrNet.Prediction
             if (_removalScratch.Count > 0)
                 RemovePieceSet(_removalScratch, _removalSetScratch, true, false, false);
 
+            _spawnedPrefabs.Clear();
+            _recordsById.Clear();
+
+            for (var i = 0; i < target.Count; i++)
+            {
+                var record = target[i];
+                _spawnedPrefabs.Add(record);
+                _recordsById[record.instanceId] = record;
+            }
+
             _additionGroups.Clear();
             _additionGroupOrder.Clear();
 
@@ -104,6 +116,8 @@ namespace PurrNet.Prediction
                     continue;
 
                 var rootId = record.rootId;
+                if (!predictionManager.ShouldMaterializeLocalRoot(rootId))
+                    continue;
 
                 if (!_additionGroups.TryGetValue(rootId, out var list))
                 {
@@ -146,16 +160,6 @@ namespace PurrNet.Prediction
                 }
 
                 ListPool<InstanceDetails>.Destroy(records);
-            }
-
-            _spawnedPrefabs.Clear();
-            _recordsById.Clear();
-
-            for (var i = 0; i < target.Count; i++)
-            {
-                var record = target[i];
-                _spawnedPrefabs.Add(record);
-                _recordsById[record.instanceId] = record;
             }
 
             _nextInstanceId = state.nextInstanceId;
@@ -360,7 +364,7 @@ namespace PurrNet.Prediction
             {
                 if (predictionManager.TryGetIdentity(rootRecord.parent.Value, out var parentIdentity) && parentIdentity)
                     parentTrs = parentIdentity.transform;
-                else
+                else if (!IsUnavailableDueToLocalInterest(rootRecord.parent.Value))
                     PurrLogger.LogError($"Failed to resolve spawn parent {rootRecord.parent.Value} for prefab {prefabId}; spawning unparented.");
             }
 
@@ -1026,6 +1030,113 @@ namespace PurrNet.Prediction
             return false;
         }
 
+        internal bool HasRootRecords(PredictedObjectID rootId)
+        {
+            for (var i = 0; i < _spawnedPrefabs.Count; i++)
+            {
+                if (_spawnedPrefabs[i].rootId.Equals(rootId))
+                    return true;
+            }
+
+            return false;
+        }
+
+        internal bool MaterializeLocalRoot(PredictedObjectID rootId)
+        {
+            _localInterestRecordsScratch.Clear();
+
+            for (var i = 0; i < _spawnedPrefabs.Count; i++)
+            {
+                var record = _spawnedPrefabs[i];
+                if (record.rootId.Equals(rootId))
+                    _localInterestRecordsScratch.Add(record);
+            }
+
+            if (_localInterestRecordsScratch.Count == 0)
+                return false;
+
+            _localInterestRecordsScratch.Sort((a, b) => a.pieceIndex.value.CompareTo(b.pieceIndex.value));
+
+            bool liveAny = false;
+            bool missingAny = false;
+
+            for (var i = 0; i < _localInterestRecordsScratch.Count; i++)
+            {
+                bool live = _instanceMap.TryGetValue(_localInterestRecordsScratch[i].instanceId, out var go) && go;
+                liveAny |= live;
+                missingAny |= !live;
+            }
+
+            if (!missingAny)
+                return true;
+
+            var prefabId = _localInterestRecordsScratch[0].prefabId;
+            var proto = GetPrototype(prefabId);
+            if (proto == null)
+                return false;
+
+            if (!liveAny)
+                CreateWholeInstance(prefabId, proto, _localInterestRecordsScratch);
+            else
+            {
+                for (var i = 0; i < _localInterestRecordsScratch.Count; i++)
+                {
+                    var record = _localInterestRecordsScratch[i];
+                    if (!_instanceMap.TryGetValue(record.instanceId, out var go) || !go)
+                        ResurrectPiece(record, proto);
+                }
+            }
+
+            for (var i = 0; i < _localInterestRecordsScratch.Count; i++)
+            {
+                if (!_instanceMap.TryGetValue(_localInterestRecordsScratch[i].instanceId, out var go) || !go)
+                    return false;
+            }
+
+            return true;
+        }
+
+        internal void DematerializeLocalRoot(PredictedObjectID rootId)
+        {
+            _localInterestRecordsScratch.Clear();
+            _localInterestMembersScratch.Clear();
+
+            for (var i = 0; i < _spawnedPrefabs.Count; i++)
+            {
+                var record = _spawnedPrefabs[i];
+                if (!record.rootId.Equals(rootId))
+                    continue;
+
+                _localInterestRecordsScratch.Add(record);
+                _localInterestMembersScratch.Add(record.instanceId);
+            }
+
+            if (_localInterestRecordsScratch.Count == 0)
+                return;
+
+            bool wasRollingBack = _isRollingBack;
+            bool wasSuppressingParentWarnings = _suppressParentWarnings;
+            _isRollingBack = true;
+            _suppressParentWarnings = true;
+
+            try
+            {
+                RemovePieceSet(_localInterestRecordsScratch, _localInterestMembersScratch, true, false, false);
+            }
+            finally
+            {
+                _suppressParentWarnings = wasSuppressingParentWarnings;
+                _isRollingBack = wasRollingBack;
+            }
+        }
+
+        internal bool IsUnavailableDueToLocalInterest(PredictedComponentID target)
+        {
+            return TryGetRootId(target.objectId, out var rootId) &&
+                   !predictionManager.ShouldMaterializeLocalRoot(rootId) &&
+                   (!_instanceMap.TryGetValue(target.objectId, out var go) || !go);
+        }
+
         /// <summary>
         /// True when both pieces belong to the same spawn instance. Replaces
         /// id.objectId equality checks from before pieces had their own ids.
@@ -1063,9 +1174,12 @@ namespace PurrNet.Prediction
 
             if (!_instanceMap.TryGetValue(id, out var instance) || !instance)
             {
-                PurrLogger.LogError($"Deleting {id} which has a record but no live instance; removing the stale record.");
-                _instanceMap.Remove(id);
-                RemoveRecord(id);
+                _removalScratch.Clear();
+                _removalSetScratch.Clear();
+                CollectCascade(record);
+                RemovePieceSet(_removalScratch, _removalSetScratch, true, true, true);
+                if (record.isRootRecord)
+                    PromoteOrphans(record);
                 return;
             }
 
@@ -1371,8 +1485,13 @@ namespace PurrNet.Prediction
 
         public void Delete(PredictedObjectID? id)
         {
+            if (!id.HasValue)
+                return;
+
             if (id.TryGetGameObject(predictionManager, out var go))
                 Delete(go);
+            else if (_recordsById.ContainsKey(id.Value))
+                currentState.toDelete.Add(id.Value);
         }
 
         public void Cleanup()

@@ -62,12 +62,16 @@ public sealed class InterestManagementScenario : Scenario
     private InterestInputProbe _serverInputProbeB;
     private InterestAnchorMarker _localAnchor;
     private InterestStateProbe _localNearProbe;
-    private InterestStateProbe _localFarProbe;
     private InterestRateProbe _localNearRateProbe;
-    private InterestRateProbe _localFarRateProbe;
     private InterestReplayTierProbe _localNearReplayTierProbe;
-    private InterestReplayTierProbe _localFarReplayTierProbe;
     private InterestInputProbe _localObservedInputProbe;
+    private PredictedObjectID _localNearProbeRoot;
+    private PredictedObjectID _localFarProbeRoot;
+    private PredictedObjectID _localNearRateProbeRoot;
+    private PredictedObjectID _localFarRateProbeRoot;
+    private PredictedObjectID _localNearReplayTierProbeRoot;
+    private PredictedObjectID _localFarReplayTierProbeRoot;
+    private PredictedObjectID _localObservedInputProbeRoot;
     private Dictionary<PlayerID, double> _visibleFrameBytes;
     private Dictionary<PlayerID, double> _culledFrameBytes;
     private RateWriteSample _tier0Writes;
@@ -380,18 +384,18 @@ public sealed class InterestManagementScenario : Scenario
                       _localNearRateProbe.isRelevant &&
                       _localNearReplayTierProbe.isRelevant &&
                       _localObservedInputProbe.isRelevant &&
-                      IsLocallyCulled(pm, _localFarProbe) &&
-                      IsLocallyCulled(pm, _localFarRateProbe) &&
-                      IsLocallyCulled(pm, _localFarReplayTierProbe),
+                      IsLocallyCulled(pm, _localFarProbeRoot) &&
+                      IsLocallyCulled(pm, _localFarRateProbeRoot) &&
+                      IsLocallyCulled(pm, _localFarReplayTierProbeRoot),
                 Timeout,
                 ctx.cancellationToken);
 
             if (!HasRetainedHierarchy(pm))
                 return ScenarioResult.Fail("culled root was removed from the replicated hierarchy");
-            if (!_localFarProbe.gameObject.activeInHierarchy)
-                return ScenarioResult.Fail("culled root was locally despawned or deactivated");
-            if (!_localFarRateProbe.gameObject.activeInHierarchy)
-                return ScenarioResult.Fail("culled rate root was locally despawned or deactivated");
+            if (pm.hierarchy.TryGetGameObject(_localFarProbeRoot, out _) ||
+                pm.hierarchy.TryGetGameObject(_localFarRateProbeRoot, out _) ||
+                pm.hierarchy.TryGetGameObject(_localFarReplayTierProbeRoot, out _))
+                return ScenarioResult.Fail("initially culled roots were materialized locally");
             if (!_localObservedInputProbe.gameObject.activeInHierarchy)
                 return ScenarioResult.Fail("input-driven root was locally despawned or deactivated");
             if (!LocalOwnerIsExempt())
@@ -527,9 +531,9 @@ public sealed class InterestManagementScenario : Scenario
 
             stage = "cull";
             await UniTaskUtils.WaitWithTimeout(
-                () => IsLocallyCulled(pm, _localNearProbe) &&
-                      IsLocallyCulled(pm, _localNearRateProbe) &&
-                      IsLocallyCulled(pm, _localObservedInputProbe),
+                () => IsLocallyCulled(pm, _localNearProbeRoot) &&
+                      IsLocallyCulled(pm, _localNearRateProbeRoot) &&
+                      IsLocallyCulled(pm, _localObservedInputProbeRoot),
                 Timeout,
                 ctx.cancellationToken);
             await UniTask.NextFrame(ctx.cancellationToken);
@@ -562,8 +566,11 @@ public sealed class InterestManagementScenario : Scenario
                 return ScenarioResult.Fail($"culled input probe kept simulating: {DescribeClient(pm)}");
             if (!_localNearProbe.GetComponent<Rigidbody>().isKinematic)
                 return ScenarioResult.Fail("culled raw rigidbody remained dynamic");
-            if (!HasRetainedHierarchy(pm) || !_localNearProbe.gameObject.activeInHierarchy)
-                return ScenarioResult.Fail("culled probe did not remain as an active replicated hierarchy instance");
+            if (!HasRetainedHierarchy(pm) ||
+                pm.hierarchy.TryGetGameObject(_localNearProbeRoot, out _) ||
+                pm.hierarchy.TryGetGameObject(_localNearRateProbeRoot, out _) ||
+                pm.hierarchy.TryGetGameObject(_localObservedInputProbeRoot, out _))
+                return ScenarioResult.Fail("culled roots did not retain records without live instances");
             if (_localNearRateProbe.predictionPolicy != PredictionPolicy.ServerRelay ||
                 _localNearRateProbe.configuredPredictionPolicy != PredictionPolicy.FullPrediction)
                 return ScenarioResult.Fail("culled dormancy did not remain stronger than the tier policy override");
@@ -576,26 +583,18 @@ public sealed class InterestManagementScenario : Scenario
 
             stage = "culled hysteresis";
             await WaitClientTicks(pm, 24, ctx);
-            if (!IsLocallyCulled(pm, _localNearProbe) ||
-                !IsLocallyCulled(pm, _localNearRateProbe) ||
-                !IsLocallyCulled(pm, _localObservedInputProbe))
+            if (!IsLocallyCulled(pm, _localNearProbeRoot) ||
+                !IsLocallyCulled(pm, _localNearRateProbeRoot) ||
+                !IsLocallyCulled(pm, _localObservedInputProbeRoot))
                 return ScenarioResult.Fail($"culled hysteresis failed: {DescribeClient(pm)}");
-            if (_localNearProbe.currentState.simulations != frozenSimulations ||
-                _localNearProbe.localSimulationCalls != frozenCalls ||
-                _localNearProbe.localViewUpdates != frozenViews)
-                return ScenarioResult.Fail("culled probe resumed before crossing the reentry edge");
-            if (!_localNearRateProbe.StateEquals(frozenRateState) ||
-                _localNearRateProbe.localSimulationCalls != frozenRateCalls ||
-                _localNearRateProbe.localViewUpdates != frozenRateViews)
-                return ScenarioResult.Fail("culled rate probe resumed before crossing the reentry edge");
-            if (!_localObservedInputProbe.StateEquals(frozenInputState) ||
-                _localObservedInputProbe.localSimulationCalls != frozenInputCalls)
-                return ScenarioResult.Fail("culled input probe resumed before crossing the reentry edge");
+            if (!HasRetainedHierarchy(pm))
+                return ScenarioResult.Fail("culled hierarchy records did not survive pool expiry");
             await ScenarioBarrier.Wait(ctx, HoldCulledBarrier, Timeout);
 
             stage = "tier 2 absolute reentry";
             await UniTaskUtils.WaitWithTimeout(
-                () => _localNearProbe.isRelevant &&
+                () => RefreshLocalNearInstances(pm) &&
+                      _localNearProbe.isRelevant &&
                       _localNearRateProbe.isRelevant &&
                       _localNearProbe.currentState.simulations >= frozenSimulations + 20 &&
                       _localNearProbe.stateIsValid,
@@ -607,17 +606,17 @@ public sealed class InterestManagementScenario : Scenario
                 Timeout,
                 ctx.cancellationToken);
             await UniTaskUtils.WaitWithTimeout(
-                () => _localNearProbe.localSimulationCalls > frozenCalls &&
-                      _localNearProbe.localViewUpdates > frozenViews &&
-                      _localNearRateProbe.localSimulationCalls > frozenRateCalls &&
-                      _localNearRateProbe.localViewUpdates > frozenRateViews,
+                () => _localNearProbe.localSimulationCalls > 0 &&
+                      _localNearProbe.localViewUpdates > 0 &&
+                      _localNearRateProbe.localSimulationCalls > 0 &&
+                      _localNearRateProbe.localViewUpdates > 0,
                 Timeout,
                 ctx.cancellationToken);
             rateFailure = await WaitForRateConvergence(pm, _localNearRateProbe, 4, ctx);
             if (rateFailure != null)
                 return ScenarioResult.Fail(rateFailure);
 
-            if (!IsLocallyCulled(pm, _localFarProbe) || !IsLocallyCulled(pm, _localFarRateProbe))
+            if (!IsLocallyCulled(pm, _localFarProbeRoot) || !IsLocallyCulled(pm, _localFarRateProbeRoot))
                 return ScenarioResult.Fail("reentry made the other client's far root relevant");
             if (!HasRetainedHierarchy(pm))
                 return ScenarioResult.Fail("hierarchy diverged across cull and reentry");
@@ -723,9 +722,12 @@ public sealed class InterestManagementScenario : Scenario
 
     private bool ResolveLocalLayout(PredictionManager pm)
     {
-        if (!pm.localPlayer.HasValue || InterestAnchorMarker.instances.Count != 2 ||
-            InterestStateProbe.instances.Count != 2 || InterestRateProbe.instances.Count != 2 ||
-            InterestReplayTierProbe.instances.Count != 2 || InterestInputProbe.instances.Count != 2)
+        if (!pm.localPlayer.HasValue || !pm.hierarchy || InterestAnchorMarker.instances.Count == 0 ||
+            PredictionTestUtils.CountInstances(pm, _anchorPrefabId) != 2 ||
+            PredictionTestUtils.CountInstances(pm, _probePrefabId) != 2 ||
+            PredictionTestUtils.CountInstances(pm, _rateProbePrefabId) != 2 ||
+            PredictionTestUtils.CountInstances(pm, _replayTierProbePrefabId) != 2 ||
+            PredictionTestUtils.CountInstances(pm, _inputProbePrefabId) != 2)
             return false;
 
         _localAnchor = null;
@@ -742,52 +744,72 @@ public sealed class InterestManagementScenario : Scenario
         if (!_localAnchor || Mathf.Abs(_localAnchor.position.x) < RootOffset * 0.5f)
             return false;
 
-        var first = InterestStateProbe.instances[0];
-        var second = InterestStateProbe.instances[1];
-        if (!first || !second || Mathf.Abs(first.position.x) < RootOffset * 0.5f || Mathf.Abs(second.position.x) < RootOffset * 0.5f)
+        if (!TryResolveRootPair(pm, _probePrefabId, out _localNearProbeRoot, out _localFarProbeRoot) ||
+            !TryResolveRootPair(pm, _rateProbePrefabId, out _localNearRateProbeRoot, out _localFarRateProbeRoot) ||
+            !TryResolveRootPair(pm, _replayTierProbePrefabId, out _localNearReplayTierProbeRoot,
+                out _localFarReplayTierProbeRoot) ||
+            !TryResolveRootPair(pm, _inputProbePrefabId, out _localObservedInputProbeRoot, out _))
             return false;
 
-        float firstDistance = Mathf.Abs(first.position.x - _localAnchor.position.x);
-        float secondDistance = Mathf.Abs(second.position.x - _localAnchor.position.x);
-        _localNearProbe = firstDistance < secondDistance ? first : second;
-        _localFarProbe = ReferenceEquals(_localNearProbe, first) ? second : first;
-
-        var firstRate = InterestRateProbe.instances[0];
-        var secondRate = InterestRateProbe.instances[1];
-        if (!firstRate || !secondRate || Mathf.Abs(firstRate.position.x) < RootOffset * 0.5f ||
-            Mathf.Abs(secondRate.position.x) < RootOffset * 0.5f)
+        if (!RefreshLocalNearInstances(pm))
             return false;
 
-        float firstRateDistance = Mathf.Abs(firstRate.position.x - _localAnchor.position.x);
-        float secondRateDistance = Mathf.Abs(secondRate.position.x - _localAnchor.position.x);
-        _localNearRateProbe = firstRateDistance < secondRateDistance ? firstRate : secondRate;
-        _localFarRateProbe = ReferenceEquals(_localNearRateProbe, firstRate) ? secondRate : firstRate;
+        return _localObservedInputProbe.owner != pm.localPlayer;
+    }
 
-        var firstReplay = InterestReplayTierProbe.instances[0];
-        var secondReplay = InterestReplayTierProbe.instances[1];
-        if (!firstReplay || !secondReplay || Mathf.Abs(firstReplay.position.x) < RootOffset * 0.5f ||
-            Mathf.Abs(secondReplay.position.x) < RootOffset * 0.5f)
-            return false;
+    private bool TryResolveRootPair(PredictionManager pm, int prefabId,
+        out PredictedObjectID nearRoot, out PredictedObjectID farRoot)
+    {
+        nearRoot = default;
+        farRoot = default;
+        PredictedObjectID firstRoot = default;
+        PredictedObjectID secondRoot = default;
+        Vector3 firstPosition = default;
+        Vector3 secondPosition = default;
+        int found = 0;
+        var records = pm.hierarchy.currentState.spawnedPrefabs;
 
-        float firstReplayDistance = Mathf.Abs(firstReplay.position.x - _localAnchor.position.x);
-        float secondReplayDistance = Mathf.Abs(secondReplay.position.x - _localAnchor.position.x);
-        _localNearReplayTierProbe = firstReplayDistance < secondReplayDistance ? firstReplay : secondReplay;
-        _localFarReplayTierProbe = ReferenceEquals(_localNearReplayTierProbe, firstReplay) ? secondReplay : firstReplay;
-
-        _localObservedInputProbe = null;
-        for (var i = 0; i < InterestInputProbe.instances.Count; i++)
+        for (var i = 0; i < records.Count; i++)
         {
-            var inputProbe = InterestInputProbe.instances[i];
-            if (!inputProbe || inputProbe.owner == pm.localPlayer)
+            var record = records[i];
+            if (!record.isRootRecord || record.prefabId.value != prefabId)
                 continue;
-            if (Mathf.Abs(inputProbe.position.x - _localAnchor.position.x) <= 2f)
+
+            if (found == 0)
             {
-                _localObservedInputProbe = inputProbe;
-                break;
+                firstRoot = record.rootId;
+                firstPosition = record.spawnPosition;
             }
+            else if (found == 1)
+            {
+                secondRoot = record.rootId;
+                secondPosition = record.spawnPosition;
+            }
+            else
+            {
+                return false;
+            }
+
+            found++;
         }
 
-        return _localObservedInputProbe;
+        if (found != 2)
+            return false;
+
+        float firstDistance = Mathf.Abs(firstPosition.x - _localAnchor.position.x);
+        float secondDistance = Mathf.Abs(secondPosition.x - _localAnchor.position.x);
+        nearRoot = firstDistance < secondDistance ? firstRoot : secondRoot;
+        farRoot = nearRoot.Equals(firstRoot) ? secondRoot : firstRoot;
+        return true;
+    }
+
+    private bool RefreshLocalNearInstances(PredictionManager pm)
+    {
+        _localNearProbe = pm.hierarchy.GetComponent<InterestStateProbe>(_localNearProbeRoot);
+        _localNearRateProbe = pm.hierarchy.GetComponent<InterestRateProbe>(_localNearRateProbeRoot);
+        _localNearReplayTierProbe = pm.hierarchy.GetComponent<InterestReplayTierProbe>(_localNearReplayTierProbeRoot);
+        _localObservedInputProbe = pm.hierarchy.GetComponent<InterestInputProbe>(_localObservedInputProbeRoot);
+        return _localNearProbe && _localNearRateProbe && _localNearReplayTierProbe && _localObservedInputProbe;
     }
 
     private void SetAnchorDistance(float distance)
@@ -851,11 +873,11 @@ public sealed class InterestManagementScenario : Scenario
         return probe && pm.interest.TryGetTier(player, probe.rootObjectId, out var tier) && tier == expected;
     }
 
-    private static bool IsLocallyCulled(PredictionManager pm, PredictedIdentity probe)
+    private static bool IsLocallyCulled(PredictionManager pm, PredictedObjectID root)
     {
-        return probe && !probe.isRelevant &&
-               pm.interest.TryGetLocalRelevance(probe.rootObjectId, out var tier) &&
-               tier == NetworkLODProfile.CulledTier;
+        return pm.interest.TryGetLocalRelevance(root, out var tier) &&
+               tier == NetworkLODProfile.CulledTier &&
+               !pm.hierarchy.TryGetGameObject(root, out _);
     }
 
     private bool HasLocalNeighborhoodTier(PredictionManager pm, byte tier)
@@ -866,9 +888,9 @@ public sealed class InterestManagementScenario : Scenario
                GetLocalTier(pm, _localNearReplayTierProbe) == tier &&
                _localObservedInputProbe && _localObservedInputProbe.isRelevant &&
                GetLocalTier(pm, _localObservedInputProbe) == tier &&
-               IsLocallyCulled(pm, _localFarProbe) &&
-               IsLocallyCulled(pm, _localFarRateProbe) &&
-               IsLocallyCulled(pm, _localFarReplayTierProbe);
+               IsLocallyCulled(pm, _localFarProbeRoot) &&
+               IsLocallyCulled(pm, _localFarRateProbeRoot) &&
+               IsLocallyCulled(pm, _localFarReplayTierProbeRoot);
     }
 
     private bool HasLocalPolicies(PredictionPolicy unsupportedPolicy, PredictionPolicy replayPolicy)
@@ -894,11 +916,18 @@ public sealed class InterestManagementScenario : Scenario
                PredictionTestUtils.CountInstances(pm, _rateProbePrefabId) == 2 &&
                PredictionTestUtils.CountInstances(pm, _replayTierProbePrefabId) == 2 &&
                PredictionTestUtils.CountInstances(pm, _inputProbePrefabId) == 2 &&
-               InterestAnchorMarker.instances.Count == 2 &&
-               InterestStateProbe.instances.Count == 2 &&
-               InterestRateProbe.instances.Count == 2 &&
-               InterestReplayTierProbe.instances.Count == 2 &&
-               InterestInputProbe.instances.Count == 2;
+               HasRetainedRoot(pm, _localNearProbeRoot) &&
+               HasRetainedRoot(pm, _localFarProbeRoot) &&
+               HasRetainedRoot(pm, _localNearRateProbeRoot) &&
+               HasRetainedRoot(pm, _localFarRateProbeRoot) &&
+               HasRetainedRoot(pm, _localNearReplayTierProbeRoot) &&
+               HasRetainedRoot(pm, _localFarReplayTierProbeRoot) &&
+               HasRetainedRoot(pm, _localObservedInputProbeRoot);
+    }
+
+    private static bool HasRetainedRoot(PredictionManager pm, PredictedObjectID root)
+    {
+        return pm.hierarchy.TryGetRootId(root, out var retainedRoot) && retainedRoot.Equals(root);
     }
 
     private static async UniTask WaitServerTicks(PredictionManager pm, ulong ticks, ScenarioContext ctx)
@@ -1027,17 +1056,21 @@ public sealed class InterestManagementScenario : Scenario
 
     private string DescribeClient(PredictionManager pm)
     {
-        if (!_localNearProbe || !_localFarProbe || !_localNearRateProbe || !_localFarRateProbe ||
-            !_localObservedInputProbe)
+        if (!_localNearProbe || !_localNearRateProbe || !_localObservedInputProbe)
             return $"anchors={InterestAnchorMarker.instances.Count} probes={InterestStateProbe.instances.Count} " +
-                   $"rateProbes={InterestRateProbe.instances.Count} " +
-                   $"inputProbes={InterestInputProbe.instances.Count}";
+                   $"rateProbes={InterestRateProbe.instances.Count} inputProbes={InterestInputProbe.instances.Count} " +
+                   $"nearTier={GetLocalTier(pm, _localNearProbeRoot)} farTier={GetLocalTier(pm, _localFarProbeRoot)} " +
+                   $"nearLive={pm.hierarchy.TryGetGameObject(_localNearProbeRoot, out _)} " +
+                   $"farLive={pm.hierarchy.TryGetGameObject(_localFarProbeRoot, out _)}";
 
-        return $"nearRelevant={_localNearProbe.isRelevant} farRelevant={_localFarProbe.isRelevant} " +
-               $"nearTier={GetLocalTier(pm, _localNearProbe)} farTier={GetLocalTier(pm, _localFarProbe)} " +
+        return $"nearRelevant={_localNearProbe.isRelevant} farLive={pm.hierarchy.TryGetGameObject(_localFarProbeRoot, out _)} " +
+               $"nearTier={GetLocalTier(pm, _localNearProbeRoot)} farTier={GetLocalTier(pm, _localFarProbeRoot)} " +
                $"state={_localNearProbe.currentState.simulations} calls={_localNearProbe.localSimulationCalls} " +
                $"views={_localNearProbe.localViewUpdates} rateTier={GetLocalTier(pm, _localNearRateProbe)} " +
                $"ratePolicy={_localNearRateProbe.predictionPolicy} rateState={_localNearRateProbe.StateDigest()} " +
+               $"replayRelevant={_localNearReplayTierProbe.isRelevant} " +
+               $"replayTier={GetLocalTier(pm, _localNearReplayTierProbe)} " +
+               $"replayPolicy={_localNearReplayTierProbe.predictionPolicy} " +
                $"inputRelevant={_localObservedInputProbe.isRelevant} " +
                $"inputTier={GetLocalTier(pm, _localObservedInputProbe)} " +
                $"inputState={_localObservedInputProbe.StateDigest()}";
@@ -1050,7 +1083,12 @@ public sealed class InterestManagementScenario : Scenario
 
     private static int GetLocalTier(PredictionManager pm, PredictedIdentity probe)
     {
-        return pm.interest.TryGetLocalRelevance(probe.rootObjectId, out var tier) ? tier : 0;
+        return probe ? GetLocalTier(pm, probe.rootObjectId) : -1;
+    }
+
+    private static int GetLocalTier(PredictionManager pm, PredictedObjectID root)
+    {
+        return pm.interest.TryGetLocalRelevance(root, out var tier) ? tier : 0;
     }
 
     private string BuildDigest(PredictionManager pm, InterestStateProbe probe, InterestRateProbe rateProbe)
@@ -1489,6 +1527,7 @@ public sealed class InterestRateProbe : PredictedIdentity<InterestRateProbe.Prob
 public sealed class InterestReplayTierProbe : PredictedRigidbody
 {
     public static readonly List<InterestReplayTierProbe> instances = new();
+    private static readonly HashSet<PredictedObjectID> _transitionedRoots = new();
 
     public bool transitionAttempted { get; private set; }
     public bool transitionDuringReplay { get; private set; }
@@ -1501,6 +1540,7 @@ public sealed class InterestReplayTierProbe : PredictedRigidbody
     public static void ResetInstances()
     {
         instances.Clear();
+        _transitionedRoots.Clear();
     }
 
     protected override void LateAwake()
@@ -1519,10 +1559,12 @@ public sealed class InterestReplayTierProbe : PredictedRigidbody
     {
         base.Simulate(ref state, delta);
 
-        if (transitionAttempted || !predictionManager || predictionManager.cachedIsServer ||
+        if (transitionAttempted || _transitionedRoots.Contains(rootObjectId) || !predictionManager ||
+            predictionManager.cachedIsServer ||
             !predictionManager.isReplaying || !isRelevant)
             return;
 
+        _transitionedRoots.Add(rootObjectId);
         transitionAttempted = true;
         transitionDuringReplay = predictionManager.isReplaying;
         bool wasKinematic = rb.isKinematic;

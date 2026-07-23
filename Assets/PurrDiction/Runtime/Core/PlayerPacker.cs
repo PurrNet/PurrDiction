@@ -155,14 +155,14 @@ namespace PurrNet.Prediction
     internal sealed class InterestControlState
     {
         readonly Dictionary<PredictedObjectID, byte> _deliveredTiers = new ();
-        readonly Dictionary<PredictedObjectID, ulong> _absoluteUntilAck = new ();
+        readonly Dictionary<PredictedObjectID, ulong> _absoluteUntilConfirmed = new ();
         readonly HashSet<PredictedObjectID> _baselineResets = new ();
         readonly List<InterestTierChange> _pending = new (8);
         readonly List<InterestTierChange> _prepared = new (8);
 
         public int count => _prepared.Count;
 
-        public bool hasUnackedReentries => _absoluteUntilAck.Count > 0;
+        public bool hasUnconfirmedReentries => _absoluteUntilConfirmed.Count > 0;
 
         public InterestTierChange this[int index] => _prepared[index];
 
@@ -199,30 +199,32 @@ namespace PurrNet.Prediction
 
                 if (deliveredTier == NetworkLODProfile.CulledTier &&
                     change.tier != NetworkLODProfile.CulledTier &&
-                    !_absoluteUntilAck.ContainsKey(change.root))
+                    !_absoluteUntilConfirmed.ContainsKey(change.root))
                 {
-                    _absoluteUntilAck.Add(change.root, sentTick);
+                    _absoluteUntilConfirmed.Add(change.root, sentTick);
                     _baselineResets.Add(change.root);
                 }
                 else if (change.tier == NetworkLODProfile.CulledTier)
                 {
-                    _absoluteUntilAck.Remove(change.root);
+                    _absoluteUntilConfirmed.Remove(change.root);
                     _baselineResets.Remove(change.root);
                 }
             }
         }
 
-        public bool RequiresAbsolute(PredictedObjectID root, ulong ackedServerTick)
+        public bool RequiresAbsolute(PredictedObjectID root)
         {
-            if (!_absoluteUntilAck.TryGetValue(root, out var sentTick))
+            return _absoluteUntilConfirmed.ContainsKey(root);
+        }
+
+        public bool ConfirmReentry(PredictedObjectID root, ulong serverTick)
+        {
+            if (!_absoluteUntilConfirmed.TryGetValue(root, out var sentTick) || serverTick < sentTick)
                 return false;
 
-            if (ackedServerTick < sentTick)
-                return true;
-
-            _absoluteUntilAck.Remove(root);
+            _absoluteUntilConfirmed.Remove(root);
             _baselineResets.Remove(root);
-            return false;
+            return true;
         }
 
         public bool ConsumeBaselineReset(PredictedObjectID root)
@@ -247,7 +249,7 @@ namespace PurrNet.Prediction
         public void Remove(PredictedObjectID root)
         {
             _deliveredTiers.Remove(root);
-            _absoluteUntilAck.Remove(root);
+            _absoluteUntilConfirmed.Remove(root);
             _baselineResets.Remove(root);
 
             for (var i = _pending.Count - 1; i >= 0; i--)
@@ -277,7 +279,7 @@ namespace PurrNet.Prediction
         public void Clear()
         {
             _deliveredTiers.Clear();
-            _absoluteUntilAck.Clear();
+            _absoluteUntilConfirmed.Clear();
             _baselineResets.Clear();
             _pending.Clear();
             _prepared.Clear();
