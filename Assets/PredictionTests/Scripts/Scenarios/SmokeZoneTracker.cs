@@ -62,24 +62,18 @@ public class SmokeZoneTracker : PredictedIdentity<SmokeZoneTracker.ZoneState>
         instances.Remove(this);
     }
 
-    private void OnPredictedTriggerEnter(GameObject other)
+    private void OnPredictedTriggerEnter(GameObject other, PredictedComponentID otherId)
     {
-        if (!PredictionManager.TryGetClosestPredictedID(other, out var pid))
-            return;
-
         enterFires++;
-        var id = pid.objectId;
+        var id = otherId.objectId;
         if (!currentState.insideIds.Contains(id))
             currentState.insideIds.Add(id);
     }
 
-    private void OnPredictedTriggerExit(GameObject other)
+    private void OnPredictedTriggerExit(GameObject other, PredictedComponentID otherId)
     {
-        if (!PredictionManager.TryGetClosestPredictedID(other, out var pid))
-            return;
-
         exitFires++;
-        var id = pid.objectId;
+        var id = otherId.objectId;
         if (currentState.insideIds.Contains(id))
             currentState.insideIds.Remove(id);
     }

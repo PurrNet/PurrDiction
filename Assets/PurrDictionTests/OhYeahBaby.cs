@@ -19,9 +19,11 @@ namespace PurrNet.Prediction.Tests
             _rb.onTriggerExit -= OnPTriggerExit;
         }
 
-        private void OnPTriggerEnter(GameObject other)
+        private void OnPTriggerEnter(GameObject other, PredictedComponentID otherId)
         {
             if (!isServer)
+                return;
+            if (!other)
                 return;
             if (other.TryGetComponent<SimpleCC>(out var controller))
             {
@@ -34,9 +36,11 @@ namespace PurrNet.Prediction.Tests
             }
         }
 
-        private void OnPTriggerExit(GameObject other)
+        private void OnPTriggerExit(GameObject other, PredictedComponentID otherId)
         {
             if (!isServer)
+                return;
+            if (!other)
                 return;
             if (other.TryGetComponent<SimpleCC>(out var controller))
             {

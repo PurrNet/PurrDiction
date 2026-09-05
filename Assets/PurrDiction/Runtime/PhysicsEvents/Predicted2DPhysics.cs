@@ -121,20 +121,21 @@ namespace PurrNet.Prediction
             if (ev.me.TryGetIdentity<PredictedRigidbody2D>(predictionManager, out var me))
             {
                 var otherGo = ev.other.GetGameObject(predictionManager);
-                if (!otherGo && ev.other.objectId.instanceId.value != 0)
+                if (!otherGo && ev.type != PhysicsEventType.Exit &&
+                    ev.other.objectId.instanceId.value != 0)
                     return;
                 if (ev.isTrigger)
                 {
                     switch (ev.type)
                     {
                         case PhysicsEventType.Enter:
-                            me.RaiseTriggerEnter(otherGo);
+                            me.RaiseTriggerEnter(otherGo, ev.other);
                             break;
                         case PhysicsEventType.Exit:
-                            me.RaiseTriggerExit(otherGo);
+                            me.RaiseTriggerExit(otherGo, ev.other);
                             break;
                         case PhysicsEventType.Stay:
-                            me.RaiseTriggerStay(otherGo);
+                            me.RaiseTriggerStay(otherGo, ev.other);
                             break;
                         default: throw new ArgumentOutOfRangeException();
                     }
@@ -144,13 +145,13 @@ namespace PurrNet.Prediction
                     switch (ev.type)
                     {
                         case PhysicsEventType.Enter:
-                            me.RaiseCollisionEnter(otherGo, ev.contacts);
+                            me.RaiseCollisionEnter(otherGo, ev.other, ev.contacts);
                             break;
                         case PhysicsEventType.Exit:
-                            me.RaiseCollisionExit(otherGo, ev.contacts);
+                            me.RaiseCollisionExit(otherGo, ev.other, ev.contacts);
                             break;
                         case PhysicsEventType.Stay:
-                            me.RaiseCollisionStay(otherGo, ev.contacts);
+                            me.RaiseCollisionStay(otherGo, ev.other, ev.contacts);
                             break;
                         default: throw new ArgumentOutOfRangeException();
                     }

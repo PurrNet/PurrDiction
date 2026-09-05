@@ -73,7 +73,8 @@ namespace PurrNet.Prediction.Tests.Editor
             }
             finally
             {
-                Object.DestroyImmediate(identityObject);
+                if (identityObject)
+                    Object.DestroyImmediate(identityObject);
                 Object.DestroyImmediate(managerObject);
             }
         }
@@ -116,5 +117,6 @@ namespace PurrNet.Prediction.Tests.Editor
             Assert.That(field, Is.Not.Null, $"missing field {name}");
             field.SetValue(manager, value);
         }
+
     }
 }
