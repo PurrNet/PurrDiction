@@ -58,7 +58,9 @@ namespace PurrNet.Prediction
 
             if (ev.me.TryGetIdentity<IPredictedPhysicsCallbacks>(predictionManager, out var me))
             {
-                var otherGo = ev.other.GetGameObject(predictionManager);
+                var otherGo = ev.type == PhysicsEventType.Exit
+                    ? predictionManager.GetGameObjectIncludingDeleting(ev.other)
+                    : ev.other.GetGameObject(predictionManager);
                 if (!otherGo && ev.other.objectId.instanceId.value != 0)
                     return;
                 if (ev.isTrigger)
