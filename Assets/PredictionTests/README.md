@@ -119,6 +119,95 @@ with delete/respawn counts, and the client-averaged `framesPerSecond` (server-fr
 per second on each pure client). Other runner controls include `-slbSeconds`, `-slbInputEvery`,
 `-slbPacketLoss`, `-slbSkipBuild`, and `-slbPlayer`.
 
+## FULL prediction physics benchmark
+
+Pass `-fullPredictionPhysicsBenchmark` to run only bootstrap and a dedicated-server physics
+workload. Launch one `-role server -count N` process and N separate `-role client -count N`
+processes with identical workload arguments and individual `-results` / `-fpMetrics` paths.
+The normal transport, latency, loss, port, and `-tickRate` arguments still apply.
+
+- `-fpBodiesPerPlayer 8`: owned rigidbodies per player.
+- `-fpSharedBodies 16`: additional passive shared rigidbodies.
+- `-fpTotalBodies N`: optional fixed total population; overrides the computed total and distributes
+  `N - sharedBodies` owned bodies across all players. This must leave at least one body per player.
+- `-fpSeconds 10`: measured simulation duration.
+- `-fpSettleSeconds 3`: settling duration before the shared future measurement window (with a
+  further three-second scheduling lead).
+- `-fpReconcileMs 0`: client reconciliation cadence; zero preserves normal reconciliation.
+  Active clients normally reconcile once in Update after all catch-up ticks and receive polls.
+  Positive values defer client batches for comparison while retaining FULL prediction.
+  A tiny positive interval such as `0.001` diagnoses a one-batch-per-render-frame limit:
+  Unity's unscaled frame time is constant within that frame. This historical probe is now
+  redundant for active clients, whose normal scheduling already coalesces corrections per frame.
+- `-fpEventMask 0`: production predicted physics event mask (0..127); defaults to no replicated
+  contact events. Native contact counters still validate the colliding workload.
+- `-fpMetrics path.json`: per-process detailed benchmark output, separate from scenario results.
+
+Every body uses the production `PredictedRigidbody` and `PredictedTransform`, explicitly configured
+for `FullPrediction` with `Purrfect` state accuracy. Only Unity 3D physics runs. Owned bodies generate
+integer inputs from simulation tick, owner ID and object ID, send them through normal input history,
+perform one grounding raycast, and apply steering forces inside a floor-and-wall arena. Shared
+props are passive and collide with the controlled bodies. Simulation does not use wall-clock
+randomness, logging or managed allocations in its workload callbacks.
+
+A readiness barrier precedes a shared `[startTick, endTick)` measurement window. Outputs include
+actual and scheduled ticks, body counts, native contact callback/contact-point counts, contacts
+between bodies, grounding queries, categorized prediction/physics/frame telemetry, sampled frame
+counts/bytes and maximum observed server acknowledgement lag. The
+scenario fails if the window is missed, a body is not dynamic FULL prediction, or the sampled
+workload has no contacts between bodies or no gameplay grounding queries.
+
+Telemetry stops before validation. Peers record which authoritative ticks actually applied every
+benchmark body (excluding gap replay), then select the newest tick common to all peers from a
+one-second window. A later verified tick alone does not prove that an earlier UDP frame arrived.
+Reports include the requested cutoff, whether it applied locally, each peer's candidates, and the
+selected tick. Every peer reads its actual verified pose/motion histories at that selected tick;
+the server checks all client results. `verifiedStateMatch` checks state delivery at the same tick,
+including body IDs, positions, rotations, velocities, sleeping, gravity and kinematic flags. It does
+not claim that speculative physics trajectories are deterministic or equal across peers. Reflection
+used to inspect the production histories is confined to this validation stage.
+The benchmark also fails if an active client performs more than one correction batch within a
+complete measured render frame, exercising the catch-up scheduling invariant under real load.
+
+Run 1, 2 and 4 clients with the default body formula to measure combined player/object growth,
+then repeat with the same `-fpTotalBodies` to separate connection growth from physics population.
+Compare cadence runs using the same build, workload and network conditions; timing is comparative
+data, not a machine-independent pass/fail threshold.
+
+Build a Development Mono player with the editor command-line entry point
+`PurrNet.Prediction.Benchmarks.Editor.FullPredictionBenchmarkBuild.BuildWindowsDev`, passing
+`-fpPlayerPath <absolute-output.exe>`. The root `run-full-prediction-bench.ps1` launches sequential
+dedicated-server cases with hidden clients, collects results, and records hardware, build metadata
+and binary/managed-assembly hashes. For example:
+
+```powershell
+./run-full-prediction-bench.ps1 -ClientCounts 1,2,4 -LatencyMs 0,50 -ReconcileMs 0 -Repeats 2
+./run-full-prediction-bench.ps1 -ClientCounts 4 -LatencyMs 50 -ReconcileMs 0,33.333 -Repeats 3
+./run-full-prediction-bench.ps1 -Scenario Regression -ClientCounts 4 -LatencyMs 50 -ReconcileMs 0,33.333 -RunTimeoutSeconds 240
+./run-full-prediction-bench.ps1 -Scenario Trail -ClientCounts 4 -LatencyMs 50 -ReconcileMs 0 -RunTimeoutSeconds 240
+python analyze-full-prediction-bench.py <physics-run-directory> --output <summary-directory>
+```
+
+With latency configured at both endpoints, the pinned transport's `50` setting adds nominally
+50 ms one way (100 ms RTT), plus scheduling. All processes share the same machine; avoid other
+heavy work while measuring. Telemetry uses elapsed Stopwatch spans, which include worker waits
+and process descheduling. It is not a measurement of processor utilization or rendered FPS.
+The analyzer averages clients within each case before comparing independent repeats. Input
+trajectories depend on absolute simulation tick and owner assignment, so repeat runs and fixed
+population controls do not guarantee identical contact configurations.
+
+`PredictionPerformanceTelemetry.Begin(world)` and `End()` can also bracket a representative
+workload in another project. Collection is disabled until `Begin`. The experimental global
+`reconcileIntervalSeconds` defaults to zero; a positive value delays corrections and verified
+callbacks. `End()` stops collection but leaves that cadence active for subsequent validation.
+
+`-fpReconcileMs` also applies outside the benchmark. Use `-fullPredictionCadenceRegressionOnly`
+to select bootstrap, bounce events, deterministic alignment with the timed hierarchy spawner,
+predicted pawns, the deterministic gauntlet and projectile chains from the existing test scene,
+then compare default cadence and a positive interval. The alignment setup initializes the timed
+spawner used by the later shared-tick digest gates. This
+keeps event/topology correctness checks separate from the physics timing workload.
+
 ## Visibility microbenchmarks
 
 Use `Tools/PurrDiction/Analysis/Run Visibility Benchmarks` to measure the per-player visibility

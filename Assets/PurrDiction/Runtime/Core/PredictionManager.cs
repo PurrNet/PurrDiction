@@ -416,6 +416,7 @@ namespace PurrNet.Prediction
             localTick = 1;
             localTickInContext = 1;
             _verifiedServerTick = 0;
+            _lastPerformanceReconcileTime = double.NegativeInfinity;
             _ackedServerTick = 0;
             _recordDecodeQuarantine.Clear();
             _recordFailureLogAt.Clear();
@@ -736,6 +737,7 @@ namespace PurrNet.Prediction
             ReadAddressedStateRecords(frame, stateTick, 0, serverTick, true, true);
 
             SyncTransforms();
+            PredictionPerformanceTelemetry.StateRestored(this);
         }
 
         readonly List<PlayerPacker> _clientFrames = new (16);
@@ -756,6 +758,7 @@ namespace PurrNet.Prediction
                 return;
             }
 
+            using var performance = PredictionPerformanceTelemetry.BeginPass(this, PredictionPassKind.Forward);
             var myPlayer = isSpawned ? localPlayer ?? default : default;
             var cachedIsClient = isClient;
 
@@ -810,6 +813,7 @@ namespace PurrNet.Prediction
             if (time)
                 delta *= time.timeScale;
 
+            long prepareStarted = performance.Timestamp();
             using (SimulateInputsMarker.Auto())
             {
                 try
@@ -823,6 +827,8 @@ namespace PurrNet.Prediction
                 }
             }
 
+            performance.PrepareDone(prepareStarted);
+            long simulateStarted = performance.Timestamp();
             var simulateMarker = SimulateMarker.Auto();
             try
             {
@@ -838,8 +844,10 @@ namespace PurrNet.Prediction
                 simulateMarker.Dispose();
             }
 
-            DoPhysicsPass();
+            performance.SimulateDone(simulateStarted);
+            DoPhysicsPass(performance);
 
+            long lateStarted = performance.Timestamp();
             var lateSimulateMarker = LateSimulateMarker.Auto();
             try
             {
@@ -854,6 +862,7 @@ namespace PurrNet.Prediction
             {
                 lateSimulateMarker.Dispose();
             }
+            performance.LateDone(lateStarted);
 
             using (SaveHistoryMarker.Auto())
             {
@@ -1720,6 +1729,7 @@ namespace PurrNet.Prediction
                     system.RunRollback(tick);
             }
             SyncTransforms();
+            PredictionPerformanceTelemetry.StateRestored(this);
         }
 
         private void WriteEventHandles()
@@ -1970,7 +1980,7 @@ namespace PurrNet.Prediction
         /// </summary>
         public event Action onAfterPhysicsPass;
 
-        private void DoPhysicsPass()
+        private void DoPhysicsPass(PredictionPerformanceTelemetry.PassScope performance)
         {
             var delta = tickDelta;
             if (time)
@@ -1986,6 +1996,7 @@ namespace PurrNet.Prediction
             }
 
             isInPhysicsPass = true;
+            long physicsStarted = performance.Timestamp();
             try
             {
 #if UNITY_PHYSICS_2D
@@ -2007,6 +2018,7 @@ namespace PurrNet.Prediction
             }
             finally
             {
+                performance.PhysicsDone(physicsStarted);
                 isInPhysicsPass = false;
 
                 try
@@ -2137,7 +2149,7 @@ namespace PurrNet.Prediction
                 RollbackAllToVerified(_verifiedServerTick + 1);
 
                 for (ulong tick = _verifiedServerTick + 1; tick < serverTick; tick++)
-                    SimulateFrame(tick, HistorySaveMode.Full);
+                    SimulateFrame(tick, HistorySaveMode.Full, PredictionPassKind.GapCatchup);
 
                 // Applying the verified hierarchy now removes leavers only after their gap
                 // inputs were consumed, and creates entrants before their addressed state.
@@ -2176,6 +2188,7 @@ namespace PurrNet.Prediction
                 true);
 
             SyncTransforms();
+            PredictionPerformanceTelemetry.StateRestored(this);
         }
 
         private void SyncTransforms()
@@ -2448,15 +2461,21 @@ namespace PurrNet.Prediction
 
         private void OnPostTick()
         {
-            if (cachedIsServer || _deltas.Count == 0)
+            // Tick catch-up polls the transport between ticks. Replaying here would rebuild
+            // the speculative future for each newly received batch within the same frame.
+            // Active clients instead drain once in Update, after the network's tick loop.
+            // Disabled managers remain subscribed to ticks but do not receive Unity Update.
+            if (!cachedIsServer && _deltas.Count > 0 && !isActiveAndEnabled)
             {
-                if (isClient)
-                    UpdateInterpolation(false);
-                TickBandwidthProfiler.MarkEndOfTick();
+                ProcessQueuedFrames(false);
                 return;
             }
 
-            ProcessQueuedFrames(false);
+            // Capture the prediction before correction so the render drain can refresh the
+            // pending view sample without interpreting ordinary movement as rollback error.
+            if (isClient)
+                UpdateInterpolation(false);
+            TickBandwidthProfiler.MarkEndOfTick();
         }
 
         internal static bool ShouldApplyQueuedFramesInRenderPhase(
@@ -2509,8 +2528,8 @@ namespace PurrNet.Prediction
         public ulong renderPhaseFrameAppliesTotal { get; private set; }
 
         /// <summary>
-        /// Count of server-frame batches applied from the post-tick path since the session
-        /// started. Diagnostic only.
+        /// Count of server-frame batches applied from the post-tick fallback for disabled
+        /// managers since the session started. Active clients reconcile in Update instead.
         /// </summary>
         public ulong tickPhaseFrameAppliesTotal { get; private set; }
 
@@ -2520,8 +2539,36 @@ namespace PurrNet.Prediction
         /// </summary>
         public int maxFrameApplyAgeFrames { get; private set; }
 
+        private double _lastPerformanceReconcileTime = double.NegativeInfinity;
+
+        internal static bool ShouldDeferReconciliation(
+            bool server, ulong verifiedTick, double intervalSeconds, double now, double lastBatchTime)
+        {
+            return !server && verifiedTick > 0 && intervalSeconds > 0 &&
+                   now - lastBatchTime < intervalSeconds;
+        }
+
         private void ProcessQueuedFrames(bool renderPhase)
         {
+            double interval = PredictionPerformanceTelemetry.reconcileIntervalSeconds;
+            if (interval > 0)
+            {
+                double now = Time.unscaledTimeAsDouble;
+                if (ShouldDeferReconciliation(cachedIsServer, _verifiedServerTick,
+                        interval, now, _lastPerformanceReconcileTime))
+                {
+                    PredictionPerformanceTelemetry.CadenceDeferred(this);
+                    if (!renderPhase)
+                    {
+                        UpdateInterpolation(false);
+                        TickBandwidthProfiler.MarkEndOfTick();
+                    }
+                    return;
+                }
+                _lastPerformanceReconcileTime = now;
+            }
+
+            using var performance = PredictionPerformanceTelemetry.BeginBatch(this, _deltas.Count);
             onStartingToRollback?.Invoke();
 
             if (!renderPhase)
@@ -2737,6 +2784,7 @@ namespace PurrNet.Prediction
 
             _speculativeRelayLocks.Clear();
             SyncTransforms();
+            PredictionPerformanceTelemetry.StateRestored(this);
         }
 
         private void ClearSpeculativeRelayLocks()
@@ -2838,8 +2886,12 @@ namespace PurrNet.Prediction
                 SimulateFrame(simTick, saveMode);
         }
 
-        private void SimulateFrame(ulong verifiedTick, HistorySaveMode saveMode)
+        private void SimulateFrame(ulong verifiedTick, HistorySaveMode saveMode,
+            PredictionPassKind passKind = PredictionPassKind.SpeculativeReplay)
         {
+            if (saveMode == HistorySaveMode.VerifiedFrame)
+                passKind = PredictionPassKind.Verified;
+            using var performance = PredictionPerformanceTelemetry.BeginPass(this, passKind);
             var delta = tickDelta;
             if (time)
                 delta *= time.timeScale;
@@ -2867,6 +2919,7 @@ namespace PurrNet.Prediction
                 }
             }
 
+            long prepareStarted = performance.Timestamp();
             using (SimulateInputsMarker.Auto())
             {
                 try
@@ -2880,6 +2933,8 @@ namespace PurrNet.Prediction
                 }
             }
 
+            performance.PrepareDone(prepareStarted);
+            long simulateStarted = performance.Timestamp();
             var simulateMarker = SimulateMarker.Auto();
             try
             {
@@ -2895,8 +2950,10 @@ namespace PurrNet.Prediction
                 simulateMarker.Dispose();
             }
 
-            DoPhysicsPass();
+            performance.SimulateDone(simulateStarted);
+            DoPhysicsPass(performance);
 
+            long lateStarted = performance.Timestamp();
             var lateSimulateMarker = LateSimulateMarker.Auto();
             try
             {
@@ -2911,6 +2968,7 @@ namespace PurrNet.Prediction
             {
                 lateSimulateMarker.Dispose();
             }
+            performance.LateDone(lateStarted);
 
             if (saveMode is HistorySaveMode.Full or HistorySaveMode.VerifiedFrame)
             {
@@ -3180,10 +3238,14 @@ namespace PurrNet.Prediction
 
         private void Update()
         {
+            PredictionPerformanceTelemetry.ObserveFrame(this);
             if (isSpawned && isClient && !isServer)
             {
                 ResendCachedInput();
 
+                // NetworkManager (-999) has finished all catch-up ticks and its final receive
+                // poll before this Update (1000). Apply every queued verified frame, then
+                // rebuild the speculative future once before either view update mode runs.
                 if (ShouldApplyQueuedFramesInRenderPhase(localTick, _deltas.Count, isSimulating, isReplaying))
                     ProcessQueuedFrames(true);
             }

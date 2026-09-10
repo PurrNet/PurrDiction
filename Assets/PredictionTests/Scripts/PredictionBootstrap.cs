@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -68,6 +69,34 @@ public class PredictionBootstrap : Scenario
         {
             ConfigureTransport();
             ConfigureAutoStartFlags();
+        }
+
+        if (CommandLineUtils.HasFlag("-fullPredictionPhysicsBenchmark"))
+        {
+            _scenarios = new Scenario[]
+            {
+                this,
+                gameObject.AddComponent<FullPredictionPhysicsBenchmarkScenario>()
+            };
+            _results = new ScenarioDetails?[_scenarios.Length];
+            return;
+        }
+
+        if (CommandLineUtils.HasFlag("-fullPredictionCadenceRegressionOnly"))
+        {
+            // Reuse serialized scene scenarios so their rig/spawner references remain intact.
+            _scenarios = new Scenario[]
+            {
+                this,
+                GetComponentInChildren<BounceScenario>(true) ?? gameObject.AddComponent<BounceScenario>(),
+                // Initializes the timed spawner used by later shared-tick digest gates.
+                GetComponentInChildren<DeterministicAlignmentScenario>(true) ?? gameObject.AddComponent<DeterministicAlignmentScenario>(),
+                GetComponentInChildren<PredictedPawnScenario>(true) ?? gameObject.AddComponent<PredictedPawnScenario>(),
+                GetComponentInChildren<DeterministicGauntletScenario>(true) ?? gameObject.AddComponent<DeterministicGauntletScenario>(),
+                GetComponentInChildren<ProjectileChainScenario>(true) ?? gameObject.AddComponent<ProjectileChainScenario>()
+            };
+            _results = new ScenarioDetails?[_scenarios.Length];
+            return;
         }
 
         if (CommandLineUtils.HasFlag("-serverLoadBenchmark"))
@@ -293,6 +322,19 @@ public class PredictionBootstrap : Scenario
         }
 
         CommandLineUtils.TryGetArgument("-results", out _resultsPath);
+
+        if (CommandLineUtils.TryGetArgument("-fpReconcileMs", out var reconcileMs))
+        {
+            if (!double.TryParse(reconcileMs, NumberStyles.Float, CultureInfo.InvariantCulture,
+                    out var parsedReconcileMs) || double.IsNaN(parsedReconcileMs) ||
+                double.IsInfinity(parsedReconcileMs) || parsedReconcileMs < 0)
+            {
+                Debug.LogError($"Could not parse nonnegative -fpReconcileMs value '{reconcileMs}'");
+                Application.Quit(-1);
+                return;
+            }
+            PredictionPerformanceTelemetry.reconcileIntervalSeconds = parsedReconcileMs / 1000.0;
+        }
 
         if (CommandLineUtils.TryGetArgument("-connectTimeout", out var connectTimeout)
             && float.TryParse(connectTimeout, out var parsedConnectTimeout))
