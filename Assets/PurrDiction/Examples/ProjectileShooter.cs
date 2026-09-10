@@ -35,7 +35,7 @@ namespace PurrDiction.Examples
 
             projectile.AddImpulse(transform.forward * _initialForce);
             if(projectile.isTrigger)
-                projectile.onTriggerEnter += (other) => OnProjectileTriggerEnter(projectile, other);
+                projectile.onTriggerEnter += (other, _) => OnProjectileTriggerEnter(projectile, other);
         }
 
         private void OnProjectileTriggerEnter(PredictedProjectile3D projectile, GameObject other)

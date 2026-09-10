@@ -15,8 +15,9 @@ namespace PurrNet.Prediction
         [SerializeField, Min(0f)] private float _softVelocityCorrectionRate = 8f;
 
 #if UNITY_PHYSICS_2D
-        public delegate void OnCollisionDelegate(GameObject other, DisposableList<Physics2DContactPoint> evContacts);
-        public delegate void OnTriggerDelegate(GameObject other);
+        public delegate void OnCollisionDelegate(GameObject other, PredictedComponentID otherId,
+            DisposableList<Physics2DContactPoint> evContacts);
+        public delegate void OnTriggerDelegate(GameObject other, PredictedComponentID otherId);
 
         [SerializeField] private Rigidbody2D _rigidbody;
         [SerializeField] private PhysicsEventMask _eventMask = (PhysicsEventMask)0x3F;
@@ -503,25 +504,31 @@ namespace PurrNet.Prediction
             predictionManager.physics2d.RegisterEvent(PhysicsEventType.Stay, this, other);
         }
 
-        public void RaiseTriggerEnter(GameObject other) => onTriggerEnter?.Invoke(other);
+        public void RaiseTriggerEnter(GameObject other, PredictedComponentID otherId)
+            => onTriggerEnter?.Invoke(other, otherId);
 
-        public void RaiseTriggerExit(GameObject other) => onTriggerExit?.Invoke(other);
+        public void RaiseTriggerExit(GameObject other, PredictedComponentID otherId)
+            => onTriggerExit?.Invoke(other, otherId);
 
-        public void RaiseTriggerStay(GameObject other) => onTriggerStay?.Invoke(other);
+        public void RaiseTriggerStay(GameObject other, PredictedComponentID otherId)
+            => onTriggerStay?.Invoke(other, otherId);
 
-        public void RaiseCollisionEnter(GameObject other, DisposableList<Physics2DContactPoint> evContacts)
+        public void RaiseCollisionEnter(GameObject other, PredictedComponentID otherId,
+            DisposableList<Physics2DContactPoint> evContacts)
         {
-            onCollisionEnter?.Invoke(other, evContacts);
+            onCollisionEnter?.Invoke(other, otherId, evContacts);
         }
 
-        public void RaiseCollisionExit(GameObject other, DisposableList<Physics2DContactPoint> evContacts)
+        public void RaiseCollisionExit(GameObject other, PredictedComponentID otherId,
+            DisposableList<Physics2DContactPoint> evContacts)
         {
-            onCollisionExit?.Invoke(other, evContacts);
+            onCollisionExit?.Invoke(other, otherId, evContacts);
         }
 
-        public void RaiseCollisionStay(GameObject other, DisposableList<Physics2DContactPoint> evContacts)
+        public void RaiseCollisionStay(GameObject other, PredictedComponentID otherId,
+            DisposableList<Physics2DContactPoint> evContacts)
         {
-            onCollisionStay?.Invoke(other, evContacts);
+            onCollisionStay?.Invoke(other, otherId, evContacts);
         }
 
         public Vector2 position

@@ -17,17 +17,26 @@ namespace PurrNet.Prediction
 
         public event OnControllerColliderHitDelegate onControllerColliderHit;
 
-        public void RaiseTriggerEnter(GameObject other) => onTriggerEnter?.Invoke(other);
+        public void RaiseTriggerEnter(GameObject other, PredictedComponentID otherId)
+            => onTriggerEnter?.Invoke(other, otherId);
 
-        public void RaiseTriggerExit(GameObject other) => onTriggerExit?.Invoke(other);
+        public void RaiseTriggerExit(GameObject other, PredictedComponentID otherId)
+            => onTriggerExit?.Invoke(other, otherId);
 
-        public void RaiseTriggerStay(GameObject other) => onTriggerStay?.Invoke(other);
+        public void RaiseTriggerStay(GameObject other, PredictedComponentID otherId)
+            => onTriggerStay?.Invoke(other, otherId);
 
-        public void RaiseCollisionEnter(GameObject other, PhysicsCollision evContacts) => onCollisionEnter?.Invoke(other, evContacts);
+        public void RaiseCollisionEnter(GameObject other, PredictedComponentID otherId,
+            PhysicsCollision evContacts)
+            => onCollisionEnter?.Invoke(other, otherId, evContacts);
 
-        public void RaiseCollisionExit(GameObject other, PhysicsCollision evContacts) => onCollisionExit?.Invoke(other, evContacts);
+        public void RaiseCollisionExit(GameObject other, PredictedComponentID otherId,
+            PhysicsCollision evContacts)
+            => onCollisionExit?.Invoke(other, otherId, evContacts);
 
-        public void RaiseCollisionStay(GameObject other, PhysicsCollision evContacts) => onCollisionStay?.Invoke(other, evContacts);
+        public void RaiseCollisionStay(GameObject other, PredictedComponentID otherId,
+            PhysicsCollision evContacts)
+            => onCollisionStay?.Invoke(other, otherId, evContacts);
 
         public void RaiseControllerColliderHit(GameObject other, PhysicsControllerHit hit)
             => onControllerColliderHit?.Invoke(other, hit);

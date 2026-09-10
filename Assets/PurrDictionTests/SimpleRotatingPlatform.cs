@@ -55,12 +55,13 @@ namespace PurrNet.Prediction.Tests
             predictionManager.hierarchy.Delete(gameObject);*/
         }
 
-        private void OnUnityTriggerEnter(GameObject other)
+        private void OnUnityTriggerEnter(GameObject other, PredictedComponentID otherId)
         {
             PurrLogger.Log($"Triggered with {other} on {gameObject.name}");
         }
 
-        private void OnUnityCollisionEnter(GameObject other, PhysicsCollision collision)
+        private void OnUnityCollisionEnter(GameObject other, PredictedComponentID otherId,
+            PhysicsCollision collision)
         {
             PurrLogger.Log($"Collided with {other} on {gameObject.name}");
             currentState.collisionCount += 1;

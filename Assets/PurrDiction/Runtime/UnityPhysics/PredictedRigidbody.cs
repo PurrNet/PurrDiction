@@ -26,8 +26,9 @@ namespace PurrNet.Prediction
         Low = 2
     }
 
-    public delegate void OnCollisionDelegate(GameObject other, PhysicsCollision physicsEvent);
-    public delegate void OnTriggerDelegate(GameObject other);
+    public delegate void OnCollisionDelegate(GameObject other, PredictedComponentID otherId,
+        PhysicsCollision physicsEvent);
+    public delegate void OnTriggerDelegate(GameObject other, PredictedComponentID otherId);
     public delegate void OnControllerColliderHitDelegate(GameObject other, PhysicsControllerHit physicsEvent);
 
 #if UNITY_PHYSICS_3D
@@ -746,62 +747,68 @@ namespace PurrNet.Prediction
         }
 
 
-        public void RaiseTriggerEnter(GameObject other)
+        public void RaiseTriggerEnter(GameObject other, PredictedComponentID otherId)
         {
-            onTriggerEnter?.Invoke(other);
+            onTriggerEnter?.Invoke(other, otherId);
         }
 
-        public void RaiseTriggerExit(GameObject other)
+        public void RaiseTriggerExit(GameObject other, PredictedComponentID otherId)
         {
-            onTriggerExit?.Invoke(other);
+            onTriggerExit?.Invoke(other, otherId);
         }
 
-        public void RaiseTriggerStay(GameObject other)
+        public void RaiseTriggerStay(GameObject other, PredictedComponentID otherId)
         {
-            onTriggerStay?.Invoke(other);
+            onTriggerStay?.Invoke(other, otherId);
         }
 
-        public void RaiseCollisionEnter(GameObject other, PhysicsCollision evContacts)
+        public void RaiseCollisionEnter(GameObject other, PredictedComponentID otherId,
+            PhysicsCollision evContacts)
         {
-            onCollisionEnter?.Invoke(other, evContacts);
+            onCollisionEnter?.Invoke(other, otherId, evContacts);
         }
 
-        public void RaiseCollisionExit(GameObject other, PhysicsCollision evContacts)
+        public void RaiseCollisionExit(GameObject other, PredictedComponentID otherId,
+            PhysicsCollision evContacts)
         {
-            onCollisionExit?.Invoke(other, evContacts);
+            onCollisionExit?.Invoke(other, otherId, evContacts);
         }
 
-        public void RaiseCollisionStay(GameObject other, PhysicsCollision evContacts)
+        public void RaiseCollisionStay(GameObject other, PredictedComponentID otherId,
+            PhysicsCollision evContacts)
         {
-            onCollisionStay?.Invoke(other, evContacts);
+            onCollisionStay?.Invoke(other, otherId, evContacts);
         }
 #else
-        public void RaiseTriggerEnter(GameObject other)
+        public void RaiseTriggerEnter(GameObject other, PredictedComponentID otherId)
         {
             throw new NotImplementedException();
         }
 
-        public void RaiseTriggerExit(GameObject other)
+        public void RaiseTriggerExit(GameObject other, PredictedComponentID otherId)
         {
             throw new NotImplementedException();
         }
 
-        public void RaiseTriggerStay(GameObject other)
+        public void RaiseTriggerStay(GameObject other, PredictedComponentID otherId)
         {
             throw new NotImplementedException();
         }
 
-        public void RaiseCollisionEnter(GameObject other, PhysicsCollision evContacts)
+        public void RaiseCollisionEnter(GameObject other, PredictedComponentID otherId,
+            PhysicsCollision evContacts)
         {
             throw new NotImplementedException();
         }
 
-        public void RaiseCollisionExit(GameObject other, PhysicsCollision evContacts)
+        public void RaiseCollisionExit(GameObject other, PredictedComponentID otherId,
+            PhysicsCollision evContacts)
         {
             throw new NotImplementedException();
         }
 
-        public void RaiseCollisionStay(GameObject other, PhysicsCollision evContacts)
+        public void RaiseCollisionStay(GameObject other, PredictedComponentID otherId,
+            PhysicsCollision evContacts)
         {
             throw new NotImplementedException();
         }

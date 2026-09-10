@@ -73,7 +73,7 @@ public class BounceProbe : PredictedIdentity<BounceProbe.ProbeState>
     /// </summary>
     private const float MinCountedImpactSpeed = 1f;
 
-    private void OnBounce(GameObject other, PhysicsCollision collision)
+    private void OnBounce(GameObject other, PredictedComponentID otherId, PhysicsCollision collision)
     {
         if (!predictionManager.isVerifiedView)
             return;
