@@ -78,6 +78,37 @@ namespace PurrNet.Prediction.Tests.Editor
             }
         }
 
+        [Test]
+        public void UnregisteringLiveIdentityDuringSimulationKeepsDeletingLookupUntilPostSimulate()
+        {
+            var managerObject = new GameObject("Registration manager");
+            var identityObject = new GameObject("Deleting identity");
+            try
+            {
+                var id = new PredictedComponentID(new PredictedObjectID(905), 0);
+                var manager = CreateManager(managerObject);
+                SetField(manager, "<isSimulating>k__BackingField", true);
+
+                var identity = identityObject.AddComponent<OmittedStateIdentity>();
+                identity.AttachForTest(manager, id);
+                Register(manager, identity);
+
+                manager.UnregisterInstance(identity);
+
+                Assert.That(manager.GetIdentity(id), Is.Null);
+                Assert.That(manager.GetGameObjectIncludingDeleting(id), Is.SameAs(identityObject));
+
+                InvokePrivate(manager, "PostSimulateAll");
+
+                Assert.That(manager.GetGameObjectIncludingDeleting(id), Is.Null);
+            }
+            finally
+            {
+                Object.DestroyImmediate(identityObject);
+                Object.DestroyImmediate(managerObject);
+            }
+        }
+
         private static void Register(
             PredictionManager manager,
             PredictedIdentity identity)
@@ -115,6 +146,13 @@ namespace PurrNet.Prediction.Tests.Editor
             var field = typeof(PredictionManager).GetField(name, InstanceFields);
             Assert.That(field, Is.Not.Null, $"missing field {name}");
             field.SetValue(manager, value);
+        }
+
+        private static void InvokePrivate(PredictionManager manager, string name)
+        {
+            var method = typeof(PredictionManager).GetMethod(name, InstanceFields);
+            Assert.That(method, Is.Not.Null, $"missing method {name}");
+            method.Invoke(manager, null);
         }
     }
 }

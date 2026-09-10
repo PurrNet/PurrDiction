@@ -545,6 +545,7 @@ namespace PurrNet.Prediction
         }
 
         readonly Dictionary<PredictedComponentID, PredictedIdentity> _instanceMap = new ();
+        readonly Dictionary<PredictedComponentID, PredictedIdentity> _deletingInstanceMap = new ();
 
         public bool TryGetIdentity(PredictedComponentID id, out PredictedIdentity instance)
         {
@@ -554,6 +555,20 @@ namespace PurrNet.Prediction
         public PredictedIdentity GetIdentity(PredictedComponentID id)
         {
             return _instanceMap.GetValueOrDefault(id);
+        }
+
+        internal PredictedIdentity GetIdentityIncludingDeleting(PredictedComponentID id)
+        {
+            if (_instanceMap.TryGetValue(id, out var identity))
+                return identity;
+
+            return _deletingInstanceMap.GetValueOrDefault(id);
+        }
+
+        internal GameObject GetGameObjectIncludingDeleting(PredictedComponentID id)
+        {
+            var identity = GetIdentityIncludingDeleting(id);
+            return identity ? identity.gameObject : null;
         }
 
         private void RegisterInstance(PredictedIdentity system, PredictedObjectID objectId, uint componentId, PlayerID? owner, bool preserveState = false)
@@ -622,6 +637,9 @@ namespace PurrNet.Prediction
             if (_instanceMap.TryGetValue(predictedIdentity.id, out var mapped) &&
                 ReferenceEquals(mapped, predictedIdentity))
             {
+                if (isSimulating)
+                    _deletingInstanceMap[predictedIdentity.id] = predictedIdentity;
+
                 _instanceMap.Remove(predictedIdentity.id);
                 _recordDecodeQuarantine.Remove(predictedIdentity.id);
                 _recordFailureLogAt.Remove(predictedIdentity.id);
@@ -885,15 +903,7 @@ namespace PurrNet.Prediction
                 }
             }
 
-            try
-            {
-                for (var i = 0; i < _systemsCount; i++)
-                    _systems[i].RunPostSimulate();
-            }
-            catch (Exception e)
-            {
-                Debug.LogException(e);
-            }
+            PostSimulateAll();
 
             RestoreSpeculativeRelayStates();
 
@@ -2983,15 +2993,7 @@ namespace PurrNet.Prediction
                 }
             }
 
-            try
-            {
-                for (var i = 0; i < _systemsCount; i++)
-                    _systems[i].RunPostSimulate();
-            }
-            catch (Exception e)
-            {
-                Debug.LogException(e);
-            }
+            PostSimulateAll();
 
             try
             {
@@ -3429,6 +3431,23 @@ namespace PurrNet.Prediction
             {
                 UnregisterInstance(instance, false, true);
                 UnityProxy.DestroyImmediateDirectly(instance);
+            }
+        }
+
+        private void PostSimulateAll()
+        {
+            try
+            {
+                for (var i = 0; i < _systemsCount; i++)
+                    _systems[i].RunPostSimulate();
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+            }
+            finally
+            {
+                _deletingInstanceMap.Clear();
             }
         }
 
