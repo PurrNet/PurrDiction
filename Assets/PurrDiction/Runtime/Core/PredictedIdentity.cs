@@ -55,6 +55,7 @@ namespace PurrNet.Prediction
         /// The unique identifier for this object.
         /// Can be used to identify the object across the network.
         /// </summary>
+        [NonSerialized]
         public PredictedComponentID id;
 
         /// <summary>
