@@ -295,7 +295,13 @@ namespace PurrNet.Prediction
             for (var i = 0; i < _queue.Count; i++)
                 known.Add(_queue[i]);
 
-            var all = UnityEngine.Object.FindObjectsByType<PredictedIdentity>(FindObjectsSortMode.None);
+            // SortMode was obsoleted in Unity 6.4. Skip the argument in future versions.
+            var all = 
+#if UNITY_6000_4_OR_NEWER
+                UnityEngine.Object.FindObjectsByType<PredictedIdentity>();
+#else
+                UnityEngine.Object.FindObjectsByType<PredictedIdentity>(FindObjectsSortMode.None);
+#endif
             for (var i = 0; i < all.Length; i++)
             {
                 var identity = all[i];
