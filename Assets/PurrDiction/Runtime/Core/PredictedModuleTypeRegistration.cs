@@ -10,8 +10,14 @@ namespace PurrNet.Prediction
         private static void RegisterAllModuleTypes()
         {
             var moduleBase = typeof(PredictedModule);
+#if !UNITY_6000_4_OR_NEWER
             var assemblies = AppDomain.CurrentDomain.GetAssemblies();
-            for (int a = 0; a < assemblies.Length; a++)
+            var length = assemblies.Length;
+#else
+            var assemblies = UnityEngine.Assemblies.CurrentAssemblies.GetLoadedAssemblies();
+            var length = assemblies.Count;
+#endif
+            for (int a = 0; a < length; a++)
             {
                 Type[] types;
                 try { types = assemblies[a].GetTypes(); }
