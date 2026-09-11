@@ -68,11 +68,11 @@ namespace PurrNet.Prediction
     {
         public PredictedEvent(PredictionManager world, PredictedIdentity identity) : base(world, identity) { }
 
-        public void Invoke(T arg1)
+        public void Invoke(T value)
         {
             if (ShouldInvoke())
             {
-                onInvoke?.Invoke(arg1);
+                onInvoke?.Invoke(value);
             }
         }
     }
