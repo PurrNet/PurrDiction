@@ -15,9 +15,6 @@ namespace PurrNet.Prediction
     {
         public sealed override bool supportsSoftCorrection => false;
 
-        [UsedImplicitly]
-        public new PlayerID? owner { get; }
-
         private static StatelessHeSaid _stateless;
 
         [UsedImplicitly]
