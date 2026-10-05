@@ -36,14 +36,14 @@ namespace PurrNet.Prediction.Tests
 #if UNITY_PHYSICS_3D
         protected override void LateAwake()
         {
-            _predictedRigidbody.onCollisionEnter += OnUnityCollisionEnter;
-            _predictedRigidbody.onTriggerEnter += OnUnityTriggerEnter;
+            _predictedRigidbody.onPredictedCollisionEnter += OnUnityCollisionEnter;
+            _predictedRigidbody.onPredictedTriggerEnter += OnUnityTriggerEnter;
         }
 
         protected override void Destroyed()
         {
-            _predictedRigidbody.onCollisionEnter -= OnUnityCollisionEnter;
-            _predictedRigidbody.onTriggerEnter -= OnUnityTriggerEnter;
+            _predictedRigidbody.onPredictedCollisionEnter -= OnUnityCollisionEnter;
+            _predictedRigidbody.onPredictedTriggerEnter -= OnUnityTriggerEnter;
         }
 #endif
 
@@ -55,14 +55,14 @@ namespace PurrNet.Prediction.Tests
             predictionManager.hierarchy.Delete(gameObject);*/
         }
 
-        private void OnUnityTriggerEnter(GameObject other)
+        private void OnUnityTriggerEnter(PredictedTrigger trigger)
         {
-            PurrLogger.Log($"Triggered with {other} on {gameObject.name}");
+            PurrLogger.Log($"Triggered with {trigger.other} on {gameObject.name}");
         }
 
-        private void OnUnityCollisionEnter(GameObject other, PhysicsCollision collision)
+        private void OnUnityCollisionEnter(PredictedCollision collision)
         {
-            PurrLogger.Log($"Collided with {other} on {gameObject.name}");
+            PurrLogger.Log($"Collided with {collision.other} on {gameObject.name}");
             currentState.collisionCount += 1;
         }
     }

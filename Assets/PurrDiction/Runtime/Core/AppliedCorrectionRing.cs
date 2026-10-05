@@ -26,11 +26,8 @@ namespace PurrNet.Prediction
             _valid[index] = true;
         }
 
-        /// <summary>
-        /// Returns the totals snapshot taken at the start of <paramref name="tick"/>. When that slot
-        /// was overwritten because the tick is too old, falls back to the OLDEST retained tick after it,
-        /// yielding partial (never over-counted) compensation instead of none. False when nothing usable remains.
-        /// </summary>
+        // Baselines contain start-of-tick totals. If overwritten, use the oldest retained tick after it.
+        // This gives partial compensation without over-counting; false means no usable snapshot remains.
         public bool TryGetBaseline(ulong tick, out T totals)
         {
             int index = (int)(tick % (ulong)_ticks.Length);

@@ -5,12 +5,8 @@ namespace PurrNet.Prediction
 {
     internal static class PredictionPhysicsVisibility
     {
-        /// <summary>
-        /// Membership is tracked as the hidden set rather than the visible set so that anything
-        /// the predicted hierarchy does not own - scene-authored colliders, runtime-created
-        /// identities, static geometry - stays visible instead of being filtered out for never
-        /// having appeared in the spawned-prefab list.
-        /// </summary>
+        // Track hidden pieces so scene colliders and other objects outside the predicted
+        // hierarchy remain visible without ever entering the spawned-prefab list.
         static bool IsVisible(
             PredictedComponentID id,
             HashSet<PredictedObjectID> hiddenPieces)

@@ -28,6 +28,163 @@ namespace PurrNet.Prediction.Tests.Editor
                     value.id = Packer<int>.Read(packer));
         }
 
+        [TestCase(1000UL, 33U)]
+        [TestCase(1000UL, uint.MaxValue)]
+        [TestCase(100UL, 33U)]
+        [TestCase(100UL, uint.MaxValue)]
+        [TestCase(ulong.MaxValue, 2U)]
+        [TestCase(ulong.MaxValue - 30, 32U)]
+        public void InvalidUploadRangeIsRejectedBeforeQueueMutation(ulong firstTick, uint tickCount)
+        {
+            var serverObject = new GameObject("Invalid upload range server");
+            try
+            {
+                var server = CreateManager(serverObject);
+                SetLocalTick(server, 100);
+                var sender = new PlayerID(9, false);
+                var queue = new PredictionManager.InputQueue
+                {
+                    ackedServerTick = 10,
+                    rawHighestReceivedTick = 50,
+                    highestReceivedTick = 50,
+                    pendingInputSlackMs = 12,
+                    hasPendingInputSlack = true
+                };
+                var queues = GetField<Dictionary<PlayerID, PredictionManager.InputQueue>>(
+                    typeof(PredictionManager), server, "_clientTicks");
+                queues.Add(sender, queue);
+
+                var payload = BitPackerPool.Get();
+                payload.WriteBits(1, 1);
+                payload.ResetMode(true);
+                Deliver(server, firstTick, tickCount, payload, sender, 80);
+
+                Assert.That(queue.Count, Is.Zero);
+                Assert.That(queue.ackedServerTick, Is.EqualTo(10UL));
+                Assert.That(queue.rawHighestReceivedTick, Is.EqualTo(50UL));
+                Assert.That(queue.highestReceivedTick, Is.EqualTo(50UL));
+                Assert.That(queue.pendingInputSlackMs, Is.EqualTo(12d));
+                Assert.That(queue.hasPendingInputSlack, Is.True);
+                Assert.That(payload.positionInBits, Is.Zero,
+                    "a rejected upload must still return its payload to the pool");
+
+                var unknownSender = new PlayerID(10, false);
+                Deliver(server, firstTick, tickCount, BitPackerPool.Get(true), unknownSender, 80);
+                Assert.That(queues.ContainsKey(unknownSender), Is.False,
+                    "an invalid upload must not create an input queue");
+            }
+            finally
+            {
+                Object.DestroyImmediate(serverObject);
+            }
+        }
+
+        [Test]
+        public void ZeroCountUploadStillAcknowledgesServerFrames()
+        {
+            var serverObject = new GameObject("ACK-only upload server");
+            try
+            {
+                var server = CreateManager(serverObject);
+                SetLocalTick(server, 100);
+                var sender = new PlayerID(9, false);
+                Deliver(server, ulong.MaxValue, 0, BitPackerPool.Get(true), sender, 80);
+
+                var queue = GetQueue(server, sender);
+                Assert.That(queue.ackedServerTick, Is.EqualTo(80UL));
+                Assert.That(queue.rawHighestReceivedTick, Is.Zero);
+                Assert.That(queue.Count, Is.Zero);
+            }
+            finally
+            {
+                Object.DestroyImmediate(serverObject);
+            }
+        }
+
+        [TestCase(100UL, 133UL, 32U, 32)]
+        [TestCase(100UL, 100UL, 1U, 1)]
+        [TestCase(100UL, 164UL, 1U, 1)]
+        [TestCase(100UL, 165UL, 1U, 0)]
+        [TestCase(100UL, 90UL, 32U, 22)]
+        [TestCase(100UL, 68UL, 32U, 0)]
+        [TestCase(ulong.MaxValue - 31, ulong.MaxValue - 31, 32U, 32)]
+        public void BoundedUploadKeepsTheExistingTickWindow(
+            ulong serverTick, ulong firstTick, uint tickCount, int acceptedCount)
+        {
+            var serverObject = new GameObject("Bounded upload server");
+            PredictionManager.InputQueue queue = null;
+            try
+            {
+                var server = CreateManager(serverObject);
+                SetLocalTick(server, serverTick);
+                var payload = BitPackerPool.Get();
+                for (uint i = 0; i < tickCount; i++)
+                {
+                    payload.WriteBits(0, PredictionManager.ViewOffsetBits);
+                    Packer<PackedUInt>.Write(payload, 0U);
+                    Packer<PackedUInt>.Write(payload, 0U);
+                }
+                payload.ResetPositionAndMode(true);
+                var sender = new PlayerID(9, false);
+                Deliver(server, firstTick, tickCount, payload, sender, 80);
+
+                queue = GetQueue(server, sender);
+                ulong newestTick = firstTick + (tickCount - 1);
+                Assert.That(queue.Count, Is.EqualTo(acceptedCount));
+                Assert.That(queue.rawHighestReceivedTick, Is.EqualTo(newestTick));
+                Assert.That(queue.highestReceivedTick,
+                    Is.EqualTo(acceptedCount > 0 ? newestTick : 0UL));
+                Assert.That(queue.ackedServerTick, Is.EqualTo(80UL));
+            }
+            finally
+            {
+                queue?.Clear();
+                Object.DestroyImmediate(serverObject);
+            }
+        }
+
+        [Test]
+        public void ConsumedUploadPrefixStillProvidesTheBaselineForRepeatRecords()
+        {
+            var clientObject = new GameObject("Consumed prefix upload client");
+            var serverObject = new GameObject("Consumed prefix upload server");
+            var probeObject = new GameObject("Consumed prefix upload probe");
+            var queue = new PredictionManager.InputQueue { lastConsumedTick = 39 };
+            try
+            {
+                var client = CreateManager(clientObject);
+                SetLocalTick(client, 40);
+                SetInputAckTick(client, 30);
+                var probe = probeObject.AddComponent<StatefulInputProbe>();
+                var probeId = new PredictedComponentID(new PredictedObjectID(700), 0);
+                AttachIdentity(probe, client, probeId);
+                SeedInputs(probe, typeof(PredictedIdentity<TrackedInput, EmptyState>), 30, 40, _ => 7);
+                FinalizeInput(client, probe);
+                var cached = GetCachedPayload(client, out var firstTick, out var tickCount);
+
+                var server = CreateManager(serverObject);
+                SetLocalTick(server, 40);
+                var sender = new PlayerID(9, false);
+                GetField<Dictionary<PlayerID, PredictionManager.InputQueue>>(
+                    typeof(PredictionManager), server, "_clientTicks").Add(sender, queue);
+                Deliver(server, firstTick, tickCount, CopyForRead(cached), sender);
+
+                Assert.That(queue.Count, Is.EqualTo(1));
+                var decoded = DecodeSlice(queue.byTick[40]);
+                Assert.That(decoded.Count, Is.EqualTo(1));
+                Assert.That(decoded[0].id, Is.EqualTo(probeId));
+                Assert.That(decoded[0].hasInput, Is.True);
+                Assert.That(decoded[0].value, Is.EqualTo(7));
+            }
+            finally
+            {
+                queue.Clear();
+                Object.DestroyImmediate(probeObject);
+                Object.DestroyImmediate(serverObject);
+                Object.DestroyImmediate(clientObject);
+            }
+        }
+
         [Test]
         public void ConstantWindowUsesRepeatBitsAndStillExpandsEveryTick()
         {
@@ -53,7 +210,7 @@ namespace PurrNet.Prediction.Tests.Editor
                 FinalizeInput(client, probe);
                 var cached = GetCachedPayload(client, out var firstTick, out var tickCount);
                 Assert.That(firstTick, Is.EqualTo(36UL),
-                    "without guaranteed systems the window must start at the redundancy cap");
+                    "the upload window must start at the redundancy cap");
                 Assert.That(tickCount, Is.EqualTo(5U));
 
                 var parsed = ParseUpload(cached, tickCount);
@@ -153,8 +310,9 @@ namespace PurrNet.Prediction.Tests.Editor
             }
         }
 
-        [Test]
-        public void GuaranteedTranscriptExtendsBelowTheCapAndReentersWithFullPayload()
+        [TestCase(false)]
+        [TestCase(true)]
+        public void BothIdentityKindsUseTheSameUploadWindowAndReenterWithFullPayload(bool constantIsDeterministic)
         {
             var clientObject = new GameObject("Mixed upload client");
             var serverObject = new GameObject("Mixed upload server");
@@ -166,77 +324,72 @@ namespace PurrNet.Prediction.Tests.Editor
                 SetLocalTick(client, 40);
                 SetInputAckTick(client, 20);
 
-                var deterministic =
-                    deterministicObject.AddComponent<DeterministicInputProbe>();
-                var deterministicId =
-                    new PredictedComponentID(new PredictedObjectID(720), 0);
+                var deterministic = deterministicObject.AddComponent<DeterministicInputProbe>();
+                var deterministicId = new PredictedComponentID(new PredictedObjectID(720), 0);
                 AttachIdentity(deterministic, client, deterministicId);
-                SeedInputs(
-                    deterministic,
-                    typeof(DeterministicIdentity<TrackedInput, EmptyState>),
-                    21,
-                    40,
-                    tick => 1000 + (int)tick);
+                SeedInputs(deterministic, typeof(DeterministicIdentity<TrackedInput, EmptyState>),
+                    21, 40, tick => constantIsDeterministic ? 5 : 1000 + (int)tick);
 
                 var stateful = statefulObject.AddComponent<StatefulInputProbe>();
                 var statefulId = new PredictedComponentID(new PredictedObjectID(721), 0);
                 AttachIdentity(stateful, client, statefulId);
-                SeedInputs(
-                    stateful,
-                    typeof(PredictedIdentity<TrackedInput, EmptyState>),
-                    21,
-                    40,
-                    _ => 5);
+                SeedInputs(stateful, typeof(PredictedIdentity<TrackedInput, EmptyState>),
+                    21, 40, tick => constantIsDeterministic ? 1000 + (int)tick : 5);
+
+                PredictedIdentity constant = constantIsDeterministic ? deterministic : stateful;
+                var constantType = constantIsDeterministic
+                    ? typeof(DeterministicIdentity<TrackedInput, EmptyState>)
+                    : typeof(PredictedIdentity<TrackedInput, EmptyState>);
+                var constantId = constant.id;
+                var changingId = constantIsDeterministic ? statefulId : deterministicId;
+                GetField<History<TrackedInput>>(constantType, constant, "_inputHistory").Remove(38);
 
                 FinalizeInput(client, deterministic, stateful);
                 var cached = GetCachedPayload(client, out var firstTick, out var tickCount);
-                Assert.That(firstTick, Is.EqualTo(21UL),
-                    "a guaranteed-history system must keep the window at the ack frontier");
-                Assert.That(tickCount, Is.EqualTo(20U));
-
+                Assert.That(firstTick, Is.EqualTo(36UL),
+                    "both identity kinds use the same bounded upload redundancy despite an older ACK");
+                Assert.That(tickCount, Is.EqualTo(5U));
                 var parsed = ParseUpload(cached, tickCount);
-                for (var i = 0; i < 15; i++)
+                for (var i = 0; i < 5; i++)
                 {
-                    Assert.That(parsed[i].entries.Count, Is.EqualTo(1),
-                        $"tick {21 + i} below the cap must carry only the guaranteed system");
-                    Assert.That(parsed[i].entries[0].id, Is.EqualTo(deterministicId));
-                    Assert.That(parsed[i].entries[0].repeat, Is.False);
-                }
-
-                for (var i = 15; i < 20; i++)
                     Assert.That(parsed[i].entries.Count, Is.EqualTo(2));
-
-                // The stateful payload is constant across the window, so only its absence
-                // from the tick-35 block can force the full payload here.
-                Assert.That(FindEntry(parsed[15], statefulId).repeat, Is.False,
-                    "a system absent from the previous tick must never repeat into it");
-                for (var i = 16; i < 20; i++)
-                    Assert.That(FindEntry(parsed[i], statefulId).repeat, Is.True);
+                    Assert.That(FindEntry(parsed[i], changingId).repeat, Is.False);
+                }
+                Assert.That(FindEntry(parsed[0], constantId).repeat, Is.False);
+                Assert.That(FindEntry(parsed[1], constantId).repeat, Is.True);
+                Assert.That(FindEntry(parsed[2], constantId).repeat, Is.False,
+                    "the explicit absence at tick 38 differs from the preceding input");
+                Assert.That(FindEntry(parsed[3], constantId).repeat, Is.False,
+                    "an available input must be sent in full when the previous tick had none");
+                Assert.That(FindEntry(parsed[4], constantId).repeat, Is.True);
 
                 var server = CreateManager(serverObject);
                 SetLocalTick(server, 2);
                 var sender = new PlayerID(9, false);
                 Deliver(server, firstTick, tickCount, CopyForRead(cached), sender);
-
                 var queue = GetQueue(server, sender);
-                Assert.That(queue.byTick.Count, Is.EqualTo(20));
-                for (ulong tick = 21; tick <= 35; tick++)
-                {
-                    var decoded = DecodeSlice(queue.byTick[tick]);
-                    Assert.That(decoded.Count, Is.EqualTo(1));
-                    Assert.That(decoded[0].id, Is.EqualTo(deterministicId));
-                    Assert.That(decoded[0].value, Is.EqualTo(1000 + (int)tick));
-                }
-
+                Assert.That(queue.byTick.Count, Is.EqualTo(5));
+                Assert.That(queue.byTick.ContainsKey(35), Is.False,
+                    "neither identity may extend upload retention below the common window");
                 for (ulong tick = 36; tick <= 40; tick++)
                 {
                     var decoded = DecodeSlice(queue.byTick[tick]);
                     Assert.That(decoded.Count, Is.EqualTo(2));
-                    Assert.That(decoded[0].id, Is.EqualTo(deterministicId));
-                    Assert.That(decoded[0].value, Is.EqualTo(1000 + (int)tick));
-                    Assert.That(decoded[1].id, Is.EqualTo(statefulId));
-                    Assert.That(decoded[1].hasInput, Is.True);
-                    Assert.That(decoded[1].value, Is.EqualTo(5));
+                    foreach (var entry in decoded)
+                    {
+                        if (entry.id.Equals(constantId))
+                        {
+                            Assert.That(entry.hasInput, Is.EqualTo(tick != 38), $"tick {tick}");
+                            if (tick != 38)
+                                Assert.That(entry.value, Is.EqualTo(5), $"tick {tick}");
+                        }
+                        else
+                        {
+                            Assert.That(entry.id, Is.EqualTo(changingId));
+                            Assert.That(entry.hasInput, Is.True);
+                            Assert.That(entry.value, Is.EqualTo(1000 + (int)tick));
+                        }
+                    }
                 }
             }
             finally
@@ -387,8 +540,70 @@ namespace PurrNet.Prediction.Tests.Editor
             public int payloadBitLength;
         }
 
+        [Test]
+        public void ViewOffsetRidesEveryUploadTickAndIsClampedOnTheServer()
+        {
+            var clientObject = new GameObject("View offset upload client");
+            var serverObject = new GameObject("View offset upload server");
+            var probeObject = new GameObject("View offset upload probe");
+            try
+            {
+                var client = CreateManager(clientObject);
+                SetLocalTick(client, 40);
+                SetInputAckTick(client, 30);
+
+                var probe = probeObject.AddComponent<StatefulInputProbe>();
+                var probeId = new PredictedComponentID(new PredictedObjectID(720), 0);
+                AttachIdentity(probe, client, probeId);
+                SeedInputs(
+                    probe,
+                    typeof(PredictedIdentity<TrackedInput, EmptyState>),
+                    30,
+                    40,
+                    _ => 7);
+
+                for (ulong tick = 36; tick <= 40; tick++)
+                    client.RecordViewOffset(default, tick, (uint)(tick - 36) * 100);
+
+                FinalizeInput(client, probe);
+                var cached = GetCachedPayload(client, out var firstTick, out var tickCount);
+                Assert.That(firstTick, Is.EqualTo(36UL));
+                Assert.That(tickCount, Is.EqualTo(5U));
+
+                var parsed = ParseUpload(cached, tickCount);
+                for (var i = 0; i < parsed.Count; i++)
+                {
+                    Assert.That(parsed[i].viewOffset, Is.EqualTo((uint)i * 100),
+                        $"tick block {i} must carry the offset recorded for its tick");
+                }
+
+                var server = CreateManager(serverObject);
+                SetLocalTick(server, 2);
+                var sender = new PlayerID(9, false);
+                Deliver(server, firstTick, tickCount, CopyForRead(cached), sender);
+
+                uint cap = PredictionManager.QuantizeViewOffset(server.maxLagCompensationTicks);
+                Assert.That(cap, Is.EqualTo(192u));
+
+                var queue = GetQueue(server, sender);
+                for (ulong tick = 36; tick <= 40; tick++)
+                {
+                    uint sent = (uint)(tick - 36) * 100;
+                    Assert.That(queue.byTick[tick].viewOffset, Is.EqualTo(Math.Min(sent, cap)),
+                        $"tick {tick} must keep the sent offset up to the server cap");
+                }
+            }
+            finally
+            {
+                Object.DestroyImmediate(probeObject);
+                Object.DestroyImmediate(serverObject);
+                Object.DestroyImmediate(clientObject);
+            }
+        }
+
         private sealed class ParsedUploadTick
         {
+            public uint viewOffset;
             public uint declaredBlockBits;
             public readonly List<ParsedUploadEntry> entries = new List<ParsedUploadEntry>();
         }
@@ -525,14 +740,15 @@ namespace PurrNet.Prediction.Tests.Editor
             ulong firstTick,
             uint tickCount,
             BitPacker payload,
-            PlayerID sender)
+            PlayerID sender,
+            ulong frameAck = 0)
         {
             var method = typeof(PredictionManager).GetMethod(
                 "ReceivedInput",
                 InstanceFields);
             Assert.That(method, Is.Not.Null);
             var info = new RPCInfo { sender = sender };
-            method.Invoke(server, new object[] { firstTick, tickCount, 0UL, payload, info });
+            method.Invoke(server, new object[] { firstTick, tickCount, frameAck, payload, info });
         }
 
         private static PredictionManager.InputQueue GetQueue(
@@ -559,6 +775,7 @@ namespace PurrNet.Prediction.Tests.Editor
                 var result = new List<ParsedUploadTick>();
                 for (uint i = 0; i < tickCount; i++)
                 {
+                    uint viewOffset = (uint)payload.ReadBits((byte)PredictionManager.ViewOffsetBits);
                     PackedUInt blockBits = default;
                     Packer<PackedUInt>.Read(payload, ref blockBits);
                     PackedUInt entryCount = default;
@@ -567,6 +784,7 @@ namespace PurrNet.Prediction.Tests.Editor
 
                     var tickBlock = new ParsedUploadTick
                     {
+                        viewOffset = viewOffset,
                         declaredBlockBits = blockBits.value
                     };
 

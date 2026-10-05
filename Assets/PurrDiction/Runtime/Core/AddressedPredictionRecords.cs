@@ -3,11 +3,8 @@ using PurrNet.Packing;
 
 namespace PurrNet.Prediction
 {
-    /// <summary>
-    /// Length-delimited prediction records. The component id makes each record independent
-    /// of the receiver's local system order; the bit length makes unknown records skippable
-    /// without byte-aligning their payload.
-    /// </summary>
+    // Component IDs decouple records from local system order; bit lengths let receivers
+    // skip unknown records without byte-aligning their payloads.
     internal static class AddressedPredictionRecords
     {
         internal delegate void ReadRecord(
@@ -16,24 +13,18 @@ namespace PurrNet.Prediction
             BitPacker payload,
             int payloadBitCount);
 
-        /// <summary>
-        /// Invoked instead of throwing when a record's payload fails to decode. The source
-        /// stream is already positioned past the record, so the caller may keep reading the
-        /// remaining records of the section.
-        /// </summary>
+        // The source is already past the failed record, so callers can continue the section.
         internal delegate void RecordFailure(
             PredictedComponentID id,
             Exception error,
             int declaredBits,
             int consumedBits);
 
-        // Keep BitPacker out of the first parameter. PurrNet codegen treats every static
-        // (BitPacker, T) method as a global serializer, regardless of its name or visibility.
+        // A leading BitPacker would make codegen discover this as a global serializer.
         internal static void WriteSectionCount(int count, BitPacker packer)
         {
             Packer<PackedUInt>.Write(packer, (uint)count);
         }
-
 
         public static void WriteRecord(
             BitPacker destination,
@@ -55,6 +46,27 @@ namespace PurrNet.Prediction
 
             for (uint i = 0; i < count.value; i++)
                 ReadOne(readRecord, source, onRecordFailure);
+        }
+
+        // Gap replay needs the trailing event transcript before ordinary states are decoded.
+        internal static void SkipSection(BitPacker source, int endBit, uint maximumRecords = uint.MaxValue)
+        {
+            if (source.positionInBits >= endBit)
+                throw new InvalidOperationException("Missing addressed section header.");
+            uint count = Packer<PackedUInt>.Read(source);
+            if (source.positionInBits > endBit || count > maximumRecords ||
+                count > (uint)(endBit - source.positionInBits))
+                throw new InvalidOperationException("Addressed section count exceeds its frame.");
+            for (uint i = 0; i < count; i++)
+            {
+                Packer<PredictedComponentID>.Read(source);
+                Packer<bool>.Read(source);
+                uint bits = Packer<PackedUInt>.Read(source);
+                int next = checked(source.positionInBits + checked((int)bits));
+                if (next > endBit)
+                    throw new InvalidOperationException("Addressed record exceeds its frame.");
+                source.SetBitPosition(next);
+            }
         }
 
         internal static void ReadOne(ReadRecord readRecord, BitPacker source, RecordFailure onRecordFailure = null)

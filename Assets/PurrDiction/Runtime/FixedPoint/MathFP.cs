@@ -37,7 +37,6 @@ namespace PurrNet.Prediction
         const long FractionMask = (1L << Shift) - 1;
         const long IntegerMask = ~FractionMask;
 
-        // Constants
         internal const long Zero = 0L;
         internal const long Neg1 = -1L << Shift;
         internal const long One = 1L << Shift;
@@ -48,7 +47,6 @@ namespace PurrNet.Prediction
         internal const long MinValue = -9223372036854775808L;
         internal const long MaxValue = 9223372036854775807L;
 
-        // Private constants
         const long RCP_LN2      = 0x171547652L; // 1.0 / log(2.0) ~= 1.4426950408889634
         const long RCP_LOG2_E   = 2977044471L;  // 1.0 / log2(e) ~= 0.6931471805599453
         const int  RCP_HALF_PI  = 683565276; // 1.0 / (4.0 * 0.5 * Math.PI);  // the 4.0 factor converts directly to s2.30
@@ -98,7 +96,6 @@ namespace PurrNet.Prediction
                     return new FP(sign != 0 ? long.MinValue : long.MaxValue);
             }
 
-            // Normal case
             int shift = exp - 118;
 
             long value = shift switch
@@ -403,7 +400,6 @@ namespace PurrNet.Prediction
             // Overflow?
             if (Long.compareUnsigned(u1, v) >= 0) // u1 >= v
             {
-                //rem = 0;
                 return 0x7fffffffffffffffL;
             }
 
@@ -447,10 +443,6 @@ namespace PurrNet.Prediction
                 else break;
             } while (Long.compareUnsigned(rhat, b) < 0);
 
-            // Calculate the remainder
-            // ulong r = (un21 * b + un0 - q0 * v) >>> s;
-            // rem = (long)r;
-
             long ret = q1 * b + q0;
             return (sign_dif < 0) ? -ret : ret;
 #else
@@ -465,7 +457,6 @@ namespace PurrNet.Prediction
             // Overflow?
             if (u1 >= v)
             {
-                //rem = 0;
                 return 0x7fffffffffffffffL;
             }
 
@@ -509,10 +500,6 @@ namespace PurrNet.Prediction
                 else break;
             } while (rhat < b);
 
-            // Calculate the remainder
-            // ulong r = (un21 * b + un0 - q0 * v) >> s;
-            // rem = (long)r;
-
             ulong ret = q1 * b + q0;
             return (sign_dif < 0) ? -(long)ret : (long)ret;
 #endif
@@ -525,11 +512,9 @@ namespace PurrNet.Prediction
         {
             if (b == MinValue || b == 0)
             {
-                // FPUtils.InvalidArgument("Fixed64.Div", "b", b);
                 return 0;
             }
 
-            // Handle negative values.
             int sign = (b < 0) ? -1 : 1;
             b *= sign;
 
@@ -539,7 +524,6 @@ namespace PurrNet.Prediction
             const int ONE = (1 << 30);
             Debug.Assert(n >= ONE);
 
-            // Polynomial approximation.
             int res = FPUtils.RcpPoly4Lut8(n - ONE);
 
             // Apply exponent, convert back to s32.32.
@@ -554,11 +538,9 @@ namespace PurrNet.Prediction
         {
             if (b == MinValue || b == 0)
             {
-                // FPUtils.InvalidArgument("Fixed64.DivFast", "b", b);
                 return 0;
             }
 
-            // Handle negative values.
             int sign = (b < 0) ? -1 : 1;
             b *= sign;
 
@@ -568,7 +550,6 @@ namespace PurrNet.Prediction
             const int ONE = (1 << 30);
             Debug.Assert(n >= ONE);
 
-            // Polynomial approximation.
             int res = FPUtils.RcpPoly6(n - ONE);
 
             // Apply exponent, convert back to s32.32.
@@ -589,11 +570,9 @@ namespace PurrNet.Prediction
         {
             if (b == MinValue || b == 0)
             {
-                // FPUtils.InvalidArgument("Fixed64.DivFastest", "b", b);
                 return 0;
             }
 
-            // Handle negative values.
             int sign = (b < 0) ? -1 : 1;
             b *= sign;
 
@@ -603,7 +582,6 @@ namespace PurrNet.Prediction
             const int ONE = (1 << 30);
             Debug.Assert(n >= ONE);
 
-            // Polynomial approximation.
             int res = FPUtils.RcpPoly4(n - ONE);
 
             // Apply exponent, convert back to s32.32.
@@ -656,7 +634,6 @@ namespace PurrNet.Prediction
 
         static long Sqrt(long x)
         {
-            // Return 0 for all non-positive values.
             if (x <= 0)
                 return 0;
 
@@ -680,7 +657,6 @@ namespace PurrNet.Prediction
 
         public static long SqrtFast(long x)
         {
-            // Return 0 for all non-positive values.
             if (x <= 0)
                 return 0;
 
@@ -705,7 +681,6 @@ namespace PurrNet.Prediction
 
         public static long SqrtFastest(long x)
         {
-            // Return 0 for all non-positive values.
             if (x <= 0)
             {
                 return 0;
@@ -735,10 +710,8 @@ namespace PurrNet.Prediction
         /// </summary>
         public static long RSqrt(long x)
         {
-            // Return 0 for invalid values
             if (x <= 0)
             {
-                // FPUtils.InvalidArgument("Fixed64.RSqrt", "x", x);
                 return 0;
             }
 
@@ -766,10 +739,8 @@ namespace PurrNet.Prediction
         /// </summary>
         public static long RSqrtFast(long x)
         {
-            // Return 0 for invalid values
             if (x <= 0)
             {
-                // FPUtils.InvalidArgument("Fixed64.RSqrtFast", "x", x);
                 return 0;
             }
 
@@ -797,10 +768,8 @@ namespace PurrNet.Prediction
         /// </summary>
         public static long RSqrtFastest(long x)
         {
-            // Return 0 for invalid values
             if (x <= 0)
             {
-                // FPUtils.InvalidArgument("Fixed64.RSqrtFastest", "x", x);
                 return 0;
             }
 
@@ -830,11 +799,9 @@ namespace PurrNet.Prediction
         {
             if (x == MinValue || x == 0)
             {
-                // FPUtils.InvalidArgument("Fixed64.Rcp", "x", x);
                 return 0;
             }
 
-            // Handle negative values.
             int sign = (x < 0) ? -1 : 1;
             x *= sign;
 
@@ -844,7 +811,6 @@ namespace PurrNet.Prediction
             const int ONE = (1 << 30);
             Debug.Assert(n >= ONE);
 
-            // Polynomial approximation.
             int res = FPUtils.RcpPoly4Lut8(n - ONE);
             long y = (long)(sign * res) << 2;
 
@@ -859,11 +825,9 @@ namespace PurrNet.Prediction
         {
             if (x == MinValue || x == 0)
             {
-                // FPUtils.InvalidArgument("Fixed64.RcpFast", "x", x);
                 return 0;
             }
 
-            // Handle negative values.
             int sign = (x < 0) ? -1 : 1;
             x *= sign;
 
@@ -873,7 +837,6 @@ namespace PurrNet.Prediction
             const int ONE = (1 << 30);
             Debug.Assert(n >= ONE);
 
-            // Polynomial approximation.
             int res = FPUtils.RcpPoly6(n - ONE);
             long y = (long)(sign * res) << 2;
 
@@ -888,11 +851,9 @@ namespace PurrNet.Prediction
         {
             if (x == MinValue || x == 0)
             {
-                // FPUtils.InvalidArgument("Fixed64.RcpFastest", "x", x);
                 return 0;
             }
 
-            // Handle negative values.
             int sign = (x < 0) ? -1 : 1;
             x *= sign;
 
@@ -900,9 +861,7 @@ namespace PurrNet.Prediction
             const int ONE = (1 << 30);
             int offset = 31 - Nlz((ulong)x);
             int n = (int)FPUtils.ShiftRight(x, offset + 2);
-            //int n = (int)(((offset >= 0) ? (x >> offset) : (x << -offset)) >> 2);
 
-            // Polynomial approximation.
             int res = FPUtils.RcpPoly4(n - ONE);
             long y = (long)(sign * res) << 2;
 
@@ -985,10 +944,8 @@ namespace PurrNet.Prediction
         // Natural logarithm (base e).
         public static long Log(long x)
         {
-            // Return 0 for invalid values
             if (x <= 0)
             {
-                // FPUtils.InvalidArgument("Fixed64.Log", "x", x);
                 return 0;
             }
 
@@ -1005,10 +962,8 @@ namespace PurrNet.Prediction
 
         public static long LogFast(long x)
         {
-            // Return 0 for invalid values
             if (x <= 0)
             {
-                // FPUtils.InvalidArgument("Fixed64.LogFast", "x", x);
                 return 0;
             }
 
@@ -1025,10 +980,8 @@ namespace PurrNet.Prediction
 
         public static long LogFastest(long x)
         {
-            // Return 0 for invalid values
             if (x <= 0)
             {
-                // FPUtils.InvalidArgument("Fixed64.LogFastest", "x", x);
                 return 0;
             }
 
@@ -1045,10 +998,8 @@ namespace PurrNet.Prediction
 
         public static long Log2(long x)
         {
-            // Return 0 for invalid values
             if (x <= 0)
             {
-                // FPUtils.InvalidArgument("Fixed64.Log2", "x", x);
                 return 0;
             }
 
@@ -1067,10 +1018,8 @@ namespace PurrNet.Prediction
 
         public static long Log2Fast(long x)
         {
-            // Return 0 for invalid values
             if (x <= 0)
             {
-                // FPUtils.InvalidArgument("Fixed64.Log2Fast", "x", x);
                 return 0;
             }
 
@@ -1089,10 +1038,8 @@ namespace PurrNet.Prediction
 
         public static long Log2Fastest(long x)
         {
-            // Return 0 for invalid values
             if (x <= 0)
             {
-                // FPUtils.InvalidArgument("Fixed64.Log2Fastest", "x", x);
                 return 0;
             }
 
@@ -1114,11 +1061,9 @@ namespace PurrNet.Prediction
         /// </summary>
         public static long Pow(long x, long exponent)
         {
-            // n^0 == 1
             if (exponent == 0)
                 return One;
 
-            // Return 0 for invalid values
             if (x <= 0)
             {
                 return 0;
@@ -1132,11 +1077,9 @@ namespace PurrNet.Prediction
         /// </summary>
         public static long PowFast(long x, long exponent)
         {
-            // n^0 == 1
             if (exponent == 0)
                 return One;
 
-            // Return 0 for invalid values
             if (x <= 0)
                 return 0;
 
@@ -1148,11 +1091,9 @@ namespace PurrNet.Prediction
         /// </summary>
         public static long PowFastest(long x, long exponent)
         {
-            // n^0 == 1
             if (exponent == 0)
                 return One;
 
-            // Return 0 for invalid values
             if (x <= 0)
                 return 0;
 
@@ -1173,7 +1114,6 @@ namespace PurrNet.Prediction
             const int ONE = (1 << 30);
             Debug.Assert((z >= -ONE) && (z <= ONE));
 
-            // Polynomial approximation.
             int zz = FPUtils.Qmul30(z, z);
             int res = FPUtils.Qmul30(FPUtils.SinPoly4(zz), z);
 
@@ -1195,7 +1135,6 @@ namespace PurrNet.Prediction
             const int ONE = (1 << 30);
             Debug.Assert((z >= -ONE) && (z <= ONE));
 
-            // Polynomial approximation.
             int zz = FPUtils.Qmul30(z, z);
             int res = FPUtils.Qmul30(FPUtils.SinPoly3(zz), z);
 
@@ -1217,7 +1156,6 @@ namespace PurrNet.Prediction
             const int ONE = (1 << 30);
             Debug.Assert((z >= -ONE) && (z <= ONE));
 
-            // Polynomial approximation.
             int zz = FPUtils.Qmul30(z, z);
             int res = FPUtils.Qmul30(FPUtils.SinPoly2(zz), z);
 
@@ -1352,7 +1290,6 @@ namespace PurrNet.Prediction
                 if (y > 0) return PIHALF;
                 if (y < 0) return -PIHALF;
 
-                // FPUtils.InvalidArgument("Fixed64.Atan2", "y, x", y, x);
                 return 0;
             }
 
@@ -1390,7 +1327,6 @@ namespace PurrNet.Prediction
             int n = (int)(((offset >= 0) ? (x >> offset) : (x << -offset)) >> 2);
             int k = n - ONE;
 
-            // Polynomial approximation.
             int oox = FPUtils.RcpPoly6(k);
             Debug.Assert(oox >= HALF && oox <= ONE);
 
@@ -1408,7 +1344,6 @@ namespace PurrNet.Prediction
                 if (y > 0) return PIHALF;
                 if (y < 0) return -PIHALF;
 
-                // FPUtils.InvalidArgument("Fixed64.Atan2Fast", "y, x", y, x);
                 return 0;
             }
 
@@ -1446,7 +1381,6 @@ namespace PurrNet.Prediction
             int n = (int)(((offset >= 0) ? (x >> offset) : (x << -offset)) >> 2);
             int k = n - ONE;
 
-            // Polynomial approximation.
             int oox = FPUtils.RcpPoly4(k);
             Debug.Assert(oox >= HALF && oox <= ONE);
 
@@ -1464,7 +1398,6 @@ namespace PurrNet.Prediction
                 if (y > 0) return PIHALF;
                 if (y < 0) return -PIHALF;
 
-                // FPUtils.InvalidArgument("Fixed64.Atan2Fastest", "y, x", y, x);
                 return 0;
             }
 
@@ -1499,10 +1432,8 @@ namespace PurrNet.Prediction
 
         public static long Asin(long x)
         {
-            // Return 0 for invalid values
             if (x < -One || x > One)
             {
-                // FPUtils.InvalidArgument("Fixed64.Asin", "x", x);
                 return 0;
             }
 
@@ -1511,10 +1442,8 @@ namespace PurrNet.Prediction
 
         public static long AsinFast(long x)
         {
-            // Return 0 for invalid values
             if (x < -One || x > One)
             {
-                // FPUtils.InvalidArgument("Fixed64.AsinFast", "x", x);
                 return 0;
             }
 
@@ -1523,10 +1452,8 @@ namespace PurrNet.Prediction
 
         public static long AsinFastest(long x)
         {
-            // Return 0 for invalid values
             if (x < -One || x > One)
             {
-                // FPUtils.InvalidArgument("Fixed64.AsinFastest", "x", x);
                 return 0;
             }
 
@@ -1540,10 +1467,8 @@ namespace PurrNet.Prediction
 
         public static long Acos(long x)
         {
-            // Return 0 for invalid values
             if (x < -One || x > One)
             {
-                // FPUtils.InvalidArgument("Fixed64.Acos", "x", x);
                 return 0;
             }
 
@@ -1552,10 +1477,8 @@ namespace PurrNet.Prediction
 
         public static long AcosFast(long x)
         {
-            // Return 0 for invalid values
             if (x < -One || x > One)
             {
-                // FPUtils.InvalidArgument("Fixed64.AcosFast", "x", x);
                 return 0;
             }
 
@@ -1564,10 +1487,8 @@ namespace PurrNet.Prediction
 
         public static long AcosFastest(long x)
         {
-            // Return 0 for invalid values
             if (x < -One || x > One)
             {
-                // FPUtils.InvalidArgument("Fixed64.AcosFastest", "x", x);
                 return 0;
             }
 

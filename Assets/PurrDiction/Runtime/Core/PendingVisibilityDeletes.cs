@@ -2,10 +2,8 @@ using System.Collections.Generic;
 
 namespace PurrNet.Prediction
 {
-    /// <summary>
-    /// Permanent deletes are transient in the hierarchy state. Keep a receiver-local
-    /// tombstone riding every frame until any frame that carried it is acknowledged.
-    /// </summary>
+    // Hierarchy deletes are transient. Repeat each receiver's tombstone until a frame
+    // carrying it is acknowledged.
     internal sealed class PlayerPendingVisibilityDeletes
     {
         struct Entry

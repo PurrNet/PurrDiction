@@ -44,7 +44,7 @@ namespace PurrNet.Prediction
 
                 rb.bodyType = RigidbodyType2D.Kinematic;
 
-                //reset velocities as setting bodyType to Kinematic does not reset them like on 3d rigidbodies
+                // Switching to Kinematic preserves 2D velocities, unlike 3D rigidbodies.
 #if UNITY_6000
                 rb.linearVelocity = default;
 #else
@@ -61,7 +61,7 @@ namespace PurrNet.Prediction
                 var state = _state[i];
                 var rb = _rigidbodies[i];
                 rb.bodyType = (RigidbodyType2D) state.bodyType;
-                //Rigidbody2D can have velocity even when Kinematic. We only skip when bodyType is Static
+                // Kinematic 2D bodies still need their velocities restored.
                 if (rb.bodyType == RigidbodyType2D.Static)
                     continue;
 

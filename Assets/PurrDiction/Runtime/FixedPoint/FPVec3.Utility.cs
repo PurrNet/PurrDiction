@@ -69,7 +69,6 @@ namespace PurrNet.Prediction
             return new FPVec3(MathFP.Abs(v.x), MathFP.Abs(v.y), MathFP.Abs(v.z));
         }
 
-        // --- To FPVec2 ---
         public FPVec2 xy { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new FPVec2(x, y); }
         public FPVec2 yx { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new FPVec2(y, x); }
         public FPVec2 xx { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new FPVec2(x, x); }
@@ -81,12 +80,10 @@ namespace PurrNet.Prediction
         public FPVec2 zy { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new FPVec2(z, y); }
         public FPVec2 zz { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new FPVec2(z, z); }
 
-        // --- Duplicate Components ---
         public FPVec3 xxx { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new FPVec3(x, x, x); }
         public FPVec3 yyy { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new FPVec3(y, y, y); }
         public FPVec3 zzz { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new FPVec3(z, z, z); }
 
-        // --- Full Reorderings ---
         public FPVec3 xyz { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new FPVec3(x, y, z); }
         public FPVec3 xzy { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new FPVec3(x, z, y); }
         public FPVec3 yxz { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new FPVec3(y, x, z); }

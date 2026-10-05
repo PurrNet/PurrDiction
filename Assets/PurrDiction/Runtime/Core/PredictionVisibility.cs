@@ -15,10 +15,7 @@ namespace PurrNet.Prediction
         }
     }
 
-    /// <summary>
-    /// Per-receiver visibility timeline. Current state is stored as exceptions to the configured
-    /// default, and history is stored only for roots whose visibility actually changed.
-    /// </summary>
+    // Store only exceptions to default visibility and roots with actual transitions.
     internal sealed class PlayerVisibilityTimeline
     {
         readonly bool _defaultVisible;
@@ -75,11 +72,7 @@ namespace PurrNet.Prediction
             }
         }
 
-        /// <summary>
-        /// Records one effective root transition. Calls must be made in nondecreasing tick order.
-        /// Returns false when the requested state is already current or cancels an earlier change
-        /// from the same tick.
-        /// </summary>
+        // Calls must use nondecreasing ticks. False also covers a canceled same-tick transition.
         public bool SetVisible(
             ulong tick,
             PredictedObjectID rootId,
@@ -135,11 +128,7 @@ namespace PurrNet.Prediction
             return found >= 0 ? transitions[found].visible : _defaultVisible;
         }
 
-        /// <summary>
-        /// True only when the root is currently visible and has not left/re-entered since
-        /// the supplied baseline. A re-entry therefore remains a full-state entry until a
-        /// frame from the new visibility generation is acknowledged.
-        /// </summary>
+        // Re-entry requires full state until a frame from the new visibility generation is ACKed.
         public bool HasContinuousVisibilityFrom(
             PredictedObjectID rootId,
             ulong baselineTick)
@@ -162,10 +151,7 @@ namespace PurrNet.Prediction
             return latestTransitionTick > baselineTick;
         }
 
-        /// <summary>
-        /// Prunes only histories that received a transition since their last stable anchor.
-        /// Long-lived non-default exceptions therefore add no per-tick pruning work.
-        /// </summary>
+        // Stable non-default exceptions add no per-tick pruning work.
         public void PruneThrough(ulong acknowledgedTick)
         {
             if (acknowledgedTick <= _lastPrunedTick ||

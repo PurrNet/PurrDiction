@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 
 namespace PurrNet.Prediction
 {
@@ -29,7 +30,6 @@ namespace PurrNet.Prediction
         /// <summary>
         /// Access values directly by index
         /// </summary>
-        /// <value></value>
         public T this[int index]
         {
             get
@@ -53,7 +53,6 @@ namespace PurrNet.Prediction
         /// <summary>
         /// Number of entries
         /// </summary>
-        /// <value></value>
         public int Count => m_count;
 
         public int Capacity => m_maxCount;
@@ -61,19 +60,16 @@ namespace PurrNet.Prediction
         /// <summary>
         /// Value of the most recent received tick
         /// </summary>
-        /// <value></value>
         public ulong MostRecentTick => m_count == 0 ? 0 : m_ticks[Phys(m_count - 1)];
 
         /// <summary>
         /// Oldest tick we have in the set (this will vary as older entries are purged)
         /// </summary>
-        /// <value></value>
         public ulong OldestTick => m_count == 0 ? 0 : m_ticks[m_head];
 
         /// <summary>
         /// Gets the tick value for the index in the internal collection
         /// </summary>
-        /// <param name="index"></param>
         /// <returns>Tick number</returns>
         public ulong GetEntryTick(int index)
         {
@@ -109,6 +105,53 @@ namespace PurrNet.Prediction
         void Grow()
         {
             int newCapacity = m_ticks.Length * 2;
+            if (m_maxCount > 0)
+                newCapacity = Math.Min(newCapacity, m_limitToCut + 1);
+            ResizeBackingStorage(newCapacity);
+        }
+
+        // Compaction must preserve every baseline and value without disposing ownership.
+        internal bool TryCompactBackingStorage(int maximumPayloadBytes)
+        {
+            if (m_maxCount <= 0)
+                return false;
+            int newCapacity = Math.Max(1, m_count);
+            if (newCapacity >= m_ticks.Length ||
+                (long)newCapacity * (Unsafe.SizeOf<T>() + sizeof(ulong)) > maximumPayloadBytes)
+                return false;
+            ResizeBackingStorage(newCapacity);
+            return true;
+        }
+
+        // Keep the baseline's latest preceding entry as an anchor, even with a removal budget.
+        internal int PruneBeforeBaseline(ulong baselineTick, int maximumEntriesToRemove = int.MaxValue)
+        {
+            if (m_count <= 1 || maximumEntriesToRemove <= 0)
+                return 0;
+            bool found = Find(baselineTick, out int index);
+            int firstIndexToKeep = found ? index : Math.Max(0, index - 1);
+            int removeCount = Math.Min(firstIndexToKeep, maximumEntriesToRemove);
+            if (removeCount > 0)
+                RemoveFront(removeCount);
+            return removeCount;
+        }
+
+        // Restore capacity before Setup to avoid deferring growth into later simulation.
+        internal long RestoreEagerBackingStorage()
+        {
+            if (m_maxCount <= 0 || m_ticks.Length >= m_limitToCut + 1)
+                return 0;
+            ResizeBackingStorage(m_limitToCut + 1);
+            return BackingStoragePayloadBytes;
+        }
+
+        internal bool HasEagerBackingStorage => m_maxCount > 0 && m_ticks.Length >= m_limitToCut + 1;
+
+        internal long BackingStoragePayloadBytes =>
+            (long)m_ticks.Length * (Unsafe.SizeOf<T>() + sizeof(ulong));
+
+        private void ResizeBackingStorage(int newCapacity)
+        {
             var newTicks = new ulong[newCapacity];
             var newValues = new T[newCapacity];
 
@@ -135,7 +178,6 @@ namespace PurrNet.Prediction
         /// <param name="data">What is the state/data of the tick.</param>
         public void Write(ulong tick, in T data)
         {
-            // Fast path for appending, AKA most common case
             if (m_count == 0 || tick > m_ticks[Phys(m_count - 1)])
             {
                 if (m_count > 0 && tick != m_ticks[Phys(m_count - 1)] + 1)
@@ -156,14 +198,12 @@ namespace PurrNet.Prediction
 
             if (Find(tick, out var index))
             {
-                // Override existing data
                 int phys = Phys(index);
                 m_values[phys].Dispose();
                 m_values[phys] = data;
                 return;
             }
 
-            // Insert new data
             InsertAt(index, tick, data);
             m_contiguous = false;
 
@@ -194,7 +234,6 @@ namespace PurrNet.Prediction
         {
             if (m_count < m_limitToCut)
             {
-                // Not enough to worry about
                 return;
             }
 
@@ -245,14 +284,7 @@ namespace PurrNet.Prediction
             if (currentTick <= window)
                 return;
 
-            ulong cutoff = currentTick - window;
-            bool found = Find(cutoff, out int index);
-            int firstIndexToKeep = found ? index : Math.Max(0, index - 1);
-
-            if (firstIndexToKeep <= 0)
-                return;
-
-            RemoveFront(firstIndexToKeep);
+            PruneBeforeBaseline(currentTick - window);
         }
 
         /// <summary>
@@ -297,7 +329,6 @@ namespace PurrNet.Prediction
         /// </summary>
         /// <param name="tick">The tick you are searching for.</param>
         /// <param name="result">The data stored or default if not found.</param>
-        /// <returns></returns>
         public bool Read(ulong tick, out T result)
         {
             if (Find(tick, out var index))
@@ -448,20 +479,7 @@ namespace PurrNet.Prediction
             if (m_maxCount > 0 || m_count > m_ticks.Length / 2 || m_ticks.Length <= 16)
                 return;
 
-            int newCapacity = Math.Max(16, m_count);
-            var newTicks = new ulong[newCapacity];
-            var newValues = new T[newCapacity];
-
-            for (int i = 0; i < m_count; i++)
-            {
-                int phys = Phys(i);
-                newTicks[i] = m_ticks[phys];
-                newValues[i] = m_values[phys];
-            }
-
-            m_ticks = newTicks;
-            m_values = newValues;
-            m_head = 0;
+            ResizeBackingStorage(Math.Max(16, m_count));
         }
 
         public void Remove(ulong tick)

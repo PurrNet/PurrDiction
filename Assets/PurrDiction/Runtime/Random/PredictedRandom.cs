@@ -18,7 +18,7 @@ namespace PurrNet.Prediction
             return new PredictedRandom { seed = seed };
         }
 
-        // Generates a random uint in the range [0, uint.MaxValue)
+        /// <summary>Returns the next unsigned random value.</summary>
         public uint Next()
         {
             seed ^= seed << 13;
@@ -29,37 +29,37 @@ namespace PurrNet.Prediction
             return seed;
         }
 
-        // Generates a random integer in the range [min, max)
+        /// <summary>Returns a random integer in [min, max).</summary>
         public int Next(int min, int max)
         {
             return (int)(Next() % (uint)(max - min)) + min;
         }
 
-        // Generates a random integer in the range [0, max)
+        /// <summary>Returns a random integer in [0, max).</summary>
         public int Next(int max)
         {
             return (int)(Next() % (uint)max);
         }
 
-        // Generates a random float in the range [0, 1)
+        /// <summary>Returns a random float in [0, 1).</summary>
         public float NextFloat()
         {
             return BitConverter.Int32BitsToSingle((int)((Next() >> 9) | FLOAT_EXPONENT_MASK)) - 1.0f;
         }
 
-        // Generates a random sfloat in the range [0, 1)
+        /// <summary>Returns a random sfloat in [0, 1).</summary>
         public sfloat NextSFloat()
         {
             return sfloat.FromRaw((Next() >> 9) | FLOAT_EXPONENT_MASK) - sfloat.one;
         }
 
-        // Generates a random sfloat in the range [0, 1)
+        /// <summary>Returns a random fixed-point value in [0, 1).</summary>
         public FP NextFP()
         {
             return FP.FromRaw(Next());
         }
 
-        // Generates a random float in the range [min, max)
+        /// <summary>Returns a random float in [min, max).</summary>
         public float NextFloat(float min, float max)
         {
             return min + (max - min) * NextFloat();

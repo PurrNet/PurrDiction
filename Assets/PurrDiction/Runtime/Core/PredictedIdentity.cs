@@ -55,6 +55,7 @@ namespace PurrNet.Prediction
         /// The unique identifier for this object.
         /// Can be used to identify the object across the network.
         /// </summary>
+        [NonSerialized]
         public PredictedComponentID id;
 
         /// <summary>
@@ -456,10 +457,11 @@ namespace PurrNet.Prediction
             if (manager.cachedIsServer)
                 return false;
 
-            if (UsesFullPredictionTimeline())
+            var policy = EffectivePolicy();
+            if (policy == PredictionPolicy.FullPrediction)
                 return false;
 
-            if (UsesSoftCorrectionTimeline())
+            if (policy == PredictionPolicy.SoftCorrection)
                 return manager.isReplaying && !_simulateSoftCorrectionDuringReplay;
 
             return !(manager.isReplaying && manager.isVerified);
@@ -518,6 +520,7 @@ namespace PurrNet.Prediction
             isServer = false;
             isFreshSpawn = true;
             preservesStateOnSetup = false;
+            continuesSpawnOnSetup = false;
             _simulateSoftCorrectionDuringReplay = false;
             _skipReplaySpawnInitialization = false;
             _hasLastEffectivePredictionPolicy = false;
@@ -532,6 +535,13 @@ namespace PurrNet.Prediction
         internal void SetPreserveStateOnSetup(bool preserve)
         {
             preservesStateOnSetup = preserve;
+        }
+
+        internal bool continuesSpawnOnSetup { get; private set; }
+
+        internal void SetContinuesSpawnOnSetup(bool continues)
+        {
+            continuesSpawnOnSetup = continues;
         }
 
         internal void SetSoftCorrectionReplaySimulation(bool simulate)
@@ -679,16 +689,14 @@ namespace PurrNet.Prediction
 
         public SceneID sceneId { get; private set; }
 
-        internal ulong lastChangedStateTick;
-
         internal virtual void Setup(NetworkManager manager, PredictionManager world, PredictedComponentID id, PlayerID? owner)
         {
             isServer = manager.isServer;
             this.id = id;
             _destroyedFired = false;
+            _poolPrewarmed = true;
             predictionManager = world;
             sceneId = world.sceneId;
-            lastChangedStateTick = world.localTick + 1;
             _metadataVerified = null;
             _moduleSetVerified = null;
             SetOwner(owner, false);
@@ -718,6 +726,7 @@ namespace PurrNet.Prediction
 
         protected virtual void OnDestroy()
         {
+            DisposeUploadedInputBits();
             TriggerDestroyedEvent();
             TearDownAllModules();
 
@@ -751,6 +760,16 @@ namespace PurrNet.Prediction
         }
 
         public bool isOwner => IsOwner();
+
+        /// <summary>
+        /// The precise prediction tick the controlling player was presenting when it produced the
+        /// input for the tick being simulated. Pass it to <see cref="PredictionManager.lagCompensation"/>
+        /// queries to hit-test the world as that player saw it. Server-controlled identities return
+        /// the tick being simulated. Only meaningful inside Simulate.
+        /// </summary>
+        public double lagCompensationTick => predictionManager
+            ? predictionManager.GetLagCompensationTick(owner, predictionManager.localTickInContext)
+            : 0d;
 
         public bool isController
         {
@@ -841,6 +860,17 @@ namespace PurrNet.Prediction
 
         internal virtual bool HasUnchangedStateBaseline(ulong baselineTick) => false;
 
+        internal virtual bool TryGetFirstVerifiedTick(out ulong tick)
+        {
+            if (_metadataVerified != null && _metadataVerified.Count > 0)
+            {
+                tick = _metadataVerified.OldestTick;
+                return true;
+            }
+            tick = 0;
+            return false;
+        }
+
         internal virtual void ReadUnchangedState(
             ulong tick,
             ulong baselineTick,
@@ -851,6 +881,45 @@ namespace PurrNet.Prediction
         }
 
         internal abstract void QueueInput(BitPacker packer, PlayerID sender);
+
+        // Bits of the owner's upload that the server consumed for a tick, kept so the
+        // transcript can tell that owner to restore them instead of echoing them.
+        private BitPacker _uploadedInputBits;
+        private ulong _uploadedInputTick;
+        private bool _uploadedInputPending;
+        private bool _hasUploadedInputBits;
+
+        internal void RecordUploadedInputBits(BitPacker packer, int origin)
+        {
+            _uploadedInputBits ??= BitPackerPool.Get();
+            _uploadedInputBits.ResetPositionAndMode(false);
+            _uploadedInputBits.WriteBitDataWithoutConsumingIt(new BitData(packer, origin, packer.positionInBits - origin));
+            _uploadedInputPending = true;
+        }
+
+        internal void ConsumeUploadedInputBits(ulong tick, bool used)
+        {
+            _hasUploadedInputBits = used && _uploadedInputPending;
+            _uploadedInputTick = tick;
+            _uploadedInputPending = false;
+        }
+
+        internal bool TryGetUploadedInputBits(ulong tick, out BitData bits)
+        {
+            bits = default;
+            if (!_hasUploadedInputBits || _uploadedInputTick != tick)
+                return false;
+            bits = new BitData(_uploadedInputBits, 0, _uploadedInputBits.positionInBits);
+            return true;
+        }
+
+        private void DisposeUploadedInputBits()
+        {
+            _uploadedInputBits?.Dispose();
+            _uploadedInputBits = null;
+            _uploadedInputPending = false;
+            _hasUploadedInputBits = false;
+        }
 
         public GameObject GetRoot()
         {
@@ -873,8 +942,23 @@ namespace PurrNet.Prediction
             OnAddedToPool();
         }
 
+        private bool _poolPrewarmed;
+
+        internal void PrewarmForPool(PredictionManager world)
+        {
+            if (_poolPrewarmed)
+                return;
+
+            _poolPrewarmed = true;
+            PrewarmPredictionState(world);
+        }
+
+        internal virtual void PrewarmPredictionState(PredictionManager world) { }
+
         internal virtual void ReleasePredictionStateForPool()
         {
+            _metadataVerified = null;
+            _moduleSetVerified = null;
             ReleaseModuleStateForPool();
         }
 
@@ -885,8 +969,6 @@ namespace PurrNet.Prediction
         internal abstract void ClearFuture(ulong stateTick);
 
         internal virtual bool HasInputAt(ulong tick) => false;
-
-        internal virtual bool requiresGuaranteedInputHistory => false;
 
         internal DesyncPolicy resolvedDesyncPolicy = DesyncPolicy.Ignore;
 

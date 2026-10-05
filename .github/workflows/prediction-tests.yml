@@ -24,6 +24,10 @@ on:
         required: false
         type: boolean
         default: false
+      targetFrameRate:
+        description: "Frame-rate cap for every headless player (0 = unthrottled)"
+        required: false
+        default: "240"
 
 jobs:
   prediction-tests:
@@ -42,6 +46,8 @@ jobs:
       CONNECT_DELAY: ${{ inputs.connectionDelaySeconds || '1' }}
       PROFILE_TIMEOUT_SECONDS: ${{ inputs.profileTimeoutSeconds || '420' }}
       JOB_TEMP_LEAK_VALIDATION: ${{ inputs.jobTempLeakValidation && 'true' || 'false' }}
+      # Headless players spin unthrottled; six of them on a 4 vCPU runner starve each other.
+      TARGET_FRAME_RATE: ${{ inputs.targetFrameRate || '240' }}
 
     steps:
       - name: Checkout
@@ -109,9 +115,9 @@ jobs:
 
           RUN=(xvfb-run -a --server-args="-screen 0 1024x768x24")
           FAIL=0
-          DIAGNOSTIC_ARGS=()
+          DIAGNOSTIC_ARGS=(-targetFrameRate "$TARGET_FRAME_RATE")
           if [ "$JOB_TEMP_LEAK_VALIDATION" = "true" ]; then
-            DIAGNOSTIC_ARGS=(-diag-job-temp-memory-leak-validation)
+            DIAGNOSTIC_ARGS+=(-diag-job-temp-memory-leak-validation)
           fi
 
           terminate_process_tree() {
@@ -280,6 +286,7 @@ jobs:
           run_profile high-jitter 37003 -latencyMin 120 -latencyMax 250
           run_profile loss 37004 -latencyMin 40 -latencyMax 80 -packetLoss 5
           run_profile heavy-loss 37005 -latencyMin 80 -latencyMax 160 -packetLoss 15
+          run_profile coalesced-30hz 37010 -tickRate 60 -serverUpdateRate 30 -latencyMin 40 -latencyMax 80 -packetLoss 5
           run_profile input-bandwidth-budget 37009 -inputBandwidthBenchmark -ibSeconds 12 -ibNoise constant -ibAssert -tickRate 64 -latencyMin 70 -latencyMax 70
           run_profile purrleague-immediate-rpc 37006 -tickRate 60 -mtuFragment -desyncPolicy Report -immediateRpcRegressionScenarioOnly
           run_profile webtransport-immediate-rpc 37007 -tickRate 60 -mtuFragment -desyncPolicy Report -webTransport -immediateRpcRegressionScenarioOnly
@@ -354,7 +361,17 @@ jobs:
                 if [ "$pfail" -eq 0 ]; then
                   echo "#### \`${proc}\` — ${ppass}/${pcount} passed :white_check_mark:"
                   echo ""
-                  echo "_All scenarios passed; rows omitted._"
+                  notes=$(jq -r "$JQ_LIB"'
+                    to_entries[] | select(.value.result.success == true and ((.value.result.message // "") | startswith("NOTE:"))) |
+                    "| \(.key) | \(.value.name // "?") | :information_source: | \(.value.durationInMs | humanDuration) | \(((.value.result.message // "") | split(" | ")[0]) | gsub("\\|"; "&#124;")) |"
+                  ' "$f")
+                  if [ -n "$notes" ]; then
+                    echo "| # | Scenario | Status | Duration | Note |"
+                    echo "|---|---|---|---|---|"
+                    echo "$notes"
+                  else
+                    echo "_All scenarios passed; rows omitted._"
+                  fi
                   echo ""
                   continue
                 fi

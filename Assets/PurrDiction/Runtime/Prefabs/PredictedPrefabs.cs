@@ -28,7 +28,6 @@ namespace PurrNet.Prediction
 
         public List<PredictedPrefab> prefabs = new();
 
-        // Legacy migration fields
 #pragma warning disable CS0612
         [SerializeField, HideInInspector, Obsolete, UsedImplicitly] private List<GameObject> _prefabs = new();
 
@@ -56,7 +55,6 @@ namespace PurrNet.Prediction
         private void OnValidate()
         {
 #pragma warning disable CS0612
-            // Migrate from oldest format (plain GameObject list)
             if (_prefabs.Count > 0)
             {
                 for (int i = _prefabs.Count - 1; i >= 0; i--)
@@ -72,7 +70,6 @@ namespace PurrNet.Prediction
                 EditorUtility.SetDirty(this);
             }
 
-            // Migrate from intermediate format (LegacyPredictedPrefab with PoolSettings)
             if (_newPrefabs.Count > 0)
             {
                 for (int i = 0; i < _newPrefabs.Count; i++)
@@ -128,7 +125,7 @@ namespace PurrNet.Prediction
                     return;
                 }
 
-                // Scan for prefabs with PredictedIdentity (can't use ScanPrefabs which filters by NetworkIdentity)
+                // ScanPrefabs filters by NetworkIdentity, excluding prediction-only prefabs.
                 var found = new List<AssetScannerUtility.ScanResult>();
                 string[] guids = AssetDatabase.FindAssets("t:prefab", new[] { resolvedPath });
                 var identities = new List<PredictedIdentity>();
@@ -153,7 +150,6 @@ namespace PurrNet.Prediction
 
                 found.Sort(AssetScannerUtility.CompareByGuid);
 
-                // Update GUIDs on existing entries
                 for (int i = 0; i < prefabs.Count; i++)
                 {
                     if (!prefabs[i].prefab) continue;

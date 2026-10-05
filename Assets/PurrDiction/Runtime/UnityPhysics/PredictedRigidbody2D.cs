@@ -19,15 +19,31 @@ namespace PurrNet.Prediction
         public delegate void OnTriggerDelegate(GameObject other);
 
         [SerializeField] private Rigidbody2D _rigidbody;
-        [SerializeField] private PhysicsEventMask _eventMask = (PhysicsEventMask)0x3F;
+        [SerializeField] private PhysicsEventMask _eventMask = PredictedRigidbody.DEFAULT_EVENT_MASK;
 
+        public new Rigidbody2D rigidbody => _rigidbody;
+
+        [Obsolete("Use onPredictedCollisionEnter. It also carries the other object's PredictedComponentID and, on Exit, still fires after the other object was deleted.")]
         public event OnCollisionDelegate onCollisionEnter;
+        [Obsolete("Use onPredictedCollisionExit. It also carries the other object's PredictedComponentID and, on Exit, still fires after the other object was deleted.")]
         public event OnCollisionDelegate onCollisionExit;
+        [Obsolete("Use onPredictedCollisionStay. It also carries the other object's PredictedComponentID and, on Exit, still fires after the other object was deleted.")]
         public event OnCollisionDelegate onCollisionStay;
 
+        [Obsolete("Use onPredictedTriggerEnter. It also carries the other object's PredictedComponentID and, on Exit, still fires after the other object was deleted.")]
         public event OnTriggerDelegate onTriggerEnter;
+        [Obsolete("Use onPredictedTriggerExit. It also carries the other object's PredictedComponentID and, on Exit, still fires after the other object was deleted.")]
         public event OnTriggerDelegate onTriggerExit;
+        [Obsolete("Use onPredictedTriggerStay. It also carries the other object's PredictedComponentID and, on Exit, still fires after the other object was deleted.")]
         public event OnTriggerDelegate onTriggerStay;
+
+        public event OnPredictedCollision2DDelegate onPredictedCollisionEnter;
+        public event OnPredictedCollision2DDelegate onPredictedCollisionExit;
+        public event OnPredictedCollision2DDelegate onPredictedCollisionStay;
+
+        public event OnPredictedTriggerDelegate onPredictedTriggerEnter;
+        public event OnPredictedTriggerDelegate onPredictedTriggerExit;
+        public event OnPredictedTriggerDelegate onPredictedTriggerStay;
 
         private void Reset()
         {
@@ -89,6 +105,7 @@ namespace PurrNet.Prediction
                 RestoreDefaultPhysicsMode();
 
             base.Setup(manager, world, id, owner);
+            SyncEventProxies();
 
             if (!_rigidbody)
                 return;
@@ -437,72 +454,58 @@ namespace PurrNet.Prediction
 #endif
         }
 
-        private void OnCollisionEnter2D(Collision2D other)
+        public PhysicsEventMask eventMask
         {
-            if (!_eventMask.HasFlag(PhysicsEventMask.CollisionEnter))
+            get => _eventMask;
+            set
+            {
+                if (_eventMask == value)
+                    return;
+                _eventMask = value;
+                SyncEventProxies();
+            }
+        }
+
+        private const PhysicsEventMask ContactProxyMask =
+            PhysicsEventMask.CollisionEnter | PhysicsEventMask.CollisionExit |
+            PhysicsEventMask.TriggerEnter | PhysicsEventMask.TriggerExit;
+
+        private const PhysicsEventMask StayProxyMask =
+            PhysicsEventMask.CollisionStay | PhysicsEventMask.TriggerStay;
+
+        internal void SyncEventProxies()
+        {
+            if (PredictedPhysicsEventProxies.Sync<PredictedRigidbody2DContactProxy>(
+                    gameObject, (_eventMask & ContactProxyMask) != 0, out var contact))
+                contact.target = this;
+            if (PredictedPhysicsEventProxies.Sync<PredictedRigidbody2DStayProxy>(
+                    gameObject, (_eventMask & StayProxyMask) != 0, out var stay))
+                stay.target = this;
+        }
+
+        internal void HandleCollision(PhysicsEventType type, PhysicsEventMask kind, Collision2D other)
+        {
+            if ((_eventMask & kind) == 0)
                 return;
 
             if (!predictionManager || !predictionManager.isSimulating || predictionManager.isVerifiedAndReplaying)
                 return;
 
-            predictionManager.physics2d.RegisterEvent(PhysicsEventType.Enter, this, other);
+            predictionManager.physics2d.RegisterEvent(type, this, other);
         }
 
-        private void OnCollisionExit2D(Collision2D other)
+        internal void HandleTrigger(PhysicsEventType type, PhysicsEventMask kind, Collider2D other)
         {
-            if (!_eventMask.HasFlag(PhysicsEventMask.CollisionExit))
+            if ((_eventMask & kind) == 0)
                 return;
 
             if (!predictionManager || !predictionManager.isSimulating || predictionManager.isVerifiedAndReplaying)
                 return;
 
-            predictionManager.physics2d.RegisterEvent(PhysicsEventType.Exit, this, other);
+            predictionManager.physics2d.RegisterEvent(type, this, other);
         }
 
-        private void OnCollisionStay2D(Collision2D other)
-        {
-            if (!_eventMask.HasFlag(PhysicsEventMask.CollisionStay))
-                return;
-
-            if (!predictionManager || !predictionManager.isSimulating || predictionManager.isVerifiedAndReplaying)
-                return;
-
-            predictionManager.physics2d.RegisterEvent(PhysicsEventType.Stay, this, other);
-        }
-
-        private void OnTriggerEnter2D(Collider2D other)
-        {
-            if (!_eventMask.HasFlag(PhysicsEventMask.TriggerEnter))
-                return;
-
-            if (!predictionManager || !predictionManager.isSimulating || predictionManager.isVerifiedAndReplaying)
-                return;
-
-            predictionManager.physics2d.RegisterEvent(PhysicsEventType.Enter, this, other);
-        }
-
-        private void OnTriggerExit2D(Collider2D other)
-        {
-            if (!_eventMask.HasFlag(PhysicsEventMask.TriggerExit))
-                return;
-
-            if (!predictionManager || !predictionManager.isSimulating || predictionManager.isVerifiedAndReplaying)
-                return;
-
-            predictionManager.physics2d.RegisterEvent(PhysicsEventType.Exit, this, other);
-        }
-
-        private void OnTriggerStay2D(Collider2D other)
-        {
-            if (!_eventMask.HasFlag(PhysicsEventMask.TriggerStay))
-                return;
-
-            if (!predictionManager || !predictionManager.isSimulating || predictionManager.isVerifiedAndReplaying)
-                return;
-
-            predictionManager.physics2d.RegisterEvent(PhysicsEventType.Stay, this, other);
-        }
-
+#pragma warning disable CS0618 // the GameObject-only events stay raised until they are removed
         public void RaiseTriggerEnter(GameObject other) => onTriggerEnter?.Invoke(other);
 
         public void RaiseTriggerExit(GameObject other) => onTriggerExit?.Invoke(other);
@@ -510,19 +513,26 @@ namespace PurrNet.Prediction
         public void RaiseTriggerStay(GameObject other) => onTriggerStay?.Invoke(other);
 
         public void RaiseCollisionEnter(GameObject other, DisposableList<Physics2DContactPoint> evContacts)
-        {
-            onCollisionEnter?.Invoke(other, evContacts);
-        }
+            => onCollisionEnter?.Invoke(other, evContacts);
 
         public void RaiseCollisionExit(GameObject other, DisposableList<Physics2DContactPoint> evContacts)
-        {
-            onCollisionExit?.Invoke(other, evContacts);
-        }
+            => onCollisionExit?.Invoke(other, evContacts);
 
         public void RaiseCollisionStay(GameObject other, DisposableList<Physics2DContactPoint> evContacts)
-        {
-            onCollisionStay?.Invoke(other, evContacts);
-        }
+            => onCollisionStay?.Invoke(other, evContacts);
+#pragma warning restore CS0618
+
+        public void RaiseTriggerEnter(PredictedTrigger trigger) => onPredictedTriggerEnter?.Invoke(trigger);
+
+        public void RaiseTriggerExit(PredictedTrigger trigger) => onPredictedTriggerExit?.Invoke(trigger);
+
+        public void RaiseTriggerStay(PredictedTrigger trigger) => onPredictedTriggerStay?.Invoke(trigger);
+
+        public void RaiseCollisionEnter(PredictedCollision2D collision) => onPredictedCollisionEnter?.Invoke(collision);
+
+        public void RaiseCollisionExit(PredictedCollision2D collision) => onPredictedCollisionExit?.Invoke(collision);
+
+        public void RaiseCollisionStay(PredictedCollision2D collision) => onPredictedCollisionStay?.Invoke(collision);
 
         public Vector2 position
         {
@@ -549,7 +559,7 @@ namespace PurrNet.Prediction
 
             set
             {
-                //setting linearVelocity on static Rigidbody2D logs a warning.
+                // Unity warns when velocity is assigned to a static body.
                 if (_rigidbody.bodyType == RigidbodyType2D.Static)
                     return;
 
@@ -572,7 +582,7 @@ namespace PurrNet.Prediction
             get => _rigidbody.angularVelocity;
             set
             {
-                //setting angularVelocity on static Rigidbody2D logs a warning.
+                // Unity warns when velocity is assigned to a static body.
                 if (_rigidbody.bodyType == RigidbodyType2D.Static)
                     return;
 

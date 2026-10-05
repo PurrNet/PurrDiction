@@ -156,7 +156,7 @@ namespace PurrNet.Prediction
                 case 0:
                     return zero;
                 case int.MinValue:
-                    // special case
+                    // Math.Abs cannot represent the magnitude of int.MinValue.
                     return FromRaw(0xcf000000);
             }
 
@@ -231,18 +231,15 @@ namespace PurrNet.Prediction
                 int man2;
                 if (rawExp2 != 0)
                 {
-                    // man1 = f1.Mantissa
                     // http://graphics.stanford.edu/~seander/bithacks.html#ConditionalNegate
                     uint sign1 = (uint)((int)f1.rawValue >> 31);
                     man1 = (int)(((f1.RawMantissa | 0x800000) ^ sign1) - sign1);
-                    // man2 = f2.Mantissa
                     uint sign2 = (uint)((int)f2.rawValue >> 31);
                     man2 = (int)(((f2.RawMantissa | 0x800000) ^ sign2) - sign2);
                 }
                 else
                 {
                     // Subnorm
-                    // man2 = f2.Mantissa
                     uint sign2 = (uint)((int)f2.rawValue >> 31);
                     man2 = (int)((f2.RawMantissa ^ sign2) - sign2);
 
@@ -348,7 +345,6 @@ namespace PurrNet.Prediction
                 rawMan1 <<= shift;
                 rawExp1 = 1 - shift;
 
-                //Debug.Assert(rawMan1 >> MantissaBits == 1);
                 man1 = (int)((rawMan1 ^ sign1) - sign1);
             }
             else if (rawExp1 != 255)
@@ -412,7 +408,6 @@ namespace PurrNet.Prediction
                 rawMan2 <<= shift;
                 rawExp2 = 1 - shift;
 
-                //Debug.Assert(rawMan2 >> MantissaBits == 1);
                 man2 = (int)((rawMan2 ^ sign2) - sign2);
             }
             else if (rawExp2 != 255)
@@ -440,7 +435,6 @@ namespace PurrNet.Prediction
 
             long longMan = man1 * (long)man2;
             int man = (int)(longMan >> MantissaBits);
-            //Debug.Assert(man != 0);
             uint absMan = (uint)Math.Abs(man);
             int rawExp = rawExp1 + rawExp2 - ExponentBias;
             uint sign = (uint)man & 0x80000000;
@@ -452,7 +446,6 @@ namespace PurrNet.Prediction
 
             switch (rawExp)
             {
-                //Debug.Assert(absMan >> MantissaBits == 1);
                 case >= 255:
                     // Overflow
                     return new sfloat(sign ^ RawPositiveInfinity);
@@ -501,7 +494,6 @@ namespace PurrNet.Prediction
                 rawMan1 <<= shift;
                 rawExp1 = 1 - shift;
 
-                //Debug.Assert(rawMan1 >> MantissaBits == 1);
                 man1 = (int)((rawMan1 ^ sign1) - sign1);
             }
             else if (rawExp1 != 255)
@@ -544,7 +536,6 @@ namespace PurrNet.Prediction
                 rawMan2 <<= shift;
                 rawExp2 = 1 - shift;
 
-                //Debug.Assert(rawMan2 >> MantissaBits == 1);
                 man2 = (int)((rawMan2 ^ sign2) - sign2);
             }
             else if (rawExp2 != 255)
@@ -574,7 +565,6 @@ namespace PurrNet.Prediction
 
             long longMan = ((long)man1 << MantissaBits) / man2;
             int man = (int)longMan;
-            //Debug.Assert(man != 0);
             uint absMan = (uint)Math.Abs(man);
             int rawExp = rawExp1 - rawExp2 + ExponentBias;
             uint sign = (uint)man & 0x80000000;
@@ -587,7 +577,6 @@ namespace PurrNet.Prediction
 
             switch (rawExp)
             {
-                //Debug.Assert(absMan >> MantissaBits == 1);
                 case >= 255:
                     // Overflow
                     return new sfloat(sign ^ RawPositiveInfinity);

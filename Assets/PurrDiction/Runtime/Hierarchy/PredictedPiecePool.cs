@@ -19,6 +19,25 @@ namespace PurrNet.Prediction
         }
     }
 
+    internal readonly struct SpawnKey
+    {
+        public readonly ulong tick;
+        public readonly PredictedComponentID creator;
+        public readonly int ordinal;
+        public readonly bool isValid;
+
+        public SpawnKey(ulong tick, PredictedComponentID creator, int ordinal)
+        {
+            this.tick = tick;
+            this.creator = creator;
+            this.ordinal = ordinal;
+            isValid = true;
+        }
+
+        public bool Matches(in SpawnKey other) =>
+            isValid && other.isValid && tick == other.tick && ordinal == other.ordinal && creator.Equals(other.creator);
+    }
+
     internal sealed class PredictedPiecePool
     {
         sealed class Entry
@@ -29,7 +48,10 @@ namespace PurrNet.Prediction
             public ulong addedTick;
             public Vector3 rootSpawnPosition;
             public bool isComplete;
+            public SpawnKey spawnKey;
             public readonly List<PooledPiece> pieces = new ();
+
+            public bool IsReservedAt(ulong tick) => spawnKey.isValid && spawnKey.tick >= tick;
         }
 
         sealed class PieceIndexComparer : IComparer<PooledPiece>
@@ -42,19 +64,34 @@ namespace PurrNet.Prediction
         readonly Dictionary<PredictedObjectID, Entry> _byPieceId = new ();
         readonly List<Entry> _entries = new ();
         readonly HashSet<GameObject> _entryPieceScratch = new ();
+        readonly Stack<Entry> _freeEntries = new ();
+
+        Entry RentEntry(GameObject rootGo, PredictedObjectID rootPieceId, PackedInt prefabId, ulong addedTick,
+            Vector3 rootSpawnPosition, bool isComplete, in SpawnKey spawnKey)
+        {
+            var entry = _freeEntries.Count > 0 ? _freeEntries.Pop() : new Entry();
+            entry.rootGo = rootGo;
+            entry.rootPieceId = rootPieceId;
+            entry.prefabId = prefabId;
+            entry.addedTick = addedTick;
+            entry.rootSpawnPosition = rootSpawnPosition;
+            entry.isComplete = isComplete;
+            entry.spawnKey = spawnKey;
+            return entry;
+        }
+
+        void ReturnEntry(Entry entry)
+        {
+            entry.rootGo = null;
+            entry.spawnKey = default;
+            entry.pieces.Clear();
+            _freeEntries.Push(entry);
+        }
 
         public void PutTree(PackedInt prefabId, PredictedObjectID rootPieceId, Vector3 rootSpawnPosition,
-            GameObject rootGo, List<PooledPiece> pieces, ulong tick, bool isComplete)
+            GameObject rootGo, List<PooledPiece> pieces, ulong tick, bool isComplete, in SpawnKey spawnKey = default)
         {
-            var entry = new Entry
-            {
-                rootGo = rootGo,
-                rootPieceId = rootPieceId,
-                prefabId = prefabId,
-                addedTick = tick,
-                rootSpawnPosition = rootSpawnPosition,
-                isComplete = isComplete
-            };
+            var entry = RentEntry(rootGo, rootPieceId, prefabId, tick, rootSpawnPosition, isComplete, spawnKey);
 
             for (var i = 0; i < pieces.Count; i++)
             {
@@ -67,15 +104,7 @@ namespace PurrNet.Prediction
 
         public void PutPiece(PackedInt prefabId, PredictedObjectID pieceId, uint pieceIndex, GameObject go, ulong tick)
         {
-            var entry = new Entry
-            {
-                rootGo = go,
-                rootPieceId = pieceId,
-                prefabId = prefabId,
-                addedTick = tick,
-                rootSpawnPosition = go.transform.position,
-                isComplete = false
-            };
+            var entry = RentEntry(go, pieceId, prefabId, tick, go.transform.position, false, default);
 
             entry.pieces.Add(new PooledPiece(pieceId, pieceIndex, go));
             MapPiece(pieceId, entry);
@@ -108,11 +137,8 @@ namespace PurrNet.Prediction
         }
 
         /// <summary>
-        /// Drops the pool's claim on a piece id that has been materialized live from somewhere
-        /// else - a fuzzy fallback that returned a different tree, or a fresh instantiate. The
-        /// GameObject stays owned by its entry so it is still torn down with it; only the id
-        /// lookup is relinquished, so the pool can never hand out a stale instance for an id
-        /// that is already live.
+        /// Releases the id lookup after a piece materializes elsewhere, preventing stale reuse.
+        /// The entry retains ownership of its GameObject for cleanup.
         /// </summary>
         public void ReleaseClaim(PredictedObjectID id)
         {
@@ -124,13 +150,43 @@ namespace PurrNet.Prediction
             return _byPieceId.ContainsKey(pieceId);
         }
 
+        /// <summary>
+        /// Takes the complete tree that showed the same spawn, whatever id it had then. Prefers the one
+        /// that also kept its id.
+        /// </summary>
+        public bool TryTakeSameSpawn(PackedInt prefabId, in SpawnKey spawnKey, PredictedObjectID rootPieceId,
+            List<PooledPiece> resultPieces, out GameObject rootGo)
+        {
+            rootGo = null;
+            if (!spawnKey.isValid)
+                return false;
+
+            Entry match = null;
+            for (var i = 0; i < _entries.Count; i++)
+            {
+                var entry = _entries[i];
+                if (!entry.isComplete || entry.prefabId != prefabId || !entry.spawnKey.Matches(spawnKey))
+                    continue;
+
+                match = entry;
+                if (entry.rootPieceId.Equals(rootPieceId))
+                    break;
+            }
+
+            if (match == null)
+                return false;
+
+            TakeEntry(match, resultPieces, out rootGo);
+            return true;
+        }
+
         public bool TryTakeTree(PredictedObjectID rootPieceId, PackedInt prefabId, Vector3 expectedSpawnPosition, bool checkDrift,
-            List<PooledPiece> resultPieces, out GameObject rootGo, out bool foundButDrifted)
+            List<PooledPiece> resultPieces, out GameObject rootGo, out bool foundButDrifted, ulong currentTick = ulong.MaxValue)
         {
             foundButDrifted = false;
 
             if (!_byPieceId.TryGetValue(rootPieceId, out var entry) || entry.rootPieceId.Equals(rootPieceId) == false ||
-                entry.prefabId != prefabId)
+                entry.prefabId != prefabId || entry.IsReservedAt(currentTick))
             {
                 rootGo = null;
                 return false;
@@ -143,14 +199,27 @@ namespace PurrNet.Prediction
                 return false;
             }
 
-            RemoveEntry(entry);
-            resultPieces.AddRange(entry.pieces);
-            rootGo = entry.rootGo;
+            TakeEntry(entry, resultPieces, out rootGo);
+            return true;
+        }
+
+        public bool TryTakeExactCompleteTree(PredictedObjectID rootPieceId, PackedInt prefabId,
+            List<PooledPiece> resultPieces, out GameObject rootGo, ulong currentTick = ulong.MaxValue)
+        {
+            if (!_byPieceId.TryGetValue(rootPieceId, out var entry) ||
+                !entry.rootPieceId.Equals(rootPieceId) || entry.prefabId != prefabId || !entry.isComplete ||
+                entry.IsReservedAt(currentTick))
+            {
+                rootGo = null;
+                return false;
+            }
+
+            TakeEntry(entry, resultPieces, out rootGo);
             return true;
         }
 
         public bool TryTakeNearestCompleteTree(PackedInt prefabId, Vector3 spawnPosition,
-            List<PooledPiece> resultPieces, out GameObject rootGo)
+            List<PooledPiece> resultPieces, out GameObject rootGo, ulong currentTick = ulong.MaxValue)
         {
             Entry closest = null;
             float closestError = float.MaxValue;
@@ -159,7 +228,7 @@ namespace PurrNet.Prediction
             {
                 var entry = _entries[i];
 
-                if (!entry.isComplete || entry.prefabId != prefabId)
+                if (!entry.isComplete || entry.prefabId != prefabId || entry.IsReservedAt(currentTick))
                     continue;
 
                 float posError = Vector3.Distance(entry.rootSpawnPosition, spawnPosition);
@@ -177,9 +246,7 @@ namespace PurrNet.Prediction
                 return false;
             }
 
-            RemoveEntry(closest);
-            resultPieces.AddRange(closest.pieces);
-            rootGo = closest.rootGo;
+            TakeEntry(closest, resultPieces, out rootGo);
             return true;
         }
 
@@ -228,7 +295,10 @@ namespace PurrNet.Prediction
                 go.transform.SetParent(null, false);
 
             if (entry.pieces.Count == 0)
+            {
                 _entries.Remove(entry);
+                ReturnEntry(entry);
+            }
             else if (go == entry.rootGo)
             {
                 var newRoot = entry.pieces[0];
@@ -257,14 +327,8 @@ namespace PurrNet.Prediction
                 var subRoot = subtreeRoots[i];
                 subRoot.SetParent(null, false);
 
-                var subEntry = new Entry
-                {
-                    rootGo = subRoot.gameObject,
-                    prefabId = entry.prefabId,
-                    addedTick = entry.addedTick,
-                    rootSpawnPosition = subRoot.position,
-                    isComplete = false
-                };
+                var subEntry = RentEntry(subRoot.gameObject, default, entry.prefabId, entry.addedTick,
+                    subRoot.position, false, default);
 
                 MovePiecesInSubtree(entry, subEntry, subRoot);
                 subEntry.rootPieceId = subEntry.pieces.Count > 0 ? subEntry.pieces[0].id : default;
@@ -308,11 +372,14 @@ namespace PurrNet.Prediction
             to.pieces.Sort(PieceIndexComparer.instance);
         }
 
-        void RemoveEntry(Entry entry)
+        void TakeEntry(Entry entry, List<PooledPiece> resultPieces, out GameObject rootGo)
         {
             for (var i = 0; i < entry.pieces.Count; i++)
                 UnmapPiece(entry.pieces[i].id, entry);
             _entries.Remove(entry);
+            resultPieces.AddRange(entry.pieces);
+            rootGo = entry.rootGo;
+            ReturnEntry(entry);
         }
 
         public void ClearOld(PredictionManager predictionManager)
@@ -346,13 +413,15 @@ namespace PurrNet.Prediction
 
             _entries.Remove(entry);
 
-            if (!entry.rootGo)
-                return;
+            if (entry.rootGo)
+            {
+                if (entry.isComplete)
+                    predictionManager.InternalDelete(entry.prefabId, entry.rootGo);
+                else
+                    UnityProxy.DestroyImmediateDirectly(entry.rootGo);
+            }
 
-            if (entry.isComplete)
-                predictionManager.InternalDelete(entry.prefabId, entry.rootGo);
-            else
-                UnityProxy.DestroyImmediateDirectly(entry.rootGo);
+            ReturnEntry(entry);
         }
     }
 }

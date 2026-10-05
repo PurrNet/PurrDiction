@@ -53,13 +53,13 @@ public class BounceProbe : PredictedIdentity<BounceProbe.ProbeState>
     {
         _rb = GetComponent<PredictedRigidbody>();
         if (_rb)
-            _rb.onCollisionEnter += OnBounce;
+            _rb.onPredictedCollisionEnter += OnBounce;
     }
 
     protected override void OnDestroy()
     {
         if (_rb)
-            _rb.onCollisionEnter -= OnBounce;
+            _rb.onPredictedCollisionEnter -= OnBounce;
         base.OnDestroy();
     }
 
@@ -73,8 +73,9 @@ public class BounceProbe : PredictedIdentity<BounceProbe.ProbeState>
     /// </summary>
     private const float MinCountedImpactSpeed = 1f;
 
-    private void OnBounce(GameObject other, PhysicsCollision collision)
+    private void OnBounce(PredictedCollision predicted)
     {
+        var collision = predicted.collision;
         if (!predictionManager.isVerifiedView)
             return;
 

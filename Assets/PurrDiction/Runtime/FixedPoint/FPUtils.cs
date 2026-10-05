@@ -1,23 +1,8 @@
-/* Coding style:
- *
- * In order to keep the transpiled C++/Java code working, here are some generic
- * coding guidelines.
- *
- * All 64bit constants should be of the form " -1234L" or " 0x1234L" (so start
- * with a whitespace and end with a capital L).
- *
- * All definitions should be in dependency order. That is, define functions
- * that are used later first. This is because C++ processes things in order,
- * where as in C# the definition order doesn't matter.
- *
- * Minimize the use of system libraries.
- *
- * There is a very limited preprocessor, which accepts "#if <LANG>",
- * "#elif <LANG>", "#else", as well as "#if !TRANSPILE" directives. No nested
- * directives are allowed.
- *
- * Use up-to C# 3 features to keep the library compatible with older versions
- * of Unity.
+/* C++/Java transpiler constraints:
+ * Prefix 64-bit literals with whitespace and suffix them with capital L.
+ * Define dependencies before callers and minimize system library use.
+ * Only non-nested #if <LANG>, #elif <LANG>, #else and #if !TRANSPILE are supported.
+ * Keep to C# 3 features for older Unity versions.
  */
 using System.Runtime.CompilerServices;
 
@@ -71,8 +56,6 @@ namespace PurrNet.Prediction
 #endif
         }
 
-        // Exp2()
-
         // Precision: 13.24 bits
         [MethodImpl(AggressiveInlining)]
         public static int Exp2Poly3(int a)
@@ -108,8 +91,6 @@ namespace PurrNet.Prediction
             y = y + 1073741824;
             return y;
         }
-
-        // Rcp()
 
         // Precision: 11.33 bits
         [MethodImpl(AggressiveInlining)]
@@ -182,8 +163,6 @@ namespace PurrNet.Prediction
             return y;
         }
 
-        // Sqrt()
-
         // Precision: 13.36 bits
         [MethodImpl(AggressiveInlining)]
         public static int SqrtPoly3(int a)
@@ -230,8 +209,6 @@ namespace PurrNet.Prediction
             y = y + SqrtPoly3Lut8Table[offset + 3];
             return y;
         }
-
-        // RSqrt()
 
         // Precision: 10.55 bits
         [MethodImpl(AggressiveInlining)]
@@ -288,8 +265,6 @@ namespace PurrNet.Prediction
             y = y + RSqrtPoly3Lut16Table[offset + 3];
             return y;
         }
-
-        // Log()
 
         // Precision: 12.18 bits
         [MethodImpl(AggressiveInlining)]
@@ -372,8 +347,6 @@ namespace PurrNet.Prediction
             y = y + LogPoly5Lut8Table[offset + 5];
             return y;
         }
-
-        // Log2()
 
         // Precision: 12.29 bits
         [MethodImpl(AggressiveInlining)]
@@ -519,8 +492,6 @@ namespace PurrNet.Prediction
             return y;
         }
 
-        // Sin()
-
         // Precision: 12.55 bits
         [MethodImpl(AggressiveInlining)]
         public static int SinPoly2(int a)
@@ -553,8 +524,6 @@ namespace PurrNet.Prediction
             y = y + 1686629713; // 1.57079632679489661923132169163975144209852010327780228586210672049751840856976653075976474782503285074174660817200999164
             return y;
         }
-
-        // Atan()
 
         // Precision: 11.51 bits
         [MethodImpl(AggressiveInlining)]

@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using PurrNet.Prediction.StateMachine;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace PurrNet.Prediction.Editor
 {
@@ -45,6 +46,7 @@ namespace PurrNet.Prediction.Editor
         private PredictedStateMachine _stateMachine;
         private SerializedProperty _defaultStateIndexProperty;
         private SerializedProperty _statesProperty;
+        private IMGUIContainer _stateMachineInfoContainer;
         
         private class StateCache
         {
@@ -69,6 +71,55 @@ namespace PurrNet.Prediction.Editor
         private void OnDisable()
         {
             EditorApplication.update -= OnEditorUpdate;
+            EditorAttributesIntegration.OnDisable(this);
+            AlchemyIntegration.OnDisable(this);
+            _stateMachineInfoContainer = null;
+        }
+
+        private void OnSceneGUI()
+        {
+            EditorAttributesIntegration.OnSceneGUI(this);
+        }
+
+        public override VisualElement CreateInspectorGUI()
+        {
+            var inspector = EditorAttributesIntegration.CreateInspectorGUI(
+                this, "_defaultStateIndex", "_wrappedStates") ??
+                AlchemyIntegration.CreateInspectorGUI(this, "_defaultStateIndex", "_wrappedStates");
+            if (inspector == null)
+                return null;
+
+            var root = new VisualElement();
+            root.Add(new IMGUIContainer(() =>
+            {
+                if (!this || !target)
+                    return;
+
+                serializedObject.UpdateIfRequiredOrScript();
+                using (new EditorGUI.DisabledScope(Application.isPlaying))
+                    DrawStateMachineControls();
+                serializedObject.ApplyModifiedProperties();
+            }));
+            var userProperties = new VisualElement();
+            userProperties.Add(inspector);
+            root.Add(userProperties);
+            _stateMachineInfoContainer = new IMGUIContainer(() =>
+            {
+                if (this && target)
+                    DrawStateMachineStatus();
+            });
+            root.Add(_stateMachineInfoContainer);
+
+            userProperties.SetEnabled(!Application.isPlaying);
+            root.schedule.Execute(() =>
+            {
+                if (!this || !target)
+                    return;
+
+                userProperties.SetEnabled(!Application.isPlaying);
+                _stateMachineInfoContainer?.MarkDirtyRepaint();
+            }).Every(100);
+            return root;
         }
 
         private void OnEditorUpdate()
@@ -85,6 +136,7 @@ namespace PurrNet.Prediction.Editor
             if (HasStateChanged())
             {
                 Repaint();
+                _stateMachineInfoContainer?.MarkDirtyRepaint();
             }
         }
 
@@ -184,8 +236,7 @@ namespace PurrNet.Prediction.Editor
             if (Application.isPlaying)
                 EditorGUI.BeginDisabledGroup(true);
 
-            EditorGUILayout.PropertyField(_defaultStateIndexProperty, new GUIContent("Default State Index"));
-            EditorGUILayout.PropertyField(_statesProperty, new GUIContent("States"), true);
+            DrawStateMachineControls();
             DrawPropertiesExcluding(serializedObject, ExcludedProperties);
 
             if (Application.isPlaying)
@@ -197,6 +248,17 @@ namespace PurrNet.Prediction.Editor
                 serializedObject.ApplyModifiedProperties();
             }
 
+            DrawStateMachineStatus();
+        }
+
+        private void DrawStateMachineControls()
+        {
+            EditorGUILayout.PropertyField(_defaultStateIndexProperty, new GUIContent("Default State Index"));
+            EditorGUILayout.PropertyField(_statesProperty, new GUIContent("States"), true);
+        }
+
+        private void DrawStateMachineStatus()
+        {
             if (!Application.isPlaying)
             {
                 EditorGUILayout.HelpBox("State information available during Play Mode", MessageType.Info);

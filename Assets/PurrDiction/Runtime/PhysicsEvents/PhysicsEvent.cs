@@ -10,6 +10,7 @@ namespace PurrNet.Prediction
         public PredictedComponentID me;
         public PredictedComponentID other;
         public PhysicsCollision collision;
+        public PhysicsControllerHit? controllerHit;
 
         public void Dispose() => collision.Dispose();
 
@@ -21,7 +22,8 @@ namespace PurrNet.Prediction
                 type = type,
                 me = me,
                 other = other,
-                collision = collision.Duplicate()
+                collision = collision.Duplicate(),
+                controllerHit = controllerHit
             };
         }
 

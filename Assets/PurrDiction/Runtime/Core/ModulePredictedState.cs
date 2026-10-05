@@ -1,4 +1,3 @@
-using System;
 using PurrNet.Packing;
 using Unity.Profiling;
 
@@ -11,7 +10,7 @@ namespace PurrNet.Prediction
         public void Dispose() { }
     }
 
-    internal struct MODULE_STATE<T> : IDisposable, IPackedAuto
+    internal struct MODULE_STATE<T> : IAuthoritativeState<MODULE_STATE<T>>, IPackedAuto
         where T : struct, IPredictedData<T>
     {
         public T state;

@@ -30,6 +30,26 @@
             "name": "com.codewriter.triinspector",
             "expression": "",
             "define": "TRI_INSPECTOR_PACKAGE"
+        },
+        {
+            "name": "com.v0lt.editor-attributes",
+            "expression": "",
+            "define": "EDITOR_ATTRIBUTES_PACKAGE"
+        },
+        {
+            "name": "dev.purrnet.purrnet",
+            "expression": "1.24.0-beta.29",
+            "define": "PURRNET_EDITOR_ATTRIBUTES_SUPPORT"
+        },
+        {
+            "name": "com.annulusgames.alchemy",
+            "expression": "2.1.0",
+            "define": "ALCHEMY_PACKAGE"
+        },
+        {
+            "name": "dev.purrnet.purrnet",
+            "expression": "1.24.0-beta.31",
+            "define": "PURRNET_ALCHEMY_SUPPORT"
         }
     ],
     "noEngineReferences": false

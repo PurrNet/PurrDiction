@@ -4,7 +4,6 @@ using System.IO;
 using JetBrains.Annotations;
 using Mono.Cecil;
 using Mono.Cecil.Cil;
-using PurrNet.Codegen;
 using PurrNet.Pooling;
 using PurrNet.Prediction;
 using Unity.CompilationPipeline.Common.Diagnostics;
@@ -56,7 +55,8 @@ namespace Purrdiction.Codegen
 
                 using var peStream = new MemoryStream(compiledAssembly.InMemoryAssembly.PeData);
                 using var pdbStream = new MemoryStream(compiledAssembly.InMemoryAssembly.PdbData);
-                var resolver = new AssemblyResolver(compiledAssembly);
+                // Unity 6.7+ also defines AssemblyResolver in its ILPostProcessing namespace.
+                var resolver = new PurrNet.Codegen.AssemblyResolver(compiledAssembly);
 
                 var assemblyDefinition = AssemblyDefinition.ReadAssembly(peStream, new ReaderParameters
                 {
@@ -84,7 +84,7 @@ namespace Purrdiction.Codegen
 
                         FPProcessor.HandleType(module, type, messages);
 
-                        if (!PostProcessor.InheritsFrom(type, typeof(PredictedIdentity).FullName))
+                        if (!PurrNet.Codegen.PostProcessor.InheritsFrom(type, typeof(PredictedIdentity).FullName))
                             continue;
 
                         var methods = type.Methods;
@@ -160,8 +160,9 @@ namespace Purrdiction.Codegen
 
         private static void ProcessMethod(MethodDefinition method, ModuleDefinition module)
         {
-            var predictedIdentity = module.GetTypeDefinition<PredictedIdentity>();
-            var isSimulating = predictedIdentity.GetMethod("IsSimulating").Import(module);
+            var predictedIdentity = PurrNet.Codegen.ModuleExtensions.GetTypeDefinition(module, typeof(PredictedIdentity));
+            var isSimulatingMethod = PurrNet.Codegen.ModuleExtensions.GetMethod(predictedIdentity, "IsSimulating");
+            var isSimulating = PurrNet.Codegen.ModuleExtensions.Import(module, isSimulatingMethod);
 
             var instructions = method.Body.Instructions;
             var processor = method.Body.GetILProcessor();

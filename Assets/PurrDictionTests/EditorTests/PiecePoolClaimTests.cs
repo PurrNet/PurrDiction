@@ -118,5 +118,174 @@ namespace PurrNet.Prediction.Tests.Editor
             Assert.That(pool.TryTakePiece(new PredictedObjectID(70), 1, out var takenRoot), Is.True);
             Assert.That(takenRoot, Is.EqualTo(root));
         }
+
+        [Test]
+        public void DriftedExactCompleteTreeIsAvailableBeforeAnUnrelatedNearerTree()
+        {
+            var pool = new PredictedPiecePool();
+            var id = new PredictedObjectID(80);
+            var otherId = new PredictedObjectID(90);
+            var exact = Track(new GameObject("exact drifted tree"));
+            var nearer = Track(new GameObject("unrelated nearer tree"));
+            var replayPosition = new Vector3(100, 0, 0);
+            pool.PutTree(1, id, Vector3.zero, exact, Single(id, exact), 0, true);
+            pool.PutTree(1, otherId, replayPosition, nearer, Single(otherId, nearer), 0, true);
+
+            var taken = new List<PooledPiece>();
+            Assert.That(pool.TryTakeTree(id, 1, replayPosition, true, taken, out _, out var drifted), Is.False);
+            Assert.That(drifted, Is.True);
+            Assert.That(pool.TryTakeExactCompleteTree(id, 1, taken, out var served), Is.True);
+            Assert.That(served, Is.SameAs(exact), "pose drift must not change which logical identity is restored");
+            Assert.That(taken.Count, Is.EqualTo(1));
+            Assert.That(taken[0].id, Is.EqualTo(id));
+            Assert.That(pool.Contains(id), Is.False);
+            Assert.That(pool.Contains(otherId), Is.True, "the unrelated candidate must remain available for its own replay");
+
+            taken.Clear();
+            Assert.That(pool.TryTakeTree(otherId, 1, replayPosition, true, taken, out var untouched, out _), Is.True);
+            Assert.That(untouched, Is.SameAs(nearer));
+        }
+
+        [Test]
+        public void ExactCompleteTakeTransfersEveryPieceWithoutLeavingClaims()
+        {
+            var pool = new PredictedPiecePool();
+            var root = Track(new GameObject("complete root"));
+            var child = Track(new GameObject("complete child"));
+            var leaf = Track(new GameObject("complete leaf"));
+            child.transform.SetParent(root.transform);
+            leaf.transform.SetParent(child.transform);
+            var pieces = new List<PooledPiece>
+            {
+                new(new PredictedObjectID(100), 0, root),
+                new(new PredictedObjectID(101), 1, child),
+                new(new PredictedObjectID(102), 2, leaf)
+            };
+            pool.PutTree(1, pieces[0].id, Vector3.zero, root, pieces, 0, true);
+
+            var taken = new List<PooledPiece>();
+            Assert.That(pool.TryTakeExactCompleteTree(pieces[0].id, 1, taken, out var served), Is.True);
+            Assert.That(served, Is.SameAs(root));
+            Assert.That(taken.Count, Is.EqualTo(pieces.Count));
+            for (int i = 0; i < pieces.Count; i++)
+            {
+                Assert.That(taken[i].id, Is.EqualTo(pieces[i].id));
+                Assert.That(taken[i].pieceIndex, Is.EqualTo(pieces[i].pieceIndex));
+                Assert.That(taken[i].gameObject, Is.SameAs(pieces[i].gameObject));
+                Assert.That(pool.Contains(pieces[i].id), Is.False);
+                Assert.That(pool.TryTakePiece(pieces[i].id, 1, out _), Is.False,
+                    "a transferred piece cannot later be handed out a second time");
+            }
+            pool.Clear(null);
+            Assert.That(root && child && leaf, Is.True, "pool cleanup no longer owns any transferred GameObject");
+        }
+
+        [TestCase("newId")]
+        [TestCase("wrongPrefab")]
+        [TestCase("nonRoot")]
+        [TestCase("partial")]
+        public void ExactCompleteTakeRejectsIneligibleClaimsWithoutConsumingThem(string mismatch)
+        {
+            var pool = new PredictedPiecePool();
+            var rootId = new PredictedObjectID(110);
+            var childId = new PredictedObjectID(111);
+            var root = Track(new GameObject("guard root"));
+            var child = Track(new GameObject("guard child"));
+            child.transform.SetParent(root.transform);
+            var pieces = new List<PooledPiece>
+            {
+                new(rootId, 0, root),
+                new(childId, 1, child)
+            };
+            pool.PutTree(1, rootId, Vector3.zero, root, pieces, 0, mismatch != "partial");
+            var requestedId = mismatch == "newId" ? new PredictedObjectID(120) :
+                mismatch == "nonRoot" ? childId : rootId;
+            int prefab = mismatch == "wrongPrefab" ? 2 : 1;
+            var taken = new List<PooledPiece>();
+
+            Assert.That(pool.TryTakeExactCompleteTree(requestedId, prefab, taken, out var served), Is.False);
+            Assert.That(served, Is.Null);
+            Assert.That(taken, Is.Empty);
+            Assert.That(pool.Contains(rootId), Is.True);
+            Assert.That(pool.Contains(childId), Is.True);
+            Assert.That(pool.TryTakePiece(childId, 1, out var stillClaimed), Is.True,
+                "an ineligible whole-tree request must leave exact piece recovery intact");
+            Assert.That(stillClaimed, Is.SameAs(child));
+        }
+
+        [Test]
+        public void ExtractingAPiecePreventsCompleteReuseOfEitherRemainingSubtree()
+        {
+            var pool = new PredictedPiecePool();
+            var root = Track(new GameObject("split root"));
+            var child = Track(new GameObject("split child"));
+            var leaf = Track(new GameObject("split leaf"));
+            child.transform.SetParent(root.transform);
+            leaf.transform.SetParent(child.transform);
+            var rootId = new PredictedObjectID(130);
+            var childId = new PredictedObjectID(131);
+            var leafId = new PredictedObjectID(132);
+            pool.PutTree(1, rootId, Vector3.zero, root, new List<PooledPiece>
+            {
+                new(rootId, 0, root), new(childId, 1, child), new(leafId, 2, leaf)
+            }, 0, true);
+
+            Assert.That(pool.TryTakePiece(childId, 1, out var extracted), Is.True);
+            Assert.That(extracted, Is.SameAs(child));
+            var taken = new List<PooledPiece>();
+            Assert.That(pool.TryTakeExactCompleteTree(rootId, 1, taken, out _), Is.False);
+            Assert.That(pool.TryTakeExactCompleteTree(leafId, 1, taken, out _), Is.False);
+            Assert.That(pool.TryTakeNearestCompleteTree(1, Vector3.zero, taken, out _), Is.False,
+                "partial remains cannot serve as an unrelated complete prefab either");
+            Assert.That(taken, Is.Empty);
+            Assert.That(pool.TryTakePiece(rootId, 1, out var remainingRoot), Is.True);
+            Assert.That(pool.TryTakePiece(leafId, 1, out var remainingLeaf), Is.True);
+            Assert.That(remainingRoot, Is.SameAs(root));
+            Assert.That(remainingLeaf, Is.SameAs(leaf));
+        }
+
+        [Test]
+        public void TakingAReleasedOldTreeDoesNotEraseANewerClaimForTheSameId()
+        {
+            var pool = new PredictedPiecePool();
+            var id = new PredictedObjectID(140);
+            var old = Track(new GameObject("released old tree"));
+            var replacement = Track(new GameObject("new claimant"));
+            pool.PutTree(1, id, Vector3.zero, old, Single(id, old), 0, true);
+            pool.ReleaseClaim(id);
+            pool.PutTree(1, id, new Vector3(10, 0, 0), replacement, Single(id, replacement), 1, true);
+
+            var taken = new List<PooledPiece>();
+            Assert.That(pool.TryTakeNearestCompleteTree(1, Vector3.zero, taken, out var served), Is.True);
+            Assert.That(served, Is.SameAs(old));
+            Assert.That(pool.Contains(id), Is.True,
+                "removing an old entry may release only claims that still point to that entry");
+            Assert.That(pool.TryTakePiece(id, 1, out var current), Is.True);
+            Assert.That(current, Is.SameAs(replacement));
+            pool.Clear(null);
+            Assert.That(old && replacement, Is.True);
+        }
+
+        [Test]
+        public void ClearingAReleasedPartialEntryDoesNotDestroyTheLiveReplacement()
+        {
+            var pool = new PredictedPiecePool();
+            var id = new PredictedObjectID(150);
+            var old = Track(new GameObject("released partial piece"));
+            var replacement = Track(new GameObject("live replacement piece"));
+            pool.PutPiece(1, id, 0, old, 0);
+            pool.ReleaseClaim(id);
+            pool.PutPiece(1, id, 0, replacement, 1);
+            Assert.That(pool.TryTakePiece(id, 1, out var current), Is.True);
+            Assert.That(current, Is.SameAs(replacement));
+
+            // Only the old partial entry remains pool-owned. This path uses direct
+            // destruction, so no manager, prefab asset or transport fixture is required.
+            pool.Clear(null);
+            Assert.That(old == null, Is.True, "the bypassed physical piece must be cleaned up");
+            Assert.That(replacement != null, Is.True, "the transferred replacement is live and no longer pool-owned");
+            Assert.That(pool.Contains(id), Is.False);
+        }
+
     }
 }

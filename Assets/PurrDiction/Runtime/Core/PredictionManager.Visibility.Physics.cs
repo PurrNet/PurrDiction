@@ -23,11 +23,7 @@ namespace PurrNet.Prediction
 
         readonly Dictionary<PlayerID, HiddenPiecesScratch> _hiddenPiecesScratchByPlayer = new ();
 
-        // The hidden set for a given (receiver, tick) is identical across the 3D and 2D physics
-        // writers, and each writer needs it for both the current tick and the baseline tick. All
-        // four requests happen inside one synchronous addressed-section write, so a two-slot
-        // per-receiver cache scoped to the current localTick lets the 2D pass reuse the 3D pass's
-        // scans instead of rebuilding them.
+        // The 3D and 2D writers share hidden-piece scans for the current and baseline ticks.
         HashSet<PredictedObjectID> GetHiddenPiecesAt(
             PlayerID receiver,
             PlayerVisibilityTimeline timeline,
@@ -164,9 +160,6 @@ namespace PurrNet.Prediction
                     $"No authoritative 3D physics state exists for tick {tick}.");
             }
 
-            // A pass-through receiver hides nothing, so the projection would copy every event
-            // verbatim. Feed the shared global data straight through instead of duplicating the
-            // whole event list once per receiver per tick.
             if (timeline.isPassThrough)
             {
                 if (!writeFull &&
@@ -280,8 +273,6 @@ namespace PurrNet.Prediction
                     $"No authoritative 2D physics state exists for tick {tick}.");
             }
 
-            // See WritePhysics3DVisibilityState: nothing is hidden for a pass-through receiver,
-            // so the projection is the identity and the global data can be sent directly.
             if (timeline.isPassThrough)
             {
                 if (!writeFull &&

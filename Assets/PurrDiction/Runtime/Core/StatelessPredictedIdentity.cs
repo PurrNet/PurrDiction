@@ -15,9 +15,6 @@ namespace PurrNet.Prediction
     {
         public sealed override bool supportsSoftCorrection => false;
 
-        [UsedImplicitly]
-        public new PlayerID? owner { get; }
-
         private static StatelessHeSaid _stateless;
 
         [UsedImplicitly]
@@ -37,15 +34,28 @@ namespace PurrNet.Prediction
 
         internal override void UpdateView(float deltaTime)
         {
+            base.UpdateView(deltaTime);
 #pragma warning disable CS0618 // Type or member is obsolete
             UpdateView(default, default);
+#pragma warning restore CS0618 // Type or member is obsolete
+        }
+
+        internal override void LateUpdateView(float deltaTime)
+        {
+#pragma warning disable CS0618 // Type or member is obsolete
+            LateUpdateView(default, default);
 #pragma warning restore CS0618 // Type or member is obsolete
         }
 
         [Obsolete("Use UpdateView() instead."), UsedImplicitly, MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected virtual void UpdateView(StatelessHeSaid stateless, StatelessHeSaid? verified) => UpdateView();
 
+        [Obsolete("Use LateUpdateView() instead."), UsedImplicitly, MethodImpl(MethodImplOptions.AggressiveInlining)]
+        protected virtual void LateUpdateView(StatelessHeSaid stateless, StatelessHeSaid? verified) => LateUpdateView();
+
         protected virtual void UpdateView() { }
+
+        protected virtual void LateUpdateView() { }
 
         protected virtual void LateSimulate(float delta) {}
 
@@ -63,16 +73,22 @@ namespace PurrNet.Prediction
 
         internal override void GetLatestUnityState() { }
 
+        internal override void PrewarmPredictionState(PredictionManager world)
+        {
+            base.PrewarmPredictionState(world);
+            world.PrewarmVerifiedStore<PredictedIdentityState>();
+        }
+
         internal override void WriteFirstState(ulong tick, BitPacker packer)
         {
-            var metadata = new PredictedIdentityState { owner = base.owner };
+            var metadata = new PredictedIdentityState { owner = owner };
             RefreshMetadataLedger(tick, in metadata);
             Packer<PredictedIdentityState>.Write(packer, metadata);
         }
 
         internal override bool WriteCurrentState(PlayerID receiver, BitPacker packer, ulong baselineTick)
         {
-            var metadata = new PredictedIdentityState { owner = base.owner };
+            var metadata = new PredictedIdentityState { owner = owner };
             return WritePredictionMetadata(packer, baselineTick, in metadata);
         }
 

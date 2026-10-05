@@ -7,6 +7,7 @@ namespace PurrNet.Prediction
     {
         readonly Dictionary<PlayerID, PlayerPendingVisibilityDeletes> _pendingVisibilityDeletes = new ();
         readonly List<PredictedObjectID> _incomingVisibilityDeletes = new ();
+        readonly Stack<PlayerPendingVisibilityDeletes> _freePendingVisibilityDeletes = new ();
 
         internal void CapturePendingVisibilityDelete(PredictedObjectID objectId)
         {
@@ -39,7 +40,9 @@ namespace PurrNet.Prediction
 
                 if (!_pendingVisibilityDeletes.TryGetValue(player, out var receiverPending))
                 {
-                    receiverPending = new PlayerPendingVisibilityDeletes();
+                    receiverPending = _freePendingVisibilityDeletes.Count > 0
+                        ? _freePendingVisibilityDeletes.Pop()
+                        : new PlayerPendingVisibilityDeletes();
                     _pendingVisibilityDeletes.Add(player, receiverPending);
                 }
 
@@ -70,7 +73,10 @@ namespace PurrNet.Prediction
             _visibilityRootScratch.Clear();
 
             if (pending.Count == 0)
+            {
                 _pendingVisibilityDeletes.Remove(player);
+                _freePendingVisibilityDeletes.Push(pending);
+            }
         }
 
         void WritePendingVisibilityDeleteSection(

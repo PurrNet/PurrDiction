@@ -15,5 +15,17 @@ namespace PurrNet.Prediction
         public void RaiseCollisionExit(GameObject other, PhysicsCollision evContacts);
 
         public void RaiseCollisionStay(GameObject other, PhysicsCollision evContacts);
+
+        public void RaiseTriggerEnter(PredictedTrigger trigger) { }
+
+        public void RaiseTriggerExit(PredictedTrigger trigger) { }
+
+        public void RaiseTriggerStay(PredictedTrigger trigger) { }
+
+        public void RaiseCollisionEnter(PredictedCollision collision) { }
+
+        public void RaiseCollisionExit(PredictedCollision collision) { }
+
+        public void RaiseCollisionStay(PredictedCollision collision) { }
     }
 }

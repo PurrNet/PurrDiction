@@ -172,7 +172,6 @@
             {
                 if (uxi << 1 == uyi << 1)
                 {
-                    //return 0.0 * x;
                     return sfloat.zero;
                 }
 
@@ -222,7 +221,6 @@
                 {
                     if (i == 0)
                     {
-                        //return 0.0 * x;
                         return sfloat.zero;
                     }
 
@@ -239,7 +237,6 @@
             {
                 if (i == 0)
                 {
-                    //return 0.0 * x;
                     return sfloat.zero;
                 }
 
@@ -285,8 +282,6 @@
 
             if (e < 0x7f - 1)
             {
-                //force_eval!(x + TOINT);
-                //return 0.0 * x;
                 return sfloat.zero;
             }
 
@@ -453,7 +448,6 @@
             /* take care of Inf and NaN */
             if (((uint)ix & 0x7f800000) == 0x7f800000)
             {
-                //return x * x + x; /* sqrt(NaN)=NaN, sqrt(+inf)=+inf, sqrt(-inf)=sNaN */
                 if (x.IsNaN() || x.IsNegativeInfinity())
                 {
                     return sfloat.NaN;
@@ -474,7 +468,6 @@
 
                 if (ix < 0)
                 {
-                    //return (x - x) / (x - x); /* sqrt(-ve) = sNaN */
                     return sfloat.NaN;
                 }
             }

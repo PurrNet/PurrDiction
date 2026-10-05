@@ -832,9 +832,9 @@ namespace PurrNet.Prediction.Tests.Editor
                 {
                     state = state.state.Duplicate()
                 };
-                var interpolation = new InterpolatedWithDispose<FULL_STATE<PlayerSpawnerState>>(
+                var interpolation = new PredictedViewBuffer<FULL_STATE<PlayerSpawnerState>>(
                     (from, _, _) => from,
-                    1f,
+                    0,
                     initial,
                     2);
                 SetField(typeof(DeterministicIdentity<PlayerSpawnerState>), identity,
@@ -846,47 +846,6 @@ namespace PurrNet.Prediction.Tests.Editor
             finally
             {
                 UnityEngine.Object.DestroyImmediate(gameObject);
-            }
-        }
-
-        [Test]
-        public void RestoringRelayLocksClearsTheSnapshotForTheNextTick()
-        {
-            var managerObject = new GameObject("PredictionManager");
-            var identityObject = new GameObject("RelayLockProbe");
-            try
-            {
-                var manager = managerObject.AddComponent<PredictionManager>();
-                var identity = identityObject.AddComponent<RelayLockProbe>();
-                identity.AttachForTest(manager);
-                identity.SetPredictionPolicyOverride(PredictionPolicy.ServerRelay);
-
-                // The prediction codegen publicizes nested types during IL weaving, so the
-                // lookup must accept either visibility.
-                var lockType = typeof(PredictionManager).GetNestedType(
-                    "SpeculativeRelayLock", BindingFlags.Public | BindingFlags.NonPublic);
-                Assert.That(lockType, Is.Not.Null);
-                var entry = Activator.CreateInstance(lockType);
-                lockType.GetField("system")?.SetValue(entry, identity);
-                lockType.GetField("tick")?.SetValue(entry, 42UL);
-
-                var locksField = typeof(PredictionManager).GetField(
-                    "_speculativeRelayLocks", InstanceFields);
-                Assert.That(locksField, Is.Not.Null);
-                var locks = (IList)locksField.GetValue(manager);
-                locks.Add(entry);
-
-                InvokeLifecycle(manager, "RestoreSpeculativeRelayStates");
-
-                Assert.That(identity.rollbackCount, Is.EqualTo(1));
-                Assert.That(identity.lastRollbackTick, Is.EqualTo(42UL));
-                Assert.That(locks.Count, Is.Zero);
-                identity.DetachForTest();
-            }
-            finally
-            {
-                UnityEngine.Object.DestroyImmediate(identityObject);
-                UnityEngine.Object.DestroyImmediate(managerObject);
             }
         }
 
@@ -1329,28 +1288,6 @@ namespace PurrNet.Prediction.Tests.Editor
         public void DetachForTest()
         {
             predictionManager = null;
-        }
-    }
-
-    public sealed class RelayLockProbe : PredictedIdentity<EmptyState>
-    {
-        public int rollbackCount { get; private set; }
-        public ulong lastRollbackTick { get; private set; }
-
-        public void AttachForTest(PredictionManager manager)
-        {
-            predictionManager = manager;
-        }
-
-        public void DetachForTest()
-        {
-            predictionManager = null;
-        }
-
-        internal override void Rollback(ulong tick)
-        {
-            rollbackCount++;
-            lastRollbackTick = tick;
         }
     }
 

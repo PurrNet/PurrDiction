@@ -81,7 +81,6 @@ namespace PurrNet.Prediction
                 if (signb)
                 {
                     /* underflow */
-                    //force_eval!(-x1p_126 / x);
 
                     if (hx >= 0x42cff1b5)
                     {
@@ -122,8 +121,6 @@ namespace PurrNet.Prediction
             }
             else
             {
-                /* raise inexact */
-                //force_eval!(x1p127 + x);
                 return sfloat.one + x;
             }
 
@@ -156,13 +153,11 @@ namespace PurrNet.Prediction
                 /* x < 2**-126  */
                 if (ix << 1 == 0)
                 {
-                    //return -1. / (x * x); /* log(+-0)=-inf */
                     return sfloat.negativeInfinity;
                 }
 
                 if ((ix >> 31) != 0)
                 {
-                    //return (x - x) / 0.; /* log(-#) = NaN */
                     return sfloat.NaN;
                 }
 
@@ -237,13 +232,11 @@ namespace PurrNet.Prediction
                 /* x < 2**-126  */
                 if (ix << 1 == 0)
                 {
-                    //return -1. / (x * x); /* log(+-0)=-inf */
                     return sfloat.negativeInfinity;
                 }
 
                 if ((ix >> 31) > 0)
                 {
-                    //return (x - x) / 0.0; /* log(-#) = NaN */
                     return sfloat.NaN;
                 }
 
@@ -470,7 +463,6 @@ namespace PurrNet.Prediction
                 if (yisint == 0)
                 {
                     /* (x<0)**(non-int) is NaN */
-                    //return (x - x) / (x - x);
                     return sfloat.NaN;
                 }
 

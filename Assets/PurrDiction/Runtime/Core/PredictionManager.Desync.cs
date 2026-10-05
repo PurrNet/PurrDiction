@@ -28,6 +28,7 @@ namespace PurrNet.Prediction
         private ulong _nextDesyncReportTick;
 
         readonly Dictionary<PlayerID, HashSet<PredictedComponentID>> _pendingDesyncHeals = new ();
+        readonly Dictionary<PlayerID, HashSet<PredictedComponentID>> _preparedDesyncHeals = new ();
         readonly Dictionary<PlayerID, Dictionary<PredictedComponentID, ulong>> _desyncHealServedTick = new ();
         readonly Dictionary<PlayerID, ulong> _desyncResyncServedTick = new ();
         readonly Dictionary<PlayerID, ulong> _desyncNoticeCooldownTick = new ();
@@ -187,9 +188,29 @@ namespace PurrNet.Prediction
             served[system.id] = localTick;
         }
 
-        private bool TryConsumeDesyncHeal(PlayerID player, PredictedComponentID id)
+        private void BeginPreparingDesyncHeals(PlayerID player)
         {
-            return _pendingDesyncHeals.TryGetValue(player, out var pending) && pending.Remove(id);
+            if (_preparedDesyncHeals.TryGetValue(player, out var prepared))
+                prepared.Clear();
+        }
+
+        private bool PrepareDesyncHeal(PlayerID player, PredictedComponentID id)
+        {
+            if (!_pendingDesyncHeals.TryGetValue(player, out var pending) || !pending.Contains(id))
+                return false;
+            if (!_preparedDesyncHeals.TryGetValue(player, out var prepared))
+                _preparedDesyncHeals[player] = prepared = new HashSet<PredictedComponentID>();
+            prepared.Add(id);
+            return true;
+        }
+
+        private void CommitPreparedDesyncHeals(PlayerID player)
+        {
+            if (!_preparedDesyncHeals.TryGetValue(player, out var prepared))
+                return;
+            if (_pendingDesyncHeals.TryGetValue(player, out var pending))
+                pending.ExceptWith(prepared);
+            prepared.Clear();
         }
 
         private void TriggerDesyncResync(PlayerID player)
@@ -198,28 +219,34 @@ namespace PurrNet.Prediction
                 localTick < last + (ulong)tickRate)
                 return;
 
+            QueueFullResync(player);
+        }
+
+        private bool QueueFullResync(PlayerID player)
+        {
             for (var i = 0; i < _clientFrames.Count; i++)
             {
                 var clientFrame = _clientFrames[i];
                 if (!clientFrame.player.Equals(player))
                     continue;
 
-                clientFrame.fullFrame = true;
+                clientFrame.requiresFullCheckpoint = true;
+                clientFrame.fullFrame = false;
                 clientFrame.preparedFrameTick = 0;
                 clientFrame.preparedVisibilityTick = 0;
-                clientFrame.sentVisibilityTick = 0;
-                clientFrame.reliableFrame.Clear();
-                clientFrame.baselineAdvance.Reset();
                 _clientFrames[i] = clientFrame;
 
                 _desyncResyncServedTick[player] = localTick;
-                break;
+                return true;
             }
+            return false;
         }
 
         private void ClearDesyncTrackingForPlayer(PlayerID player)
         {
+            _historyResyncServedAt.Remove(player);
             _pendingDesyncHeals.Remove(player);
+            _preparedDesyncHeals.Remove(player);
             _desyncHealServedTick.Remove(player);
             _desyncResyncServedTick.Remove(player);
             _desyncNoticeCooldownTick.Remove(player);

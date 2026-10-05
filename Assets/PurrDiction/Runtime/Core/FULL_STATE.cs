@@ -1,10 +1,9 @@
-﻿using System;
-using PurrNet.Packing;
+﻿using PurrNet.Packing;
 using Unity.Profiling;
 
 namespace PurrNet.Prediction
 {
-    internal struct FULL_STATE<T> : IDisposable, IPackedAuto
+    internal struct FULL_STATE<T> : IAuthoritativeState<FULL_STATE<T>>, IPackedAuto
         where T : struct, IPredictedData<T>
     {
         public T state;

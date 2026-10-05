@@ -219,7 +219,7 @@ public class InputBandwidthScenario : Scenario
         sb.Append(" noise=").Append(InputBandwidthPawn.noiseMode);
         sb.Append(" vectors=").Append(_useHalfVectors ? "half" : "full");
         sb.Append(" tickRate=").Append(pm.tickRate);
-        sb.Append(" guaranteedInputSystems=").Append(pm.guaranteedInputHistorySystems);
+        sb.Append(" inputSystems=").Append(pm.inputHistorySystems);
         sb.Append(" redundancyTicks=").Append(pm.inputRedundancyTickCount);
         sb.Append(" seconds=").Append(windowSeconds.ToString("0.##", CultureInfo.InvariantCulture));
         sb.Append(" ticks=").Append(elapsedTicks);

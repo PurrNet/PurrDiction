@@ -27,6 +27,12 @@ namespace PurrNet.Prediction
             return _pools.TryGetValue(prefab, out pool);
         }
 
+        internal void CollectPooled(List<GameObject> results)
+        {
+            foreach (var pool in _pools.Values)
+                pool.CollectPooled(results);
+        }
+
         public void Dispose()
         {
             foreach (var (_, val) in _pools)
@@ -78,6 +84,15 @@ namespace PurrNet.Prediction
         public GameObject Allocate()
         {
             return _pool.Count > 0 ? _pool.Pop() : _factory();
+        }
+
+        internal void CollectPooled(List<GameObject> results)
+        {
+            foreach (var go in _pool)
+            {
+                if (go)
+                    results.Add(go);
+            }
         }
 
         public void Delete(GameObject obj)

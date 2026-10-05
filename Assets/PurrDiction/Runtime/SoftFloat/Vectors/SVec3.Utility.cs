@@ -71,7 +71,6 @@ namespace PurrNet.Prediction
             return new SVec3(Math.Abs(v.x), Math.Abs(v.y), Math.Abs(v.z));
         }
 
-        // --- To FPVec2 ---
         public SVec2 xy { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new SVec2(x, y); }
         public SVec2 yx { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new SVec2(y, x); }
         public SVec2 xx { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new SVec2(x, x); }
@@ -83,12 +82,10 @@ namespace PurrNet.Prediction
         public SVec2 zy { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new SVec2(z, y); }
         public SVec2 zz { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new SVec2(z, z); }
 
-        // --- Duplicate Components ---
         public SVec3 xxx { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new SVec3(x, x, x); }
         public SVec3 yyy { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new SVec3(y, y, y); }
         public SVec3 zzz { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new SVec3(z, z, z); }
 
-        // --- Full Reorderings ---
         public SVec3 xyz { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new SVec3(x, y, z); }
         public SVec3 xzy { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new SVec3(x, z, y); }
         public SVec3 yxz { [MethodImpl(MethodImplOptions.AggressiveInlining)] get => new SVec3(y, x, z); }

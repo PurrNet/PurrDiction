@@ -85,7 +85,10 @@ public class ProjectileChainReconnectScenario : Scenario
 
     public override async UniTask<ScenarioResult> RunScenario(ScenarioContext ctx)
     {
-        ProjectileChainReconnectSignals.Reset();
+        // Only the broadcaster resets: a client entering late must keep a victim broadcast that
+        // already arrived, otherwise it waits for a signal that was cleared underneath it.
+        if (ctx.isServer)
+            ProjectileChainReconnectSignals.Reset();
 
         var pm = ctx.predictionManager;
         pm.TryGetPrefab(_driverPrefab, out _driverPrefabId);
@@ -96,11 +99,18 @@ public class ProjectileChainReconnectScenario : Scenario
         if (!pm.hierarchy.Create(_driverPrefab).HasValue)
             return ScenarioResult.Fail("failed to create projectile reconnect driver");
 
-        var choreography = await RunSplit(ctx, RunAsClient, RunAsServer);
-        if (!choreography.success)
-            return choreography;
+        try
+        {
+            var choreography = await RunSplit(ctx, RunAsClient, RunAsServer);
+            if (!choreography.success)
+                return choreography;
 
-        return await FinishAndCompare(ctx);
+            return await FinishAndCompare(ctx);
+        }
+        finally
+        {
+            ProjectileChainReconnectSignals.Reset();
+        }
     }
 
     private async UniTask<ScenarioResult> RunAsServer(ScenarioContext ctx)

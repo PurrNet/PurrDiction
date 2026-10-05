@@ -37,7 +37,7 @@
         // Generates a random sfloat in the range [0, 1)
         public sfloat NextSFloat() => currentState.random.NextSFloat();
 
-        // Generates a random sfloat in the range [0, 1)
+        // Generates a random fixed-point value in the range [0, 1)
         public FP NextFP() => currentState.random.NextFP();
 
         // Generates a random float in the range [min, max)

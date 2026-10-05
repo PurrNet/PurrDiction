@@ -121,36 +121,47 @@ namespace PurrNet.Prediction
             if (ev.me.TryGetIdentity<PredictedRigidbody2D>(predictionManager, out var me))
             {
                 var otherGo = ev.other.GetGameObject(predictionManager);
-                if (!otherGo && ev.other.objectId.instanceId.value != 0)
+                bool hasOther = otherGo || ev.other.objectId.instanceId.value == 0;
+                if (!hasOther && ev.type != PhysicsEventType.Exit)
                     return;
                 if (ev.isTrigger)
                 {
+                    var trigger = new PredictedTrigger(otherGo, ev.other);
                     switch (ev.type)
                     {
                         case PhysicsEventType.Enter:
                             me.RaiseTriggerEnter(otherGo);
+                            me.RaiseTriggerEnter(trigger);
                             break;
                         case PhysicsEventType.Exit:
-                            me.RaiseTriggerExit(otherGo);
+                            if (hasOther)
+                                me.RaiseTriggerExit(otherGo);
+                            me.RaiseTriggerExit(trigger);
                             break;
                         case PhysicsEventType.Stay:
                             me.RaiseTriggerStay(otherGo);
+                            me.RaiseTriggerStay(trigger);
                             break;
                         default: throw new ArgumentOutOfRangeException();
                     }
                 }
                 else
                 {
+                    var collision = new PredictedCollision2D(otherGo, ev.other, ev.contacts);
                     switch (ev.type)
                     {
                         case PhysicsEventType.Enter:
                             me.RaiseCollisionEnter(otherGo, ev.contacts);
+                            me.RaiseCollisionEnter(collision);
                             break;
                         case PhysicsEventType.Exit:
-                            me.RaiseCollisionExit(otherGo, ev.contacts);
+                            if (hasOther)
+                                me.RaiseCollisionExit(otherGo, ev.contacts);
+                            me.RaiseCollisionExit(collision);
                             break;
                         case PhysicsEventType.Stay:
                             me.RaiseCollisionStay(otherGo, ev.contacts);
+                            me.RaiseCollisionStay(collision);
                             break;
                         default: throw new ArgumentOutOfRangeException();
                     }
@@ -160,6 +171,9 @@ namespace PurrNet.Prediction
 
         public void RegisterEvent(PhysicsEventType type, PredictedRigidbody2D caller, Collision2D other)
         {
+            if (predictionManager && predictionManager.isVerifiedAndReplaying)
+                return;
+
             if (PredictionManager.TryGetClosestPredictedID(other.gameObject, out var otherId))
             {
                 var state = currentState;
@@ -184,6 +198,9 @@ namespace PurrNet.Prediction
 
         public void RegisterEvent(PhysicsEventType type, PredictedRigidbody2D caller, Collider2D other)
         {
+            if (predictionManager && predictionManager.isVerifiedAndReplaying)
+                return;
+
             if (PredictionManager.TryGetClosestPredictedID(other.gameObject, out var otherId))
             {
                 var state = currentState;

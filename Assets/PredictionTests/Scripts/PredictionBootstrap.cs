@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -53,7 +54,7 @@ public class PredictionBootstrap : Scenario
     private void Awake()
     {
         ScenarioSequencer.Reset();
-        DigestGate.Reset();
+        ScenarioSynchronization.Reset();
 
         var prefabs = ScriptableObject.CreateInstance<PredictedPrefabs>();
         prefabs.autoGenerate = false;
@@ -68,6 +69,72 @@ public class PredictionBootstrap : Scenario
         {
             ConfigureTransport();
             ConfigureAutoStartFlags();
+        }
+
+        if (CommandLineUtils.HasFlag("-fullPredictionPhysicsBenchmark"))
+        {
+            _scenarios = new Scenario[]
+            {
+                this,
+                gameObject.AddComponent<FullPredictionPhysicsBenchmarkScenario>()
+            };
+            _results = new ScenarioDetails?[_scenarios.Length];
+            return;
+        }
+
+        if (CommandLineUtils.HasFlag("-reliablePipelineScenarioOnly"))
+        {
+            _scenarios = new Scenario[] { this, gameObject.AddComponent<ReliablePipelineScenario>() };
+            _results = new ScenarioDetails?[_scenarios.Length];
+            return;
+        }
+
+        if (CommandLineUtils.HasFlag("-baselineRecoveryScenarioOnly"))
+        {
+            _scenarios = new Scenario[] { this, gameObject.AddComponent<BaselineRecoveryScenario>() };
+            _results = new ScenarioDetails?[_scenarios.Length];
+            return;
+        }
+
+        if (CommandLineUtils.HasFlag("-physicsEventScenariosOnly"))
+        {
+            // Bounce requires its serialized BounceRig; an added component has no rig.
+            var bounce = GetComponentInChildren<BounceScenario>(true);
+            if (!bounce)
+                throw new InvalidOperationException("The physics-event selection requires the scene's serialized BounceScenario.");
+            _scenarios = new Scenario[] { this, bounce };
+            _results = new ScenarioDetails?[_scenarios.Length];
+            return;
+        }
+
+        if (CommandLineUtils.HasFlag("-softCorrectionScenariosOnly"))
+        {
+            _scenarios = new Scenario[]
+            {
+                this,
+                GetComponentInChildren<SoftCorrectionScenario>(true),
+                GetComponentInChildren<SoftCorrection2DScenario>(true)
+            };
+            _results = new ScenarioDetails?[_scenarios.Length];
+            return;
+        }
+
+        if (CommandLineUtils.HasFlag("-fullPredictionCadenceRegressionOnly"))
+        {
+            // Reuse serialized scene scenarios so their rig/spawner references remain intact.
+            _scenarios = new Scenario[]
+            {
+                this,
+                GetComponentInChildren<BounceScenario>(true) ?? gameObject.AddComponent<BounceScenario>(),
+                // Initializes the timed spawner used by later shared-tick digest gates.
+                GetComponentInChildren<DeterministicAlignmentScenario>(true) ?? gameObject.AddComponent<DeterministicAlignmentScenario>(),
+                GetComponentInChildren<PredictedPawnScenario>(true) ?? gameObject.AddComponent<PredictedPawnScenario>(),
+                GetComponentInChildren<TickAgreementScenario>(true) ?? gameObject.AddComponent<TickAgreementScenario>(),
+                GetComponentInChildren<DeterministicGauntletScenario>(true) ?? gameObject.AddComponent<DeterministicGauntletScenario>(),
+                GetComponentInChildren<ProjectileChainScenario>(true) ?? gameObject.AddComponent<ProjectileChainScenario>()
+            };
+            _results = new ScenarioDetails?[_scenarios.Length];
+            return;
         }
 
         if (CommandLineUtils.HasFlag("-serverLoadBenchmark"))
@@ -103,6 +170,17 @@ public class PredictionBootstrap : Scenario
             return;
         }
 
+        if (CommandLineUtils.HasFlag("-packetLossPushScenarioOnly"))
+        {
+            _scenarios = new Scenario[]
+            {
+                this,
+                gameObject.AddComponent<PacketLossPushScenario>()
+            };
+            _results = new ScenarioDetails?[_scenarios.Length];
+            return;
+        }
+
         if (CommandLineUtils.HasFlag("-desyncScenarioOnly"))
         {
             _scenarios = new Scenario[]
@@ -125,12 +203,35 @@ public class PredictionBootstrap : Scenario
             return;
         }
 
+        if (CommandLineUtils.HasFlag("-mixedNetworkIdentityScenarioOnly"))
+        {
+            _scenarios = new Scenario[]
+            {
+                this,
+                gameObject.AddComponent<MixedNetworkIdentityScenario>()
+            };
+            _results = new ScenarioDetails?[_scenarios.Length];
+            return;
+        }
+
         if (CommandLineUtils.HasFlag("-immediateRpcRegressionScenarioOnly"))
         {
             _scenarios = new Scenario[]
             {
                 this,
                 gameObject.AddComponent<ImmediatePredictionRpcRegressionScenario>()
+            };
+            _results = new ScenarioDetails?[_scenarios.Length];
+            return;
+        }
+
+        if (CommandLineUtils.HasFlag("-lagCompensationScenariosOnly"))
+        {
+            _scenarios = new Scenario[]
+            {
+                this,
+                gameObject.AddComponent<ViewPhaseScenario>(),
+                gameObject.AddComponent<LagCompensationScenario>()
             };
             _results = new ScenarioDetails?[_scenarios.Length];
             return;
@@ -146,9 +247,12 @@ public class PredictionBootstrap : Scenario
 
         gameObject.AddComponent<PieceLifecycleScenario>();
         gameObject.AddComponent<PieceReconnectScenario>();
+        gameObject.AddComponent<MixedNetworkIdentityScenario>();
         gameObject.AddComponent<TickAgreementScenario>();
         gameObject.AddComponent<DeterministicGauntletScenario>();
         gameObject.AddComponent<CliffRecoveryScenario>();
+        gameObject.AddComponent<ViewPhaseScenario>();
+        gameObject.AddComponent<LagCompensationScenario>();
 
         bool policyRegressionsOnly = CommandLineUtils.HasFlag("-policyRegressionScenariosOnly");
         var policyRegressionScenarios = AddPolicyRegressionScenarios();
@@ -203,7 +307,31 @@ public class PredictionBootstrap : Scenario
         var ctx = MakeContext();
 
         for (var i = 0; i < _scenarios.Length; i++)
-            _scenarios[i].Setup(ctx, _networkManager);
+        {
+            ctx.scenarioIndex = i;
+            _unexpectedLogs.Clear();
+            _activeScenarioIndex = i;
+            try
+            {
+                _scenarios[i].Setup(ctx, _networkManager);
+                if (_unexpectedLogs.Count > 0)
+                    throw new InvalidOperationException(string.Join(" | ", _unexpectedLogs));
+            }
+            catch (Exception e)
+            {
+                // Setup registers shared prefabs before connecting. A partial registry cannot
+                // safely run the remaining suite, but must still produce reviewable results.
+                FillRemainingFailed(0, $"Setup aborted in {_scenarios[i].GetType().Name}: {e.Message}");
+                Debug.LogException(e);
+                WriteResults();
+                Application.Quit(-1);
+                return;
+            }
+            finally
+            {
+                _activeScenarioIndex = -1;
+            }
+        }
 
         SubscribeToDataSent(_networkManager.transport.transport);
         Debug.Log($"[PredictionTests] Starting {_role} run with {_scenarios.Length} scenarios; expectedConnections={_expectedConnections}");
@@ -219,7 +347,10 @@ public class PredictionBootstrap : Scenario
             expectedConnections = _expectedConnections,
             networkManager = _networkManager,
             predictionManager = _predictionManager,
-            cancellationToken = _runCts.Token
+            cancellationToken = _runCts.Token,
+            packetLossPercent = _packetLossChance,
+            minLatencyMs = _simulateLatency ? _minLatencyMs : 0,
+            maxLatencyMs = _simulateLatency ? _maxLatencyMs : 0
         };
     }
 
@@ -294,6 +425,19 @@ public class PredictionBootstrap : Scenario
 
         CommandLineUtils.TryGetArgument("-results", out _resultsPath);
 
+        if (CommandLineUtils.TryGetArgument("-fpReconcileMs", out var reconcileMs))
+        {
+            if (!double.TryParse(reconcileMs, NumberStyles.Float, CultureInfo.InvariantCulture,
+                    out var parsedReconcileMs) || double.IsNaN(parsedReconcileMs) ||
+                double.IsInfinity(parsedReconcileMs) || parsedReconcileMs < 0)
+            {
+                Debug.LogError($"Could not parse nonnegative -fpReconcileMs value '{reconcileMs}'");
+                Application.Quit(-1);
+                return;
+            }
+            PredictionPerformanceTelemetry.reconcileIntervalSeconds = parsedReconcileMs / 1000.0;
+        }
+
         if (CommandLineUtils.TryGetArgument("-connectTimeout", out var connectTimeout)
             && float.TryParse(connectTimeout, out var parsedConnectTimeout))
             _connectionTimeout = parsedConnectTimeout;
@@ -334,6 +478,26 @@ public class PredictionBootstrap : Scenario
         if (CommandLineUtils.TryGetArgument("-tickRate", out var tickRate) &&
             int.TryParse(tickRate, out var parsedTickRate) && parsedTickRate > 0)
             _networkManager.tickRate = parsedTickRate;
+
+        if (CommandLineUtils.TryGetArgument("-serverUpdateRate", out var serverUpdateRate))
+        {
+            if (!int.TryParse(serverUpdateRate, out var parsedServerUpdateRate) || parsedServerUpdateRate < 0)
+            {
+                Debug.LogError($"Could not parse nonnegative -serverUpdateRate value '{serverUpdateRate}'");
+                Application.Quit(-1);
+                return;
+            }
+            _predictionManager.serverUpdateRate = parsedServerUpdateRate;
+        }
+
+        // Headless players otherwise spin at thousands of frames per second; several of them on a
+        // small CI runner starve each other and turn timing assertions into a test of the host.
+        if (CommandLineUtils.TryGetArgument("-targetFrameRate", out var targetFrameRate) &&
+            int.TryParse(targetFrameRate, out var parsedTargetFrameRate) && parsedTargetFrameRate > 0)
+        {
+            QualitySettings.vSyncCount = 0;
+            Application.targetFrameRate = parsedTargetFrameRate;
+        }
 
         if (CommandLineUtils.HasFlag("-mtuFragment"))
             _networkManager.mtuExceededBehaviour = MTUExceededBehaviour.Fragment;
@@ -678,7 +842,11 @@ public class PredictionBootstrap : Scenario
     {
         var message = $"aborted: only {_networkManager.playerCount}/{_expectedConnections} clients still connected";
         Debug.LogError($"[PredictionTests] {message}; skipping scenarios {fromIndex}..{_scenarios.Length - 1}");
+        FillRemainingFailed(fromIndex, message);
+    }
 
+    private void FillRemainingFailed(int fromIndex, string message)
+    {
         for (var i = fromIndex; i < _scenarios.Length; i++)
         {
             _results[i] = new ScenarioDetails
@@ -697,13 +865,16 @@ public class PredictionBootstrap : Scenario
         _activeScenarioIndex = i;
 
         var scenario = _scenarios[i];
-        scenario.PrepareRun(ctx, scheduledStartTick);
+        using var scenarioCts = CancellationTokenSource.CreateLinkedTokenSource(ctx.cancellationToken);
+        ctx.cancellationToken = scenarioCts.Token;
+        ctx.scenarioIndex = i;
+        ScenarioSynchronization.BeginScenario(i);
         Debug.Log($"[PredictionTests] {_role} starting scenario {i}: {scenario.GetType().Name}");
 
         long startTick = DateTime.Now.Ticks;
         ScenarioPerformanceDetails performance = default;
         ScenarioPerformanceSampler sampler = null;
-        ScenarioResult result;
+        ScenarioResult result = ScenarioResult.Fail("Scenario did not complete.");
 
         if (_profileScenarios)
         {
@@ -713,10 +884,20 @@ public class PredictionBootstrap : Scenario
 
         try
         {
-            result = await GetResult(scenario, ctx, i);
+            result = await GetResult(scenario, ctx, i, scheduledStartTick);
         }
         finally
         {
+            try
+            {
+                scenarioCts.Cancel();
+            }
+            catch (Exception e)
+            {
+                result = ScenarioResult.Fail($"{result.message} | scenario cleanup failed: {e.Message}");
+                Debug.LogException(e);
+            }
+            ScenarioSynchronization.EndScenario(i);
             if (sampler != null)
             {
                 performance = sampler.Stop(_predictionManager);
@@ -744,7 +925,10 @@ public class PredictionBootstrap : Scenario
 
         Debug.Log(
             $"[PredictionTests] {_role} finished scenario {i}: {scenario.GetType().Name} " +
-            $"{(result.success ? "PASS" : "FAIL")} ({elapsedMs:F0} ms)");
+            $"{(result.success ? "PASS" : "FAIL")} ({elapsedMs:F0} ms)" +
+            (_predictionManager && _predictionManager.isServer
+                ? $" spawnBaselineRecords={_predictionManager.spawnBaselineRecordsTotal} entrantsOmitted={_predictionManager.lifecycleEntrantsOmittedTotal}"
+                : ""));
         if (!result.success)
             Debug.LogWarning($"[PredictionTests] {scenario.GetType().Name} failed: {result.message}");
 
@@ -757,6 +941,9 @@ public class PredictionBootstrap : Scenario
             return;
 
         if (type is not (LogType.Error or LogType.Assert or LogType.Exception))
+            return;
+
+        if (BaselineRecoveryScenario.TryConsumeExpectedBaselineError(condition ?? string.Empty, type))
             return;
 
         if (_unexpectedLogs.Count >= MaxUnexpectedLogsPerScenario)
@@ -789,12 +976,13 @@ public class PredictionBootstrap : Scenario
             : ScenarioResult.Fail($"{result.message} | {message}");
     }
 
-    private static async Task<ScenarioResult> GetResult(Scenario scenario, ScenarioContext ctx, int i)
+    private static async Task<ScenarioResult> GetResult(Scenario scenario, ScenarioContext ctx, int i, ulong scheduledStartTick)
     {
         ScenarioResult details;
 
         try
         {
+            scenario.PrepareRun(ctx, scheduledStartTick);
             details = await scenario.RunScenario(ctx);
         }
         catch (Exception e)

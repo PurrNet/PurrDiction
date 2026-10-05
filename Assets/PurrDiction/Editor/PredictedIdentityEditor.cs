@@ -36,7 +36,48 @@ namespace PurrNet.Prediction.Editor
 
         public override VisualElement CreateInspectorGUI()
         {
-            return null;
+            var inspector = EditorAttributesIntegration.CreateInspectorGUI(
+                this, "_predictionPolicySource", "_predictionPolicy", "_desyncPolicy") ??
+                AlchemyIntegration.CreateInspectorGUI(
+                    this, "_predictionPolicySource", "_predictionPolicy", "_desyncPolicy");
+            if (inspector == null)
+                return null;
+
+            var extras = new IMGUIContainer(() =>
+            {
+                if (!this || !target)
+                    return;
+
+                serializedObject.UpdateIfRequiredOrScript();
+                var source = serializedObject.FindProperty("_predictionPolicySource");
+                var policy = serializedObject.FindProperty("_predictionPolicy");
+                if (source != null && policy != null)
+                    DrawOverrideDefaults(source, policy, serializedObject.FindProperty("_desyncPolicy"));
+
+                DrawInspectorExtras();
+                serializedObject.ApplyModifiedProperties();
+            });
+            inspector.Add(extras);
+            extras.schedule.Execute(extras.MarkDirtyRepaint).Every(100);
+            return inspector;
+        }
+
+#if TRI_INSPECTOR_PACKAGE || ODIN_INSPECTOR
+        protected override void OnDisable()
+#else
+        protected virtual void OnDisable()
+#endif
+        {
+            EditorAttributesIntegration.OnDisable(this);
+            AlchemyIntegration.OnDisable(this);
+#if TRI_INSPECTOR_PACKAGE || ODIN_INSPECTOR
+            base.OnDisable();
+#endif
+        }
+
+        protected virtual void OnSceneGUI()
+        {
+            EditorAttributesIntegration.OnSceneGUI(this);
         }
 
         public override void OnInspectorGUI()
@@ -67,6 +108,11 @@ namespace PurrNet.Prediction.Editor
             }
 #endif
 
+            DrawInspectorExtras();
+        }
+
+        protected virtual void DrawInspectorExtras()
+        {
             GUILayout.Space(10);
             GUILayout.Label($"Predicted State", EditorStyles.boldLabel);
 

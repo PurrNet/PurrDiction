@@ -291,7 +291,7 @@ namespace PurrNet.Prediction.Tests.Editor
 
     public sealed class DeterministicOwnerProbe : DeterministicIdentity<PolicyContractState>
     {
-        public PlayerID? assignedOwner => ((PredictedIdentity)this).owner;
+        public PlayerID? assignedOwner => owner;
 
         public void AttachForTest(PredictionManager manager) => predictionManager = manager;
 
@@ -300,7 +300,7 @@ namespace PurrNet.Prediction.Tests.Editor
 
     public sealed class StatelessOwnerProbe : StatelessPredictedIdentity
     {
-        public PlayerID? assignedOwner => ((PredictedIdentity)this).owner;
+        public PlayerID? assignedOwner => owner;
 
         public void AssignOwner(PlayerID? player) => SetOwner(player);
 

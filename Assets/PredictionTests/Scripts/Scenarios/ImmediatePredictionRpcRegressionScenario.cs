@@ -461,6 +461,8 @@ public sealed class ImmediatePredictionRpcRegressionScenario : Scenario
                 ctx.predictionManager.onLocalDesync += OnLocalSpawnerDesync;
             }
         }
+
+        PlayerSpawnerTrace.AttachIfRequested(gameObject, ctx.predictionManager, _playerSpawner);
     }
 
     public override void PrepareRun(ScenarioContext ctx, ulong startTick)

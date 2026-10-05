@@ -34,11 +34,11 @@ public static class PredictionTestUtils
                     ctx.cancellationToken);
             }
 
-            DigestGate.BroadcastDigestTick(channel, pm.time.tick + (ulong)pm.tickRate);
+            DigestGate.BroadcastDigestTick(ctx.scenarioIndex, channel, pm.time.tick + (ulong)pm.tickRate);
         }
 
         await UniTaskUtils.WaitWithTimeout(
-            () => DigestGate.TryGetDigestTick(channel, out var digestTick) && pm.time.tick >= digestTick,
+            () => DigestGate.TryGetDigestTick(ctx.scenarioIndex, channel, out var digestTick) && pm.time.tick >= digestTick,
             timeoutSeconds,
             ctx.cancellationToken);
     }

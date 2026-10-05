@@ -13,18 +13,19 @@ namespace PurrNet.Prediction.Tests.Editor
     /// <summary>
     /// Re-running a deterministic spawn during rollback replay reuses the same POIDs, so the
     /// instance count must stay bounded even when the replayed spawn positions drift (the drift
-    /// only invalidates the pool's exact-id claim, it does not make the spawns new objects).
-    /// Growth here means every reconcile leaks prefab clones until ClearOld reaps them.
+    /// does not make the spawns new objects). Check reuse before retirement can hide churn.
     /// </summary>
     public sealed class ReplayDriftChurnTests
     {
         readonly List<GameObject> _cleanup = new ();
         readonly List<Object> _assetCleanup = new ();
         PredictionManager _manager;
+        bool _previousIgnoreFailingMessages;
 
         [SetUp]
         public void SetUp()
         {
+            _previousIgnoreFailingMessages = UnityEngine.TestTools.LogAssert.ignoreFailingMessages;
             UnityEngine.TestTools.LogAssert.ignoreFailingMessages = true;
         }
 
@@ -58,6 +59,7 @@ namespace PurrNet.Prediction.Tests.Editor
 
             _cleanup.Clear();
             _assetCleanup.Clear();
+            UnityEngine.TestTools.LogAssert.ignoreFailingMessages = _previousIgnoreFailingMessages;
         }
 
         GameObject Track(GameObject go)
@@ -70,7 +72,7 @@ namespace PurrNet.Prediction.Tests.Editor
         const int SpawnCount = 3;
         const int ReplayRounds = 5;
 
-        [Test, Ignore("Documents the replay drift pool-churn leak; unignore when the drift fallback stops stranding trees.")]
+        [Test]
         public void ReplayedSpawnsWithDriftingPositionsDoNotAccumulateClones()
         {
             var hierarchy = CreateHierarchyWorld();
@@ -102,14 +104,63 @@ namespace PurrNet.Prediction.Tests.Editor
 
                 Assert.That(liveCount, Is.EqualTo(SpawnCount),
                     $"round {round}: live instance count must match the spawn count");
+                TestContext.WriteLine($"round {round}: active={liveCount}, totalClones={FindPrefabClones().Count}");
 
                 RollBackToEmpty(hierarchy);
             }
 
             int totalClones = FindPrefabClones().Count;
-            Assert.That(totalClones, Is.LessThanOrEqualTo(SpawnCount + 1),
+            Assert.That(totalClones, Is.EqualTo(SpawnCount),
                 $"{ReplayRounds} replays of the same {SpawnCount} spawns left {totalClones} prefab clones " +
-                "in the scene; every reconcile leaks instances until ClearOld reaps them");
+                "in the scene; replay should reuse the existing complete trees without extra instantiations");
+        }
+
+        [Test]
+        public void DriftedReplayKeepsEachIdentityAndRestoresItsNewSpawnState()
+        {
+            var hierarchy = CreateHierarchyWorld();
+            RegisterPrefab(hierarchy, withTransform: true);
+            var originals = new GameObject[SpawnCount];
+
+            for (var round = 0; round < ReplayRounds; round++)
+            {
+                SetField(typeof(PredictionManager), _manager, "<isReplaying>k__BackingField", round > 0);
+                for (var k = 0; k < SpawnCount; k++)
+                {
+                    var position = new Vector3((round * SpawnCount + k) * 10f, round, 0);
+                    var rotation = Quaternion.Euler(0, round * 30f + k * 5f, 0);
+                    var id = hierarchy.Create(0, position, rotation);
+                    Assert.That(id, Is.Not.Null);
+                    Assert.That(id.Value, Is.EqualTo(new PredictedObjectID((uint)(2 + k))));
+                    var instance = hierarchy.GetGameObject(id);
+                    Assert.That(instance, Is.Not.Null);
+                    if (round == 0)
+                        originals[k] = instance;
+                    else
+                        Assert.That(instance, Is.SameAs(originals[k]),
+                            "a complete matching tree must not be swapped with another replayed identity");
+
+                    var identity = instance.GetComponent<PredictedTransform>();
+                    Assert.That(identity.id.objectId, Is.EqualTo(id.Value));
+                    Assert.That(_manager.GetIdentity(identity.id), Is.SameAs(identity));
+                    Assert.That(identity.predictionPolicy, Is.EqualTo(PredictionPolicy.FullPrediction));
+                    Assert.That(instance.transform.position, Is.EqualTo(position));
+                    Assert.That(Quaternion.Angle(instance.transform.rotation, rotation), Is.LessThan(0.001f));
+                    Assert.That(identity.currentState.unityPosition, Is.EqualTo(position),
+                        "reuse must initialize prediction from the new spawn pose");
+                    Assert.That(Quaternion.Angle(identity.currentState.unityRotation, rotation), Is.LessThan(0.001f));
+
+                    // Leave stale future state behind before rollback. Reusing the same
+                    // component must not carry that state into the next replayed spawn.
+                    identity.currentState.unityPosition = Vector3.one * -999f;
+                    identity.currentState.unityRotation = Quaternion.Euler(90, 0, 0);
+                    instance.transform.position = Vector3.one * -555f;
+                }
+
+                RollBackToEmpty(hierarchy);
+            }
+
+            Assert.That(FindPrefabClones().Count, Is.EqualTo(SpawnCount));
         }
 
         static List<GameObject> FindPrefabClones()
@@ -136,10 +187,12 @@ namespace PurrNet.Prediction.Tests.Editor
             return result;
         }
 
-        void RegisterPrefab(PredictedHierarchy hierarchy)
+        void RegisterPrefab(PredictedHierarchy hierarchy, bool withTransform = false)
         {
             var prefab = Track(new GameObject(PrefabName));
             prefab.AddComponent<PredictedGameObject>();
+            if (withTransform)
+                prefab.AddComponent<PredictedTransform>();
 
             var prefabsAsset = ScriptableObject.CreateInstance<PredictedPrefabs>();
             _assetCleanup.Add(prefabsAsset);
@@ -175,6 +228,7 @@ namespace PurrNet.Prediction.Tests.Editor
             PurrNet.Utils.Hasher.PrepareType<PredictedObjectID>();
             PurrNet.Utils.Hasher.PrepareType<PredictedComponentID>();
             PurrNet.Utils.Hasher.PrepareType<PredictedGameObjectState>();
+            PurrNet.Utils.Hasher.PrepareType<PredictedTransformState>();
 
             var networkObject = Track(new GameObject("NetworkManager"));
             var managerObject = Track(new GameObject("PredictionManager"));

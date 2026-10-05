@@ -104,6 +104,82 @@ namespace PurrNet.Prediction.Tests.Editor
         }
 
         [Test]
+        public void NewlyAttachedDynamicModuleUsesDefaultBaselineInsideAnExistingParentDelta()
+        {
+            var senderManagerObject = new GameObject("New module sender manager");
+            var receiverManagerObject = new GameObject("New module receiver manager");
+            var senderObject = new GameObject("Existing sender parent");
+            var receiverObject = new GameObject("Existing receiver parent");
+            try
+            {
+                var id = new PredictedComponentID(new PredictedObjectID(193), 0);
+                var senderManager = CreateManager(senderManagerObject);
+                var receiverManager = CreateManager(receiverManagerObject);
+                var sender = senderObject.AddComponent<OmittedStateIdentity>();
+                var receiver = receiverObject.AddComponent<OmittedStateIdentity>();
+                InitializeIdentity(sender, senderManager, id, 100).Write(10, FullState(100));
+                InitializeIdentity(receiver, receiverManager, id, 900).Write(10, FullState(100));
+                sender.lastVerifiedTick = receiver.lastVerifiedTick = 10;
+                SetLocalTick(senderManager, 12);
+                SetLocalTick(receiverManager, 12);
+                RegisterSystem(senderManager, sender);
+                RegisterSystem(receiverManager, receiver);
+                foreach (var identity in new[] { sender, receiver })
+                {
+                    SetField(typeof(PredictedIdentity), identity, "_moduleHistory",
+                        new History<DisposableList<uint>>(200));
+                }
+
+                // Attach through the normal dynamic registration branch after the parent
+                // baseline, rather than seeding a fake module baseline to satisfy the guard.
+                SetField(typeof(PredictionManager), senderManager, "<localTickInContext>k__BackingField", 12UL);
+                SetField(typeof(PredictionManager), senderManager, "<isSimulating>k__BackingField", true);
+                var added = new OmittedAlphaModule(sender);
+                SetField(typeof(PredictionManager), senderManager, "<isSimulating>k__BackingField", false);
+                added.currentState.value = 731;
+                Assert.That(added.registeredAtTick, Is.EqualTo(12));
+                Assert.That(added.HasUnchangedStateBaselineInternal(10), Is.False);
+                Assert.That(sender.HasUnchangedStateBaseline(10), Is.True);
+                Assert.That(sender.RunCanOmitUnchangedState(10), Is.False,
+                    "the new module must prevent aggregate omission without forcing a full parent record");
+                Assert.That(receiver.modules, Is.Empty);
+                Assert.That(receiver.HasUnchangedStateBaseline(10), Is.True);
+                Assert.That(receiverManager.GetVerifiedHistory<MODULE_STATE<OmittedState>>(id, 1, out _).Count,
+                    Is.Zero, "the receiver must decode the new module without a prior module snapshot");
+
+                using var frame = BitPackerPool.Get();
+                WriteAddressedStateSection(senderManager, new PlayerVisibilityTimeline(), frame,
+                    tick: 12, baselineTick: 10, fullFrame: false);
+                AssertSingleRecord(frame, id, expectedFullState: false);
+                frame.ResetPositionAndMode(true);
+                ReadAddressedStateSection(receiverManager, frame, stateTick: 12, baselineTick: 10, serverTick: 12);
+
+                Assert.That(receiver.modules.Count, Is.EqualTo(1));
+                Assert.That(receiver.modules[0], Is.TypeOf<OmittedAlphaModule>());
+                var received = (OmittedAlphaModule)receiver.modules[0];
+                Assert.That(received.currentState.value, Is.EqualTo(731));
+                Assert.That(receiver.currentState.value, Is.EqualTo(100));
+                Assert.That(receiver.lastVerifiedTick, Is.EqualTo(12));
+                var moduleHistory = receiverManager.GetVerifiedHistory<MODULE_STATE<OmittedState>>(id, 1, out _);
+                Assert.That(moduleHistory.ReadOrPrevious(10, out _), Is.False,
+                    "the test must not create a historical baseline as a side effect of attachment");
+                Assert.That(moduleHistory.ReadOrPrevious(12, out var verifiedModule), Is.True);
+                Assert.That(verifiedModule.state.value, Is.EqualTo(731));
+                Assert.That(GetField<bool>(typeof(PredictionManager), receiverManager,
+                    "_frameApplyHadRecordFailure"), Is.False);
+                Assert.That(GetField<bool>(typeof(PredictionManager), receiverManager,
+                    "_historyResyncPending"), Is.False);
+            }
+            finally
+            {
+                Object.DestroyImmediate(receiverObject);
+                Object.DestroyImmediate(senderObject);
+                Object.DestroyImmediate(receiverManagerObject);
+                Object.DestroyImmediate(senderManagerObject);
+            }
+        }
+
+        [Test]
         public void UnknownRecordDoesNotPreventKnownOmissionCarryForward()
         {
             var managerObject = new GameObject("Unknown plus omission manager");
@@ -831,6 +907,28 @@ namespace PurrNet.Prediction.Tests.Editor
                         fullFrame: false);
                     AssertSingleRecord(healed, id, expectedFullState: true);
                 }
+
+                Assert.That(heals[default].Contains(id), Is.True,
+                    "serialization alone must not consume a heal that has not been sent");
+                using (var retry = BitPackerPool.Get())
+                {
+                    WriteAddressedStateSection(
+                        manager,
+                        new PlayerVisibilityTimeline(),
+                        retry,
+                        tick: 12,
+                        baselineTick: 10,
+                        fullFrame: false);
+                    AssertSingleRecord(retry, id, expectedFullState: true);
+                }
+
+                // Represent transport-success bookkeeping explicitly. The checkpoint
+                // delivery fixture separately runs the real oversized no-send branch.
+                var commit = typeof(PredictionManager).GetMethod(
+                    "CommitPreparedDesyncHeals", InstanceFields);
+                Assert.That(commit, Is.Not.Null);
+                commit.Invoke(manager, new object[] { default(PlayerID) });
+                Assert.That(heals[default].Contains(id), Is.False);
 
                 using var consumed = BitPackerPool.Get();
                 WriteAddressedStateSection(

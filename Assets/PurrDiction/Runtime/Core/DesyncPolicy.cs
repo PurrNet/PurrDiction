@@ -53,8 +53,6 @@ namespace PurrNet.Prediction
         const uint FnvOffset = 2166136261u;
         const uint FnvPrime = 16777619u;
 
-        // Keep BitPacker out of the first parameter. PurrNet codegen currently treats every
-        // static (BitPacker, T) method as a Packer<T> writer, even when it returns a value.
         public static ushort Compute(ulong tick, BitPacker packer)
         {
             uint h = FnvOffset;

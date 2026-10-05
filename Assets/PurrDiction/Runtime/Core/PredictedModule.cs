@@ -37,10 +37,7 @@ namespace PurrNet.Prediction
         /// </summary>
         public int moduleIndex { get; internal set; }
 
-        /// <summary>
-        /// Simulation tick when this dynamic module instance joined its identity. Static modules
-        /// and modules reconstructed from authoritative topology use zero.
-        /// </summary>
+        // Static modules and modules reconstructed from authoritative topology use tick zero.
         internal ulong registeredAtTick { get; set; }
 
         internal readonly uint typeHash;
@@ -174,7 +171,6 @@ namespace PurrNet.Prediction
         /// <summary>
         /// Updates the interpolation state used for smooth visual rollback.
         /// </summary>
-        /// <param name="delta"></param>
         /// <param name="accumulateError">If true, the difference between predicted and actual state is added to an error accumulator for smoothing.</param>
         protected virtual void UpdateInterpolation(float delta, bool accumulateError) { }
         internal void ResetInterpolationInternal() => ResetInterpolation();

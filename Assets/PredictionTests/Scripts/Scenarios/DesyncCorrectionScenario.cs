@@ -45,6 +45,10 @@ public class DesyncCorrectionScenario : Scenario
     private int _serverDetections;
     private int _correctionsApplied;
     private int _localDesyncs;
+    private int _unexpectedDesyncs;
+    private ulong _fullFramesAtStart;
+    private ulong _faultStartsAt;
+    private DesyncProbe _observedProbe;
 
     public override void Setup(ScenarioContext ctx, NetworkManager manager)
     {
@@ -61,18 +65,31 @@ public class DesyncCorrectionScenario : Scenario
         _serverDetections = 0;
         _correctionsApplied = 0;
         _localDesyncs = 0;
+        _unexpectedDesyncs = 0;
+        _fullFramesAtStart = pm.fullFramesReceivedTotal;
+        _faultStartsAt = 0;
+        _observedProbe = null;
 
         Action<PredictedIdentity, PlayerID, ulong, DesyncPolicy> onDetected = (identity, player, tick, policy) =>
         {
+            if (!(identity is DesyncProbe))
+            {
+                _unexpectedDesyncs++;
+                return;
+            }
             _serverDetections++;
             if (policy == DesyncPolicy.Correct)
                 _correctionsApplied++;
         };
         Action<PredictedIdentity, ulong, DesyncPolicy> onLocal = (identity, tick, policy) =>
         {
+            if (!(identity is DesyncProbe probe))
+            {
+                _unexpectedDesyncs++;
+                return;
+            }
             _localDesyncs++;
-            if (identity is DesyncProbe probe)
-                probe.corruptAtCount = 0;
+            probe.corruptFromTick = 0;
         };
 
         pm.onDesyncDetected += onDetected;
@@ -84,6 +101,9 @@ public class DesyncCorrectionScenario : Scenario
         }
         finally
         {
+            // Bound fault injection to this scenario even if its assertions time out.
+            if (_observedProbe)
+                _observedProbe.corruptFromTick = 0;
             pm.onDesyncDetected -= onDetected;
             pm.onLocalDesync -= onLocal;
         }
@@ -109,6 +129,8 @@ public class DesyncCorrectionScenario : Scenario
             return ScenarioResult.Fail("desync probe never appeared");
         }
 
+        _observedProbe = FindProbe(pm);
+
         await UniTask.WaitForSeconds(1f, cancellationToken: ctx.cancellationToken);
 
         if (ctx.isServer)
@@ -129,8 +151,11 @@ public class DesyncCorrectionScenario : Scenario
             catch (TimeoutException)
             {
                 return ScenarioResult.Fail(
-                    $"server never observed the desync: detections={_serverDetections} victimDone={DesyncCorrectionSignals.victimDone}");
+                    $"server never observed the desync: victimDone={DesyncCorrectionSignals.victimDone}; {Report(pm)}");
             }
+
+            if (_correctionsApplied == 0)
+                return ScenarioResult.Fail($"the server did not apply the Correct policy: {Report(pm)}");
 
             DesyncCorrectionSignals.BroadcastCycleComplete();
         }
@@ -159,7 +184,8 @@ public class DesyncCorrectionScenario : Scenario
                 if (probe == null)
                     return ScenarioResult.Fail("victim lost the desync probe");
 
-                probe.corruptAtCount = probe.currentState.count + CorruptionOffset;
+                _faultStartsAt = pm.localTick + CorruptionOffset;
+                probe.corruptFromTick = _faultStartsAt;
 
                 try
                 {
@@ -171,8 +197,11 @@ public class DesyncCorrectionScenario : Scenario
                 catch (TimeoutException)
                 {
                     return ScenarioResult.Fail(
-                        $"corruption was never detected: corruptions={probe.corruptionsApplied} localDesyncs={_localDesyncs}");
+                        $"corruption was never detected: {Report(pm)}");
                 }
+
+                if (probe.corruptionsApplied == 0)
+                    return ScenarioResult.Fail($"the victim received a notice without injecting its fault: {Report(pm)}");
 
                 DesyncCorrectionSignals.ReportVictimDone();
             }
@@ -186,7 +215,7 @@ public class DesyncCorrectionScenario : Scenario
             }
             catch (TimeoutException)
             {
-                return ScenarioResult.Fail("cycle-complete broadcast never arrived");
+                return ScenarioResult.Fail($"cycle-complete broadcast never arrived: {Report(pm)}");
             }
 
             if (!isVictim && _localDesyncs > 0)
@@ -199,12 +228,23 @@ public class DesyncCorrectionScenario : Scenario
         var digest = BuildDigest(ctx);
         var digestResult = await DigestExchange.Compare(ctx, DigestChannel, digest, 30f);
         if (!digestResult.success)
-            return digestResult;
+            return ScenarioResult.Fail($"{digestResult.message}; {Report(pm)}");
 
-        var report = $"detections={_serverDetections} corrections={_correctionsApplied} localDesyncs={_localDesyncs}";
+        if (_unexpectedDesyncs > 0)
+            return ScenarioResult.Fail($"an unrelated identity diverged during the test: {Report(pm)}");
+
+        var report = Report(pm);
         Debug.Log($"[DesyncCorrection] {ctx.role} {report}");
         return ScenarioResult.Ok(report);
     }
+
+    private string Report(PredictionManager pm)
+        => $"detections={_serverDetections}; corrections={_correctionsApplied}; localDesyncs={_localDesyncs}; " +
+           $"unexpectedDesyncs={_unexpectedDesyncs}; corruptions={(_observedProbe ? _observedProbe.corruptionsApplied : 0)}; " +
+           $"verifiedCorruptions={(_observedProbe ? _observedProbe.verifiedCorruptionsApplied : 0)}; " +
+           $"faultStartsAt={_faultStartsAt}; firstCorruptionTick={(_observedProbe ? _observedProbe.firstCorruptionTick : 0)}; " +
+           $"lastCorruptionTick={(_observedProbe ? _observedProbe.lastCorruptionTick : 0)}; " +
+           $"fullFramesReceived={pm.fullFramesReceivedTotal - _fullFramesAtStart}";
 
     private DesyncProbe FindProbe(PredictionManager pm)
     {

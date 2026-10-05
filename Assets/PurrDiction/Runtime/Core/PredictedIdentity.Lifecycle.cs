@@ -11,8 +11,16 @@ namespace PurrNet.Prediction
             if (SkipsCurrentSimulationPhase())
                 return;
 
-            SimulateModules(tick, delta);
-            SimulateTick(tick, delta);
+            var previousCreator = predictionManager.EnterSpawnCreator(id);
+            try
+            {
+                SimulateModules(tick, delta);
+                SimulateTick(tick, delta);
+            }
+            finally
+            {
+                predictionManager.ExitSpawnCreator(previousCreator);
+            }
         }
 
         internal void RunLateSimulateTick(float delta)
@@ -20,8 +28,16 @@ namespace PurrNet.Prediction
             if (SkipsCurrentSimulationPhase())
                 return;
 
-            LateSimulateModules(delta);
-            LateSimulateTick(delta);
+            var previousCreator = predictionManager.EnterSpawnCreator(id);
+            try
+            {
+                LateSimulateModules(delta);
+                LateSimulateTick(delta);
+            }
+            finally
+            {
+                predictionManager.ExitSpawnCreator(previousCreator);
+            }
         }
 
         internal void RunPrepareSimulationInputs(ulong tick, float delta)

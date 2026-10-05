@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using PurrNet.Logging;
+using PurrNet.Pooling;
 using UnityEngine;
 
 namespace PurrNet.Prediction
@@ -13,8 +14,14 @@ namespace PurrNet.Prediction
         public readonly Vector3 localScale;
         public readonly bool activeSelf;
 
+        /// <summary>NetworkIdentity components owned by this piece, in collection order.</summary>
+        public readonly int networkIdentityCount;
+
+        /// <summary>Offset of this piece's first NetworkIdentity inside the instance's id block.</summary>
+        public readonly int networkIdOffset;
+
         public PrototypePiece(int parentPieceIndex, int[] inverseSiblingPath, Vector3 localPosition,
-            Quaternion localRotation, Vector3 localScale, bool activeSelf)
+            Quaternion localRotation, Vector3 localScale, bool activeSelf, int networkIdentityCount = 0, int networkIdOffset = 0)
         {
             this.parentPieceIndex = parentPieceIndex;
             this.inverseSiblingPath = inverseSiblingPath;
@@ -22,6 +29,8 @@ namespace PurrNet.Prediction
             this.localRotation = localRotation;
             this.localScale = localScale;
             this.activeSelf = activeSelf;
+            this.networkIdentityCount = networkIdentityCount;
+            this.networkIdOffset = networkIdOffset;
         }
     }
 
@@ -29,11 +38,38 @@ namespace PurrNet.Prediction
     {
         public readonly PrototypePiece[] pieces;
 
+        /// <summary>Total NetworkIdentity components across all pieces; the size of one id block.</summary>
+        public readonly int networkIdentityCount;
+
         public int pieceCount => pieces.Length;
 
         private PiecePrototype(PrototypePiece[] pieces)
         {
             this.pieces = pieces;
+            for (var i = 0; i < pieces.Length; i++)
+                networkIdentityCount += pieces[i].networkIdentityCount;
+        }
+
+        /// <summary>
+        /// Collects the NetworkIdentity components a piece owns: those on the piece itself and on
+        /// descendants that are not pieces of their own. Order is the deterministic hierarchy
+        /// order, so every peer maps the same component to the same id offset.
+        /// </summary>
+        public static void CollectNetworkIdentities(Transform piece, List<NetworkIdentity> result)
+        {
+            var own = ListPool<NetworkIdentity>.Instantiate();
+            piece.GetComponents(own);
+            result.AddRange(own);
+            ListPool<NetworkIdentity>.Destroy(own);
+
+            int childCount = piece.childCount;
+            for (var i = 0; i < childCount; i++)
+            {
+                var child = piece.GetChild(i);
+                if (child.TryGetComponent<PredictedIdentity>(out _))
+                    continue;
+                CollectNetworkIdentities(child, result);
+            }
         }
 
         public static PiecePrototype Build(GameObject root, HashSet<Transform> boundaries = null)
@@ -59,13 +95,24 @@ namespace PurrNet.Prediction
 
                 var path = parentPieceIndex < 0 ? System.Array.Empty<int>() : GetInverseSiblingPath(current, parentPieceIndex, result);
 
+                var networkIdentities = ListPool<NetworkIdentity>.Instantiate();
+                CollectNetworkIdentities(current, networkIdentities);
+                int networkIdentityCount = networkIdentities.Count;
+                ListPool<NetworkIdentity>.Destroy(networkIdentities);
+
+                int networkIdOffset = 0;
+                for (var i = 0; i < result.Count; i++)
+                    networkIdOffset += result[i].networkIdentityCount;
+
                 result.Add(new PrototypePiece(
                     parentPieceIndex,
                     path,
                     current.localPosition,
                     current.localRotation,
                     current.localScale,
-                    current.gameObject.activeSelf));
+                    current.gameObject.activeSelf,
+                    networkIdentityCount,
+                    networkIdOffset));
             }
 
             int childCount = current.childCount;

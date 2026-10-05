@@ -46,8 +46,8 @@ public class SmokeZoneTracker : PredictedIdentity<SmokeZoneTracker.ZoneState>
     {
         _predictedRigidbody = transform.GetComponent<PredictedRigidbody>();
 
-        _predictedRigidbody.onTriggerEnter += OnPredictedTriggerEnter;
-        _predictedRigidbody.onTriggerExit += OnPredictedTriggerExit;
+        _predictedRigidbody.onPredictedTriggerEnter += OnPredictedTriggerEnter;
+        _predictedRigidbody.onPredictedTriggerExit += OnPredictedTriggerExit;
         instances.Add(this);
     }
 
@@ -55,31 +55,25 @@ public class SmokeZoneTracker : PredictedIdentity<SmokeZoneTracker.ZoneState>
     {
         if (_predictedRigidbody)
         {
-            _predictedRigidbody.onTriggerEnter -= OnPredictedTriggerEnter;
-            _predictedRigidbody.onTriggerExit -= OnPredictedTriggerExit;
+            _predictedRigidbody.onPredictedTriggerEnter -= OnPredictedTriggerEnter;
+            _predictedRigidbody.onPredictedTriggerExit -= OnPredictedTriggerExit;
         }
 
         instances.Remove(this);
     }
 
-    private void OnPredictedTriggerEnter(GameObject other)
+    private void OnPredictedTriggerEnter(PredictedTrigger trigger)
     {
-        if (!PredictionManager.TryGetClosestPredictedID(other, out var pid))
-            return;
-
         enterFires++;
-        var id = pid.objectId;
+        var id = trigger.otherId.objectId;
         if (!currentState.insideIds.Contains(id))
             currentState.insideIds.Add(id);
     }
 
-    private void OnPredictedTriggerExit(GameObject other)
+    private void OnPredictedTriggerExit(PredictedTrigger trigger)
     {
-        if (!PredictionManager.TryGetClosestPredictedID(other, out var pid))
-            return;
-
         exitFires++;
-        var id = pid.objectId;
+        var id = trigger.otherId.objectId;
         if (currentState.insideIds.Contains(id))
             currentState.insideIds.Remove(id);
     }

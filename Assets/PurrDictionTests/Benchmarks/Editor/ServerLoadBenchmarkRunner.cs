@@ -628,7 +628,6 @@ namespace PurrNet.Prediction.Benchmarks.Editor
             row.elapsedTicks = ReadUnsignedMetric(header, "ticks");
             row.ackLagAverageTicks = ReadDoubleMetric(header, "ackLagAvg");
             row.ackLagMaximumTicks = ReadUnsignedMetric(header, "ackLagMax");
-            row.reliableFramesSent = ReadUnsignedMetric(header, "reliableFrames");
             row.fullFramesSent = ReadUnsignedMetric(header, "fullFrames");
             row.deleteChurnDeletes = ReadLongMetric(header, "deleteChurnDeletes");
             row.deleteChurnRespawns = ReadLongMetric(header, "deleteChurnRespawns");
@@ -853,8 +852,8 @@ namespace PurrNet.Prediction.Benchmarks.Editor
             sb.AppendLine();
             sb.AppendLine("## Summary");
             sb.AppendLine();
-            sb.AppendLine("| Run | Clients | Objects | Latency ms | Visibility | Delete churn /s | Ack avg ticks | Ack max ticks | Reliable frames | Full frames | Client frames/s | Input history us/tick | Visibility events us/tick | Commit visibility us/tick | Hierarchy projection us/tick | Frame write us/tick | Client replay us/tick | Client rollback us/tick | Client input read us/tick | Host window sent B | Host window received B | Validated players | Result |");
-            sb.AppendLine("|---:|---:|---:|---:|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|");
+            sb.AppendLine("| Run | Clients | Objects | Latency ms | Visibility | Delete churn /s | Ack avg ticks | Ack max ticks | Full frames | Client frames/s | Input history us/tick | Visibility events us/tick | Commit visibility us/tick | Hierarchy projection us/tick | Frame write us/tick | Client replay us/tick | Client rollback us/tick | Client input read us/tick | Host window sent B | Host window received B | Validated players | Result |");
+            sb.AppendLine("|---:|---:|---:|---:|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|");
 
             foreach (var row in rows)
             {
@@ -866,7 +865,6 @@ namespace PurrNet.Prediction.Benchmarks.Editor
                 sb.Append(" | ").Append(row.deleteChurnPerSecond);
                 sb.Append(" | ").Append(FormatNumber(row.ackLagAverageTicks));
                 sb.Append(" | ").Append(row.ackLagMaximumTicks);
-                sb.Append(" | ").Append(row.reliableFramesSent);
                 sb.Append(" | ").Append(row.fullFramesSent);
                 sb.Append(" | ").Append(FormatNumber(row.clientFramesPerSecondAverage));
                 sb.Append(" | ").Append(FormatNumber(
@@ -911,8 +909,7 @@ namespace PurrNet.Prediction.Benchmarks.Editor
                     $"Final visibility signatures validated: " +
                     $"`{row.visibilityValidatedPlayers} players`");
                 sb.AppendLine(
-                    $"Timed window frame delivery: `{row.reliableFramesSent} reliable / " +
-                    $"{row.fullFramesSent} full frames`");
+                    $"Timed window full frames: `{row.fullFramesSent}`");
                 if (row.visibilityMode is "churn" or "acquire-churn")
                 {
                     sb.AppendLine(
@@ -1214,7 +1211,6 @@ namespace PurrNet.Prediction.Benchmarks.Editor
             public ulong hostDataReceived;
             public ulong windowDataSent;
             public ulong windowDataReceived;
-            public ulong reliableFramesSent;
             public ulong fullFramesSent;
             public int visibilityValidatedPlayers;
             public ulong elapsedTicks;

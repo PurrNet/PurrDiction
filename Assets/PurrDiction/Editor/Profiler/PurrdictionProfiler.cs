@@ -7,7 +7,6 @@ using UnityEngine;
 
 namespace PurrNet.Prediction.Editor
 {
-    // this is a unity editor window
     public class PurrdictionProfiler : EditorWindow
     {
         const int MAX_SAMPLES = 1024;
@@ -162,7 +161,6 @@ namespace PurrNet.Prediction.Editor
             if (sampleCount == 0)
                 return;
 
-            // Determine max total for scaling
             int maxBits = 0;
             for (var i = 0; i < sampleCount; i++)
             {
@@ -184,14 +182,12 @@ namespace PurrNet.Prediction.Editor
             }
 
             var contentRect = new Rect(0, 0, Mathf.Max(outerRect.width, contentWidth), Mathf.Max(1f, outerRect.height - 1f));
-            _graphScroll.y = 0f; // prevent any vertical scrolling
+            _graphScroll.y = 0f;
             _graphScroll = GUI.BeginScrollView(outerRect, _graphScroll, contentRect, GUI.skin.horizontalScrollbar, GUIStyle.none);
-            _graphScroll.y = 0f; // enforce vertical lock even if mouse wheel moves
+            _graphScroll.y = 0f; // BeginScrollView can reintroduce vertical motion from the wheel.
 
-            // Background inside content
             EditorGUI.DrawRect(new Rect(0, 0, contentRect.width, contentRect.height), new Color(0.10f, 0.10f, 0.10f, 1f));
 
-            // Draw bars in local space
             for (var i = 0; i < sampleCount; i++)
             {
                 var totals = GetSampleTotals(_samples[i]);
@@ -212,14 +208,12 @@ namespace PurrNet.Prediction.Editor
                 if (_showReadStates) DrawStack(totals.readStates, ColorReadStates);
                 if (_showWroteStates) DrawStack(totals.wroteStates, ColorWroteStates);
 
-                // Selection highlight
                 if (i == _selectedSampleIndex)
                 {
                     var sel = new Rect(x, 0, _barWidth, contentRect.height);
                     EditorGUI.DrawRect(sel, new Color(1f, 1f, 1f, 0.08f));
                 }
 
-                // Handle click
                 var clickRect = new Rect(x, 0, _barWidth, contentRect.height);
                 if (Event.current.type == EventType.MouseDown && clickRect.Contains(Event.current.mousePosition))
                 {
@@ -228,12 +222,10 @@ namespace PurrNet.Prediction.Editor
                 }
             }
 
-            // Axis label
             var label = new GUIContent($"Max: {maxBits} bits");
             var size = GUI.skin.label.CalcSize(label);
             GUI.Label(new Rect(4, 4, size.x, size.y), label);
 
-            // Convert vertical wheel to horizontal pan when hovering the graph
             if (Event.current.type == EventType.ScrollWheel && outerRect.Contains(Event.current.mousePosition))
             {
                 float delta = Event.current.delta.y * 10f;
@@ -273,7 +265,6 @@ namespace PurrNet.Prediction.Editor
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("Details", EditorStyles.boldLabel);
 
-			// View options
 			EditorGUILayout.BeginHorizontal();
 			_groupByParentType = GUILayout.Toggle(_groupByParentType, "Group by Parent", GUILayout.Width(140));
 			_sortByBitsDescending = GUILayout.Toggle(_sortByBitsDescending, "Sort by bits (desc)", GUILayout.Width(160));
@@ -329,7 +320,6 @@ namespace PurrNet.Prediction.Editor
 			const float PingColWidth = 44f;
 			float rowHeight = EditorGUIUtility.singleLineHeight + 4f;
 
-			// Prepare filtered items
 			var filtered = new List<PackingInfo>(Mathf.Max(16, list.Count));
 			for (var i = 0; i < list.Count; i++)
 			{
@@ -347,7 +337,6 @@ namespace PurrNet.Prediction.Editor
 
 			if (!_groupByParentType)
 			{
-				// Flat list with optional sorting
 				if (_sortByBitsDescending)
 					filtered.Sort((a, b) => b.bitCount.CompareTo(a.bitCount));
 
@@ -399,7 +388,6 @@ namespace PurrNet.Prediction.Editor
 				return;
 			}
 
-			// Grouped by parent type
 			var groups = new List<GroupRow>(16);
 			for (var i = 0; i < filtered.Count; i++)
 			{
@@ -436,7 +424,6 @@ namespace PurrNet.Prediction.Editor
 				if (!state)
 					continue;
 
-				// Header inside group
 				var headerRect = EditorGUILayout.GetControlRect(false, rowHeight);
 				EditorGUI.DrawRect(headerRect, new Color(0.18f, 0.18f, 0.18f, 1f));
 				EditorGUI.DrawRect(new Rect(headerRect.x, headerRect.yMax - 1f, headerRect.width, 1f), new Color(0f, 0f, 0f, 0.35f));

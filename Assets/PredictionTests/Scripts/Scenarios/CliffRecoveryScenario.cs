@@ -66,18 +66,29 @@ public class CliffRecoveryScenario : Scenario
 
             framesDuringBlackout = pm.framesReceivedTotal - framesBefore;
 
+            // The ordered stream redelivers every frame sent during the outage, so verified progress
+            // must pass the blackout and keep going without falling back to a full frame.
+            ulong verifiedAtRestore = pm.verifiedServerTick;
+            ulong requiredTicks = (ulong)Mathf.CeilToInt((BlackoutSeconds + 1f) * pm.tickRate);
             var recoveryDeadline = Time.realtimeSinceStartup + RecoveryTimeout;
-            while (pm.fullFramesReceivedTotal <= fullFramesBefore)
+            while (pm.verifiedServerTick < verifiedAtRestore + requiredTicks)
             {
                 if (Time.realtimeSinceStartup > recoveryDeadline)
                 {
                     return ScenarioResult.Fail(
-                        "no full-frame recovery after ack blackout: " +
+                        "verified progress did not resume after the blackout: " +
                         $"framesDuringBlackout={framesDuringBlackout} " +
-                        $"fullFrames={pm.fullFramesReceivedTotal - fullFramesBefore}");
+                        $"verified={pm.verifiedServerTick - verifiedAtRestore}/{requiredTicks} ticks");
                 }
 
                 await UniTask.NextFrame(ctx.cancellationToken);
+            }
+
+            if (pm.fullFramesReceivedTotal != fullFramesBefore)
+            {
+                return ScenarioResult.Fail(
+                    "the ordered frame stream needed a full frame to heal a transport outage: " +
+                    $"fullFrames={pm.fullFramesReceivedTotal - fullFramesBefore}");
             }
         }
 #endif
@@ -87,7 +98,7 @@ public class CliffRecoveryScenario : Scenario
         {
             return ScenarioResult.Fail(
                 "blackout could not be enforced (network simulation unavailable or non-UDP " +
-                "transport); the distress-heal contract was not exercised. Pass -allowDigestOnly " +
+                "transport); outage recovery was not exercised. Pass -allowDigestOnly " +
                 "to accept a digest-only run.");
         }
 
@@ -122,7 +133,7 @@ public class CliffRecoveryScenario : Scenario
 
         string note = ctx.role == NetworkRole.Client
             ? (blackoutEnforced
-                ? $"ack blackout enforced (frames during={framesDuringBlackout}), full-sync heal observed, deterministic state reconverged"
+                ? $"blackout enforced (frames during={framesDuringBlackout}), stream caught up without a full frame, deterministic state reconverged"
                 : "network simulation unavailable; digest-only check")
             : "server digest consistent";
         return ScenarioResult.Ok(note);

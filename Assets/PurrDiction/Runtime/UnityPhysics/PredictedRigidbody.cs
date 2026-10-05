@@ -1,5 +1,4 @@
 using System;
-using PurrNet.Modules;
 using PurrNet.Packing;
 using PurrNet.Utils;
 using UnityEngine;
@@ -15,7 +14,8 @@ namespace PurrNet.Prediction
         CollisionStay = 1 << 2,
         TriggerEnter = 1 << 3,
         TriggerExit = 1 << 4,
-        TriggerStay = 1 << 5
+        TriggerStay = 1 << 5,
+        ControllerColliderHit = 1 << 6
     }
 
     public enum FloatAccuracy
@@ -27,6 +27,7 @@ namespace PurrNet.Prediction
 
     public delegate void OnCollisionDelegate(GameObject other, PhysicsCollision physicsEvent);
     public delegate void OnTriggerDelegate(GameObject other);
+    public delegate void OnControllerColliderHitDelegate(GameObject other, PhysicsControllerHit physicsEvent);
 
 #if UNITY_PHYSICS_3D
     [RequireComponent(typeof(Rigidbody))]
@@ -41,19 +42,39 @@ namespace PurrNet.Prediction
 #if UNITY_PHYSICS_3D
         [SerializeField, PurrLock] private Rigidbody _rigidbody;
         [SerializeField, PurrLock] private FloatAccuracy _floatAccuracy = FloatAccuracy.Medium;
-        [SerializeField, PurrLock] private PhysicsEventMask _eventMask = (PhysicsEventMask)0x3F;
+        // Stay events fire once per touching pair per physics step and are opt-in; see eventMask.
+        [SerializeField, PurrLock] private PhysicsEventMask _eventMask = DEFAULT_EVENT_MASK;
         [SerializeField] private bool _ignoreTriggerOnTrigger;
+
+        public const PhysicsEventMask DEFAULT_EVENT_MASK =
+            PhysicsEventMask.CollisionEnter | PhysicsEventMask.CollisionExit |
+            PhysicsEventMask.TriggerEnter | PhysicsEventMask.TriggerExit;
+
         public new Rigidbody rigidbody => _rigidbody;
 
         public Rigidbody rb => _rigidbody;
 
+        [Obsolete("Use onPredictedCollisionEnter. It also carries the other object's PredictedComponentID and, on Exit, still fires after the other object was deleted.")]
         public event OnCollisionDelegate onCollisionEnter;
+        [Obsolete("Use onPredictedCollisionExit. It also carries the other object's PredictedComponentID and, on Exit, still fires after the other object was deleted.")]
         public event OnCollisionDelegate onCollisionExit;
+        [Obsolete("Use onPredictedCollisionStay. It also carries the other object's PredictedComponentID and, on Exit, still fires after the other object was deleted.")]
         public event OnCollisionDelegate onCollisionStay;
 
+        [Obsolete("Use onPredictedTriggerEnter. It also carries the other object's PredictedComponentID and, on Exit, still fires after the other object was deleted.")]
         public event OnTriggerDelegate onTriggerEnter;
+        [Obsolete("Use onPredictedTriggerExit. It also carries the other object's PredictedComponentID and, on Exit, still fires after the other object was deleted.")]
         public event OnTriggerDelegate onTriggerExit;
+        [Obsolete("Use onPredictedTriggerStay. It also carries the other object's PredictedComponentID and, on Exit, still fires after the other object was deleted.")]
         public event OnTriggerDelegate onTriggerStay;
+
+        public event OnPredictedCollisionDelegate onPredictedCollisionEnter;
+        public event OnPredictedCollisionDelegate onPredictedCollisionExit;
+        public event OnPredictedCollisionDelegate onPredictedCollisionStay;
+
+        public event OnPredictedTriggerDelegate onPredictedTriggerEnter;
+        public event OnPredictedTriggerDelegate onPredictedTriggerExit;
+        public event OnPredictedTriggerDelegate onPredictedTriggerStay;
 
         public Vector3 position
         {
@@ -162,6 +183,7 @@ namespace PurrNet.Prediction
                 RestoreDefaultPhysicsMode();
 
             base.Setup(manager, world, id, owner);
+            SyncEventProxies();
 
             if (!_rigidbody)
                 return;
@@ -653,42 +675,49 @@ namespace PurrNet.Prediction
             }
         }
 
-        private void OnCollisionEnter(Collision other)
+        public PhysicsEventMask eventMask
         {
-            if (!_eventMask.HasFlag(PhysicsEventMask.CollisionEnter))
+            get => _eventMask;
+            set
+            {
+                if (_eventMask == value)
+                    return;
+                _eventMask = value;
+                SyncEventProxies();
+            }
+        }
+
+        private const PhysicsEventMask ContactProxyMask =
+            PhysicsEventMask.CollisionEnter | PhysicsEventMask.CollisionExit |
+            PhysicsEventMask.TriggerEnter | PhysicsEventMask.TriggerExit;
+
+        private const PhysicsEventMask StayProxyMask =
+            PhysicsEventMask.CollisionStay | PhysicsEventMask.TriggerStay;
+
+        internal void SyncEventProxies()
+        {
+            if (PredictedPhysicsEventProxies.Sync<PredictedRigidbodyContactProxy>(
+                    gameObject, (_eventMask & ContactProxyMask) != 0, out var contact))
+                contact.target = this;
+            if (PredictedPhysicsEventProxies.Sync<PredictedRigidbodyStayProxy>(
+                    gameObject, (_eventMask & StayProxyMask) != 0, out var stay))
+                stay.target = this;
+        }
+
+        internal void HandleCollision(PhysicsEventType type, PhysicsEventMask kind, Collision other)
+        {
+            if ((_eventMask & kind) == 0)
                 return;
 
             if (!predictionManager || !predictionManager.isSimulating || predictionManager.isVerifiedAndReplaying)
                 return;
 
-            predictionManager.physics3d.RegisterEvent(PhysicsEventType.Enter, this, other);
+            predictionManager.physics3d.RegisterEvent(type, this, other);
         }
 
-        private void OnCollisionExit(Collision other)
+        internal void HandleTrigger(PhysicsEventType type, PhysicsEventMask kind, Collider other)
         {
-            if (!_eventMask.HasFlag(PhysicsEventMask.CollisionExit))
-                return;
-
-            if (!predictionManager || !predictionManager.isSimulating || predictionManager.isVerifiedAndReplaying)
-                return;
-
-            predictionManager.physics3d.RegisterEvent(PhysicsEventType.Exit, this, other);
-        }
-
-        private void OnCollisionStay(Collision other)
-        {
-            if (!_eventMask.HasFlag(PhysicsEventMask.CollisionStay))
-                return;
-
-            if (!predictionManager || !predictionManager.isSimulating || predictionManager.isVerifiedAndReplaying)
-                return;
-
-            predictionManager.physics3d.RegisterEvent(PhysicsEventType.Stay, this, other);
-        }
-
-        private void OnTriggerEnter(Collider other)
-        {
-            if (!_eventMask.HasFlag(PhysicsEventMask.TriggerEnter))
+            if ((_eventMask & kind) == 0)
                 return;
 
             if (!predictionManager || !predictionManager.isSimulating || predictionManager.isVerifiedAndReplaying)
@@ -697,35 +726,7 @@ namespace PurrNet.Prediction
             if (_ignoreTriggerOnTrigger && other.isTrigger)
                 return;
 
-            predictionManager.physics3d.RegisterEvent(PhysicsEventType.Enter, this, other);
-        }
-
-        private void OnTriggerExit(Collider other)
-        {
-            if (!_eventMask.HasFlag(PhysicsEventMask.TriggerExit))
-                return;
-
-            if (!predictionManager || !predictionManager.isSimulating || predictionManager.isVerifiedAndReplaying)
-                return;
-
-            if (_ignoreTriggerOnTrigger && other.isTrigger)
-                return;
-
-            predictionManager.physics3d.RegisterEvent(PhysicsEventType.Exit, this, other);
-        }
-
-        private void OnTriggerStay(Collider other)
-        {
-            if (!_eventMask.HasFlag(PhysicsEventMask.TriggerStay))
-                return;
-
-            if (!predictionManager || !predictionManager.isSimulating || predictionManager.isVerifiedAndReplaying)
-                return;
-
-            if (_ignoreTriggerOnTrigger && other.isTrigger)
-                return;
-
-            predictionManager.physics3d.RegisterEvent(PhysicsEventType.Stay, this, other);
+            predictionManager.physics3d.RegisterEvent(type, this, other);
         }
 
         public void MovePosition(Vector3 position)
@@ -744,65 +745,58 @@ namespace PurrNet.Prediction
         }
 
 
-        public void RaiseTriggerEnter(GameObject other)
-        {
-            onTriggerEnter?.Invoke(other);
-        }
+#pragma warning disable CS0618 // the GameObject-only events stay raised until they are removed
+        public void RaiseTriggerEnter(GameObject other) => onTriggerEnter?.Invoke(other);
 
-        public void RaiseTriggerExit(GameObject other)
-        {
-            onTriggerExit?.Invoke(other);
-        }
+        public void RaiseTriggerExit(GameObject other) => onTriggerExit?.Invoke(other);
 
-        public void RaiseTriggerStay(GameObject other)
-        {
-            onTriggerStay?.Invoke(other);
-        }
+        public void RaiseTriggerStay(GameObject other) => onTriggerStay?.Invoke(other);
 
         public void RaiseCollisionEnter(GameObject other, PhysicsCollision evContacts)
-        {
-            onCollisionEnter?.Invoke(other, evContacts);
-        }
+            => onCollisionEnter?.Invoke(other, evContacts);
 
         public void RaiseCollisionExit(GameObject other, PhysicsCollision evContacts)
-        {
-            onCollisionExit?.Invoke(other, evContacts);
-        }
+            => onCollisionExit?.Invoke(other, evContacts);
 
         public void RaiseCollisionStay(GameObject other, PhysicsCollision evContacts)
-        {
-            onCollisionStay?.Invoke(other, evContacts);
-        }
+            => onCollisionStay?.Invoke(other, evContacts);
+#pragma warning restore CS0618
+
+        public void RaiseTriggerEnter(PredictedTrigger trigger) => onPredictedTriggerEnter?.Invoke(trigger);
+
+        public void RaiseTriggerExit(PredictedTrigger trigger) => onPredictedTriggerExit?.Invoke(trigger);
+
+        public void RaiseTriggerStay(PredictedTrigger trigger) => onPredictedTriggerStay?.Invoke(trigger);
+
+        public void RaiseCollisionEnter(PredictedCollision collision) => onPredictedCollisionEnter?.Invoke(collision);
+
+        public void RaiseCollisionExit(PredictedCollision collision) => onPredictedCollisionExit?.Invoke(collision);
+
+        public void RaiseCollisionStay(PredictedCollision collision) => onPredictedCollisionStay?.Invoke(collision);
 #else
-        public void RaiseTriggerEnter(GameObject other)
-        {
-            throw new NotImplementedException();
-        }
+        public void RaiseTriggerEnter(GameObject other) => throw new NotImplementedException();
 
-        public void RaiseTriggerExit(GameObject other)
-        {
-            throw new NotImplementedException();
-        }
+        public void RaiseTriggerExit(GameObject other) => throw new NotImplementedException();
 
-        public void RaiseTriggerStay(GameObject other)
-        {
-            throw new NotImplementedException();
-        }
+        public void RaiseTriggerStay(GameObject other) => throw new NotImplementedException();
 
-        public void RaiseCollisionEnter(GameObject other, PhysicsCollision evContacts)
-        {
-            throw new NotImplementedException();
-        }
+        public void RaiseCollisionEnter(GameObject other, PhysicsCollision evContacts) => throw new NotImplementedException();
 
-        public void RaiseCollisionExit(GameObject other, PhysicsCollision evContacts)
-        {
-            throw new NotImplementedException();
-        }
+        public void RaiseCollisionExit(GameObject other, PhysicsCollision evContacts) => throw new NotImplementedException();
 
-        public void RaiseCollisionStay(GameObject other, PhysicsCollision evContacts)
-        {
-            throw new NotImplementedException();
-        }
+        public void RaiseCollisionStay(GameObject other, PhysicsCollision evContacts) => throw new NotImplementedException();
+
+        public void RaiseTriggerEnter(PredictedTrigger trigger) => throw new NotImplementedException();
+
+        public void RaiseTriggerExit(PredictedTrigger trigger) => throw new NotImplementedException();
+
+        public void RaiseTriggerStay(PredictedTrigger trigger) => throw new NotImplementedException();
+
+        public void RaiseCollisionEnter(PredictedCollision collision) => throw new NotImplementedException();
+
+        public void RaiseCollisionExit(PredictedCollision collision) => throw new NotImplementedException();
+
+        public void RaiseCollisionStay(PredictedCollision collision) => throw new NotImplementedException();
 #endif
     }
 }

@@ -37,6 +37,7 @@ namespace PurrNet.Prediction.Tests.Editor
                 Register(manager, live);
 
                 Assert.That(manager.GetIdentity(id), Is.SameAs(live));
+                AssertSystems(manager, stale, live);
 
                 manager.UnregisterInstance(stale);
 
@@ -44,6 +45,12 @@ namespace PurrNet.Prediction.Tests.Editor
                     manager.GetIdentity(id),
                     Is.SameAs(live),
                     "the expiring pooled identity evicted the live registration for its id");
+                AssertSystems(manager, live);
+
+                manager.UnregisterInstance(stale);
+
+                Assert.That(manager.GetIdentity(id), Is.SameAs(live));
+                AssertSystems(manager, live);
             }
             finally
             {
@@ -58,24 +65,57 @@ namespace PurrNet.Prediction.Tests.Editor
         {
             var managerObject = new GameObject("Registration manager");
             var identityObject = new GameObject("Live identity");
+            var firstObject = new GameObject("First neighboring identity");
+            var lastObject = new GameObject("Last neighboring identity");
             try
             {
                 var id = new PredictedComponentID(new PredictedObjectID(904), 0);
+                var firstId = new PredictedComponentID(new PredictedObjectID(903), 0);
+                var lastId = new PredictedComponentID(new PredictedObjectID(905), 0);
                 var manager = CreateManager(managerObject);
+
+                var first = firstObject.AddComponent<OmittedStateIdentity>();
+                first.AttachForTest(manager, firstId);
+                Register(manager, first);
 
                 var identity = identityObject.AddComponent<OmittedStateIdentity>();
                 identity.AttachForTest(manager, id);
                 Register(manager, identity);
 
+                var last = lastObject.AddComponent<OmittedStateIdentity>();
+                last.AttachForTest(manager, lastId);
+                Register(manager, last);
+                AssertSystems(manager, first, identity, last);
+
                 manager.UnregisterInstance(identity);
 
                 Assert.That(manager.GetIdentity(id), Is.Null);
+                Assert.That(manager.GetIdentity(firstId), Is.SameAs(first));
+                Assert.That(manager.GetIdentity(lastId), Is.SameAs(last));
+                AssertSystems(manager, first, last);
+
+                manager.UnregisterInstance(identity);
+
+                Assert.That(manager.GetIdentity(id), Is.Null);
+                Assert.That(manager.GetIdentity(firstId), Is.SameAs(first));
+                Assert.That(manager.GetIdentity(lastId), Is.SameAs(last));
+                AssertSystems(manager, first, last);
             }
             finally
             {
+                Object.DestroyImmediate(lastObject);
+                Object.DestroyImmediate(firstObject);
                 Object.DestroyImmediate(identityObject);
                 Object.DestroyImmediate(managerObject);
             }
+        }
+
+        private static void AssertSystems(
+            PredictionManager manager,
+            params PredictedIdentity[] expected)
+        {
+            Assert.That(GetField<List<PredictedIdentity>>(manager, "_systems"), Is.EqualTo(expected));
+            Assert.That(GetField<int>(manager, "_systemsCount"), Is.EqualTo(expected.Length));
         }
 
         private static void Register(

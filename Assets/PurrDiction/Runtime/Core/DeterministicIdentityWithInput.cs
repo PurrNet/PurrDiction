@@ -42,9 +42,23 @@ namespace PurrNet.Prediction
         {
             base.Setup(manager, world, id, owner);
 
-            if (_inputHistory == null)
-                _inputHistory = new History<INPUT>(world.tickRate * 5);
+            EnsureInputHistory(world);
             DisposeInputStorage();
+        }
+
+        internal override void PrewarmPredictionState(PredictionManager world)
+        {
+            base.PrewarmPredictionState(world);
+            EnsureInputHistory(world);
+        }
+
+        private void EnsureInputHistory(PredictionManager world)
+        {
+            if (_inputHistory != null && _inputHistory.Capacity == world.tickRate * 5)
+                return;
+
+            _inputHistory?.Clear();
+            _inputHistory = new History<INPUT>(world.tickRate * 5);
         }
 
         internal override void ReleasePredictionStateForPool()
@@ -145,9 +159,11 @@ namespace PurrNet.Prediction
                 _lastInput = _nextInput;
                 _inputHistory.Write(tick, Packer.Copy(_nextInput));
                 _nextInput = GetDefaultInput();
+                ConsumeUploadedInputBits(tick, false);
             }
             else if (isServer)
             {
+                ConsumeUploadedInputBits(tick, _queuedInput != null);
                 if (_queuedInput == null)
                 {
                     if (!extrapolate)
@@ -194,8 +210,6 @@ namespace PurrNet.Prediction
             return _inputHistory != null && _inputHistory.TryGet(tick, out _);
         }
 
-        internal override bool requiresGuaranteedInputHistory => true;
-
         public override void WriteFirstInput(ulong localTick, BitPacker packer)
         {
             int pos = packer.positionInBits;
@@ -230,7 +244,6 @@ namespace PurrNet.Prediction
         /// Sanitize the input before using it.
         /// Use this to clamp values or prevent invalid input.
         /// </summary>
-        /// <param name="input"></param>
         protected virtual void SanitizeInput(ref INPUT input) { }
 
         internal override void QueueInput(BitPacker packer, PlayerID sender)
@@ -252,6 +265,7 @@ namespace PurrNet.Prediction
 
                 _queuedInput = sanitizedInput;
             }
+            RecordUploadedInputBits(packer, pos);
             TickBandwidthProfiler.OnReadInput(myType, packer.positionInBits - pos, this);
         }
     }

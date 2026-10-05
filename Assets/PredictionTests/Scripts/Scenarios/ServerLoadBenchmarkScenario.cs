@@ -44,7 +44,6 @@ public class ServerLoadBenchmarkScenario : Scenario
     private readonly List<PredictedObjectID> _expectedRootsScratch = new();
     private ulong _windowDataSent;
     private ulong _windowDataReceived;
-    private ulong _windowReliableFrames;
     private ulong _windowFullFrames;
     private ulong _windowDeltaFrames;
     private ulong _windowDeltaBytes;
@@ -54,10 +53,6 @@ public class ServerLoadBenchmarkScenario : Scenario
     private ulong _windowHierarchyBits;
     private ulong _windowInputBits;
     private ulong _windowStateBits;
-    private ulong _windowSuppressedTicks;
-    private ulong _windowLatchCycles;
-    private ulong _windowLatchTicks;
-    private ulong _windowMaxLatchTicks;
     private ulong _clientFramesReceived;
     private ulong _clientFullFramesReceived;
     private ulong _clientRenderApplies;
@@ -502,7 +497,6 @@ public class ServerLoadBenchmarkScenario : Scenario
 
             _windowDataSent = 0;
             _windowDataReceived = 0;
-            _windowReliableFrames = 0;
             _windowFullFrames = 0;
             var transport = ctx.networkManager.rawTransport;
             if (transport != null)
@@ -513,12 +507,8 @@ public class ServerLoadBenchmarkScenario : Scenario
 
             var sampler = ScenarioPerformanceSampler.StartDefault();
             var startTick = pm.localTick;
-            var startReliableFrames = pm.reliableFramesSentTotal;
             var startFullFrames = pm.fullFramesSentTotal;
             var startDeltaFrames = pm.deltaFramesWrittenTotal;
-            var startSuppressedTicks = pm.suppressedTicksTotal;
-            var startLatchCycles = pm.latchCyclesTotal;
-            var startLatchTicks = pm.latchTicksTotal;
             var startDeltaBytes = pm.deltaFrameBytesTotal;
             var startFullBytes = pm.fullFrameBytesTotal;
             var startDeleteBits = pm.deltaSectionDeleteBitsTotal;
@@ -552,13 +542,8 @@ public class ServerLoadBenchmarkScenario : Scenario
                 }
 
                 elapsedTicks = pm.localTick - startTick;
-                _windowReliableFrames = pm.reliableFramesSentTotal - startReliableFrames;
                 _windowFullFrames = pm.fullFramesSentTotal - startFullFrames;
                 _windowDeltaFrames = pm.deltaFramesWrittenTotal - startDeltaFrames;
-                _windowSuppressedTicks = pm.suppressedTicksTotal - startSuppressedTicks;
-                _windowLatchCycles = pm.latchCyclesTotal - startLatchCycles;
-                _windowLatchTicks = pm.latchTicksTotal - startLatchTicks;
-                _windowMaxLatchTicks = pm.maxLatchTicks;
                 _windowDeltaBytes = pm.deltaFrameBytesTotal - startDeltaBytes;
                 _windowFullBytes = pm.fullFrameBytesTotal - startFullBytes;
                 _windowMaxDeltaBytes = pm.maxDeltaFrameBytes;
@@ -834,14 +819,7 @@ public class ServerLoadBenchmarkScenario : Scenario
         sb.Append(" ticks=").Append(elapsedTicks);
         sb.Append(" ackLagAvg=").Append((lagSamples > 0 ? lagSum / lagSamples : 0).ToString("0.##", CultureInfo.InvariantCulture));
         sb.Append(" ackLagMax=").Append(lagMax);
-        sb.Append(" reliableFrames=").Append(_windowReliableFrames);
         sb.Append(" fullFrames=").Append(_windowFullFrames);
-        sb.Append(" suppressedTicks=").Append(_windowSuppressedTicks);
-        sb.Append(" latchCycles=").Append(_windowLatchCycles);
-        sb.Append(" latchTicksAvg=").Append(
-            (_windowLatchCycles > 0 ? (double)_windowLatchTicks / _windowLatchCycles : 0)
-            .ToString("0.#", CultureInfo.InvariantCulture));
-        sb.Append(" maxLatchTicks=").Append(_windowMaxLatchTicks);
         sb.Append(" deltaFrames=").Append(_windowDeltaFrames);
         sb.Append(" deltaBytes=").Append(_windowDeltaBytes);
         sb.Append(" fullBytes=").Append(_windowFullBytes);

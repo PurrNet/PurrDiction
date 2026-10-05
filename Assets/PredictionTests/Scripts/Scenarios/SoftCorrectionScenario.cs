@@ -63,7 +63,14 @@ public class SoftCorrectionScenario : Scenario
         }
         catch (TimeoutException)
         {
-            return ScenarioResult.Fail("client-side impulse was never applied");
+            return ScenarioResult.Fail($"client-side impulse was never applied: {Report(ctx, probe)}");
+        }
+
+        if (!(Mathf.Abs(SoftProbe.injectedDisplacement - probe.expectedDisplacement) <= 0.001f) ||
+            !(Mathf.Abs(SoftProbe.injectedVelocityChange - probe.expectedVelocityChange) <= 0.001f) ||
+            !(SoftProbe.initialDivergence >= _minDivergence))
+        {
+            return ScenarioResult.Fail($"disturbance was not applied as configured: {Report(ctx, probe)}");
         }
 
         try
@@ -75,7 +82,7 @@ public class SoftCorrectionScenario : Scenario
         }
         catch (TimeoutException)
         {
-            return ScenarioResult.Fail($"impulse produced no divergence (max={SoftProbe.maxObservedDivergence:F3}, expected >= {_minDivergence})");
+            return ScenarioResult.Fail($"post-physics disturbance did not reach {_minDivergence:F3}m: {Report(ctx, probe)}");
         }
 
         double convergedSince = Time.realtimeSinceStartupAsDouble;
@@ -86,7 +93,7 @@ public class SoftCorrectionScenario : Scenario
                 () =>
                 {
                     var now = Time.realtimeSinceStartupAsDouble;
-                    if (probe.divergence > _convergedDistance)
+                    if (!(probe.divergence <= _convergedDistance))
                     {
                         convergedSince = now;
                         return false;
@@ -98,12 +105,16 @@ public class SoftCorrectionScenario : Scenario
         }
         catch (TimeoutException)
         {
-            return ScenarioResult.Fail($"soft body never converged back to the verified pose (divergence={probe.divergence:F3})");
+            return ScenarioResult.Fail($"soft body never converged back to the verified pose: {Report(ctx, probe)}");
         }
 
         if (SoftProbe.replayViolations > 0)
-            return ScenarioResult.Fail($"soft identity simulated {SoftProbe.replayViolations} times during replay/verified frames");
+            return ScenarioResult.Fail($"soft identity simulated during replay/verified frames: {Report(ctx, probe)}");
 
-        return ScenarioResult.Ok();
+        return ScenarioResult.Ok(Report(ctx, probe));
     }
+
+    private string Report(ScenarioContext ctx, SoftProbe probe)
+        => FormattableString.Invariant(
+            $"tickRate={ctx.predictionManager.tickRate}; injectionTick={SoftProbe.injectionTick}; injectedDistance={SoftProbe.injectedDisplacement:F3}; velocityChange={SoftProbe.injectedVelocityChange:F3}; initial={SoftProbe.initialDivergence:F3}; postPhysicsPeak={SoftProbe.maxObservedDivergence:F3}; final={probe.divergence:F3}; postPhysicsSamples={SoftProbe.postPhysicsSamples}; settleSeconds={_settleSeconds:F3}; replayViolations={SoftProbe.replayViolations}");
 }

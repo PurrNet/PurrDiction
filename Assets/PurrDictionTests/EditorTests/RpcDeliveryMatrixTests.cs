@@ -37,19 +37,20 @@ namespace PurrNet.Prediction.Tests.Editor
         }
 
         [Test]
-        public void FrameBroadcastIsAnUnreliableImmediateTargetRpc()
+        public void FramesShareOneOrderedReliableTargetRpc()
         {
             var rpc = FindSingleRpc("SendFrameToRemote", typeof(TargetRpcAttribute));
-            Assert.That(ChannelOf(rpc), Is.EqualTo(Channel.Unreliable));
-            Assert.That(ImmediateOf(rpc), Is.True);
+            Assert.That(ChannelOf(rpc), Is.EqualTo(Channel.ReliableOrdered),
+                "every frame is a delta against the one before it, so none may be lost or reordered");
+            Assert.That(ImmediateOf(rpc), Is.False,
+                "an immediate lane is flushed independently and could overtake a batched frame");
         }
 
         [Test]
-        public void ReliableFrameRecoveryStaysOnTheDefaultReliableChannel()
+        public void MissingBaselineRequestUsesReliableDelivery()
         {
-            var rpc = FindSingleRpc("SendFrameToRemoteReliable", typeof(TargetRpcAttribute));
-            Assert.That(ChannelOf(rpc), Is.EqualTo(Channel.ReliableOrdered),
-                "SendFrameToRemoteReliable is the recovery path and must never ride an unreliable channel");
+            var rpc = FindSingleRpc("RequestHistoryResync", typeof(ServerRpcAttribute));
+            Assert.That(ChannelOf(rpc), Is.EqualTo(Channel.ReliableOrdered));
         }
 
         [Test]

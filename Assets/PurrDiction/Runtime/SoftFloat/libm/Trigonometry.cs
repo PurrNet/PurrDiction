@@ -19,7 +19,6 @@ namespace PurrNet.Prediction
             // https://en.wikipedia.org/wiki/Bhaskara_I%27s_sine_approximation_formula
             // sin(x) ~= (16x * (pi - x)) / (5pi^2 - 4x * (pi - x)) if 0 <= x <= pi
 
-            // move x into range
             x %= sfloat.FromRaw(two_pi);
             if (x.IsNegative())
             {
@@ -29,8 +28,7 @@ namespace PurrNet.Prediction
             bool negate;
             if (x > sfloat.FromRaw(pi))
             {
-                // pi < x <= 2pi, we need to move x to the 0 <= x <= pi range
-                // also, we need to negate the result before returning it
+                // Reflect into [0, pi] and negate for the lower half of the circle.
                 x = sfloat.FromRaw(two_pi) - x;
                 negate = true;
             }
@@ -220,11 +218,6 @@ namespace PurrNet.Prediction
                 if (ix < 0x39800000)
                 {
                     /* |x| < 2**-12 */
-                    //if (ix < 0x00800000)
-                    //{
-                    //    /* raise underflow for subnormal x */
-                    //    force_eval!(x * x);
-                    //}
                     return x;
                 }
                 id = -1;

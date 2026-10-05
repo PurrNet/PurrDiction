@@ -8,22 +8,22 @@ namespace PurrNet.Prediction.Tests
 
         protected override void LateAwake()
         {
-            _rb.onTriggerEnter += OnPTriggerEnter;
-            _rb.onTriggerExit += OnPTriggerExit;
+            _rb.onPredictedTriggerEnter += OnPTriggerEnter;
+            _rb.onPredictedTriggerExit += OnPTriggerExit;
         }
 
         protected override void OnDestroy()
         {
             base.OnDestroy();
-            _rb.onTriggerEnter -= OnPTriggerEnter;
-            _rb.onTriggerExit -= OnPTriggerExit;
+            _rb.onPredictedTriggerEnter -= OnPTriggerEnter;
+            _rb.onPredictedTriggerExit -= OnPTriggerExit;
         }
 
-        private void OnPTriggerEnter(GameObject other)
+        private void OnPTriggerEnter(PredictedTrigger trigger)
         {
             if (!isServer)
                 return;
-            if (other.TryGetComponent<SimpleCC>(out var controller))
+            if (trigger.other && trigger.other.TryGetComponent<SimpleCC>(out var controller))
             {
                 var players = predictionManager.players.players;
                 for (var i = 0; i < players.Count; i++)
@@ -34,11 +34,11 @@ namespace PurrNet.Prediction.Tests
             }
         }
 
-        private void OnPTriggerExit(GameObject other)
+        private void OnPTriggerExit(PredictedTrigger trigger)
         {
             if (!isServer)
                 return;
-            if (other.TryGetComponent<SimpleCC>(out var controller))
+            if (trigger.other && trigger.other.TryGetComponent<SimpleCC>(out var controller))
             {
                 var players = predictionManager.players.players;
                 for (var i = 0; i < players.Count; i++)

@@ -75,23 +75,33 @@ public sealed class SoftCorrectionPoolReuseScenario : Scenario
                 $"staleCorrections={SoftCorrectionPoolProbe.staleCorrectionReuses}");
         }
 
+        var report = $"tickRate={pm.tickRate}; lifetimeSeconds={SoftCorrectionPoolDriver.LifetimeSeconds}; " +
+                     $"gapSeconds={SoftCorrectionPoolDriver.GapSeconds}; liveTicks={SoftCorrectionPoolProbe.liveTicks}; " +
+                     $"verifiedCorrections={SoftCorrectionPoolProbe.verifiedCorrections}; " +
+                     $"priorLifetimeReuses={SoftCorrectionPoolProbe.priorLifetimeReuses}; " +
+                     $"correctedLifetimeReuses={SoftCorrectionPoolProbe.correctedLifetimeReuses}; " +
+                     $"staleCorrections={SoftCorrectionPoolProbe.staleCorrectionReuses}";
+
         if (ctx.role != NetworkRole.Client)
-            return ScenarioResult.Ok();
+            return ScenarioResult.Ok(report);
 
         if (SoftCorrectionPoolProbe.verifiedCorrections == 0)
-            return ScenarioResult.Fail("the client never received a soft-correction target");
+            return ScenarioResult.Fail($"the client never received a soft-correction target: {report}");
 
         if (SoftCorrectionPoolProbe.priorLifetimeReuses == 0)
-            return ScenarioResult.Fail("the probe was never reused after a completed pooled lifetime");
+            return ScenarioResult.Fail($"the probe was never reused after a completed pooled lifetime: {report}");
+
+        if (SoftCorrectionPoolProbe.correctedLifetimeReuses == 0 || SoftCorrectionPoolProbe.liveTicks == 0)
+            return ScenarioResult.Fail($"no live reuse followed a lifetime with a verified correction: {report}");
 
         if (SoftCorrectionPoolProbe.staleCorrectionReuses != 0)
         {
             return ScenarioResult.Fail(
                 $"{SoftCorrectionPoolProbe.staleCorrectionReuses}/" +
-                $"{SoftCorrectionPoolProbe.priorLifetimeReuses} pooled lifetimes started with a stale correction");
+                $"{SoftCorrectionPoolProbe.priorLifetimeReuses} pooled lifetimes started with a stale correction: {report}");
         }
 
-        return ScenarioResult.Ok();
+        return ScenarioResult.Ok(report);
     }
 
     private bool DriverFinished(PredictionManager pm)
@@ -114,8 +124,10 @@ public sealed class SoftCorrectionPoolReuseScenario : Scenario
 public sealed class SoftCorrectionPoolDriver : PredictedIdentity<SoftCorrectionPoolDriver.DriverState>
 {
     public const int TotalLifetimes = 18;
-    private const uint LifetimeTicks = 18;
-    private const uint GapTicks = 3;
+    // Preserve the original 20 Hz fixture's durations. At 60 Hz, 18 ticks was only
+    // 0.3 seconds: a lifetime could end before a high-latency client received a target.
+    public const float LifetimeSeconds = 18f / 20f;
+    public const float GapSeconds = 3f / 20f;
 
     public GameObject probePrefab;
 
@@ -139,7 +151,7 @@ public sealed class SoftCorrectionPoolDriver : PredictedIdentity<SoftCorrectionP
 
         if (state.active)
         {
-            if (state.phaseTicks < LifetimeTicks)
+            if (state.phaseTicks < Mathf.CeilToInt(LifetimeSeconds * predictionManager.tickRate))
                 return;
 
             hierarchy.Delete((PredictedObjectID)state.activeId);
@@ -149,7 +161,7 @@ public sealed class SoftCorrectionPoolDriver : PredictedIdentity<SoftCorrectionP
             return;
         }
 
-        if (state.phaseTicks < GapTicks || state.spawned >= TotalLifetimes)
+        if (state.phaseTicks < Mathf.CeilToInt(GapSeconds * predictionManager.tickRate) || state.spawned >= TotalLifetimes)
             return;
 
         var created = hierarchy.Create(probePrefab, new Vector3(60f, 4f, 0f), Quaternion.identity, owner);
@@ -171,10 +183,15 @@ public sealed class SoftCorrectionPoolProbe : PredictedTransform
     public static int priorLifetimeReuses { get; private set; }
     public static int staleCorrectionReuses { get; private set; }
     public static int verifiedCorrections { get; private set; }
+    public static int correctedLifetimeReuses { get; private set; }
+    public static int liveTicks { get; private set; }
 
     private bool _completedPooledLifetime;
     private bool _reusedAfterCompletedLifetime;
     private bool _checkedFirstLiveTick;
+    private bool _lifetimeReceivedCorrection;
+    private bool _completedLifetimeHadCorrection;
+    private bool _reusedAfterCorrection;
     private Vector3 _spawnPosition;
 
     public static void ResetStats()
@@ -182,20 +199,26 @@ public sealed class SoftCorrectionPoolProbe : PredictedTransform
         priorLifetimeReuses = 0;
         staleCorrectionReuses = 0;
         verifiedCorrections = 0;
+        correctedLifetimeReuses = 0;
+        liveTicks = 0;
     }
 
     public override void ResetState()
     {
-        base.ResetState();
         _reusedAfterCompletedLifetime = false;
         _checkedFirstLiveTick = false;
+        _lifetimeReceivedCorrection = false;
         _spawnPosition = default;
+        // The base reset invokes OnRemovedFromPool. Keep the lifetime provenance
+        // established by that callback for the first subsequent live-tick check.
+        base.ResetState();
     }
 
     protected override void LateAwake()
     {
         base.LateAwake();
-        _spawnPosition = currentState.unityPosition;
+        // Setup has positioned the object, but its initial predicted state is captured later.
+        _spawnPosition = transform.position;
         _checkedFirstLiveTick = false;
     }
 
@@ -203,12 +226,14 @@ public sealed class SoftCorrectionPoolProbe : PredictedTransform
     {
         base.OnAddedToPool();
         _completedPooledLifetime = true;
+        _completedLifetimeHadCorrection = _lifetimeReceivedCorrection;
     }
 
     protected override void OnRemovedFromPool()
     {
         base.OnRemovedFromPool();
         _reusedAfterCompletedLifetime = _completedPooledLifetime;
+        _reusedAfterCorrection = _completedLifetimeHadCorrection;
         if (_reusedAfterCompletedLifetime)
             priorLifetimeReuses++;
     }
@@ -220,7 +245,10 @@ public sealed class SoftCorrectionPoolProbe : PredictedTransform
     {
         base.OnVerifiedStateReceived(tick, in predicted, in verified);
         if (predictionManager && !predictionManager.cachedIsServer)
+        {
             verifiedCorrections++;
+            _lifetimeReceivedCorrection = true;
+        }
     }
 
     protected override void Simulate(ref PredictedTransformState state, float delta)
@@ -235,6 +263,8 @@ public sealed class SoftCorrectionPoolProbe : PredictedTransform
 
         if (liveClient && !_checkedFirstLiveTick)
         {
+            if (_reusedAfterCorrection)
+                correctedLifetimeReuses++;
             if (_reusedAfterCompletedLifetime &&
                 (state.unityPosition - beforeCorrection).sqrMagnitude > StaleMovementThreshold * StaleMovementThreshold)
             {
@@ -247,6 +277,7 @@ public sealed class SoftCorrectionPoolProbe : PredictedTransform
         if (!liveClient)
             return;
 
+        liveTicks++;
         state.unityPosition = _spawnPosition + Vector3.right * InjectedOffset;
         transform.SetPositionAndRotation(state.unityPosition, state.unityRotation);
     }
@@ -260,7 +291,7 @@ public sealed class GenericSoftCorrectionScenario : Scenario
 {
     private const float TimeoutSeconds = 60f;
     private const float SettleSeconds = 3f;
-    private const float AllowedTimelineLead = 30f;
+    private const float AllowedResidualError = 30f;
 
     private GameObject _probePrefab;
     private ulong _startTick;
@@ -307,7 +338,8 @@ public sealed class GenericSoftCorrectionScenario : Scenario
             await UniTaskUtils.WaitWithTimeout(
                 () => GenericSoftCorrectionProbe.injectionApplied &&
                       GenericSoftCorrectionProbe.instances.Count > 0 &&
-                      GenericSoftCorrectionProbe.instances[0].verifiedState.HasValue,
+                      GenericSoftCorrectionProbe.instances[0].verifiedState.HasValue &&
+                      GenericSoftCorrectionProbe.instances[0].postInjectionCallbacks > 0,
                 TimeoutSeconds,
                 ctx.cancellationToken);
         }
@@ -315,7 +347,8 @@ public sealed class GenericSoftCorrectionScenario : Scenario
         {
             return ScenarioResult.Fail(
                 $"generic probe did not receive usable state: injected={GenericSoftCorrectionProbe.injectionApplied}, " +
-                $"instances={GenericSoftCorrectionProbe.instances.Count}");
+                $"instances={GenericSoftCorrectionProbe.instances.Count}; " +
+                (GenericSoftCorrectionProbe.instances.Count > 0 ? GenericSoftCorrectionProbe.instances[0].Report() : "no probe"));
         }
 
         await UniTask.WaitForSeconds(SettleSeconds, cancellationToken: ctx.cancellationToken);
@@ -331,15 +364,18 @@ public sealed class GenericSoftCorrectionScenario : Scenario
         if (!verified.HasValue)
             return ScenarioResult.Fail("generic probe lost its verified state");
 
-        float divergence = Mathf.Abs(probe.currentState.value - verified.Value.value);
-        if (divergence > AllowedTimelineLead)
+        float divergence = probe.matchedDivergence;
+        if (!(divergence <= AllowedResidualError))
         {
             return ScenarioResult.Fail(
                 $"generic SoftCorrection state never converged: divergence={divergence:F1}, " +
-                $"maxInjected={GenericSoftCorrectionProbe.maxObservedDivergence:F1}, policy={probe.predictionPolicy}");
+                $"{probe.Report()}");
         }
 
-        return ScenarioResult.Ok();
+        if (probe.replayViolations > 0)
+            return ScenarioResult.Fail($"generic soft identity simulated during replay: {probe.Report()}");
+
+        return ScenarioResult.Ok(probe.Report());
     }
 }
 
@@ -354,6 +390,14 @@ public sealed class GenericSoftCorrectionProbe : PredictedIdentity<GenericSoftCo
 
     private int _liveTicks;
     private bool _injectedThisLifetime;
+    private GenericSoftCorrectionProgress _progress;
+    private double _targetReceivedAt;
+    private ulong _targetTick;
+    private int _nativeReplacements;
+
+    public int postInjectionCallbacks { get; private set; }
+    public int replayViolations { get; private set; }
+    public float matchedDivergence => _progress.Residual(currentState.value);
 
     public override bool supportsSoftCorrection => true;
 
@@ -388,11 +432,14 @@ public sealed class GenericSoftCorrectionProbe : PredictedIdentity<GenericSoftCo
         if (!predictionManager || predictionManager.cachedIsServer ||
             predictionManager.isReplaying || predictionManager.isVerified)
         {
+            if (predictionManager && !predictionManager.cachedIsServer && _liveTicks > 0)
+                replayViolations++;
             return;
         }
 
+        _progress.AdvanceLiveTick();
         _liveTicks++;
-        if (_injectedThisLifetime || _liveTicks < InjectAfterLiveTicks)
+        if (_injectedThisLifetime || _liveTicks < InjectAfterLiveTicks || !_progress.hasTarget)
             return;
 
         state.value += ClientOnlyError;
@@ -407,7 +454,52 @@ public sealed class GenericSoftCorrectionProbe : PredictedIdentity<GenericSoftCo
         in ProbeState verified)
     {
         currentState.value = verified.value;
+        RecordTarget(verified.value, tick);
+        if (_injectedThisLifetime)
+            postInjectionCallbacks++;
     }
+
+    protected override void SetUnityState(ProbeState state)
+    {
+        // Native full-state rollback bypasses the soft callback. It is an actual
+        // authoritative replacement, not permission to bless an ordinary live fault.
+        if (predictionManager && !predictionManager.cachedIsServer && predictionManager.isVerified)
+        {
+            RecordTarget(state.value, 0); // This hook does not expose the incoming tick.
+            _nativeReplacements++;
+        }
+    }
+
+    private void RecordTarget(float value, ulong tick)
+    {
+        _progress.RecordTarget(value);
+        _targetTick = tick;
+        _targetReceivedAt = Time.realtimeSinceStartupAsDouble;
+    }
+
+    public string Report()
+        => FormattableString.Invariant(
+            $"residual={matchedDivergence:F1}; rawLag={(verifiedState.HasValue ? currentState.value - verifiedState.Value.value : float.NaN):F1}; live={currentState.value:F1}; target={_progress.targetValue:F1}; liveStepsSinceTarget={_progress.liveSteps}; targetTick={_targetTick}; targetAgeSeconds={Time.realtimeSinceStartupAsDouble - _targetReceivedAt:F3}; postInjectionCallbacks={postInjectionCallbacks}; nativeReplacements={_nativeReplacements}; maxInjected={maxObservedDivergence:F1}; replayViolations={replayViolations}; policy={predictionPolicy}");
+}
+
+// Count actual live calls, not tick-label differences: pacing can jump tick labels.
+internal struct GenericSoftCorrectionProgress
+{
+    public bool hasTarget { get; private set; }
+    public float targetValue { get; private set; }
+    public ulong liveSteps { get; private set; }
+
+    public void RecordTarget(float value)
+    {
+        hasTarget = true;
+        targetValue = value;
+        liveSteps = 0;
+    }
+
+    public void AdvanceLiveTick() => liveSteps++;
+    public float Residual(float current) => hasTarget
+        ? Mathf.Abs(current - (targetValue + liveSteps))
+        : float.PositiveInfinity;
 }
 
 /// <summary>

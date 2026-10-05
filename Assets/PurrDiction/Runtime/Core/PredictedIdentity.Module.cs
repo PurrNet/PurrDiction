@@ -96,6 +96,10 @@ namespace PurrNet.Prediction
         private bool _isApplyingModuleDiff;
         private bool _isRunningInitialModuleSetup;
         private History<DisposableList<uint>> _moduleHistory;
+
+        private History<DisposableList<uint>> moduleHistory =>
+            _moduleHistory ??= new History<DisposableList<uint>>(predictionManager.tickRate * 10);
+
         private List<PredictedModule> _softCorrectionLiveModules;
         private List<PredictedModule> _softCorrectionTemporaryModules;
 
@@ -116,8 +120,11 @@ namespace PurrNet.Prediction
 
         private void ModuleSetup(PredictionManager world)
         {
-            if (_moduleHistory == null)
-                _moduleHistory = new History<DisposableList<uint>>(world.tickRate * 10);
+            if (_moduleHistory != null && _moduleHistory.Capacity != world.tickRate * 10)
+            {
+                _moduleHistory.Clear();
+                _moduleHistory = null;
+            }
 
             for (int i = 0; i < _modules.Count; i++)
                 _modules[i].SetupInternal(this, world);
@@ -179,13 +186,14 @@ namespace PurrNet.Prediction
             if (!HasDynamicModulesOrHistory())
                 return;
 
-            _moduleHistory.PruneByTickWindow(tick);
+            var history = moduleHistory;
+            history.PruneByTickWindow(tick);
 
             int dynamicCount = _staticModuleCount < 0 ? 0 : _modules.Count - _staticModuleCount;
 
-            if (_moduleHistory.Count > 0)
+            if (history.Count > 0)
             {
-                var last = _moduleHistory[^1];
+                var last = history[^1];
                 if (!last.isDisposed && last.Count == dynamicCount)
                 {
                     bool unchanged = true;
@@ -207,7 +215,7 @@ namespace PurrNet.Prediction
             for (int i = 0; i < dynamicCount; i++)
                 snapshot.Add(_modules[_staticModuleCount + i].typeHash);
 
-            _moduleHistory.Write(tick, snapshot);
+            history.Write(tick, snapshot);
         }
 
         internal void RollbackDynamicModules(ulong tick)
@@ -215,7 +223,7 @@ namespace PurrNet.Prediction
             if (!HasDynamicModulesOrHistory())
                 return;
 
-            if (!_moduleHistory.ReadOrPrevious(tick, out var target))
+            if (!moduleHistory.ReadOrPrevious(tick, out var target))
             {
                 TearDownAllDynamic();
                 return;
@@ -245,15 +253,8 @@ namespace PurrNet.Prediction
 
             StoreVerifiedModuleSet(serverTick, in incoming);
 
-            if (_moduleHistory == null)
-            {
-                if (!incoming.isDisposed)
-                    incoming.Dispose();
-                return;
-            }
-
             var owned = !incoming.isDisposed ? incoming : DisposableList<uint>.Create(0);
-            _moduleHistory.Write(tick, owned);
+            moduleHistory.Write(tick, owned);
             ApplyDynamicModuleSnapshotForRead(tick, owned, UsesSoftCorrectionTimeline());
         }
 
@@ -288,7 +289,7 @@ namespace PurrNet.Prediction
             var owned = baseline.isDisposed
                 ? DisposableList<uint>.Create(0)
                 : baseline.Duplicate();
-            _moduleHistory.Write(tick, owned);
+            moduleHistory.Write(tick, owned);
             ApplyDynamicModuleSnapshotForRead(
                 tick,
                 owned,
@@ -451,22 +452,17 @@ namespace PurrNet.Prediction
 
             StoreVerifiedModuleSet(serverTick, in incoming);
 
-            if (_moduleHistory == null)
-            {
-                if (incoming.list != null) incoming.Dispose();
-                return;
-            }
-
-            _moduleHistory.Write(tick, incoming);
+            moduleHistory.Write(tick, incoming);
             ApplyDynamicHashList(incoming);
         }
 
         private void ApplyEmptyDynamicModuleSnapshot(ulong tick, bool preserveLiveTopology = false)
         {
-            if (!HasDynamicModulesOrHistory() || _moduleHistory == null)
+            if (!HasDynamicModulesOrHistory())
                 return;
 
-            if (_moduleHistory.ReadOrPrevious(tick, out var previous) &&
+            var history = moduleHistory;
+            if (history.ReadOrPrevious(tick, out var previous) &&
                 !previous.isDisposed && previous.Count == 0)
             {
                 ApplyDynamicModuleSnapshotForRead(tick, previous, preserveLiveTopology);
@@ -474,7 +470,7 @@ namespace PurrNet.Prediction
             }
 
             var empty = DisposableList<uint>.Create(0);
-            _moduleHistory.Write(tick, empty);
+            history.Write(tick, empty);
             ApplyDynamicModuleSnapshotForRead(tick, empty, preserveLiveTopology);
         }
 
@@ -489,11 +485,8 @@ namespace PurrNet.Prediction
                 ApplyDynamicHashList(target);
         }
 
-        /// <summary>
-        /// Presents the authoritative topology while a soft-correction delta is decoded without
-        /// disposing modules that were created later on the live timeline. ReadModules restores
-        /// the live list after consuming the authoritative module payload.
-        /// </summary>
+        // Borrow the authoritative topology for decoding without disposing later live modules.
+        // ReadModules restores the live list after consuming the payload.
         internal void BeginSoftCorrectionDynamicModuleRead(ulong tick, DisposableList<uint> target)
         {
             EndSoftCorrectionDynamicModuleRead();
