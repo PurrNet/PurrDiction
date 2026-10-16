@@ -235,7 +235,7 @@ namespace PurrNet.Prediction
             PredictionManager manager)
         {
             var policy = ResolvePredictionPolicyForSetup();
-            bool locallyOwned = manager && manager.isSpawned && setupOwner == manager.localPlayer;
+            bool locallyOwned = manager && manager.isSpawned && IsSamePlayer(setupOwner, manager.localPlayer);
             return ResolveEffectivePolicy(
                 policy,
                 locallyOwned,
@@ -794,7 +794,7 @@ namespace PurrNet.Prediction
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public bool IsOwner()
         {
-            if (predictionManager && predictionManager.isSpawned && owner == predictionManager.localPlayer)
+            if (predictionManager && predictionManager.isSpawned && IsSamePlayer(owner, predictionManager.localPlayer))
                 return true;
             return false;
         }
@@ -808,7 +808,7 @@ namespace PurrNet.Prediction
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public bool IsOwner(PlayerID? player)
         {
-            return owner == player;
+            return IsSamePlayer(owner, player);
         }
 
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
@@ -822,6 +822,9 @@ namespace PurrNet.Prediction
             }
             return asServer;
         }
+
+        // Null never matches null.
+        private static bool IsSamePlayer(PlayerID? a, PlayerID? b) => a.HasValue && a == b;
 
         internal abstract void SimulateTick(ulong tick, float delta);
 
