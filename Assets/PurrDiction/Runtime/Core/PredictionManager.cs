@@ -52,6 +52,8 @@ namespace PurrNet.Prediction
         [Header("Lag Compensation")]
         [Tooltip("Longest rewind a client may request when hit tests are resolved against collider rollback history, in seconds. Requests beyond this are clamped on the server. The view interpolation buffer never holds more than 0.1 s, so 0.15 s covers legitimate clients with headroom.")]
         [SerializeField, Min(0f)] private float _maxLagCompensationSeconds = 0.15f;
+        [Tooltip("Longest extra rewind the server applies to colliders a client shows relayed (ServerRelay, including other players' objects under PredictedIfOwned), in seconds. A client shows those about one network delay behind the rest of its view; requests beyond this are clamped.")]
+        [SerializeField, Min(0f)] private float _maxRelayLagCompensationSeconds = 0.5f;
         [Tooltip("Forward every player's view offset in verified frames so clients replay other players' lag-compensated hits with the exact rewind. Costs about 10 bits per player per transcript tick downstream. Off, clients predict other players' hits with an estimated rewind; the server's result is unaffected either way.")]
         [SerializeField] private bool _forwardViewOffsets = true;
 
@@ -791,6 +793,7 @@ namespace PurrNet.Prediction
             localTick = 1;
             localTickInContext = 1;
             _verifiedServerTick = 0;
+            ResetRelayViewTimeline();
             _verifiedHistoryBaselineFloor = 0;
             _frameApplyHadBaselineFailure = false;
             _lastPerformanceReconcileTime = double.NegativeInfinity;
@@ -1233,7 +1236,11 @@ namespace PurrNet.Prediction
                 PrepareInputs();
 
             if (cachedIsClient)
+            {
                 RecordLocalViewOffset(localTick);
+                if (!cachedIsServer)
+                    RecordLocalRelayOffset(localTick);
+            }
 
             using var ownedIdentities = DisposableList<PredictedIdentity>.Create(_systemsCount);
 
@@ -1411,6 +1418,7 @@ namespace PurrNet.Prediction
                 if (queue.byTick.Remove(localTick, out var entry))
                 {
                     RecordViewOffset(player, localTick, entry.viewOffset);
+                    RecordRelayOffset(player, localTick, entry.relayOffset);
                     HandleIncomingInput(entry, player, queue);
                     entry.Dispose();
                     queue.lastConsumedTick = localTick;
@@ -1592,6 +1600,7 @@ namespace PurrNet.Prediction
             PrepareUploadTickBlocks();
 
             uint tickCount = 0;
+            uint previousRelayOffset = 0;
             UploadTickBlock previous = null;
 
             for (ulong tick = firstTick; tick <= localTick; tick++)
@@ -1613,6 +1622,7 @@ namespace PurrNet.Prediction
 
                 int blockBits = wire.positionInBits;
                 payload.WriteBits(GetUploadViewOffset(tick), ViewOffsetBits);
+                WriteRelayOffset(payload, GetUploadRelayOffset(tick), ref previousRelayOffset, previous == null);
                 Packer<PackedUInt>.Write(payload, (uint)blockBits);
                 Packer<PackedUInt>.Write(payload, (uint)entry.spans.Count);
                 payload.WriteBitsWithoutConsumingIt(wire, blockBits);
@@ -2997,6 +3007,7 @@ namespace PurrNet.Prediction
                             SimulateFrame(frame.serverTick, HistorySaveMode.VerifiedFrame);
                             SaveEnteringState(frame.serverTick + 1);
                             _savedEnteringStateTick = frame.serverTick + 1;
+                            CaptureRelayedColliders(frame.serverTick + 1);
                             _verifiedServerTick = frame.serverTick;
                             CarryVerifiedInputs(frame.serverTick);
                         }
@@ -3014,6 +3025,7 @@ namespace PurrNet.Prediction
                             SimulateFrame(frame.serverTick, HistorySaveMode.VerifiedFrame);
                             SaveEnteringState(frame.serverTick + 1);
                             _savedEnteringStateTick = frame.serverTick + 1;
+                            CaptureRelayedColliders(frame.serverTick + 1);
                         }
                         catch (Exception error)
                         {
@@ -3513,6 +3525,8 @@ namespace PurrNet.Prediction
             public BitPacker inputPacket;
             public ulong clientTick;
             public uint viewOffset;
+            /// <summary>Quantized ticks the client presented relayed objects behind its view.</summary>
+            public uint relayOffset;
             // Where each input's bits sit in inputPacket; identical inputs share one span's bits.
             internal List<InputHistorySpan> spans;
 
@@ -3680,6 +3694,7 @@ namespace PurrNet.Prediction
                 curSpans.Clear();
 
                 uint startIndex = 0;
+                uint relayOffset = 0;
                 if (ticks.hasExpandedTail && ticks.expandedTailTick >= firstTick &&
                     ticks.expandedTailTick < firstNeededTick)
                 {
@@ -3687,6 +3702,7 @@ namespace PurrNet.Prediction
                     for (uint i = 0; i < startIndex; i++)
                     {
                         payload.ReadBits(ViewOffsetBits);
+                        ReadRelayOffset(payload, ref relayOffset, i == 0);
                         PackedUInt skippedBits = default;
                         Packer<PackedUInt>.Read(payload, ref skippedBits);
                         Packer<PackedUInt>.Read(payload);
@@ -3700,6 +3716,7 @@ namespace PurrNet.Prediction
                 {
                     uint viewOffset = ClampViewOffset(
                         (uint)payload.ReadBits(ViewOffsetBits), maxLagCompensationTicks);
+                    ReadRelayOffset(payload, ref relayOffset, i == 0);
                     PackedUInt blockBits = default;
                     Packer<PackedUInt>.Read(payload, ref blockBits);
                     PackedUInt count = default;
@@ -3796,6 +3813,7 @@ namespace PurrNet.Prediction
                             inputPacket = slice,
                             clientTick = tick,
                             viewOffset = viewOffset,
+                            relayOffset = relayOffset,
                             spans = spans
                         };
                     }
@@ -4054,6 +4072,7 @@ namespace PurrNet.Prediction
             {
                 var dt = Time.unscaledDeltaTime;
                 AdvanceViewClock(dt);
+                AdvanceRelayViewOffset(dt);
                 for (var i = 0; i < _systemsCount; i++)
                     _systems[i].RunUpdateView(dt);
             }

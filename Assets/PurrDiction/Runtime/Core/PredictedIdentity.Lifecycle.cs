@@ -111,7 +111,9 @@ namespace PurrNet.Prediction
             if (SkipsCurrentSimulationPhase())
                 return;
 
-            var previousCreator = predictionManager.EnterSpawnCreator(id);
+            var manager = predictionManager;
+            var previousCreator = manager.EnterSpawnCreator(id);
+            var previousViewer = manager.EnterLagCompensationViewer(owner);
             try
             {
                 SimulateModules(tick, delta);
@@ -119,7 +121,8 @@ namespace PurrNet.Prediction
             }
             finally
             {
-                predictionManager.ExitSpawnCreator(previousCreator);
+                manager.ExitLagCompensationViewer(previousViewer);
+                manager.ExitSpawnCreator(previousCreator);
             }
         }
 
@@ -128,7 +131,9 @@ namespace PurrNet.Prediction
             if (SkipsCurrentSimulationPhase())
                 return;
 
-            var previousCreator = predictionManager.EnterSpawnCreator(id);
+            var manager = predictionManager;
+            var previousCreator = manager.EnterSpawnCreator(id);
+            var previousViewer = manager.EnterLagCompensationViewer(owner);
             try
             {
                 LateSimulateModules(delta);
@@ -136,7 +141,8 @@ namespace PurrNet.Prediction
             }
             finally
             {
-                predictionManager.ExitSpawnCreator(previousCreator);
+                manager.ExitLagCompensationViewer(previousViewer);
+                manager.ExitSpawnCreator(previousCreator);
             }
         }
 

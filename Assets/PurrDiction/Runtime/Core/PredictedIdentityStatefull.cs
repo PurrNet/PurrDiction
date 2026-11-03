@@ -30,6 +30,9 @@ namespace PurrNet.Prediction
         bool _hasViewState;
         private ulong _viewStateTick;
         private bool _viewAwaitsReplaySample;
+        // Verified tick of the last relayed view sample, and whether the view is on that timeline.
+        private ulong _relayViewVerifiedTick;
+        private bool _viewOnRelayTimeline;
         private bool _firstViewUpdate = true;
         public STATE viewState;
 
@@ -397,6 +400,13 @@ namespace PurrNet.Prediction
             // One liveness check serves both reads of the manager.
             var manager = predictionManager;
             bool managerAlive = manager;
+
+            if (managerAlive && PresentsRelayedView(manager))
+            {
+                LatchRelayedView(manager, copy);
+                return;
+            }
+
             bool refreshOnly = managerAlive && manager.refreshViewLatchOnly;
             if (!PredictionManager.ShouldReplaceViewLatch(refreshOnly, _hasViewState || _viewAwaitsReplaySample))
             {
@@ -404,12 +414,48 @@ namespace PurrNet.Prediction
                 return;
             }
 
+            if (_viewOnRelayTimeline)
+                LeaveRelayedView();
+
             if (_hasViewState)
                 _viewState.Dispose();
             _viewState = copy;
             _hasViewState = true;
             _viewStateTick = managerAlive ? manager.localTick : 0;
             _viewAwaitsReplaySample = false;
+        }
+
+        private void LatchRelayedView(PredictionManager manager, FULL_STATE<STATE> copy)
+        {
+            if (!manager.TryStampRelayedView(ref _relayViewVerifiedTick, out var stamp))
+            {
+                copy.Dispose();
+                return;
+            }
+
+            // Stamped with its server tick; presented at PredictionManager.relayViewTick. Every new
+            // verified state is its own sample, so a pending one for another tick goes to the
+            // buffer rather than being replaced.
+            if (_hasViewState)
+            {
+                if (_interpolatedState != null && _viewStateTick != stamp)
+                    _interpolatedState.Add(_viewStateTick, _viewState);
+                else _viewState.Dispose();
+            }
+
+            _viewState = copy;
+            _hasViewState = true;
+            _viewStateTick = stamp;
+            _viewAwaitsReplaySample = false;
+            _viewOnRelayTimeline = true;
+        }
+
+        // Relayed samples sit on the server timeline, behind the local head, so the predicted
+        // samples that follow simply continue after them.
+        private void LeaveRelayedView()
+        {
+            _viewOnRelayTimeline = false;
+            _relayViewVerifiedTick = 0;
         }
 
         protected virtual void ModifyRollbackViewState(ref STATE state, float delta, bool accumulateError) { }
@@ -420,6 +466,7 @@ namespace PurrNet.Prediction
                 _viewState.Dispose();
             _viewState = default;
             _hasViewState = false;
+            _relayViewVerifiedTick = 0;
         }
 
         /// <summary>
@@ -946,7 +993,8 @@ namespace PurrNet.Prediction
                 _hasViewState = false;
             }
 
-            viewState = _interpolatedState.Sample(predictionManager.viewTick).state;
+            var manager = predictionManager;
+            viewState = _interpolatedState.Sample(_viewOnRelayTimeline ? manager.relayViewTick : manager.viewTick).state;
 
             int hooks = viewHooks;
             if (_firstViewUpdate)

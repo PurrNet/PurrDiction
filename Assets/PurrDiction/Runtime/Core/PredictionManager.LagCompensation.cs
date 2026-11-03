@@ -57,6 +57,12 @@ namespace PurrNet.Prediction
         public double maxLagCompensationTicks => Math.Max(0d, _maxLagCompensationSeconds) * Math.Max(1, tickRate);
 
         /// <summary>
+        /// Longest extra rewind, in ticks, the server applies to colliders a client shows relayed.
+        /// Relay offsets above this are clamped on the server.
+        /// </summary>
+        public double maxRelayLagCompensationTicks => Math.Max(0d, _maxRelayLagCompensationSeconds) * Math.Max(1, tickRate);
+
+        /// <summary>
         /// The precise prediction tick this client is presenting, including the fraction between two
         /// ticks. Follows the view interpolation buffer, so it lags <see cref="localTick"/> by the
         /// buffered depth. A server without a local view reports <see cref="localTick"/>.
@@ -282,6 +288,7 @@ namespace PurrNet.Prediction
         private void ResetLagCompensation()
         {
             _viewOffsets.Clear();
+            ResetRelayLagCompensation();
             _colliderTickMap?.Clear();
             _viewClock = null;
         }

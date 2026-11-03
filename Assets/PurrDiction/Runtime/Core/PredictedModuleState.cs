@@ -28,6 +28,9 @@ namespace PurrNet.Prediction
 
         private ulong viewTeleportTick => predictionManager ? predictionManager.localTickInContext : 0;
         private MODULE_STATE<TState>? _viewState;
+        // Verified tick of the last relayed view sample, and whether the view is on that timeline.
+        private ulong _relayViewVerifiedTick;
+        private bool _viewOnRelayTimeline;
 
         public TState viewState;
 
@@ -159,6 +162,7 @@ namespace PurrNet.Prediction
             _history?.Clear();
             _viewState?.Dispose();
             _viewState = null;
+            _relayViewVerifiedTick = 0;
 
             _interpolatedState?.Teleport(viewTeleportTick, fullPredictedState.DeepCopy());
         }
@@ -173,7 +177,8 @@ namespace PurrNet.Prediction
                 _viewState = null;
             }
 
-            viewState = _interpolatedState.Sample(predictionManager.viewTick).state;
+            var manager = predictionManager;
+            viewState = _interpolatedState.Sample(_viewOnRelayTimeline ? manager.relayViewTick : manager.viewTick).state;
 
             UpdateView(viewState, verifiedState);
         }
@@ -211,16 +216,51 @@ namespace PurrNet.Prediction
             var copy = fullPredictedState.DeepCopy();
             ModifyRollbackViewState(ref copy.state, delta, accumulateError);
 
-            bool refreshOnly = predictionManager && predictionManager.refreshViewLatchOnly;
+            var manager = predictionManager;
+            bool managerAlive = manager;
+            if (managerAlive && identity.PresentsRelayedView(manager))
+            {
+                LatchRelayedView(manager, copy);
+                return;
+            }
+
+            bool refreshOnly = managerAlive && manager.refreshViewLatchOnly;
             if (!PredictionManager.ShouldReplaceViewLatch(refreshOnly, _viewState.HasValue))
             {
                 copy.Dispose();
                 return;
             }
 
+            if (_viewOnRelayTimeline)
+            {
+                _viewOnRelayTimeline = false;
+                _relayViewVerifiedTick = 0;
+            }
+
             _viewState?.Dispose();
             _viewState = copy;
-            _viewStateTick = predictionManager ? predictionManager.localTick : 0;
+            _viewStateTick = managerAlive ? manager.localTick : 0;
+        }
+
+        // See PredictedIdentity<STATE>.LatchRelayedView.
+        private void LatchRelayedView(PredictionManager manager, MODULE_STATE<TState> copy)
+        {
+            if (!manager.TryStampRelayedView(ref _relayViewVerifiedTick, out var stamp))
+            {
+                copy.Dispose();
+                return;
+            }
+
+            if (_viewState.HasValue)
+            {
+                if (_interpolatedState != null && _viewStateTick != stamp)
+                    _interpolatedState.Add(_viewStateTick, _viewState.Value);
+                else _viewState.Value.Dispose();
+            }
+
+            _viewState = copy;
+            _viewStateTick = stamp;
+            _viewOnRelayTimeline = true;
         }
 
         protected virtual void ModifyRollbackViewState(ref TState state, float delta, bool accumulateError) { }
@@ -432,6 +472,7 @@ namespace PurrNet.Prediction
             _history?.Clear();
             _viewState?.Dispose();
             _viewState = null;
+            _relayViewVerifiedTick = 0;
             _interpolatedState?.Teleport(viewTeleportTick, default);
             _verifiedHistory = null;
             _verifiedHistoryIndex = -1;

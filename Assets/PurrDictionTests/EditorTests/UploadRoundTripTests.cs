@@ -121,6 +121,7 @@ namespace PurrNet.Prediction.Tests.Editor
                 for (uint i = 0; i < tickCount; i++)
                 {
                     payload.WriteBits(0, PredictionManager.ViewOffsetBits);
+                    WriteExplicitRelayOffset(payload, 0);
                     Packer<PackedUInt>.Write(payload, 0U);
                     Packer<PackedUInt>.Write(payload, 0U);
                 }
@@ -358,6 +359,7 @@ namespace PurrNet.Prediction.Tests.Editor
                         Packer<int>.Write(block, entry.value);
                     }
                     payload.WriteBits(0, PredictionManager.ViewOffsetBits);
+                    WriteExplicitRelayOffset(payload, 0);
                     Packer<PackedUInt>.Write(payload, (uint)block.positionInBits);
                     Packer<PackedUInt>.Write(payload, (uint)entries.Length);
                     payload.WriteBitsWithoutConsumingIt(block, block.positionInBits);
@@ -762,6 +764,10 @@ namespace PurrNet.Prediction.Tests.Editor
 
                 for (ulong tick = 36; tick <= 40; tick++)
                     client.RecordViewOffset(default, tick, (uint)(tick - 36) * 100);
+                // Relay offsets repeat on two ticks, so both wire forms are exercised.
+                uint[] relaySent = { 80, 80, 81, 4095, 4095 };
+                for (ulong tick = 36; tick <= 40; tick++)
+                    client.RecordLocalRelayOffset(tick, relaySent[tick - 36]);
 
                 FinalizeInput(client, probe);
                 var cached = GetCachedPayload(client, out var firstTick, out var tickCount);
@@ -773,6 +779,8 @@ namespace PurrNet.Prediction.Tests.Editor
                 {
                     Assert.That(parsed[i].viewOffset, Is.EqualTo((uint)i * 100),
                         $"tick block {i} must carry the offset recorded for its tick");
+                    Assert.That(parsed[i].relayOffset, Is.EqualTo(relaySent[i]),
+                        $"tick block {i} must carry the relay offset recorded for its tick");
                 }
 
                 var server = CreateManager(serverObject);
@@ -789,6 +797,8 @@ namespace PurrNet.Prediction.Tests.Editor
                     uint sent = (uint)(tick - 36) * 100;
                     Assert.That(queue.byTick[tick].viewOffset, Is.EqualTo(Math.Min(sent, cap)),
                         $"tick {tick} must keep the sent offset up to the server cap");
+                    Assert.That(queue.byTick[tick].relayOffset, Is.EqualTo(relaySent[tick - 36]),
+                        $"tick {tick} must keep the sent relay offset");
                 }
             }
             finally
@@ -799,9 +809,17 @@ namespace PurrNet.Prediction.Tests.Editor
             }
         }
 
+        // A relay offset that does not repeat the previous tick's: a clear repeat bit, then the value.
+        private static void WriteExplicitRelayOffset(BitPacker payload, uint quantized)
+        {
+            payload.WriteBits(0, 1);
+            payload.WriteBits(quantized, PredictionManager.RelayOffsetBits);
+        }
+
         private sealed class ParsedUploadTick
         {
             public uint viewOffset;
+            public uint relayOffset;
             public uint declaredBlockBits;
             public readonly List<ParsedUploadEntry> entries = new List<ParsedUploadEntry>();
         }
@@ -972,9 +990,11 @@ namespace PurrNet.Prediction.Tests.Editor
             {
                 var result = new List<ParsedUploadTick>();
                 ParsedUploadTick previous = null;
+                uint relayOffset = 0;
                 for (uint i = 0; i < tickCount; i++)
                 {
                     uint viewOffset = (uint)payload.ReadBits((byte)PredictionManager.ViewOffsetBits);
+                    PredictionManager.ReadRelayOffset(payload, ref relayOffset, i == 0);
                     PackedUInt blockBits = default;
                     Packer<PackedUInt>.Read(payload, ref blockBits);
                     PackedUInt entryCount = default;
@@ -984,6 +1004,7 @@ namespace PurrNet.Prediction.Tests.Editor
                     var tickBlock = new ParsedUploadTick
                     {
                         viewOffset = viewOffset,
+                        relayOffset = relayOffset,
                         declaredBlockBits = blockBits.value
                     };
 

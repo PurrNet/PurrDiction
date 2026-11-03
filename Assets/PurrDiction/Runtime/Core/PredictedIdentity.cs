@@ -439,6 +439,138 @@ namespace PurrNet.Prediction
         internal bool UsesServerRelayTimeline()
             => EffectivePolicy() == PredictionPolicy.ServerRelay;
 
+        /// <summary>
+        /// A client shows this identity's verified states as they arrive instead of predicting it,
+        /// so its view samples are stamped on the relayed timeline
+        /// (see <see cref="PredictionManager.TryStampRelayedView"/>).
+        /// </summary>
+        internal bool PresentsRelayedView(PredictionManager manager)
+            => !manager.cachedIsServer && UsesServerRelayTimeline();
+
+        /// <summary>
+        /// Whether <paramref name="viewer"/>'s client shows this identity relayed, resolved on
+        /// any peer from the policy and ownership alone.
+        /// </summary>
+        internal bool PresentsRelayedViewTo(PlayerID viewer)
+        {
+            bool owned = ownerFlags != 0 && ownerIdValue == viewer.id.value;
+            return ResolveEffectivePolicy(predictionPolicy, owned, !isDeterministic && supportsSoftCorrection)
+                   == PredictionPolicy.ServerRelay;
+        }
+
+        private ColliderRollback[] _rollbackColliders;
+        private bool _rollbackCollidersResolved;
+        private PurrNet.Modules.RollbackModule _relayedRollback;
+
+        // The ColliderRollback components this object owns: those whose nearest identity is on this
+        // GameObject. Only the object's first identity answers, so each collider has one owner.
+        private ColliderRollback[] RollbackColliders()
+        {
+            if (_rollbackCollidersResolved)
+                return _rollbackColliders;
+
+            _rollbackCollidersResolved = true;
+            if (GetComponent<PredictedIdentity>() != this)
+                return null;
+
+            var found = GetComponentsInChildren<ColliderRollback>(true);
+            int kept = 0;
+            for (var i = 0; i < found.Length; i++)
+            {
+                var nearest = found[i].GetComponentInParent<PredictedIdentity>(true);
+                if (nearest && nearest.gameObject == gameObject)
+                    found[kept++] = found[i];
+            }
+
+            if (kept == 0)
+                return null;
+            if (kept < found.Length)
+                System.Array.Resize(ref found, kept);
+            _rollbackColliders = found;
+            return found;
+        }
+
+        /// <summary>
+        /// On a client, while this object is relayed its colliders are also tracked by
+        /// <paramref name="relayedRollback"/>, a history keyed by server tick that is filled from
+        /// applied frames: <paramref name="stateTick"/> is the tick of the state the last frame left
+        /// this object in. It holds the server's poses, so a lag-compensated query rewinds relayed
+        /// colliders on the client exactly as the server does. Called after every applied frame.
+        /// </summary>
+        internal void SyncRelayedColliderCapture(PurrNet.Modules.RollbackModule relayedRollback, bool relayed, ulong stateTick)
+        {
+            var rollbacks = RollbackColliders();
+            if (rollbacks == null)
+                return;
+
+            if (!relayed)
+            {
+                LeaveRelayedRollback();
+                return;
+            }
+
+            if (_relayedRollback != relayedRollback)
+            {
+                LeaveRelayedRollback();
+                _relayedRollback = relayedRollback;
+                ForEachRollbackCollider(rollbacks, relayedRollback, ColliderAction.Register, 0);
+            }
+
+            ForEachRollbackCollider(rollbacks, relayedRollback, ColliderAction.Capture, stateTick);
+        }
+
+        internal void LeaveRelayedRollback()
+        {
+            if (_relayedRollback == null)
+                return;
+            ForEachRollbackCollider(_rollbackColliders, _relayedRollback, ColliderAction.Unregister, 0);
+            _relayedRollback = null;
+        }
+
+        private enum ColliderAction { Register, Unregister, Capture }
+
+        private static void ForEachRollbackCollider(ColliderRollback[] rollbacks, PurrNet.Modules.RollbackModule module,
+            ColliderAction action, ulong tick)
+        {
+            if (rollbacks == null)
+                return;
+
+            for (var r = 0; r < rollbacks.Length; r++)
+            {
+                var rollback = rollbacks[r];
+                if (!rollback)
+                    continue;
+#if UNITY_PHYSICS_3D
+                var colliders3D = rollback.colliders3D;
+                for (var i = 0; colliders3D != null && i < colliders3D.Length; i++)
+                {
+                    var collider = colliders3D[i];
+                    if (!collider)
+                        continue;
+                    if (action == ColliderAction.Register)
+                        module.Register(collider, rollback.storeHistoryInSeconds);
+                    else if (action == ColliderAction.Unregister)
+                        module.Unregister(collider);
+                    else module.Capture(tick, collider);
+                }
+#endif
+#if UNITY_PHYSICS_2D
+                var colliders2D = rollback.colliders2D;
+                for (var i = 0; colliders2D != null && i < colliders2D.Length; i++)
+                {
+                    var collider = colliders2D[i];
+                    if (!collider)
+                        continue;
+                    if (action == ColliderAction.Register)
+                        module.Register(collider, rollback.storeHistoryInSeconds);
+                    else if (action == ColliderAction.Unregister)
+                        module.Unregister(collider);
+                    else module.Capture(tick, collider);
+                }
+#endif
+            }
+        }
+
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         internal bool UsesFullPredictionTimeline()
             => EffectivePolicy() == PredictionPolicy.FullPrediction;
@@ -753,6 +885,7 @@ namespace PurrNet.Prediction
 
         protected virtual void OnDestroy()
         {
+            LeaveRelayedRollback();
             DisposeUploadedInputBits();
             TriggerDestroyedEvent();
             TearDownAllModules();
@@ -1029,6 +1162,7 @@ namespace PurrNet.Prediction
 
         internal virtual void ReleasePredictionStateForPool()
         {
+            LeaveRelayedRollback();
             _metadataVerified = null;
             _moduleSetVerified = null;
             ReleaseModuleStateForPool();
