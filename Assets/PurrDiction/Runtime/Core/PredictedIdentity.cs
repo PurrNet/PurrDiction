@@ -839,7 +839,16 @@ namespace PurrNet.Prediction
                 return;
 
             _destroyedFired = true;
-            Destroyed();
+            // Destroyed is user code, and it runs while a world tears down. One identity throwing must not stop
+            // the rest from being unregistered: a world left half torn down cannot take the next one.
+            try
+            {
+                Destroyed();
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e, this);
+            }
             TriggerModuleDestroyedEvents();
         }
 
