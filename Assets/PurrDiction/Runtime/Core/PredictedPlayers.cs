@@ -68,7 +68,7 @@ namespace PurrNet.Prediction
             bool needsRemove = false;
             for (var i = 0; i < currentPlayers.Count; i++)
             {
-                if (!predictionManager.IsObserver(currentPlayers[i])) { needsRemove = true; break; }
+                if (IsGone(currentPlayers[i])) { needsRemove = true; break; }
             }
         
             if (needsAdd)
@@ -88,12 +88,16 @@ namespace PurrNet.Prediction
                 for (var i = 0; i < currentPlayers.Count; i++)
                 {
                     var current = currentPlayers[i];
-                    if (!predictionManager.IsObserver(current))
+                    if (IsGone(current))
                         toRemove.Add(current);
                 }
                 input.removePlayers = toRemove;
             }
         }
+
+        // A promoted host keeps players from the old session while they reconnect.
+        private bool IsGone(PlayerID player)
+            => !predictionManager.IsObserver(player) && !predictionManager.IsAwaitingMigrationRejoin(player);
 
         protected override void Simulate(PredictedPlayersInput input, ref PredictedPlayersState state, float delta)
         {

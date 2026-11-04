@@ -192,6 +192,11 @@ namespace PurrNet.Prediction
                 identity.RemoveModuleInternal(this);
         }
 
+        internal void PromoteToServerInternal() => PromoteToServer();
+
+        /// <summary>Host migration: drop client-only verified-store bindings; the current state is kept.</summary>
+        internal virtual void PromoteToServer() { }
+
         internal void OnRemovedInternal()
         {
             OnDisposed();

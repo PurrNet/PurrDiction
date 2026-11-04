@@ -635,6 +635,12 @@ namespace PurrNet.Prediction
             _moduleHistory?.ClearFuture(tick);
         }
 
+        private void PromoteModulesToServer()
+        {
+            for (int i = 0; i < _modules.Count; i++)
+                _modules[i].PromoteToServerInternal();
+        }
+
         private void ResetModulesForReuse(PredictionManager world)
         {
             ResetModulesForPool();

@@ -1385,6 +1385,12 @@ namespace PurrNet.Prediction
             _pool.ClearOld(predictionManager);
         }
 
+        internal override void PromoteToServer(PredictionManager world)
+        {
+            base.PromoteToServer(world);
+            _networkMirror?.PromoteToServer();
+        }
+
         protected override void OnDestroy()
         {
             _isCleaningUp = true;

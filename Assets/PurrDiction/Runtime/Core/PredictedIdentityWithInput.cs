@@ -55,6 +55,13 @@ namespace PurrNet.Prediction
             DisposeInputStorage();
         }
 
+        internal override void PromoteToServer(PredictionManager world)
+        {
+            base.PromoteToServer(world);
+            EnsureInputHistory(world);
+            DisposeInputStorage();
+        }
+
         internal override void PrewarmPredictionState(PredictionManager world)
         {
             base.PrewarmPredictionState(world);

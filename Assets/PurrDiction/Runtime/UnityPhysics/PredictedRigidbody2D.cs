@@ -144,6 +144,21 @@ namespace PurrNet.Prediction
                 RestoreAuthoritativePhysicsState();
         }
 
+        internal override void PromoteToServer(PredictionManager world)
+        {
+            base.PromoteToServer(world);
+            if (!_rigidbody)
+                return;
+
+            if (_replayFrozen)
+                ClearStaleFreeze();
+
+            // The server simulates every body; undo the client-only relay kinematic switch.
+            if (_appliedKinematicPolicy == PredictionPolicy.ServerRelay)
+                RestoreAuthoritativePhysicsState();
+            _appliedKinematicPolicy = PredictionPolicy.FullPrediction;
+        }
+
         internal override void SyncEffectivePolicySideEffects()
         {
             if (TracksEffectivePolicyChanges())

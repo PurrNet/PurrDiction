@@ -595,6 +595,11 @@ namespace PurrNet.Prediction
         protected override void OnEarlySpawn()
         {
             _stableLocalPlayerBlocked = false;
+
+            // Host migration: the world kept from the client spawn is adopted in OnSpawned.
+            if (_worldKeptForPromotion)
+                return;
+
             RegisterScene();
 
             tickRate = networkManager.tickModule.tickRate;
@@ -702,6 +707,18 @@ namespace PurrNet.Prediction
 
         protected override void OnSpawned()
         {
+            if (_worldKeptForPromotion)
+            {
+                _worldKeptForPromotion = false;
+                if (isServer)
+                    AdoptWorldAsServer();
+                else
+                {
+                    CleanupAllSystems();
+                    OnEarlySpawn();
+                }
+            }
+
             _tickManager = networkManager.tickModule;
             _tickManager.onPreTick += OnPreTick;
             _tickManager.onPostTick += OnPostTick;
@@ -719,7 +736,82 @@ namespace PurrNet.Prediction
                 _tickManager = null;
             }
 
+            // PurrNet promotes a client by despawning its identities as client and spawning them again as
+            // server. Keep the simulated world through that so the new host continues the match.
+            if (networkManager && networkManager.isPromotingToServer && _systemsCount > 0)
+            {
+                _worldKeptForPromotion = true;
+                return;
+            }
+
+            _worldKeptForPromotion = false;
             CleanupAllSystems();
+        }
+
+        private bool _worldKeptForPromotion;
+
+        /// <summary>
+        /// True on a promoted host while a player from the old session has not reconnected yet
+        /// (NetworkManager.hostMigrationPendingPlayers). Treat such a player as present: keep their objects and
+        /// ownership. How long they are waited for is NetworkManager.hostMigrationRejoinTimeout.
+        /// </summary>
+        public bool IsAwaitingMigrationRejoin(PlayerID player)
+            => networkManager && networkManager.IsHostMigrationPlayerPending(player);
+
+        /// <summary>
+        /// Raised on the promoted host once its predicted world has switched to the server role, before the
+        /// first server tick.
+        /// </summary>
+        public event Action onPromotedToServer;
+
+        /// <summary>
+        /// Host migration: the state this client currently has becomes the authoritative state. Every object
+        /// keeps its id, owner and state; only the networking session and the role-dependent setup restart.
+        /// Returning clients receive it as a full frame like any late joiner.
+        /// </summary>
+        private void AdoptWorldAsServer()
+        {
+            cachedIsServer = true;
+            isVerified = false;
+            isReplaying = false;
+            isSimulating = false;
+            isCatchingUpFrames = false;
+            _awaitingFullFrame = false;
+            _pauseAdvanceTicks = 0;
+            localTickInContext = localTick;
+
+            for (var i = _replayFrozenSystems.Count - 1; i >= 0; i--)
+            {
+                var frozen = _replayFrozenSystems[i];
+                if (frozen)
+                    frozen.OnReplayEnd();
+            }
+            _replayFrozenSystems.Clear();
+
+            ResetSessionState();
+
+            for (var i = 0; i < _systemsCount; i++)
+            {
+                var system = _systems[i];
+                try
+                {
+                    system.PromoteToServer(this);
+                    system.lastVerifiedTick = localTick;
+                }
+                catch (Exception e)
+                {
+                    Debug.LogException(e);
+                }
+            }
+
+            try
+            {
+                onPromotedToServer?.Invoke();
+            }
+            catch (Exception e)
+            {
+                Debug.LogException(e);
+            }
         }
 
         protected override void OnDestroy()
@@ -767,6 +859,15 @@ namespace PurrNet.Prediction
             _replayFrozenSystems.Clear();
             _systemsCount = 0;
             _inputHistorySystems = 0;
+            _nextSystemId = 0;
+            localTick = 1;
+            localTickInContext = 1;
+            ResetSessionState();
+        }
+
+        // Everything tied to one network session but not to the simulated world itself.
+        private void ResetSessionState()
+        {
             _nextHistoryResyncRequestAt = 0;
             _historyResyncPending = false;
             _historyResyncRequiredAfterTick = 0;
@@ -782,7 +883,6 @@ namespace PurrNet.Prediction
             DisposeSharedStateSections();
             ClearUploadedInputs();
             ResetLagCompensation();
-            _nextSystemId = 0;
             foreach (var queue in _clientTicks.Values)
                 queue.Clear();
             _clientTicks.Clear();
@@ -790,8 +890,6 @@ namespace PurrNet.Prediction
             foreach (var packer in _clientFrames)
                 packer.Dispose();
             _clientFrames.Clear();
-            localTick = 1;
-            localTickInContext = 1;
             _verifiedServerTick = 0;
             ResetRelayViewTimeline();
             _verifiedHistoryBaselineFloor = 0;

@@ -335,6 +335,14 @@ public class PredictionBootstrap : Scenario
             return;
         }
 
+        // Ends the session: the old server leaves and a client continues as host. Run on its own, with -role server.
+        if (CommandLineUtils.HasFlag("-hostMigrationScenarioOnly"))
+        {
+            _scenarios = new Scenario[] { this, gameObject.AddComponent<HostMigrationScenario>() };
+            _results = new ScenarioDetails?[_scenarios.Length];
+            return;
+        }
+
         if (CommandLineUtils.HasFlag("-includeHistoryStressScenario"))
             gameObject.AddComponent<HistoryStressScenario>();
 
@@ -638,6 +646,22 @@ public class PredictionBootstrap : Scenario
 
             _networkManager.transport = localTransport;
             Debug.Log("[PredictionTests] Selected LocalTransport from -localTransport");
+            return;
+        }
+
+        // PurrTransport through a relay at the given balancer (for example a local PurrLay), used by the
+        // host migration scenario's relay mode.
+        if (CommandLineUtils.TryGetArgument("-relayMaster", out var relayMaster) && !string.IsNullOrEmpty(relayMaster))
+        {
+            var relay = _networkManager.GetComponent<PurrTransport>();
+            if (!relay)
+                relay = _networkManager.gameObject.AddComponent<PurrTransport>();
+            relay.masterServer = relayMaster;
+            relay.roomName = CommandLineUtils.TryGetArgument("-relayRoom", out var room) && !string.IsNullOrEmpty(room)
+                ? room
+                : "prediction-tests";
+            _networkManager.transport = relay;
+            Debug.Log($"[PredictionTests] Selected PurrTransport via {relayMaster}, room {relay.roomName}");
             return;
         }
 

@@ -287,6 +287,25 @@ namespace PurrNet.Prediction
             world.PrewarmVerifiedStore<FULL_STATE<STATE>>(StoresHistoryInTables);
         }
 
+        internal override void PromoteToServer(PredictionManager world)
+        {
+            base.PromoteToServer(world);
+            _liveVerifiedThroughTick = 0;
+            _relayViewVerifiedTick = 0;
+
+            if (tickModule == null)
+                return;
+
+            // The server keeps a different history window; restart it from the current (entering) state.
+            EnsureStateHistory(world);
+            HistoryClear();
+            HistoryWrite(world.localTick, fullPredictedState.DeepCopy());
+            _verifiedHistory = world.GetVerifiedHistory<FULL_STATE<STATE>>(id, StoresHistoryInTables, out _);
+
+            if (SupportsStateDeltaCaching() && !isEventHandler)
+                _stateDeltaCache ??= new StateDeltaCache<FULL_STATE<STATE>>();
+        }
+
         private void RestartedView(PredictionManager world)
         {
             _viewSpawnTick = world.localTickInContext;

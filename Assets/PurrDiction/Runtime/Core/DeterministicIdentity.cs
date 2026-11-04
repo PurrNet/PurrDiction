@@ -229,6 +229,20 @@ namespace PurrNet.Prediction
             _stateHistory.Write(0, fullPredictedState.DeepCopy());
         }
 
+        internal override void PromoteToServer(PredictionManager world)
+        {
+            base.PromoteToServer(world);
+            _relayViewVerifiedTick = 0;
+
+            if (tickModule == null)
+                return;
+
+            _stateHistory?.Clear();
+            if (!HasStateHistoryFor(world))
+                _stateHistory = new History<FULL_STATE<STATE>>(world.tickRate * 10);
+            _stateHistory.Write(world.localTick, fullPredictedState.DeepCopy());
+        }
+
         private static int ViewBufferCapacity(PredictionManager world)
             => PredictionManager.GetViewInterpolationMaxBufferSize(world.tickRate) + 2;
 

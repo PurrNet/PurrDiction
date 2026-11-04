@@ -397,6 +397,19 @@ namespace PurrNet.Prediction
             }
         }
 
+        /// <summary>
+        /// Host migration: the mirrored identities stay spawned (PurrNet moves them to the server role), but the
+        /// bridge and the per-player observation belong to the old role. Observers are added again as players
+        /// return and acknowledge the frames that carry each piece.
+        /// </summary>
+        internal void PromoteToServer()
+        {
+            _bridge = null;
+            _bridgeResolved = false;
+            _observed.Clear();
+            _hostPlayer = null;
+        }
+
         internal void Clear()
         {
             _idScratch.Clear();

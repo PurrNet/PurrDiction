@@ -142,6 +142,14 @@ namespace PurrNet.Prediction
             VerifiedStateStore<MODULE_STATE<TState>>.StoreReceived(store, serverTick, ref state, unchangedBaselineTick, true);
         }
 
+        internal override void PromoteToServer()
+        {
+            _verifiedHistory = null;
+            _verifiedHistoryIndex = -1;
+            _liveVerifiedThroughTick = 0;
+            _relayViewVerifiedTick = 0;
+        }
+
         protected override void Setup(PredictedIdentity parent, PredictionManager world)
         {
             base.Setup(parent, world);

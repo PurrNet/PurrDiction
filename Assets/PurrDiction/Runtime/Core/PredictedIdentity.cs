@@ -1160,6 +1160,22 @@ namespace PurrNet.Prediction
 
         internal virtual void PrewarmPredictionState(PredictionManager world) { }
 
+        /// <summary>
+        /// Host migration: the world this identity lives in became the server. The current state is kept as the
+        /// authoritative state; only the role-dependent setup (histories, verified stores, client-only policy
+        /// side effects) switches over.
+        /// </summary>
+        internal virtual void PromoteToServer(PredictionManager world)
+        {
+            isServer = true;
+            LeaveRelayedRollback();
+            _metadataVerified = null;
+            _moduleSetVerified = null;
+            _simulateSoftCorrectionDuringReplay = false;
+            _skipReplaySpawnInitialization = false;
+            PromoteModulesToServer();
+        }
+
         internal virtual void ReleasePredictionStateForPool()
         {
             LeaveRelayedRollback();
