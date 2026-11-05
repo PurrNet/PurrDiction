@@ -58,6 +58,13 @@ namespace PurrNet.Prediction.Recording
         readonly MemoryStream _compressed = new MemoryStream(1 << 16);
 
         volatile bool _busy;
+        // Writer thread CPU spent producing (encoding) and compressing records, in Stopwatch ticks.
+        long _produceTicks, _compressTicks, _maxRecordTicks;
+
+        /// <summary>Writer-thread milliseconds spent encoding chunks and compressing records, and the longest record.</summary>
+        public double produceMs => Interlocked.Read(ref _produceTicks) * 1000.0 / System.Diagnostics.Stopwatch.Frequency;
+        public double compressMs => Interlocked.Read(ref _compressTicks) * 1000.0 / System.Diagnostics.Stopwatch.Frequency;
+        public double maxRecordMs => Interlocked.Read(ref _maxRecordTicks) * 1000.0 / System.Diagnostics.Stopwatch.Frequency;
 
         /// <summary>True while the writer thread encodes or compresses a record (it allocates while doing so).</summary>
         public bool busy => _busy || _queue.Count > 0;
@@ -120,6 +127,7 @@ namespace PurrNet.Prediction.Recording
                 _busy = true;
                 try
                 {
+                    long started = System.Diagnostics.Stopwatch.GetTimestamp();
                     byte[] payload = record.payload;
                     int length = payload?.Length ?? 0;
                     if (record.producer != null)
@@ -129,6 +137,8 @@ namespace PurrNet.Prediction.Recording
                         length = produced.length;
                         Interlocked.Add(ref _rawBytes, length);
                     }
+                    long encoded = System.Diagnostics.Stopwatch.GetTimestamp();
+                    Interlocked.Add(ref _produceTicks, encoded - started);
                     byte kind = (byte)record.kind;
                     if (record.compress)
                     {
@@ -139,6 +149,10 @@ namespace PurrNet.Prediction.Recording
                         length = (int)_compressed.Length;
                         kind |= 0x80;
                     }
+                    long compressed = System.Diagnostics.Stopwatch.GetTimestamp();
+                    Interlocked.Add(ref _compressTicks, compressed - encoded);
+                    if (compressed - started > Interlocked.Read(ref _maxRecordTicks))
+                        Interlocked.Exchange(ref _maxRecordTicks, compressed - started);
 
                     header.Clear();
                     header.WriteByte(kind);

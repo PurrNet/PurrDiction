@@ -212,7 +212,7 @@ namespace PurrNet.Prediction.Tests.Editor
             private readonly int _tickRate;
             internal readonly PredictionManager server, client;
 
-            internal World(int tickRate, int warmup = 0, bool shooter = false)
+            internal World(int tickRate, int warmup = 0, bool shooter = false, Action<GameObject> decoratePrefab = null)
             {
                 _tickRate = tickRate;
                 _previousCadence = PredictionPerformanceTelemetry.reconcileIntervalSeconds;
@@ -222,6 +222,7 @@ namespace PurrNet.Prediction.Tests.Editor
                 var prefab = NewObject("Churn prefab");
                 prefab.AddComponent<PredictedTransform>();
                 prefab.AddComponent<SpawnChurnProbe>();
+                decoratePrefab?.Invoke(prefab);
                 _prefabs = ScriptableObject.CreateInstance<PredictedPrefabs>();
                 _prefabs.prefabs.Add(new PredictedPrefab { prefab = prefab, pooled = true, warmupCount = warmup });
                 if (shooter)
@@ -476,7 +477,7 @@ namespace PurrNet.Prediction.Tests.Editor
                 return (serverBytes, clientBytes, totals);
             }
 
-            private void StepServer(ulong tick)
+            internal void StepServer(ulong tick)
             {
                 Set(server, "<localTick>k__BackingField", tick);
                 Set(server, "<localTickInContext>k__BackingField", tick);
@@ -512,7 +513,7 @@ namespace PurrNet.Prediction.Tests.Editor
             private static readonly object SaveModeNone =
                 Enum.Parse(typeof(PredictionManager).GetNestedType("HistorySaveMode", BindingFlags.NonPublic), "None");
 
-            private void Deliver(ulong tick)
+            internal void Deliver(ulong tick)
             {
                 var prepared = _frames[0];
                 Assert.That(prepared.preparedFrameTick, Is.EqualTo(tick));

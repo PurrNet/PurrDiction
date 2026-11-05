@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Unity.Collections.LowLevel.Unsafe;
 
 namespace PurrNet.Prediction.Recording
 {
@@ -46,8 +47,9 @@ namespace PurrNet.Prediction.Recording
 
     /// <summary>
     /// A chunk's rows as the recorder wrote them: one append-only log for every stream, so there are no per-stream
-    /// buffers to size (or grow). Each entry: <c>[slot i32][tick u64][fixed row][per managed field: i32 length (-1:
-    /// same as the stream's previous value) and bytes]</c>. Logs are reused; after warming up nothing grows.
+    /// buffers to size (or grow). Each entry: <c>[slot i32][tick u64, only when the slot has <see cref="TickFollows"/>]
+    /// [fixed row][per managed field: i32 length (-1: same as the stream's previous value) and bytes]</c>; an entry
+    /// without a tick has the previous entry's. Logs are reused; after warming up nothing grows.
     /// </summary>
     public sealed class ChunkLog
     {
@@ -55,11 +57,16 @@ namespace PurrNet.Prediction.Recording
         public readonly List<ChunkStream> streams = new List<ChunkStream>();
         public ulong firstTick;
         public ulong tickCount;
+        /// <summary>Set on an entry's slot when its tick follows (it differs from the previous entry's).</summary>
+        public const int TickFollows = int.MinValue;
+        internal ulong lastTick;
+        internal bool hasTick;
 
         public void Clear()
         {
             bytes.Clear();
             streams.Clear();
+            hasTick = false;
         }
     }
 
@@ -69,19 +76,26 @@ namespace PurrNet.Prediction.Recording
     /// </summary>
     public sealed class ChunkEncoder
     {
-        static readonly uint[] CrcTable = BuildCrcTable();
+        // Slicing-by-8: table k gives the CRC of a byte followed by k zero bytes, so 8 bytes are folded per step.
+        static readonly uint[] CrcTables = BuildCrcTables();
 
-        static uint[] BuildCrcTable()
+        static uint[] BuildCrcTables()
         {
-            var table = new uint[256];
+            var tables = new uint[8 * 256];
             for (uint i = 0; i < 256; i++)
             {
                 uint c = i;
                 for (int k = 0; k < 8; k++)
                     c = (c & 1) != 0 ? 0xEDB88320u ^ (c >> 1) : c >> 1;
-                table[i] = c;
+                tables[i] = c;
             }
-            return table;
+            for (int t = 1; t < 8; t++)
+                for (int i = 0; i < 256; i++)
+                {
+                    uint previous = tables[(t - 1) * 256 + i];
+                    tables[t * 256 + i] = (previous >> 8) ^ tables[previous & 0xFF];
+                }
+            return tables;
         }
 
         readonly RecordingBuffer _buffer = new RecordingBuffer(4096);
@@ -239,7 +253,9 @@ namespace PurrNet.Prediction.Recording
             int at = 0;
             while (at < end)
             {
-                int slot = ReadInt(data, at);
+                int header = ReadInt(data, at);
+                int slot = header & ~ChunkLog.TickFollows;
+                at += header < 0 ? 12 : 4;
                 _slotCount[slot]++;
                 at = SkipEntry(data, at, streams[slot].layout);
             }
@@ -271,14 +287,22 @@ namespace PurrNet.Prediction.Recording
 
             // Pass 2: scatter.
             at = 0;
+            ulong tick = 0;
             while (at < end)
             {
-                int slot = ReadInt(data, at);
+                int header = ReadInt(data, at);
+                int slot = header & ~ChunkLog.TickFollows;
+                if (header < 0)
+                {
+                    tick = ReadULong(data, at + 4);
+                    at += 12;
+                }
+                else
+                    at += 4;
                 var layout = streams[slot].layout;
                 int r = _slotFill[slot]++;
                 int row = _slotFirst[slot] + r;
-                _ticks[row] = ReadULong(data, at + 4);
-                at += 12;
+                _ticks[row] = tick;
                 Buffer.BlockCopy(data, at, _rows, _rowOffset[row], layout.rowSize);
                 at += layout.rowSize;
 
@@ -303,9 +327,10 @@ namespace PurrNet.Prediction.Recording
             }
         }
 
+        /// <summary>Skips an entry's row and managed values (<paramref name="at"/> is past its slot and tick).</summary>
         static int SkipEntry(byte[] data, int at, RowLayout layout)
         {
-            at += 12 + layout.rowSize;
+            at += layout.rowSize;
             for (int f = 0; f < layout.managed.Count; f++)
             {
                 int length = ReadInt(data, at);
@@ -320,7 +345,7 @@ namespace PurrNet.Prediction.Recording
         static ulong ReadULong(byte[] data, int at) =>
             (uint)ReadInt(data, at) | (ulong)(uint)ReadInt(data, at + 4) << 32;
 
-        bool SameValue(byte[] log, int a, int b)
+        unsafe bool SameValue(byte[] log, int a, int b)
         {
             int length = _valueLength[a];
             if (length != _valueLength[b])
@@ -328,18 +353,36 @@ namespace PurrNet.Prediction.Recording
             int sa = _valueStart[a], sb = _valueStart[b];
             if (sa == sb)
                 return true;
-            for (int i = 0; i < length; i++)
-                if (log[sa + i] != log[sb + i])
-                    return false;
-            return true;
+            if (length == 0)
+                return true;
+            fixed (byte* pa = &log[sa])
+            fixed (byte* pb = &log[sb])
+                return UnsafeUtility.MemCmp(pa, pb, length) == 0;
         }
 
         /// <summary>CRC-32 (IEEE, as zlib) over the raw fixed rows of a per-tick block, one row per tick.</summary>
-        public static uint Crc32(byte[] data, int offset, int length)
+        public static unsafe uint Crc32(byte[] data, int offset, int length)
         {
+            if ((uint)offset > (uint)data.Length || (uint)length > (uint)(data.Length - offset))
+                throw new ArgumentOutOfRangeException(nameof(length));
             uint crc = 0xFFFFFFFFu;
-            for (int i = 0; i < length; i++)
-                crc = CrcTable[(crc ^ data[offset + i]) & 0xFF] ^ (crc >> 8);
+            if (length == 0)
+                return 0;
+            fixed (byte* start = &data[offset])
+            fixed (uint* t = CrcTables)
+            {
+                byte* p = start;
+                // Bytes are assembled one by one: unaligned word reads fault on some ARM targets.
+                for (; length >= 8; length -= 8, p += 8)
+                {
+                    uint one = (uint)(p[0] | p[1] << 8 | p[2] << 16 | p[3] << 24) ^ crc;
+                    crc = t[7 * 256 + (one & 0xFF)] ^ t[6 * 256 + ((one >> 8) & 0xFF)] ^
+                          t[5 * 256 + ((one >> 16) & 0xFF)] ^ t[4 * 256 + (one >> 24)] ^
+                          t[3 * 256 + p[4]] ^ t[2 * 256 + p[5]] ^ t[256 + p[6]] ^ t[p[7]];
+                }
+                for (; length > 0; length--, p++)
+                    crc = t[(crc ^ *p) & 0xFF] ^ (crc >> 8);
+            }
             return crc ^ 0xFFFFFFFFu;
         }
 
@@ -364,12 +407,15 @@ namespace PurrNet.Prediction.Recording
             }
         }
 
-        bool SameRow(byte[] rows, int r, int previous, int size, int managedBase, int managedFields, byte[] log)
+        unsafe bool SameRow(byte[] rows, int r, int previous, int size, int managedBase, int managedFields, byte[] log)
         {
-            int a = r * size, b = previous * size;
-            for (int i = 0; i < size; i++)
-                if (rows[a + i] != rows[b + i])
-                    return false;
+            if (size > 0)
+            {
+                fixed (byte* a = &rows[r * size])
+                fixed (byte* b = &rows[previous * size])
+                    if (UnsafeUtility.MemCmp(a, b, size) != 0)
+                        return false;
+            }
             for (int f = 0; f < managedFields; f++)
                 if (!SameValue(log, managedBase + r * managedFields + f, managedBase + previous * managedFields + f))
                     return false;

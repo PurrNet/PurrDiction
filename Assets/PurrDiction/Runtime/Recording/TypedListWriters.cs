@@ -112,6 +112,21 @@ namespace PurrNet.Prediction.Recording
         /// <summary>Deepest level written directly; deeper values make the caller use the generic path.</summary>
         public int depth;
 
+        /// <summary>
+        /// True when the encoding depends on nothing but the value's own bytes (no references, no lists), so equal
+        /// bytes always encode the same.
+        /// </summary>
+        public bool readsOnlyItself
+        {
+            get
+            {
+                foreach (var s in _steps)
+                    if (s.op == Op.Reference || s.op == Op.InlineList)
+                        return false;
+                return true;
+            }
+        }
+
         /// <summary>A struct value stored inline (a row field or a list element).</summary>
         public static ObjectPlan ForValue(RecordingTypeRegistry types, Type type)
         {
@@ -374,7 +389,18 @@ namespace PurrNet.Prediction.Recording
 
     sealed class ListWriter<T> : TypedListWriter, IElementPlan
     {
-        public ObjectPlan plan { get; set; }
+        ObjectPlan _plan;
+        ElementMemo _memo;
+
+        public ObjectPlan plan
+        {
+            get => _plan;
+            set
+            {
+                _plan = value;
+                _memo = ElementMemo.For<T>(value);
+            }
+        }
 
         public override bool Write(RecordingTypeRegistry types, RecordingBuffer buffer, object value, int depth,
             HashSet<object> visiting)
@@ -397,11 +423,16 @@ namespace PurrNet.Prediction.Recording
 
             buffer.WriteByte(8);
             buffer.WriteVarUInt((ulong)count);
+            var memo = ElementMemo.Use(_memo, _plan, count, depth + 1);
             for (int i = 0; i < count; i++)
             {
                 T item = list[i];
-                ElementWriter<T>.Write(plan, types, buffer, ref item, depth + 1, visiting);
+                if (memo != null)
+                    memo.Write(ref item, _plan, types, buffer, depth + 1, visiting);
+                else
+                    ElementWriter<T>.Write(_plan, types, buffer, ref item, depth + 1, visiting);
             }
+            memo?.End();
             return true;
         }
     }
@@ -437,7 +468,18 @@ namespace PurrNet.Prediction.Recording
     {
         static readonly bool _disposable = typeof(TList) == typeof(PurrNet.Pooling.DisposableList<T>);
 
-        public ObjectPlan plan { get; set; }
+        ObjectPlan _plan;
+        ElementMemo _memo;
+
+        public ObjectPlan plan
+        {
+            get => _plan;
+            set
+            {
+                _plan = value;
+                _memo = ElementMemo.For<T>(value);
+            }
+        }
 
         public override unsafe bool WriteAt(RecordingTypeRegistry types, RecordingBuffer buffer, byte* at, int depth,
             HashSet<object> visiting)
@@ -468,12 +510,119 @@ namespace PurrNet.Prediction.Recording
 
             buffer.WriteByte(8);
             buffer.WriteVarUInt((ulong)count);
+            var memo = ElementMemo.Use(_memo, _plan, count, depth + 1);
             for (int i = 0; i < count; i++)
             {
                 T item = list[i];
-                ElementWriter<T>.Write(plan, types, buffer, ref item, depth + 1, visiting);
+                if (memo != null)
+                    memo.Write(ref item, _plan, types, buffer, depth + 1, visiting);
+                else
+                    ElementWriter<T>.Write(_plan, types, buffer, ref item, depth + 1, visiting);
             }
+            memo?.End();
             return true;
+        }
+    }
+
+    /// <summary>
+    /// Remembers how the previous list's elements were encoded, by their bytes. Lists that mostly repeat from one tick
+    /// to the next (the hierarchy's spawned prefabs, an inventory) then copy each unchanged element's encoding instead
+    /// of building it again. Only for unmanaged elements whose plan reads nothing but their own bytes, so equal bytes
+    /// mean an equal encoding; the output is the same as without it.
+    /// </summary>
+    sealed unsafe class ElementMemo
+    {
+        readonly int _size;
+        byte[] _raw = Array.Empty<byte>(), _nextRaw = Array.Empty<byte>();
+        int[] _start = new int[1], _nextStart = new int[1];
+        RecordingBuffer _encoded = new RecordingBuffer(256), _nextEncoded = new RecordingBuffer(256);
+        int _count, _nextCount, _cursor, _depth = -1;
+
+        ElementMemo(int size) => _size = size;
+
+        public static ElementMemo For<T>(ObjectPlan plan) =>
+            plan != null && plan.readsOnlyItself && typeof(T).IsValueType && UnsafeUtility.IsUnmanaged(typeof(T)) &&
+            UnsafeUtility.SizeOf(typeof(T)) > 0
+                ? new ElementMemo(UnsafeUtility.SizeOf(typeof(T)))
+                : null;
+
+        /// <summary>The memo to use for a list of <paramref name="count"/> items at <paramref name="depth"/>, or null.</summary>
+        public static ElementMemo Use(ElementMemo memo, ObjectPlan plan, int count, int depth)
+        {
+            // Deeper items go through the generic path (see ElementWriter), which the memo does not reproduce.
+            if (memo == null || depth + plan.depth > RecordingTypeRegistry.MaxDepth)
+                return null;
+            memo.Begin(count, depth);
+            return memo;
+        }
+
+        void Begin(int count, int depth)
+        {
+            if (depth != _depth)
+            {
+                _count = 0;
+                _depth = depth;
+            }
+            _cursor = 0;
+            _nextCount = 0;
+            _nextEncoded.Clear();
+            if (_nextRaw.Length < count * _size)
+                _nextRaw = new byte[Math.Max(count * _size, _nextRaw.Length * 2)];
+            if (_nextStart.Length < count + 1)
+                _nextStart = new int[Math.Max(count + 1, _nextStart.Length * 2)];
+        }
+
+        public void Write<T>(ref T item, ObjectPlan plan, RecordingTypeRegistry types, RecordingBuffer buffer, int depth,
+            HashSet<object> visiting)
+        {
+            // Memos exist only for structs, so this is the item's own memory (a local, it does not move).
+            fixed (byte* p = &UnsafeUtility.As<T, byte>(ref item))
+                Write(p, plan, types, buffer, depth, visiting);
+        }
+
+        void Write(byte* p, ObjectPlan plan, RecordingTypeRegistry types, RecordingBuffer buffer, int depth,
+            HashSet<object> visiting)
+        {
+            int before = buffer.length;
+            int match = Find(p);
+            if (match >= 0)
+            {
+                buffer.WriteBytes(_encoded.data, _start[match], _start[match + 1] - _start[match]);
+                _cursor = match + 1;
+            }
+            else
+                plan.Write(p, types, buffer, depth, visiting);
+
+            fixed (byte* raw = _nextRaw)
+                UnsafeUtility.MemCpy(raw + _nextCount * _size, p, _size);
+            _nextEncoded.WriteBytes(buffer.data, before, buffer.length - before);
+            _nextStart[++_nextCount] = _nextEncoded.length;
+        }
+
+        /// <summary>
+        /// The previous list's element equal to the one at <paramref name="p"/>, looked for where this list has got to
+        /// in it: the same position, or the next one when an element was removed before it.
+        /// </summary>
+        int Find(byte* p)
+        {
+            if (_cursor >= _count)
+                return -1;
+            fixed (byte* raw = _raw)
+            {
+                int end = Math.Min(_count, _cursor + 2);
+                for (int j = _cursor; j < end; j++)
+                    if (UnsafeUtility.MemCmp(p, raw + j * _size, _size) == 0)
+                        return j;
+            }
+            return -1;
+        }
+
+        public void End()
+        {
+            (_raw, _nextRaw) = (_nextRaw, _raw);
+            (_start, _nextStart) = (_nextStart, _start);
+            (_encoded, _nextEncoded) = (_nextEncoded, _encoded);
+            _count = _nextCount;
         }
     }
 

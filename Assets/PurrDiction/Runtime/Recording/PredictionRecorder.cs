@@ -54,6 +54,7 @@ namespace PurrNet.Prediction.Recording
         {
             public int id;
             public GameObject gameObject;
+            public Transform root;
             public PredictedObjectID objectId;
             public ulong lastSeenTick;
             public ulong spawnTick;
@@ -67,7 +68,18 @@ namespace PurrNet.Prediction.Recording
             public readonly List<TrackedCollider> colliders = new List<TrackedCollider>();
             /// <summary>Colliders currently moving relative to the entity (sampled every tick).</summary>
             public int movingColliders;
+            /// <summary>Body renderers and their GameObjects (read every tick for visibility).</summary>
             public readonly List<Renderer> renderers = new List<Renderer>();
+            public readonly List<GameObject> rendererObjects = new List<GameObject>();
+        }
+
+        /// <summary>What an identity index resolved to last tick.</summary>
+        struct IdentitySlot
+        {
+            public PredictedIdentity identity;
+            public Entity entity;
+            public int entityId;
+            public Component component;
         }
 
         /// <summary>
@@ -217,6 +229,7 @@ namespace PurrNet.Prediction.Recording
         readonly RecordingBuffer _check = new RecordingBuffer(256);
         readonly JsonBuilder _json = new JsonBuilder();
         readonly List<PredictedIdentity> _identityList = new List<PredictedIdentity>();
+        IdentitySlot[] _identitySlots = Array.Empty<IdentitySlot>();
 
         // Pools: the recorder reuses everything it creates per spawn, stream and chunk.
         readonly Stack<Entity> _entityPool = new Stack<Entity>();
@@ -259,6 +272,7 @@ namespace PurrNet.Prediction.Recording
         ulong _ticksRecorded;
         int _chunkTicks;
         int _chunks;
+        int _peakLogBytes;
         float _startTime;
         bool _subscribedNetwork;
         NetworkManager _networkManager;
@@ -400,6 +414,7 @@ namespace PurrNet.Prediction.Recording
             _lastTick = 0;
             _ticksRecorded = 0;
             _chunks = 0;
+            _peakLogBytes = 0;
             _stats.Reset();
             _stats.file = _file;
             _summary.Begin(_predictionManager.tickRate);
@@ -408,6 +423,7 @@ namespace PurrNet.Prediction.Recording
 
             WriteHeader();
             _hasStaticColliderKey = false;
+            ResetStaticCheck();
             RefreshStaticColliders(_predictionManager.localTick);
             _predictionManager.onServerTickReady += OnServerTickReady;
             Debug.Log($"[PredictionRecorder] Recording to {_file.path}");
@@ -441,16 +457,19 @@ namespace PurrNet.Prediction.Recording
             file.Dispose();
             _stats.file = null;
             Debug.Log($"[PredictionRecorder] Finished {file.path}: {_ticksRecorded} ticks, {_nextEntityId - 1} entities, " +
-                      $"{file.bytesWritten / 1024f:0.0} KiB on disk ({file.rawBytes / 1024f:0.0} KiB before compression)");
+                      $"{file.bytesWritten / 1024f:0.0} KiB on disk ({file.rawBytes / 1024f:0.0} KiB before compression); " +
+                      $"writer thread {file.produceMs:0}ms encoding, {file.compressMs:0}ms compressing, longest record {file.maxRecordMs:0.0}ms, largest chunk log {_peakLogBytes / 1048576f:0.0} MiB");
             Debug.Log(_stats.Summary(_ticksRecorded));
 
             foreach (var entity in _entities)
                 ReleaseEntity(entity);
             ReleaseColliders(_staticColliders);
+            ResetStaticCheck();
             _staticMovingColliders = 0;
             _streams.Clear();
             _entities.Clear();
             _entitiesByGameObject.Clear();
+            Array.Clear(_identitySlots, 0, _identitySlots.Length);
             _players.Clear();
             _customStreams.Clear();
             _meshIds.Clear();
@@ -612,11 +631,11 @@ namespace PurrNet.Prediction.Recording
 
             byte* src = (byte*)UnsafeUtility.AddressOf(ref packet.payload);
             ulong tick = SampleTick();
-            var log = _job.log.bytes;
+            var log = _job.log;
             for (int i = 0; i < packet.rowCount; i++)
             {
                 BeginRow(rows, tick, log);
-                log.WriteBytes(src + i * rowSize, rowSize);
+                log.bytes.WriteBytes(src + i * rowSize, rowSize);
             }
         }
 
@@ -661,7 +680,9 @@ namespace PurrNet.Prediction.Recording
                 return;
 
             _stats.Begin(_statTick);
-            if (tick - _chunkFirstTick >= (ulong)_chunkTicks)
+            // A chunk also ends early once its log is big (many entities), which bounds the recorder's memory: the
+            // log and the writer's working copy of it are each about this size, whatever the game.
+            if (tick - _chunkFirstTick >= (ulong)_chunkTicks || _job.log.bytes.length >= MaxChunkLogBytes)
             {
                 _stats.Begin(_statFlush);
                 FlushChunk();
@@ -736,37 +757,55 @@ namespace PurrNet.Prediction.Recording
             _visitTick = tick;
             bool sample = _summary.IsSampleTick(tick);
 
+            if (_identitySlots.Length < count)
+                Array.Resize(ref _identitySlots, Math.Max(count, _identitySlots.Length * 2));
+
             for (int i = 0; i < count; i++)
             {
                 var identity = _predictionManager.GetIdentityAt(i);
                 if (!identity)
                     continue;
 
-                var go = identity.gameObject;
-                long key = RecordingObjectId.Of(go);
-                if (!_entitiesByGameObject.TryGetValue(key, out var entity) || entity.objectId != identity.id.objectId)
+                // Identities keep their index from tick to tick, so the entity found last tick is checked first.
+                ref var slot = ref _identitySlots[i];
+                Entity entity = slot.entity;
+                Component component;
+                if (ReferenceEquals(slot.identity, identity) && entity != null && entity.id == slot.entityId &&
+                    !ReferenceEquals(entity.gameObject, null) && entity.objectId == identity.id.objectId)
                 {
-                    _stats.Begin(_statSpawn);
-                    if (entity != null)
-                        Despawn(entity, tick);
-                    entity = Spawn(identity, tick);
-                    _stats.End(_statSpawn);
+                    component = slot.component;
+                }
+                else
+                {
+                    long key = RecordingObjectId.Of(identity.gameObject);
+                    if (!_entitiesByGameObject.TryGetValue(key, out entity) || entity.objectId != identity.id.objectId)
+                    {
+                        _stats.Begin(_statSpawn);
+                        if (entity != null)
+                            Despawn(entity, tick);
+                        entity = Spawn(identity, tick);
+                        _stats.End(_statSpawn);
+                    }
+                    component = FindComponent(entity, identity);
+                    slot.identity = identity;
+                    slot.entity = entity;
+                    slot.entityId = entity.id;
+                    slot.component = component;
                 }
 
                 if (entity.lastSeenTick != tick)
                 {
                     entity.lastSeenTick = tick;
-                    var t = go.transform;
-                    var pose = new RecordedTransform
-                    {
-                        position = t.position, rotation = t.rotation, scale = t.lossyScale, visible = Visibility(entity)
-                    };
+                    var pose = new RecordedTransform();
+                    var t = entity.root;
+                    t.GetPositionAndRotation(out pose.position, out pose.rotation);
+                    pose.scale = t.lossyScale;
+                    pose.visible = Visibility(entity);
                     AppendRow(entity.transform, tick, ref pose);
                     if (entity.owner.HasValue && entity.isRoot)
                         _summary.OnOwnedEntity(entity.owner.Value, entity.spawnTick, pose.position, tick, sample);
                 }
 
-                var component = FindComponent(entity, identity);
                 _visitingEntity = entity;
                 _visitingComponent = component;
                 identity.VisitData(this);
@@ -796,8 +835,10 @@ namespace PurrNet.Prediction.Recording
                 if ((ulong)entity.id % ColliderCheckTicks == tick % ColliderCheckTicks)
                     RefreshEntityColliders(entity, tick);
             }
-            if (tick % StaticColliderCheckTicks == 0)
-                RefreshStaticColliders(tick);
+            if (_staticCheck == StaticCheck.Idle && tick % StaticColliderCheckTicks == 0)
+                BeginStaticCheck();
+            if (_staticCheck != StaticCheck.Idle)
+                ContinueStaticCheck(tick);
 
             // Colliders moving relative to their entity (a drawbridge tilting, a door) are sampled every tick.
             foreach (var entity in _entities)
@@ -813,7 +854,7 @@ namespace PurrNet.Prediction.Recording
         Component FindComponent(Entity entity, PredictedIdentity identity)
         {
             foreach (var c in entity.components)
-                if (c.identity == identity)
+                if (ReferenceEquals(c.identity, identity))
                     return c;
             var created = _componentPool.Count > 0 ? _componentPool.Pop() : new Component();
             created.identity = identity;
@@ -829,6 +870,7 @@ namespace PurrNet.Prediction.Recording
             var entity = _entityPool.Count > 0 ? _entityPool.Pop() : new Entity();
             entity.id = _nextEntityId++;
             entity.gameObject = go;
+            entity.root = go.transform;
             entity.objectId = first.id.objectId;
             entity.lastSeenTick = 0;
             entity.hasColliderKey = false;
@@ -943,8 +985,10 @@ namespace PurrNet.Prediction.Recording
             ReleaseColliders(entity.colliders);
             entity.movingColliders = 0;
             entity.renderers.Clear();
+            entity.rendererObjects.Clear();
             entity.transform = null;
             entity.gameObject = null;
+            entity.root = null;
             _entityPool.Push(entity);
         }
 
@@ -1084,8 +1128,8 @@ namespace PurrNet.Prediction.Recording
 
         unsafe void AppendRow<T>(StreamRows rows, ulong tick, ref T value) where T : struct
         {
+            BeginRow(rows, tick, _job.log);
             var log = _job.log.bytes;
-            BeginRow(rows, tick, log);
             var layout = rows.layout;
             layout.WriteFixed(ref value, log);
             if (!layout.hasManaged)
@@ -1131,8 +1175,8 @@ namespace PurrNet.Prediction.Recording
             _stats.End(_statManaged);
         }
 
-        /// <summary>Starts a log entry: the stream's slot in this chunk, then the tick.</summary>
-        void BeginRow(StreamRows rows, ulong tick, RecordingBuffer log)
+        /// <summary>Starts a log entry: the stream's slot in this chunk, and the tick when it differs from the last entry's.</summary>
+        void BeginRow(StreamRows rows, ulong tick, ChunkLog log)
         {
             if (rows.slot < 0)
             {
@@ -1140,19 +1184,26 @@ namespace PurrNet.Prediction.Recording
                 _slots.Add(rows);
             }
             rows.rowCount++;
-            log.WriteInt32(rows.slot);
-            log.WriteUInt64(tick);
+            if (log.hasTick && log.lastTick == tick)
+                log.bytes.WriteInt32(rows.slot);
+            else
+            {
+                log.bytes.WriteInt32(rows.slot | ChunkLog.TickFollows);
+                log.bytes.WriteUInt64(tick);
+                log.lastTick = tick;
+                log.hasTick = true;
+            }
         }
 
-        bool SameAsLast(RecordingBuffer log, int offset, int length)
+        unsafe bool SameAsLast(RecordingBuffer log, int offset, int length)
         {
             if (length != _scratch.length)
                 return false;
-            byte[] data = log.data, value = _scratch.data;
-            for (int i = 0; i < length; i++)
-                if (data[offset + i] != value[i])
-                    return false;
-            return true;
+            if (length == 0)
+                return true;
+            fixed (byte* a = &log.data[offset])
+            fixed (byte* b = &_scratch.data[0])
+                return UnsafeUtility.MemCmp(a, b, length) == 0;
         }
 
         /// <summary>The first values of an in-place field writer are compared with the reflection path.</summary>
@@ -1217,6 +1268,7 @@ namespace PurrNet.Prediction.Recording
 
                 // Encoding takes milliseconds, so the log goes to the writer thread and the encode happens there.
                 var log = _job.log;
+                _peakLogBytes = Math.Max(_peakLogBytes, log.bytes.length);
                 log.firstTick = _chunkFirstTick;
                 log.tickCount = _lastTick + 1 - _chunkFirstTick;
                 foreach (var s in _slots)
@@ -1338,6 +1390,7 @@ namespace PurrNet.Prediction.Recording
 
         // ---- Colliders --------------------------------------------------------------------------------
 
+        const int MaxChunkLogBytes = 7 << 20; // under 8 MiB, so a log's array stops at 8 MiB
         const ulong ColliderCheckTicks = 10;
         const ulong StaticColliderCheckTicks = 60;
         readonly RecordingBuffer _staticColliderKey = new RecordingBuffer(256);
@@ -1372,14 +1425,140 @@ namespace PurrNet.Prediction.Recording
             _sceneRoots.Clear();
             _colliderScratch.Clear();
 
-            RefreshColliderSet(_colliderList, Matrix4x4.identity, _staticColliderKey, ref _hasStaticColliderKey,
+            RefreshColliderSet(_colliderList, null, Matrix4x4.identity, _staticColliderKey, ref _hasStaticColliderKey,
                 _staticColliders, ref _staticMovingColliders, -1, tick);
             _colliderList.Clear();
         }
 
         readonly List<TrackedCollider> _staticColliders = new List<TrackedCollider>();
         int _staticMovingColliders;
+
+        // A map can have thousands of static colliders, too many to check in one tick without a hitch, so the periodic
+        // check is spread over about StaticCheckSpreadTicks ticks. The scene is walked depth first a slice at a time (in
+        // the order GetComponentsInChildren uses) and each collider's shape key is compared with the last written set
+        // as it is found; when nothing changed, the poses are then checked a slice at a time.
+        const int StaticCheckSpreadTicks = 45;
+        enum StaticCheck { Idle, Scan, Poses }
+
+        StaticCheck _staticCheck;
+        readonly List<Transform> _staticStack = new List<Transform>();
+        readonly List<Collider> _staticFound = new List<Collider>();
+        readonly List<Collider> _nodeColliders = new List<Collider>();
+        int _staticNext;
+        int _staticBudget;
+        int _staticKeyMatched;
+        bool _staticChanged;
+        int _staticWork;
+        int _lastStaticWork;
+
+        void BeginStaticCheck()
+        {
+            _staticStack.Clear();
+            _staticFound.Clear();
+            // A stack: pushed last to first, so the first root of the first scene is walked first.
+            for (int s = SceneManager.sceneCount - 1; s >= 0; s--)
+            {
+                var scene = SceneManager.GetSceneAt(s);
+                if (!scene.isLoaded)
+                    continue;
+                scene.GetRootGameObjects(_sceneRoots);
+                for (int r = _sceneRoots.Count - 1; r >= 0; r--)
+                    _staticStack.Add(_sceneRoots[r].transform);
+            }
+            _sceneRoots.Clear();
+
+            _staticCheck = StaticCheck.Scan;
+            _staticKeyMatched = 0;
+            _staticChanged = false;
+            _staticWork = 0;
+            // The last check's work (objects and colliders walked, then poses), spread over the ticks.
+            _staticBudget = Math.Max(256, (_lastStaticWork + _staticColliders.Count) / StaticCheckSpreadTicks + 1);
+        }
+
+        void ContinueStaticCheck(ulong tick)
+        {
+            int budget = _staticBudget;
+            if (_staticCheck == StaticCheck.Scan)
+            {
+                var key = _colliderKey;
+                while (budget > 0 && _staticStack.Count > 0)
+                {
+                    var t = _staticStack[_staticStack.Count - 1];
+                    _staticStack.RemoveAt(_staticStack.Count - 1);
+                    budget--;
+                    _staticWork++;
+                    // Destroyed since the check began; whatever it held is compared at the end.
+                    if (!t)
+                        continue;
+                    var go = t.gameObject;
+                    // Inactive objects and everything a predicted object owns are not static colliders.
+                    if (!go.activeSelf || go.TryGetComponent<PredictedIdentity>(out _))
+                        continue;
+
+                    go.GetComponents(_nodeColliders);
+                    foreach (var collider in _nodeColliders)
+                    {
+                        budget--;
+                        _staticWork++;
+                        if (!collider.enabled || IsLocalPhysics(collider))
+                            continue;
+                        _staticFound.Add(collider);
+                        if (_staticChanged)
+                            continue;
+                        key.Clear();
+                        ShapeKey(key, collider);
+                        if (_staticKeyMatched + key.length > _staticColliderKey.length ||
+                            !_staticColliderKey.SameBytes(_staticKeyMatched, key.length, key.data, 0, key.length))
+                            _staticChanged = true;
+                        _staticKeyMatched += key.length;
+                    }
+                    _nodeColliders.Clear();
+
+                    for (int c = t.childCount - 1; c >= 0; c--)
+                        _staticStack.Add(t.GetChild(c));
+                }
+                if (_staticStack.Count > 0)
+                    return;
+
+                _lastStaticWork = _staticWork;
+                bool changed = _hasStaticColliderKey
+                    ? _staticChanged || _staticKeyMatched != _staticColliderKey.length
+                    : _staticFound.Count > 0;
+                if (changed)
+                {
+                    // Rare (the map changed): the whole set is compared and written now.
+                    for (int i = _staticFound.Count - 1; i >= 0; i--)
+                        if (!_staticFound[i])
+                            _staticFound.RemoveAt(i);
+                    RefreshColliderSet(_staticFound, null, Matrix4x4.identity, _staticColliderKey, ref _hasStaticColliderKey,
+                        _staticColliders, ref _staticMovingColliders, -1, tick);
+                    _staticFound.Clear();
+                    _staticCheck = StaticCheck.Idle;
+                    return;
+                }
+                _staticFound.Clear();
+                _staticCheck = StaticCheck.Poses;
+                _staticNext = 0;
+                return;
+            }
+
+            int to = Math.Min(_staticColliders.Count, _staticNext + budget);
+            CheckColliderPoses(_staticColliders, _staticNext, to, Matrix4x4.identity, ref _staticMovingColliders, -1);
+            _staticNext = to;
+            if (_staticNext >= _staticColliders.Count)
+                _staticCheck = StaticCheck.Idle;
+        }
+
+        void ResetStaticCheck()
+        {
+            _staticCheck = StaticCheck.Idle;
+            _staticStack.Clear();
+            _staticFound.Clear();
+            _lastStaticWork = 0;
+        }
+
         readonly List<TrackedCollider> _trackedScratch = new List<TrackedCollider>();
+        readonly Dictionary<long, TrackedCollider> _trackedById = new Dictionary<long, TrackedCollider>();
         readonly Stack<TrackedCollider> _trackedPool = new Stack<TrackedCollider>();
         const int StillChecksBeforeIdle = 2;
 
@@ -1388,8 +1567,8 @@ namespace PurrNet.Prediction.Recording
         /// unchanged set costs no strings), and otherwise checks each collider's pose: a collider that moved relative
         /// to its entity gets a pose stream. An empty set that was never written does not count as a change.
         /// </summary>
-        void RefreshColliderSet(List<Collider> colliders, Matrix4x4 worldToSpace, RecordingBuffer lastKey, ref bool hasKey,
-            List<TrackedCollider> tracked, ref int moving, int entity, ulong tick)
+        void RefreshColliderSet(List<Collider> colliders, Transform space, Matrix4x4 worldToSpace, RecordingBuffer lastKey,
+            ref bool hasKey, List<TrackedCollider> tracked, ref int moving, int entity, ulong tick)
         {
             var key = _colliderKey;
             key.Clear();
@@ -1404,19 +1583,16 @@ namespace PurrNet.Prediction.Recording
 
                 // Keep the trackers (and pose streams) of colliders that stay in the set.
                 _trackedScratch.Clear();
+                _trackedById.Clear();
+                foreach (var t in tracked)
+                    _trackedById[t.id] = t;
                 foreach (var collider in colliders)
                 {
-                    TrackedCollider t = null;
-                    for (int i = 0; i < tracked.Count; i++)
-                    {
-                        if (tracked[i].collider == collider)
-                        {
-                            t = tracked[i];
-                            tracked[i] = tracked[tracked.Count - 1];
-                            tracked.RemoveAt(tracked.Count - 1);
-                            break;
-                        }
-                    }
+                    long id = RecordingObjectId.Of(collider);
+                    if (_trackedById.TryGetValue(id, out var t) && ReferenceEquals(t.collider, collider))
+                        _trackedById.Remove(id);
+                    else
+                        t = null;
                     if (t == null)
                     {
                         t = _trackedPool.Count > 0 ? _trackedPool.Pop() : new TrackedCollider();
@@ -1426,11 +1602,17 @@ namespace PurrNet.Prediction.Recording
                         t.moving = false;
                         t.stillChecks = 0;
                     }
-                    // World bounds (terrain and the like) have no pose of their own to follow.
-                    t.streamable = HasShapePose(collider);
+                    // World bounds (terrain and the like) have no pose of their own to follow, and a collider on the
+                    // entity's own object is always at the entity's pose.
+                    t.streamable = HasShapePose(collider) && !ReferenceEquals(collider.transform, space);
                     RoundedPose(collider, worldToSpace, out t.position, out t.rotation, out t.scale);
                     _trackedScratch.Add(t);
                 }
+                // What is left in the map is gone from the set.
+                tracked.Clear();
+                foreach (var pair in _trackedById)
+                    tracked.Add(pair.Value);
+                _trackedById.Clear();
                 ReleaseColliders(tracked);
                 tracked.AddRange(_trackedScratch);
                 _trackedScratch.Clear();
@@ -1449,8 +1631,16 @@ namespace PurrNet.Prediction.Recording
                 return;
             }
 
-            foreach (var t in tracked)
+            CheckColliderPoses(tracked, 0, tracked.Count, worldToSpace, ref moving, entity);
+        }
+
+        /// <summary>Checks the poses of <c>tracked[from..to)</c>: a collider that moved gets a pose stream sampled every tick.</summary>
+        void CheckColliderPoses(List<TrackedCollider> tracked, int from, int to, Matrix4x4 worldToSpace, ref int moving,
+            int entity)
+        {
+            for (int i = from; i < to; i++)
             {
+                var t = tracked[i];
                 if (!t.streamable || !t.collider)
                     continue;
                 RoundedPose(t.collider, worldToSpace, out var position, out var rotation, out var scale);
@@ -1597,13 +1787,22 @@ namespace PurrNet.Prediction.Recording
             var renderers = entity.renderers;
             if (renderers.Count == 0)
                 return 2;
+            var objects = entity.rendererObjects;
             for (int i = 0; i < renderers.Count; i++)
             {
                 var r = renderers[i];
-                if (r && r.enabled && r.gameObject.activeInHierarchy)
+                if (r && r.enabled && objects[i].activeInHierarchy)
                     return 1;
             }
             return 0;
+        }
+
+        readonly List<PredictedIdentity> _nestedIdentities = new List<PredictedIdentity>();
+
+        static bool OwnedBy(UnityEngine.Component component, GameObject root)
+        {
+            var owner = component.GetComponentInParent<PredictedIdentity>(true);
+            return owner && owner.gameObject == root;
         }
 
         void RefreshEntityColliders(Entity entity, ulong tick)
@@ -1612,16 +1811,33 @@ namespace PurrNet.Prediction.Recording
             if (!root)
                 return;
 
+            // Renderers and colliders under a nested predicted object belong to that object's entity. Without nested
+            // objects (the usual case) everything under the root is the entity's, and no owner has to be looked up.
+            root.GetComponentsInChildren(true, _nestedIdentities);
+            bool nested = false;
+            foreach (var identity in _nestedIdentities)
+            {
+                if (!ReferenceEquals(identity.gameObject, root))
+                {
+                    nested = true;
+                    break;
+                }
+            }
+            _nestedIdentities.Clear();
+
             // The renderer list changes with the hierarchy, so it is refreshed on the collider cadence.
             entity.renderers.Clear();
+            entity.rendererObjects.Clear();
             root.GetComponentsInChildren(true, _rendererList);
             foreach (var renderer in _rendererList)
             {
                 if (!IsBodyRenderer(renderer))
                     continue;
-                var owner = renderer.GetComponentInParent<PredictedIdentity>(true);
-                if (owner && owner.gameObject == root)
+                if (!nested || OwnedBy(renderer, root))
+                {
                     entity.renderers.Add(renderer);
+                    entity.rendererObjects.Add(renderer.gameObject);
+                }
             }
 
             // PredictedTransform can unparent its graphics; they still show this entity.
@@ -1635,24 +1851,25 @@ namespace PurrNet.Prediction.Recording
                 foreach (var renderer in _rendererList)
                 {
                     if (IsBodyRenderer(renderer))
+                    {
                         entity.renderers.Add(renderer);
+                        entity.rendererObjects.Add(renderer.gameObject);
+                    }
                 }
             }
             _predictedTransformList.Clear();
             _rendererList.Clear();
 
-            // Colliders under a nested predicted object belong to that object's entity.
             root.GetComponentsInChildren(false, _colliderList);
             for (int i = _colliderList.Count - 1; i >= 0; i--)
             {
                 var collider = _colliderList[i];
-                var owner = collider.enabled && !IsLocalPhysics(collider) ? collider.GetComponentInParent<PredictedIdentity>(true) : null;
-                if (!owner || owner.gameObject != root)
+                if (!collider.enabled || IsLocalPhysics(collider) || (nested && !OwnedBy(collider, root)))
                     _colliderList.RemoveAt(i);
             }
 
-            RefreshColliderSet(_colliderList, root.transform.worldToLocalMatrix, entity.colliderKey, ref entity.hasColliderKey,
-                entity.colliders, ref entity.movingColliders, entity.id, tick);
+            RefreshColliderSet(_colliderList, entity.root, entity.root.worldToLocalMatrix, entity.colliderKey,
+                ref entity.hasColliderKey, entity.colliders, ref entity.movingColliders, entity.id, tick);
             _colliderList.Clear();
         }
 
