@@ -168,8 +168,54 @@ namespace PurrNet.Prediction
         private void ForceRelayKinematic()
         {
             _rigidbody.bodyType = RigidbodyType2D.Kinematic;
-            linearVelocity = default;
-            angularVelocity = 0f;
+            StopRelayBody();
+            SetRelayVelocityGuard(true);
+        }
+
+        // Unlike a kinematic 3D Rigidbody, a kinematic Rigidbody2D still moves by its velocity in every
+        // physics step. A relayed body is posed from verified state only, so it must never carry velocity
+        // into the client's predicted or replayed steps.
+        private bool isRelayKinematic => !isServer && _relayVelocityGuardManager &&
+                                         _rigidbody.bodyType == RigidbodyType2D.Kinematic;
+
+        private PredictionManager _relayVelocityGuardManager;
+
+        private void SetRelayVelocityGuard(bool enabled)
+        {
+            if (enabled)
+            {
+                if (_relayVelocityGuardManager || !predictionManager)
+                    return;
+                _relayVelocityGuardManager = predictionManager;
+                _relayVelocityGuardManager.onBeforePhysicsPass += StopRelayBodyBeforePhysics;
+            }
+            else if (_relayVelocityGuardManager)
+            {
+                _relayVelocityGuardManager.onBeforePhysicsPass -= StopRelayBodyBeforePhysics;
+                _relayVelocityGuardManager = null;
+            }
+        }
+
+        private void StopRelayBodyBeforePhysics()
+        {
+            if (_rigidbody && _rigidbody.bodyType == RigidbodyType2D.Kinematic)
+                StopRelayBody();
+        }
+
+        private void StopRelayBody()
+        {
+#if UNITY_6000
+            _rigidbody.linearVelocity = default;
+#else
+            _rigidbody.velocity = default;
+#endif
+            _rigidbody.angularVelocity = 0f;
+        }
+
+        protected override void OnDestroy()
+        {
+            SetRelayVelocityGuard(false);
+            base.OnDestroy();
         }
 
         private void ClearStaleFreeze()
@@ -185,11 +231,13 @@ namespace PurrNet.Prediction
 
         private void RestoreDefaultPhysicsMode()
         {
+            SetRelayVelocityGuard(false);
             _rigidbody.bodyType = _defaultBodyType;
         }
 
         private void RestoreAuthoritativePhysicsState()
         {
+            SetRelayVelocityGuard(false);
             ref var state = ref currentState;
             var bodyType = (RigidbodyType2D)state.bodyType;
             _rigidbody.bodyType = bodyType;
@@ -574,8 +622,9 @@ namespace PurrNet.Prediction
 
             set
             {
-                // Unity warns when velocity is assigned to a static body.
-                if (_rigidbody.bodyType == RigidbodyType2D.Static)
+                // Unity warns when velocity is assigned to a static body. A relayed body ignores
+                // velocity like a kinematic 3D PredictedRigidbody does.
+                if (_rigidbody.bodyType == RigidbodyType2D.Static || isRelayKinematic)
                     return;
 
 #if UNITY_6000
@@ -598,7 +647,7 @@ namespace PurrNet.Prediction
             set
             {
                 // Unity warns when velocity is assigned to a static body.
-                if (_rigidbody.bodyType == RigidbodyType2D.Static)
+                if (_rigidbody.bodyType == RigidbodyType2D.Static || isRelayKinematic)
                     return;
 
                 _rigidbody.angularVelocity = value;

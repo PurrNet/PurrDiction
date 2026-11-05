@@ -1016,6 +1016,64 @@ namespace PurrNet.Prediction.Tests.Editor
         }
 
         [Test]
+        public void ServerRelayRigidbody2DIgnoresVelocityLikeKinematic3D()
+        {
+            var networkObject = new GameObject("NetworkManager");
+            var managerObject = new GameObject("PredictionManager");
+            var identityObject = new GameObject(nameof(ServerRelayRigidbody2DIgnoresVelocityLikeKinematic3D));
+
+            try
+            {
+                var networkManager = networkObject.AddComponent<NetworkManager>();
+                var manager = CreateSpawnedPredictionManager(managerObject, networkManager);
+                identityObject.AddComponent<PredictedTransform>();
+                var rigidbody = identityObject.AddComponent<Rigidbody2D>();
+                rigidbody.bodyType = RigidbodyType2D.Dynamic;
+                var predicted = identityObject.AddComponent<PredictedRigidbody2D>();
+                predicted.SetPredictionPolicyOverride(PredictionPolicy.ServerRelay);
+
+                manager.RegisterInstance(identityObject, new PredictedObjectID(1), null, false, false);
+                Assert.That(rigidbody.bodyType, Is.EqualTo(RigidbodyType2D.Kinematic));
+
+                predicted.AddForce(Vector2.right * 1000f, ForceMode2D.Impulse);
+                predicted.angularVelocity = 90f;
+                Assert.That(predicted.linearVelocity, Is.EqualTo(Vector2.zero),
+                    "A relayed body accepted velocity; a kinematic Rigidbody2D would move by it every step");
+                Assert.That(predicted.angularVelocity, Is.EqualTo(0f));
+
+                // Direct Rigidbody2D writes bypass the wrapper; the body is stopped before each physics pass.
+#if UNITY_6000
+                rigidbody.linearVelocity = new Vector2(25f, 0f);
+#else
+                rigidbody.velocity = new Vector2(25f, 0f);
+#endif
+                rigidbody.angularVelocity = 45f;
+                var hook = (Action)typeof(PredictionManager)
+                    .GetField(nameof(PredictionManager.onBeforePhysicsPass), InstanceFields)
+                    .GetValue(manager);
+                Assert.That(hook, Is.Not.Null, "Relayed body did not register its pre-physics stop");
+                hook();
+                Assert.That(predicted.linearVelocity, Is.EqualTo(Vector2.zero));
+                Assert.That(rigidbody.angularVelocity, Is.EqualTo(0f));
+
+                predicted.SetPredictionPolicyOverride(PredictionPolicy.FullPrediction);
+                Assert.That(rigidbody.bodyType, Is.EqualTo(RigidbodyType2D.Dynamic));
+                Assert.That(typeof(PredictionManager)
+                        .GetField(nameof(PredictionManager.onBeforePhysicsPass), InstanceFields)
+                        .GetValue(manager), Is.Null,
+                    "Leaving relay should release the pre-physics stop");
+                predicted.AddForce(Vector2.right * 2f, ForceMode2D.Impulse);
+                Assert.That(predicted.linearVelocity.x, Is.GreaterThan(0f));
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(identityObject);
+                UnityEngine.Object.DestroyImmediate(managerObject);
+                UnityEngine.Object.DestroyImmediate(networkObject);
+            }
+        }
+
+        [Test]
         public void FullAndSoftPolicyTransitionsPreserveLiveRigidbody2DMode()
         {
             var gameObject = new GameObject(nameof(FullAndSoftPolicyTransitionsPreserveLiveRigidbody2DMode));
