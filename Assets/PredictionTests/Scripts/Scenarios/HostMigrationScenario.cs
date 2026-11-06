@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using Cysharp.Threading.Tasks;
 using PurrNet;
+using PurrNet.Modules;
 using PurrNet.Prediction;
 using PurrNet.Transports;
 using UnityEngine;
@@ -80,6 +81,13 @@ public class HostMigrationScenario : Scenario
     // -hostMigrationRetry: the highest transferring client first aims at a port nobody listens on. With
     // keepClientStateOnFailedHostMigration the failed attempt must keep its world for the second attempt.
     private bool _retry;
+    // -hostMigrationSceneGap: before the migration the server loads MigrationGapScene (a second PredictionManager)
+    // through the scenes module. A player rejoining the promoted host only observes that PredictionManager once its
+    // ClientFinishedLoadingScene arrives, so the promoted host sees every returning player before it observes. Its
+    // PredictedPlayers must keep them through that gap.
+    private bool _sceneGap;
+
+    private const string GapSceneName = "MigrationGapScene";
 
     private DeterministicTickCounter _counter;
     private DeterministicTimedSpawner _spawner;
@@ -91,6 +99,7 @@ public class HostMigrationScenario : Scenario
         HostMigrationSignals.Reset();
         _lostHost = CommandLineUtils.HasFlag("-hostMigrationLostHost");
         _retry = CommandLineUtils.HasFlag("-hostMigrationRetry");
+        _sceneGap = CommandLineUtils.HasFlag("-hostMigrationSceneGap");
 
         _counter = FindFirstObjectByType<DeterministicTickCounter>();
         _spawner = FindFirstObjectByType<DeterministicTimedSpawner>();
@@ -151,6 +160,31 @@ public class HostMigrationScenario : Scenario
         {
             return ScenarioResult.Fail(
                 $"pre-migration world never settled: spawned={_spawner.spawnedCount}/{_spawner.totalSpawns} pawns={PawnOwners(ctx.predictionManager).Count}/{ctx.expectedConnections}");
+        }
+
+        if (_sceneGap)
+        {
+            manager.sceneModule.LoadSceneAsync(GapSceneName, new PurrSceneSettings
+            {
+                mode = UnityEngine.SceneManagement.LoadSceneMode.Additive,
+                physicsMode = UnityEngine.SceneManagement.LocalPhysicsMode.Physics3D,
+                isPublic = true
+            });
+
+            try
+            {
+                await UniTaskUtils.WaitWithTimeout(
+                    () => GapManager() is { isSpawned: true } gap &&
+                          gap.observers.Count >= ctx.expectedConnections,
+                    _timeout,
+                    ctx.cancellationToken);
+            }
+            catch (TimeoutException)
+            {
+                var gap = GapManager();
+                return ScenarioResult.Fail(
+                    $"clients never observed the {GapSceneName} PredictionManager: found={gap != null} observers={(gap ? gap.observers.Count : 0)}/{ctx.expectedConnections}");
+            }
         }
 
         await ScenarioBarrier.Wait(ctx, PrePlanBarrier, _timeout);
@@ -235,6 +269,25 @@ public class HostMigrationScenario : Scenario
                 $"pre-migration world never settled: spawned={_spawner.spawnedCount}/{_spawner.totalSpawns} pawns={PawnOwners(pm).Count}/{ctx.expectedConnections} ownPawn={LocalPawnSum(ctx).HasValue}");
         }
 
+        PredictionManager gapManager = null;
+        if (_sceneGap)
+        {
+            try
+            {
+                await UniTaskUtils.WaitWithTimeout(
+                    () => GapManager() is { isSpawned: true, players: not null } gap &&
+                          Predicts(gap, manager.localPlayer),
+                    _timeout,
+                    ctx.cancellationToken);
+            }
+            catch (TimeoutException)
+            {
+                return ScenarioResult.Fail($"the {GapSceneName} PredictionManager never predicted this player");
+            }
+
+            gapManager = GapManager();
+        }
+
         await ScenarioBarrier.Wait(ctx, PrePlanBarrier, _timeout);
 
         try
@@ -303,6 +356,32 @@ public class HostMigrationScenario : Scenario
         bool promotedEventRaised = false;
         void OnPromoted() => promotedEventRaised = true;
         pm.onPromotedToServer += OnPromoted;
+
+        // Every player comes back, so the promoted host must never drop one from PredictedPlayers, including in
+        // the gap between a player rejoining and observing the PredictionManager.
+        var removedPlayers = new List<PlayerID>();
+        void OnPlayerRemoved(PlayerID player) => removedPlayers.Add(player);
+        var predictedPlayers = pm.players;
+        if (isPromoted && predictedPlayers)
+            predictedPlayers.onPlayerRemoved += OnPlayerRemoved;
+
+        // Scene gap: count the players that rejoin before they observe the scene-loaded PredictionManager, so a
+        // pass proves the gap was crossed rather than skipped.
+        var gapRemovedPlayers = new List<PlayerID>();
+        void OnGapPlayerRemoved(PlayerID player) => gapRemovedPlayers.Add(player);
+        int returnedBeforeObserving = 0;
+        void OnPlayerReturned(PlayerID player)
+        {
+            if (gapManager && !gapManager.IsObserver(player))
+                returnedBeforeObserving++;
+        }
+
+        var gapPlayers = gapManager ? gapManager.players : null;
+        if (isPromoted && gapPlayers)
+        {
+            gapPlayers.onPlayerRemoved += OnGapPlayerRemoved;
+            manager.onHostMigrationPlayerReturned += OnPlayerReturned;
+        }
 
         manager.hostMigrationTimeout = _migrationTimeout;
 
@@ -404,6 +483,59 @@ public class HostMigrationScenario : Scenario
                 $"post-migration wave never completed: spawned={_spawner.spawnedCount}/{_spawner.totalSpawns}");
         }
 
+        if (isPromoted && predictedPlayers)
+        {
+            predictedPlayers.onPlayerRemoved -= OnPlayerRemoved;
+            if (removedPlayers.Count > 0)
+            {
+                return ScenarioResult.Fail(
+                    $"the promoted host removed returning players from PredictedPlayers: {string.Join(", ", removedPlayers)}");
+            }
+        }
+
+        if (_sceneGap)
+        {
+            if (!gapManager)
+                return ScenarioResult.Fail($"the {GapSceneName} PredictionManager did not survive the migration");
+
+            try
+            {
+                await UniTaskUtils.WaitWithTimeout(
+                    () => isPromoted
+                        ? gapManager.observers.Count >= ctx.expectedConnections
+                        : Predicts(gapManager, manager.localPlayer),
+                    _timeout,
+                    post.cancellationToken);
+            }
+            catch (TimeoutException)
+            {
+                return ScenarioResult.Fail(
+                    $"returning players never observed the {GapSceneName} PredictionManager again: observers={gapManager.observers.Count}/{ctx.expectedConnections} predicted={(gapPlayers ? gapPlayers.players.Count : 0)}");
+            }
+
+            if (isPromoted && gapPlayers)
+            {
+                gapPlayers.onPlayerRemoved -= OnGapPlayerRemoved;
+                manager.onHostMigrationPlayerReturned -= OnPlayerReturned;
+
+                if (gapRemovedPlayers.Count > 0)
+                {
+                    return ScenarioResult.Fail(
+                        $"the promoted host removed returning players from the {GapSceneName} PredictedPlayers during the rejoin gap: {string.Join(", ", gapRemovedPlayers)} (returned before observing: {returnedBeforeObserving})");
+                }
+
+                // Every other peer comes back through that scene load.
+                if (returnedBeforeObserving < ctx.expectedConnections - 1)
+                {
+                    return ScenarioResult.Fail(
+                        $"only {returnedBeforeObserving}/{ctx.expectedConnections - 1} returning players rejoined before observing the {GapSceneName} PredictionManager; the scenario did not exercise the rejoin gap");
+                }
+
+                Debug.Log(
+                    $"[HostMigrationScenario] scene gap: {returnedBeforeObserving} players rejoined before observing {GapSceneName}, none removed; predicted={gapPlayers.players.Count}");
+            }
+        }
+
         await UniTask.WaitForSeconds(_settleSeconds, cancellationToken: post.cancellationToken);
         await PredictionTestUtils.AlignDigestTick(post, DigestChannel, _timeout);
 
@@ -501,6 +633,32 @@ public class HostMigrationScenario : Scenario
             return $"a failed transfer lost the world: before={Describe(preOwners)} after={Describe(kept)}";
 
         return null;
+    }
+
+    private static PredictionManager GapManager()
+    {
+        var scene = UnityEngine.SceneManagement.SceneManager.GetSceneByName(GapSceneName);
+        if (!scene.IsValid() || !scene.isLoaded)
+            return null;
+
+        foreach (var root in scene.GetRootGameObjects())
+        {
+            if (root.TryGetComponent<PredictionManager>(out var gap))
+                return gap;
+        }
+
+        return null;
+    }
+
+    private static bool Predicts(PredictionManager gap, PlayerID player)
+    {
+        var players = gap.players.players;
+        for (int i = 0; i < players.Count; i++)
+        {
+            if (players[i] == player)
+                return true;
+        }
+        return false;
     }
 
     private static bool IsHighestPlayer(NetworkManager manager)

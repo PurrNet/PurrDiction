@@ -8,7 +8,7 @@ public static class LocalTestBuild
     {
         var options = new BuildPlayerOptions
         {
-            scenes = new[] { "Assets/PredictionTests/Bootstrap.unity" },
+            scenes = new[] { "Assets/PredictionTests/Bootstrap.unity", "Assets/PredictionTests/MigrationGapScene.unity" },
             locationPathName = "build/StandaloneWindows64/PurrDictionTests.exe",
             target = BuildTarget.StandaloneWindows64,
             options = BuildOptions.None
@@ -31,7 +31,7 @@ public static class LocalTestBuild
     {
         var options = new BuildPlayerOptions
         {
-            scenes = new[] { "Assets/PredictionTests/Bootstrap.unity" },
+            scenes = new[] { "Assets/PredictionTests/Bootstrap.unity", "Assets/PredictionTests/MigrationGapScene.unity" },
             locationPathName = "test-results/suite-player/PurrDictionTests.exe",
             target = BuildTarget.StandaloneWindows64,
             options = BuildOptions.Development

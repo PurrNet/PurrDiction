@@ -719,6 +719,8 @@ namespace PurrNet.Prediction
                 }
             }
 
+            HookMigrationRoster(networkManager);
+
             _tickManager = networkManager.tickModule;
             _tickManager.onPreTick += OnPreTick;
             _tickManager.onPostTick += OnPostTick;
@@ -745,18 +747,88 @@ namespace PurrNet.Prediction
             }
 
             _worldKeptForPromotion = false;
+            _migrationRejoiners.Clear();
             CleanupAllSystems();
         }
 
         private bool _worldKeptForPromotion;
 
+        // Players from the old session that reconnected to this promoted host but do not observe it yet, with the
+        // time they stop being waited for. The NetworkManager forgets them once they join; they only observe
+        // after loading the scene.
+        private readonly Dictionary<PlayerID, double> _migrationRejoiners = new ();
+        private NetworkManager _migrationRosterSource;
+
+        // Hooked from the first spawn and kept through the promotion, since a returning player can join before
+        // this identity spawns again as server.
+        private void HookMigrationRoster(NetworkManager source)
+        {
+            if (_migrationRosterSource == source)
+                return;
+
+            UnhookMigrationRoster();
+            _migrationRosterSource = source;
+            if (!source)
+                return;
+
+            source.onHostMigrationPlayerReturned += OnMigrationPlayerReturned;
+            source.onPlayerLeft += OnMigrationPlayerLeft;
+        }
+
+        private void UnhookMigrationRoster()
+        {
+            if (_migrationRosterSource)
+            {
+                _migrationRosterSource.onHostMigrationPlayerReturned -= OnMigrationPlayerReturned;
+                _migrationRosterSource.onPlayerLeft -= OnMigrationPlayerLeft;
+            }
+
+            _migrationRosterSource = null;
+            _migrationRejoiners.Clear();
+        }
+
+        private void OnMigrationPlayerReturned(PlayerID player)
+        {
+            if (IsObserver(player))
+                return;
+
+            var timeout = _migrationRosterSource ? _migrationRosterSource.hostMigrationRejoinTimeout : 0f;
+            _migrationRejoiners[player] = timeout > 0
+                ? Time.unscaledTimeAsDouble + timeout
+                : double.MaxValue;
+        }
+
+        private void OnMigrationPlayerLeft(PlayerID player, bool asServer)
+        {
+            if (asServer)
+                _migrationRejoiners.Remove(player);
+        }
+
         /// <summary>
         /// True on a promoted host while a player from the old session has not reconnected yet
-        /// (NetworkManager.hostMigrationPendingPlayers). Treat such a player as present: keep their objects and
-        /// ownership. How long they are waited for is NetworkManager.hostMigrationRejoinTimeout.
+        /// (NetworkManager.hostMigrationPendingPlayers), or has reconnected but does not observe this
+        /// PredictionManager yet. Treat such a player as present: keep their objects and ownership. How long they
+        /// are waited for, each step, is NetworkManager.hostMigrationRejoinTimeout.
         /// </summary>
         public bool IsAwaitingMigrationRejoin(PlayerID player)
-            => networkManager && networkManager.IsHostMigrationPlayerPending(player);
+        {
+            if (!networkManager)
+                return false;
+
+            if (networkManager.IsHostMigrationPlayerPending(player))
+                return true;
+
+            if (!_migrationRejoiners.TryGetValue(player, out var deadline))
+                return false;
+
+            if (IsObserver(player) || Time.unscaledTimeAsDouble >= deadline)
+            {
+                _migrationRejoiners.Remove(player);
+                return false;
+            }
+
+            return true;
+        }
 
         /// <summary>
         /// Raised on the promoted host once its predicted world has switched to the server role, before the
@@ -817,6 +889,7 @@ namespace PurrNet.Prediction
         protected override void OnDestroy()
         {
             ForgetStableLocalPlayer();
+            UnhookMigrationRoster();
             base.OnDestroy();
 
             foreach (var packer in _clientFrames)

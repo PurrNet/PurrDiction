@@ -8,6 +8,9 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/PredictionTests/Bootstrap.unity
     guid: e3f8a1c20d934b6e8a51f0c4d7b21002
+  - enabled: 1
+    path: Assets/PredictionTests/MigrationGapScene.unity
+    guid: cf1035f6673e4ad1a113baf53cb72149
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   m_UseUCBPForAssetBundles: 0

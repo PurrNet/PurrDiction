@@ -31,7 +31,7 @@ namespace PurrNet.Prediction.Benchmarks.Editor
 
                 var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions
                 {
-                    scenes = new[] { "Assets/PredictionTests/Bootstrap.unity" },
+                    scenes = new[] { "Assets/PredictionTests/Bootstrap.unity", "Assets/PredictionTests/MigrationGapScene.unity" },
                     locationPathName = playerPath,
                     target = BuildTarget.StandaloneWindows64,
                     subtarget = (int)StandaloneBuildSubtarget.Player,
