@@ -23,8 +23,10 @@ namespace PurrNet.Prediction.Recording
     public sealed class PredictionRecorder : MonoBehaviour, IPredictedDataVisitor
     {
         [SerializeField] private PredictionManager _predictionManager;
-        [Tooltip("Start recording as soon as this machine is the server.")]
+        [Tooltip("Start recording as soon as this machine is the server. Never on CI machines (the CI environment variable and the like).")]
         [SerializeField] private bool _recordOnServer = true;
+        [Tooltip("Also record play sessions in the editor (kept on disk, never uploaded). Off: editor sessions are development, not gameplay.")]
+        [SerializeField] private bool _recordInEditor;
         [Tooltip("Record the camera each player renders with.")]
         [SerializeField] private bool _recordCamera = true;
         [Tooltip("Folder for recordings. Relative paths are under Application.persistentDataPath.")]
@@ -202,10 +204,11 @@ namespace PurrNet.Prediction.Recording
         }
 
         /// <summary>A chunk's log on its way to the writer thread, encoded there.</summary>
-        sealed class ChunkJob : IRecordProducer
+        sealed class ChunkJob : IStepwiseRecordProducer
         {
             public readonly PredictionRecorder owner;
             public readonly ChunkLog log;
+            bool _stepping;
 
             public ChunkJob(PredictionRecorder owner)
             {
@@ -213,10 +216,26 @@ namespace PurrNet.Prediction.Recording
                 log = new ChunkLog(Shelf);
             }
 
-            public RecordingBuffer Produce() => owner._encoder.Encode(log);
+            public void Begin()
+            {
+                owner._encoder.Begin(log);
+                _stepping = true;
+            }
+
+            public bool Step(long deadline) => owner._encoder.Step(deadline);
+
+            public RecordingBuffer Produce()
+            {
+                if (!_stepping)
+                    return owner._encoder.Encode(log);
+                _stepping = false;
+                owner._encoder.Step(long.MaxValue);
+                return owner._encoder.result;
+            }
 
             public void Release()
             {
+                _stepping = false;
                 log.Clear();
                 lock (owner._jobPool)
                     owner._jobPool.Push(this);
@@ -296,6 +315,8 @@ namespace PurrNet.Prediction.Recording
         ulong _chunkFirstTick;
         ulong _lastTick;
         ulong _ticksRecorded;
+        // The finished recording's entity count, for its report (the live counter starts over when it stops).
+        int _lastEntities;
         int _chunkTicks;
         int _chunks;
         int _peakLogBytes;
@@ -363,7 +384,7 @@ namespace PurrNet.Prediction.Recording
             if (!server)
                 _stoppedThisSession = false;
 
-            if (_recordOnServer && server && !isRecording && !_stoppedThisSession && _predictionManager.isSpawned)
+            if (_recordOnServer && RecordsAutomatically() && server && !isRecording && !_stoppedThisSession && _predictionManager.isSpawned)
                 StartRecording();
             else if (isRecording && !server)
                 StopRecording();
@@ -373,6 +394,9 @@ namespace PurrNet.Prediction.Recording
                 _nextSend = Time.unscaledTime + _clientSendInterval;
                 SendOutgoing();
             }
+
+            // WebGL has no writer thread: queued chunks are encoded here, one per frame (a no-op elsewhere).
+            _file?.Pump();
         }
 
         void SubscribeNetwork()
@@ -395,6 +419,9 @@ namespace PurrNet.Prediction.Recording
             _subscribedNetwork = false;
         }
 
+        /// <summary>Whether matches start recording on their own here: not on CI, and in the editor only when asked.</summary>
+        bool RecordsAutomatically() => !RecordingUploader.runningOnCI && (!Application.isEditor || _recordInEditor);
+
         string RecordingDirectory() => Path.IsPathRooted(_directory)
             ? _directory
             : Path.Combine(Application.persistentDataPath, _directory);
@@ -414,7 +441,8 @@ namespace PurrNet.Prediction.Recording
         void ConfigureUploads()
         {
             string key = string.IsNullOrWhiteSpace(_projectKey) ? PurrNet.Transports.PurrServicesProjectLink.projectKey : _projectKey.Trim();
-            if (_upload && !string.IsNullOrEmpty(key) && !string.IsNullOrEmpty(_uploadEndpoint))
+            // Editor and CI sessions are development and tests, not gameplay: they stay out of the data pool.
+            if (_upload && !Application.isEditor && !RecordingUploader.runningOnCI && !string.IsNullOrEmpty(key) && !string.IsNullOrEmpty(_uploadEndpoint))
                 RecordingUploader.Configure(_uploadEndpoint, key, RecordingDirectory(), (long)_maxLocalMegabytes * 1024 * 1024);
         }
 
@@ -434,7 +462,7 @@ namespace PurrNet.Prediction.Recording
             // Every file is self-contained, so type ids and records start over.
             _types = new RecordingTypeRegistry();
             _poseColumns.Clear();
-            _file = new RecordingFile(Path.Combine(directory, fileName));
+            _file = new RecordingFile(Path.Combine(directory, fileName), (long)_maxLocalMegabytes * 1024 * 1024);
             RecordingUploader.SetActiveRecording(_file.path);
             _chunkTicks = Mathf.Max(1, Mathf.RoundToInt(_chunkSeconds * _predictionManager.tickRate));
             _chunkFirstTick = _predictionManager.localTick;
@@ -483,6 +511,7 @@ namespace PurrNet.Prediction.Recording
             var file = _file;
             _file = null;
             file.Dispose();
+            _lastEntities = _nextEntityId - 1;
             _stats.file = null;
             _lastFile = file;
 
@@ -690,9 +719,11 @@ namespace PurrNet.Prediction.Recording
             var file = _lastFile;
             if (file == null)
                 return "";
-            return $"[PredictionRecorder] Finished {file.path}: {_ticksRecorded} ticks, {_nextEntityId - 1} entities, " +
+            return $"[PredictionRecorder] Finished {file.path}: {_ticksRecorded} ticks, {_lastEntities} entities, " +
                    $"{file.bytesWritten / 1024f:0.0} KiB on disk ({file.rawBytes / 1024f:0.0} KiB before compression); " +
-                   $"writer thread {file.produceMs:0}ms encoding, {file.compressMs:0}ms compressing, longest record {file.maxRecordMs:0.0}ms, " +
+                   (RecordingFile.encodesOnMainThread
+                       ? $"main thread {file.produceMs:0}ms encoding (longest frame {file.maxRecordMs:0.0}ms), worker {file.compressMs:0}ms compressing, "
+                       : $"writer thread {file.produceMs:0}ms encoding, {file.compressMs:0}ms compressing, longest record {file.maxRecordMs:0.0}ms, ") +
                    $"largest chunk log {_peakLogBytes / 1048576f:0.0} MiB{(file.nativeDeflate ? "" : ", DeflateStream fallback")}\n" +
                    _stats.Summary(_ticksRecorded) + _types.DescribeReflection();
         }

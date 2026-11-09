@@ -84,6 +84,67 @@ namespace PurrNet.Prediction.Tests.Editor
         }
 
         [Test]
+        public void ChunksEncodedInStepsMatchOneEncode()
+        {
+            // Browsers encode a chunk over several frames; the bytes must not depend on where it was paused.
+            using var h = new RecorderHarness(60, Decorate);
+            var standing = new List<GameObject>();
+            for (int i = 0; i < 64; i++)
+            {
+                var id = h.world.server.hierarchy.Create(0, new Vector3(i, 1, 0), Quaternion.identity)!.Value;
+                h.world.server.hierarchy.TryGetGameObject(id, out var go);
+                standing.Add(go);
+            }
+            h.Configure("_chunkSeconds", 100f);
+            h.Start("stepwise-chunk.purrrec");
+            var bullets = new Queue<PredictedObjectID>();
+            for (int i = 0; i < 120; i++)
+            {
+                for (int e = 0; e < standing.Count; e++)
+                    standing[e].transform.position = new Vector3(e + Mathf.Sin(h.tick * 0.05f + e), 1, 0);
+                bullets.Enqueue(h.world.server.hierarchy.Create(0, Vector3.zero, Quaternion.identity)!.Value);
+                if (bullets.Count > 10)
+                    h.world.server.hierarchy.Delete(bullets.Dequeue());
+                h.Tick();
+            }
+
+            // The chunk being collected, with the stream table a flush gives it (see PredictionRecorder.FlushChunk).
+            const System.Reflection.BindingFlags Private = System.Reflection.BindingFlags.Instance |
+                                                           System.Reflection.BindingFlags.NonPublic;
+            object Field(object target, string name) => target.GetType().GetField(name, Private | System.Reflection.BindingFlags.Public)!.GetValue(target);
+            var job = Field(h.recorder, "_job");
+            var live = (ChunkLog)Field(job, "log");
+            var log = new ChunkLog();
+            log.bytes.WriteBytes(live.bytes.data, 0, live.bytes.length);
+            log.firstTick = (ulong)Field(h.recorder, "_chunkFirstTick");
+            log.tickCount = h.tick - log.firstTick;
+            foreach (var s in (List<StreamRows>)Field(h.recorder, "_slots"))
+            {
+                log.streams.Add(new ChunkStream
+                {
+                    id = s.id, layout = s.layout, forwardFill = s.forwardFill, baseColumns = s.baseColumns,
+                    baseSlot = s.baseStream != null ? (int)Field(s.baseStream, "slot") : -1
+                });
+            }
+            Assert.That(log.bytes.length, Is.GreaterThan(64 * 1024), "a chunk worth pausing");
+
+            var whole = new ChunkEncoder().Encode(log);
+            byte[] expected = whole.data.AsSpan(0, whole.length).ToArray();
+
+            var stepped = new ChunkEncoder();
+            stepped.Begin(log);
+            int pauses = 0;
+            // A deadline in the past: every call does the least it may and pauses.
+            while (!stepped.Step(0))
+                pauses++;
+            byte[] actual = stepped.result.data.AsSpan(0, stepped.result.length).ToArray();
+
+            Assert.That(pauses, Is.GreaterThan(20), "the chunk was encoded in many steps");
+            Assert.That(actual, Is.EqualTo(expected));
+            h.Stop();
+        }
+
+        [Test]
         public void ChangesAreFoundWithNoTimeBudget()
         {
             using var h = new RecorderHarness(60, Decorate);

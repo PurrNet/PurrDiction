@@ -1,3 +1,7 @@
+#if UNITY_WEBGL && !UNITY_EDITOR
+// In a browser the recording worker stores and uploads the files (see WebRecording); this only says when it may.
+#define PURRREC_WEB
+#endif
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -16,6 +20,8 @@ namespace PurrNet.Prediction.Recording
     /// is deleted unsent. Recordings that cannot be sent are kept up to a size cap, oldest deleted first.
     /// The settings are remembered, so files left by an earlier session are sent from the next launch on,
     /// before any match scene loads.
+    /// On WebGL the recordings live in the browser (IndexedDB) and the recording worker sends them with the same
+    /// protocol and rules; the service and its storage must allow the game's origin (CORS).
     /// </summary>
     [AddComponentMenu("")]
     public sealed class RecordingUploader : MonoBehaviour
@@ -27,14 +33,43 @@ namespace PurrNet.Prediction.Recording
 
         static RecordingUploader _instance;
 
+        /// <summary>
+        /// True on CI machines (GitHub Actions, GitLab, Azure Pipelines, Jenkins, TeamCity, Buildkite and anything that
+        /// sets CI). Test and benchmark matches there are not gameplay: the recorder does not start on its own and
+        /// nothing is uploaded. An explicit <see cref="PredictionRecorder.StartRecording"/> still records.
+        /// </summary>
+        public static bool runningOnCI { get; } = DetectCI();
+
+        static bool DetectCI()
+        {
+            try
+            {
+                string ci = Environment.GetEnvironmentVariable("CI");
+                if (!string.IsNullOrEmpty(ci) && ci != "0" && !ci.Equals("false", StringComparison.OrdinalIgnoreCase))
+                    return true;
+                foreach (var name in new[] { "GITHUB_ACTIONS", "GITLAB_CI", "TF_BUILD", "JENKINS_URL", "TEAMCITY_VERSION", "BUILDKITE" })
+                {
+                    if (!string.IsNullOrEmpty(Environment.GetEnvironmentVariable(name)))
+                        return true;
+                }
+            }
+            catch (Exception)
+            {
+                // No environment on this platform (a browser): not CI.
+            }
+            return false;
+        }
+
         string _endpoint;
         string _projectKey;
         string _directory;
         long _maxLocalBytes;
         string _activePath;
+#if !PURRREC_WEB
         float _retryAt;
         bool _blocked;
         bool _uploading;
+#endif
         UnityWebRequest _request;
 
         /// <summary>
@@ -54,6 +89,9 @@ namespace PurrNet.Prediction.Recording
             _instance._projectKey = projectKey;
             _instance._directory = directory;
             _instance._maxLocalBytes = maxLocalBytes;
+#if PURRREC_WEB
+            WebRecording.Uploads(_instance._endpoint, projectKey, maxLocalBytes);
+#endif
 
             var saved = JsonUtility.ToJson(new SavedSettings
             {
@@ -78,7 +116,7 @@ namespace PurrNet.Prediction.Recording
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         static void ResumeFromLastSession()
         {
-            if (_instance)
+            if (_instance || runningOnCI || Application.isEditor)
                 return;
             string json = PlayerPrefs.GetString(PrefsKey, "");
             if (string.IsNullOrEmpty(json))
@@ -98,12 +136,27 @@ namespace PurrNet.Prediction.Recording
         /// <summary>A recording was finished: try sending it soon, and keep the folder under its cap.</summary>
         public static void NotifyFinished()
         {
+#if !PURRREC_WEB // the worker trims and sends recordings as they are finished
             if (!_instance)
                 return;
             _instance._retryAt = 0;
             _instance.TrimFolder();
+#endif
         }
 
+#if PURRREC_WEB
+        bool? _webIdle;
+
+        void Update()
+        {
+            bool idle = IsIdle();
+            if (_webIdle != idle)
+            {
+                _webIdle = idle;
+                WebRecording.SetIdle(idle);
+            }
+        }
+#else
         void Update()
         {
             if (_uploading)
@@ -125,6 +178,7 @@ namespace PurrNet.Prediction.Recording
             }
             StartCoroutine(Send(next));
         }
+#endif
 
         static bool IsIdle()
         {
@@ -132,6 +186,7 @@ namespace PurrNet.Prediction.Recording
             return !manager || manager.isOffline;
         }
 
+#if !PURRREC_WEB
         string OldestPending()
         {
             if (string.IsNullOrEmpty(_directory) || !Directory.Exists(_directory))
@@ -305,6 +360,8 @@ namespace PurrNet.Prediction.Recording
                 return false;
             }
         }
+
+#endif
 
         void OnDestroy()
         {

@@ -154,145 +154,220 @@ namespace PurrNet.Prediction.Recording
         /// <summary>Returns the encoder's own buffer, valid until the next call.</summary>
         public RecordingBuffer Encode(ChunkLog log)
         {
-            Split(log);
+            Begin(log);
+            Step(long.MaxValue);
+            return _buffer;
+        }
 
+        // Where a chunk that is encoded in steps (see Step) got to.
+        enum Phase { Count, Layout, Scatter, Header, Streams, Done }
+
+        ChunkLog _log;
+        Phase _phase = Phase.Done;
+        int _at, _slot;
+        ulong _tick;
+
+        /// <summary>The finished chunk once <see cref="Step"/> returned true; valid until the next chunk.</summary>
+        public RecordingBuffer result => _buffer;
+
+        /// <summary>Starts encoding <paramref name="log"/> in steps; <see cref="Step"/> does the work.</summary>
+        public void Begin(ChunkLog log)
+        {
+            _log = log;
+            _phase = Phase.Count;
+            _at = 0;
+            _tick = 0;
+            _slot = 0;
+            int slots = log.streams.Count;
+            Grow(ref _slotFirst, slots);
+            Grow(ref _slotCount, slots);
+            Grow(ref _slotFill, slots);
+            Grow(ref _slotManagedFirst, slots);
+            Array.Clear(_slotCount, 0, slots);
+        }
+
+        /// <summary>
+        /// Encodes until the chunk is done (true) or <see cref="System.Diagnostics.Stopwatch"/> passes
+        /// <paramref name="deadline"/> (false: call again to continue). The bytes are the same as one
+        /// <see cref="Encode"/> call; a browser spreads a chunk over frames this way.
+        /// </summary>
+        public bool Step(long deadline)
+        {
+            var log = _log;
             var streams = log.streams;
-            var buffer = _buffer;
-            buffer.Clear();
-            buffer.WriteVarUInt(log.firstTick);
-            buffer.WriteVarUInt(log.tickCount);
-            int blocks = 0;
-            for (int i = 0; i < streams.Count; i++)
-                if (_slotCount[i] > 0)
-                    blocks++;
-            buffer.WriteVarUInt((ulong)blocks);
+            byte[] data = log.bytes.data;
+            int end = log.bytes.length;
+            int work = 0;
+            while (true)
+            {
+                switch (_phase)
+                {
+                    case Phase.Count:
+                        // Pass 1: rows per slot.
+                        while (_at < end)
+                        {
+                            if ((++work & 255) == 0 && System.Diagnostics.Stopwatch.GetTimestamp() > deadline)
+                                return false;
+                            int header = ReadInt(data, _at);
+                            int slot = header & ~ChunkLog.TickFollows;
+                            _at += header < 0 ? 12 : 4;
+                            _slotCount[slot]++;
+                            _at = SkipEntry(data, _at, streams[slot].layout);
+                        }
+                        _phase = Phase.Layout;
+                        break;
 
+                    case Phase.Layout:
+                        Layout(streams);
+                        _at = 0;
+                        _tick = 0;
+                        _phase = Phase.Scatter;
+                        break;
+
+                    case Phase.Scatter:
+                        // Pass 2: scatter.
+                        while (_at < end)
+                        {
+                            if ((++work & 255) == 0 && System.Diagnostics.Stopwatch.GetTimestamp() > deadline)
+                                return false;
+                            _at = ScatterEntry(data, _at, streams);
+                        }
+                        _phase = Phase.Header;
+                        break;
+
+                    case Phase.Header:
+                        _buffer.Clear();
+                        _buffer.WriteVarUInt(log.firstTick);
+                        _buffer.WriteVarUInt(log.tickCount);
+                        int blocks = 0;
+                        for (int i = 0; i < streams.Count; i++)
+                            if (_slotCount[i] > 0)
+                                blocks++;
+                        _buffer.WriteVarUInt((ulong)blocks);
+                        _slot = 0;
+                        _phase = Phase.Streams;
+                        break;
+
+                    case Phase.Streams:
+                        while (_slot < streams.Count)
+                        {
+                            int slot = _slot++;
+                            if (_slotCount[slot] == 0)
+                                continue;
+                            EncodeStream(log, slot);
+                            // Each stream is written whole and the deadline checked after it, so every call progresses.
+                            if (_slot < streams.Count && System.Diagnostics.Stopwatch.GetTimestamp() > deadline)
+                                return false;
+                        }
+                        _phase = Phase.Done;
+                        _log = null;
+                        return true;
+
+                    default:
+                        return true;
+                }
+            }
+        }
+
+        void EncodeStream(ChunkLog log, int slot)
+        {
+            var buffer = _buffer;
             var work = _work;
             var coded = _coded;
             var keep = _keep;
             byte[] plane = _plane;
             byte[] logBytes = log.bytes.data;
 
-            for (int slot = 0; slot < streams.Count; slot++)
+            int n = _slotCount[slot];
+            var s = log.streams[slot];
+            int size = s.layout.rowSize;
+            int first = _slotFirst[slot];
+            int managedFields = s.layout.managed.Count;
+
+            // 1. Duplicate columns become XOR against the base stream's row at the same tick.
+            work.Clear();
+            work.Ensure(n * size);
+            Buffer.BlockCopy(_rows, _rowOffset[first], work.data, 0, n * size);
+            work.length = n * size;
+            if (s.baseSlot >= 0 && _slotCount[s.baseSlot] > 0)
+                XorWithBase(s, first, n, _slotFirst[s.baseSlot], _slotCount[s.baseSlot], work.data);
+
+            // 2. Per-tick streams keep only rows that differ from the previous kept one.
+            keep.Clear();
+            int managedBase = _slotManagedFirst[slot];
+            for (int r = 0; r < n; r++)
             {
-                int n = _slotCount[slot];
-                if (n == 0)
-                    continue;
+                if (r == 0 || !s.forwardFill ||
+                    !SameRow(work.data, r, keep[keep.Count - 1], size, managedBase, managedFields, logBytes))
+                    keep.Add(r);
+            }
+            int k = keep.Count;
 
-                var s = streams[slot];
-                int size = s.layout.rowSize;
-                int first = _slotFirst[slot];
-                int managedFields = s.layout.managed.Count;
+            buffer.WriteVarUInt((ulong)s.id);
+            buffer.WriteVarUInt((ulong)k);
+            ulong previous = log.firstTick;
+            foreach (int r in keep)
+            {
+                buffer.WriteVarUInt(_ticks[first + r] - previous);
+                previous = _ticks[first + r];
+            }
+            if (s.forwardFill)
+                buffer.WriteVarUInt(_ticks[first + n - 1] - _ticks[first + keep[0]]);
 
-                // 1. Duplicate columns become XOR against the base stream's row at the same tick.
-                work.Clear();
-                work.Ensure(n * size);
-                Buffer.BlockCopy(_rows, _rowOffset[first], work.data, 0, n * size);
-                work.length = n * size;
-                if (s.baseSlot >= 0 && _slotCount[s.baseSlot] > 0)
-                    XorWithBase(s, first, n, _slotFirst[s.baseSlot], _slotCount[s.baseSlot], work.data);
+            // 3. Column coding of the kept rows, then byte planes.
+            int total = k * size;
+            if (total > 0)
+            {
+                coded.Clear();
+                coded.Ensure(total);
+                for (int i = 0; i < k; i++)
+                    Buffer.BlockCopy(work.data, keep[i] * size, coded.data, i * size, size);
+                coded.length = total;
+                CodeColumns(s.layout, coded.data, k);
 
-                // 2. Per-tick streams keep only rows that differ from the previous kept one.
-                keep.Clear();
-                int managedBase = _slotManagedFirst[slot];
-                for (int r = 0; r < n; r++)
+                if (plane.Length < total)
                 {
-                    if (r == 0 || !s.forwardFill ||
-                        !SameRow(work.data, r, keep[keep.Count - 1], size, managedBase, managedFields, logBytes))
-                        keep.Add(r);
+                    if (plane.Length > 0)
+                        _shelf.Put(plane);
+                    plane = _shelf.Take(Mathf.NextPowerOfTwo(total));
                 }
-                int k = keep.Count;
+                for (int r = 0; r < k; r++)
+                    for (int b = 0; b < size; b++)
+                        plane[b * k + r] = coded.data[r * size + b];
+                buffer.WriteBytes(plane, 0, total);
+            }
 
-                buffer.WriteVarUInt((ulong)s.id);
-                buffer.WriteVarUInt((ulong)k);
-                ulong previous = log.firstTick;
+            for (int f = 0; f < managedFields; f++)
+            {
+                int last = -1;
                 foreach (int r in keep)
                 {
-                    buffer.WriteVarUInt(_ticks[first + r] - previous);
-                    previous = _ticks[first + r];
-                }
-                if (s.forwardFill)
-                    buffer.WriteVarUInt(_ticks[first + n - 1] - _ticks[first + keep[0]]);
-
-                // 3. Column coding of the kept rows, then byte planes.
-                int total = k * size;
-                if (total > 0)
-                {
-                    coded.Clear();
-                    coded.Ensure(total);
-                    for (int i = 0; i < k; i++)
-                        Buffer.BlockCopy(work.data, keep[i] * size, coded.data, i * size, size);
-                    coded.length = total;
-                    CodeColumns(s.layout, coded.data, k);
-
-                    if (plane.Length < total)
+                    int v = managedBase + r * managedFields + f;
+                    if (last >= 0 && SameValue(logBytes, last, v))
                     {
-                        if (plane.Length > 0)
-                            _shelf.Put(plane);
-                        plane = _shelf.Take(Mathf.NextPowerOfTwo(total));
+                        buffer.WriteVarUInt(0);
+                        continue;
                     }
-                    for (int r = 0; r < k; r++)
-                        for (int b = 0; b < size; b++)
-                            plane[b * k + r] = coded.data[r * size + b];
-                    buffer.WriteBytes(plane, 0, total);
+                    buffer.WriteVarUInt((ulong)_valueLength[v] + 1);
+                    buffer.WriteBytes(logBytes, _valueStart[v], _valueLength[v]);
+                    last = v;
                 }
+            }
 
-                for (int f = 0; f < managedFields; f++)
-                {
-                    int last = -1;
-                    foreach (int r in keep)
-                    {
-                        int v = managedBase + r * managedFields + f;
-                        if (last >= 0 && SameValue(logBytes, last, v))
-                        {
-                            buffer.WriteVarUInt(0);
-                            continue;
-                        }
-                        buffer.WriteVarUInt((ulong)_valueLength[v] + 1);
-                        buffer.WriteBytes(logBytes, _valueStart[v], _valueLength[v]);
-                        last = v;
-                    }
-                }
-
-                if (s.forwardFill)
-                {
-                    uint crc = Crc32(_rows, _rowOffset[first], n * size);
-                    for (int i = 0; i < 4; i++)
-                        buffer.WriteByte((byte)(crc >> (8 * i)));
-                }
+            if (s.forwardFill)
+            {
+                uint crc = Crc32(_rows, _rowOffset[first], n * size);
+                for (int i = 0; i < 4; i++)
+                    buffer.WriteByte((byte)(crc >> (8 * i)));
             }
 
             _plane = plane;
-            return buffer;
         }
 
-        /// <summary>
-        /// Splits the log into per-slot runs: fixed rows copied contiguously per slot, ticks, and the positions of the
-        /// managed values (which stay in the log).
-        /// </summary>
-        void Split(ChunkLog log)
+        /// <summary>Places each slot's rows contiguously once the rows per slot are counted.</summary>
+        void Layout(List<ChunkStream> streams)
         {
-            var streams = log.streams;
             int slots = streams.Count;
-            Grow(ref _slotFirst, slots);
-            Grow(ref _slotCount, slots);
-            Grow(ref _slotFill, slots);
-            Grow(ref _slotManagedFirst, slots);
-            Array.Clear(_slotCount, 0, slots);
-
-            // Pass 1: rows per slot.
-            byte[] data = log.bytes.data;
-            int end = log.bytes.length;
-            int at = 0;
-            while (at < end)
-            {
-                int header = ReadInt(data, at);
-                int slot = header & ~ChunkLog.TickFollows;
-                at += header < 0 ? 12 : 4;
-                _slotCount[slot]++;
-                at = SkipEntry(data, at, streams[slot].layout);
-            }
-
             int rowTotal = 0, rowBytes = 0, managedTotal = 0;
             for (int i = 0; i < slots; i++)
             {
@@ -317,47 +392,46 @@ namespace PurrNet.Prediction.Recording
                     _rowOffset[_slotFirst[i] + r] = offset + r * size;
                 offset += _slotCount[i] * size;
             }
+        }
 
-            // Pass 2: scatter.
-            at = 0;
-            ulong tick = 0;
-            while (at < end)
+        /// <summary>Copies one log entry to its slot's rows (fixed part) and value table (managed part).</summary>
+        int ScatterEntry(byte[] data, int at, List<ChunkStream> streams)
+        {
+            int header = ReadInt(data, at);
+            int slot = header & ~ChunkLog.TickFollows;
+            if (header < 0)
             {
-                int header = ReadInt(data, at);
-                int slot = header & ~ChunkLog.TickFollows;
-                if (header < 0)
-                {
-                    tick = ReadULong(data, at + 4);
-                    at += 12;
-                }
-                else
-                    at += 4;
-                var layout = streams[slot].layout;
-                int r = _slotFill[slot]++;
-                int row = _slotFirst[slot] + r;
-                _ticks[row] = tick;
-                Buffer.BlockCopy(data, at, _rows, _rowOffset[row], layout.rowSize);
-                at += layout.rowSize;
-
-                int fields = layout.managed.Count;
-                int managedRow = _slotManagedFirst[slot] + r * fields;
-                for (int f = 0; f < fields; f++)
-                {
-                    int length = ReadInt(data, at);
-                    at += 4;
-                    int v = managedRow + f;
-                    if (length < 0)
-                    {
-                        // Same as the stream's previous value in this chunk.
-                        _valueStart[v] = _valueStart[v - fields];
-                        _valueLength[v] = _valueLength[v - fields];
-                        continue;
-                    }
-                    _valueStart[v] = at;
-                    _valueLength[v] = length;
-                    at += length;
-                }
+                _tick = ReadULong(data, at + 4);
+                at += 12;
             }
+            else
+                at += 4;
+            var layout = streams[slot].layout;
+            int r = _slotFill[slot]++;
+            int row = _slotFirst[slot] + r;
+            _ticks[row] = _tick;
+            Buffer.BlockCopy(data, at, _rows, _rowOffset[row], layout.rowSize);
+            at += layout.rowSize;
+
+            int fields = layout.managed.Count;
+            int managedRow = _slotManagedFirst[slot] + r * fields;
+            for (int f = 0; f < fields; f++)
+            {
+                int length = ReadInt(data, at);
+                at += 4;
+                int v = managedRow + f;
+                if (length < 0)
+                {
+                    // Same as the stream's previous value in this chunk.
+                    _valueStart[v] = _valueStart[v - fields];
+                    _valueLength[v] = _valueLength[v - fields];
+                    continue;
+                }
+                _valueStart[v] = at;
+                _valueLength[v] = length;
+                at += length;
+            }
+            return at;
         }
 
         /// <summary>Skips an entry's row and managed values (<paramref name="at"/> is past its slot and tick).</summary>
