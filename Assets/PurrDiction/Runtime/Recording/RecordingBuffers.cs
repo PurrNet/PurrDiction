@@ -11,13 +11,29 @@ namespace PurrNet.Prediction.Recording
     {
         public byte[] data;
         public int length;
+        /// <summary>When set, growing takes the larger array from here and leaves the old one for the next buffer.</summary>
+        readonly ByteShelf _shelf;
 
         public RecordingBuffer(int capacity = 256)
         {
             data = new byte[Math.Max(16, capacity)];
         }
 
+        /// <summary>A buffer whose arrays come from (and go back to) <paramref name="shelf"/>, so growing makes no garbage.</summary>
+        public RecordingBuffer(ByteShelf shelf, int capacity)
+        {
+            _shelf = shelf;
+            data = shelf.Take(Math.Max(16, capacity));
+        }
+
         public void Clear() => length = 0;
+
+        /// <summary>Grows the array now (a load moment) so later writes up to <paramref name="capacity"/> do not.</summary>
+        public void Reserve(int capacity)
+        {
+            if (data.Length < capacity)
+                Ensure(capacity - length);
+        }
 
         public void Ensure(int extra)
         {
@@ -27,7 +43,15 @@ namespace PurrNet.Prediction.Recording
             int size = data.Length;
             while (size < needed)
                 size *= 2;
-            Array.Resize(ref data, size);
+            if (_shelf == null)
+            {
+                Array.Resize(ref data, size);
+                return;
+            }
+            var next = _shelf.Take(size);
+            Buffer.BlockCopy(data, 0, next, 0, length);
+            _shelf.Put(data);
+            data = next;
         }
 
         public void WriteByte(byte value)
@@ -150,6 +174,57 @@ namespace PurrNet.Prediction.Recording
                 if (data[offset + i] != other[i])
                     return false;
             return true;
+        }
+    }
+
+    /// <summary>
+    /// Byte arrays that buffers grew out of, kept for the next buffer that needs one. Chunk logs grow to megabytes
+    /// early in a match; with a shelf the arrays they leave behind are reused instead of becoming garbage, so the
+    /// recorder never triggers a collection by growing.
+    /// </summary>
+    public sealed class ByteShelf
+    {
+        /// <summary>The recorder's shelf: chunk logs, metadata batches, the encoder and compressed output share it.</summary>
+        public static readonly ByteShelf shared = new ByteShelf();
+
+        readonly System.Collections.Generic.List<byte[]> _free = new System.Collections.Generic.List<byte[]>();
+
+        /// <summary>
+        /// The smallest kept array of at least <paramref name="size"/> bytes, or a new one. Arrays more than four times
+        /// too big are left for buffers that need them, so a small buffer never holds megabytes.
+        /// </summary>
+        public byte[] Take(int size)
+        {
+            lock (_free)
+            {
+                int best = -1;
+                for (int i = 0; i < _free.Count; i++)
+                    if (_free[i].Length >= size && _free[i].Length / 4 <= size &&
+                        (best < 0 || _free[i].Length < _free[best].Length))
+                        best = i;
+                if (best >= 0)
+                    return TakeAt(best);
+            }
+            return new byte[size];
+        }
+
+        byte[] TakeAt(int index)
+        {
+            var array = _free[index];
+            _free[index] = _free[_free.Count - 1];
+            _free.RemoveAt(_free.Count - 1);
+            return array;
+        }
+
+        public void Put(byte[] array)
+        {
+            lock (_free)
+                _free.Add(array);
+        }
+
+        public int count
+        {
+            get { lock (_free) return _free.Count; }
         }
     }
 }

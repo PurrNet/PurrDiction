@@ -535,7 +535,7 @@ namespace PurrNet.Prediction.Recording
         readonly int _size;
         byte[] _raw = Array.Empty<byte>(), _nextRaw = Array.Empty<byte>();
         int[] _start = new int[1], _nextStart = new int[1];
-        RecordingBuffer _encoded = new RecordingBuffer(256), _nextEncoded = new RecordingBuffer(256);
+        RecordingBuffer _encoded = new RecordingBuffer(ByteShelf.shared, 256), _nextEncoded = new RecordingBuffer(ByteShelf.shared, 256);
         int _count, _nextCount, _cursor, _depth = -1;
 
         ElementMemo(int size) => _size = size;
@@ -566,10 +566,11 @@ namespace PurrNet.Prediction.Recording
             _cursor = 0;
             _nextCount = 0;
             _nextEncoded.Clear();
+            // Power-of-two sizes: lists that grow over a match reach their size in few steps.
             if (_nextRaw.Length < count * _size)
-                _nextRaw = new byte[Math.Max(count * _size, _nextRaw.Length * 2)];
+                _nextRaw = new byte[Math.Max(UnityEngine.Mathf.NextPowerOfTwo(count * _size), _nextRaw.Length * 2)];
             if (_nextStart.Length < count + 1)
-                _nextStart = new int[Math.Max(count + 1, _nextStart.Length * 2)];
+                _nextStart = new int[Math.Max(UnityEngine.Mathf.NextPowerOfTwo(count + 1), _nextStart.Length * 2)];
         }
 
         public void Write<T>(ref T item, ObjectPlan plan, RecordingTypeRegistry types, RecordingBuffer buffer, int depth,

@@ -347,12 +347,19 @@ namespace PurrNet.Prediction.Recording
 
         readonly HashSet<Type> _reflectionNoted = new HashSet<Type>();
 
-        /// <summary>Says once per type that it is recorded through reflection, which allocates every tick.</summary>
+        readonly List<string> _reflectionNotes = new List<string>();
+
+        /// <summary>Remembers once per type that it is recorded through reflection, which allocates every tick.</summary>
         void NoteReflection(Type type, string where)
         {
             if (_reflectionNoted.Add(type))
-                UnityEngine.Debug.Log($"[PredictionRecorder] {TypeName(type)} ({where}) is recorded through reflection, which makes garbage.");
+                _reflectionNotes.Add($"{TypeName(type)} ({where})");
         }
+
+        /// <summary>The types recorded through reflection (they make garbage), as text; empty when there are none.</summary>
+        internal string DescribeReflection() => _reflectionNotes.Count == 0
+            ? ""
+            : "  recorded through reflection (makes garbage): " + string.Join(", ", _reflectionNotes) + "\n";
 
         bool WriteTypedList(RecordingBuffer buffer, object value, Type type, int depth, HashSet<object> visiting)
         {

@@ -86,6 +86,9 @@ namespace PurrNet.Prediction.Tests.Editor
             return ReadMeta(_path);
         }
 
+        /// <summary>Sets a recorder field (an inspector setting, say) before <see cref="Start"/>.</summary>
+        public void Configure(string name, object value) => Set(recorder, name, value);
+
         public object Private(string name) => typeof(PredictionRecorder).GetField(name, Fields)!.GetValue(recorder);
 
         public void Dispose()
@@ -110,7 +113,26 @@ namespace PurrNet.Prediction.Tests.Editor
             return result;
         }
 
-        static void Read(byte[] data, int pos, int end, bool topLevel, List<(RecordKind, string)> into)
+        /// <summary>The raw payloads of the records of one kind, including those inside BATCH records.</summary>
+        public static List<byte[]> ReadPayloads(string path, RecordKind kind)
+        {
+            var result = new List<byte[]>();
+            var bytes = File.ReadAllBytes(path);
+            Read(bytes, 10, bytes.Length, true, null, (k, payload) =>
+            {
+                if (k == kind)
+                    result.Add(payload);
+            });
+            return result;
+        }
+
+        public string path => _path;
+
+        /// <summary>The recorder's description of the last recording (it logs nothing itself).</summary>
+        public string Describe() => (string)typeof(PredictionRecorder).GetMethod("DescribeLastRecording", Fields)!.Invoke(recorder, null);
+
+        static void Read(byte[] data, int pos, int end, bool topLevel, List<(RecordKind, string)> into,
+            Action<RecordKind, byte[]> onRecord = null)
         {
             while (pos < end)
             {
@@ -128,9 +150,10 @@ namespace PurrNet.Prediction.Tests.Editor
                     kind &= 0x7F;
                 }
                 var k = (RecordKind)kind;
+                onRecord?.Invoke(k, payload);
                 if (k == RecordKind.Batch)
-                    Read(payload, 0, payload.Length, false, into);
-                else if (k != RecordKind.Chunk && k != RecordKind.Mesh)
+                    Read(payload, 0, payload.Length, false, into, onRecord);
+                else if (into != null && k != RecordKind.Chunk && k != RecordKind.Mesh)
                     into.Add((k, Encoding.UTF8.GetString(payload)));
             }
         }

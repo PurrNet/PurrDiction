@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Unity.Collections.LowLevel.Unsafe;
+using Mathf = UnityEngine.Mathf;
 
 namespace PurrNet.Prediction.Recording
 {
@@ -53,7 +54,7 @@ namespace PurrNet.Prediction.Recording
     /// </summary>
     public sealed class ChunkLog
     {
-        public readonly RecordingBuffer bytes = new RecordingBuffer(1 << 16);
+        public readonly RecordingBuffer bytes;
         public readonly List<ChunkStream> streams = new List<ChunkStream>();
         public ulong firstTick;
         public ulong tickCount;
@@ -61,6 +62,11 @@ namespace PurrNet.Prediction.Recording
         public const int TickFollows = int.MinValue;
         internal ulong lastTick;
         internal bool hasTick;
+
+        public ChunkLog() => bytes = new RecordingBuffer(1 << 16);
+
+        /// <summary>A log whose array comes from <paramref name="shelf"/> and grows through it.</summary>
+        public ChunkLog(ByteShelf shelf) => bytes = new RecordingBuffer(shelf, 1 << 16);
 
         public void Clear()
         {
@@ -98,9 +104,17 @@ namespace PurrNet.Prediction.Recording
             return tables;
         }
 
-        readonly RecordingBuffer _buffer = new RecordingBuffer(4096);
-        readonly RecordingBuffer _work = new RecordingBuffer(1024);
-        readonly RecordingBuffer _coded = new RecordingBuffer(1024);
+        // The encoder's buffers grow to the largest chunk early in a match; the arrays they outgrow are reused by one
+        // another instead of becoming garbage.
+        readonly ByteShelf _shelf = ByteShelf.shared;
+        readonly RecordingBuffer _buffer, _work, _coded;
+
+        public ChunkEncoder()
+        {
+            _buffer = new RecordingBuffer(_shelf, 4096);
+            _work = new RecordingBuffer(_shelf, 1024);
+            _coded = new RecordingBuffer(_shelf, 1024);
+        }
         readonly List<int> _keep = new List<int>();
         readonly Dictionary<RowLayout, bool[]> _numericMasks = new Dictionary<RowLayout, bool[]>();
         byte[] _plane = Array.Empty<byte>();
@@ -118,8 +132,23 @@ namespace PurrNet.Prediction.Recording
 
         static void Grow<T>(ref T[] array, int size)
         {
+            // Power-of-two sizes: chunks of a growing match need few steps, so few arrays are left behind.
             if (array.Length < size)
-                array = new T[Math.Max(size, array.Length * 2)];
+                array = new T[Math.Max(Mathf.NextPowerOfTwo(size), array.Length * 2)];
+        }
+
+        /// <summary>
+        /// Sizes the working arrays for logs of up to <paramref name="logCapacity"/> bytes, so encoding does not grow
+        /// them during a match. Call before chunks are queued (the writer thread owns the encoder afterwards).
+        /// </summary>
+        public void Reserve(int logCapacity)
+        {
+            Grow(ref _rows, logCapacity);
+            // Entries are at least a 4-byte header and a row; most rows are tens of bytes.
+            Grow(ref _rowOffset, logCapacity / 16);
+            Grow(ref _ticks, logCapacity / 16);
+            // An encoded chunk is at most about its log's size (every row changed), usually far less.
+            _buffer.Reserve(logCapacity);
         }
 
         /// <summary>Returns the encoder's own buffer, valid until the next call.</summary>
@@ -197,7 +226,11 @@ namespace PurrNet.Prediction.Recording
                     CodeColumns(s.layout, coded.data, k);
 
                     if (plane.Length < total)
-                        plane = new byte[Math.Max(total, plane.Length * 2)];
+                    {
+                        if (plane.Length > 0)
+                            _shelf.Put(plane);
+                        plane = _shelf.Take(Mathf.NextPowerOfTwo(total));
+                    }
                     for (int r = 0; r < k; r++)
                         for (int b = 0; b < size; b++)
                             plane[b * k + r] = coded.data[r * size + b];
