@@ -63,10 +63,10 @@ namespace PurrNet.Prediction.Tests.Editor
             Assert.That(_manager.IsAwaitingMigrationRejoin(Returning), Is.True,
                 "joined but not observing yet: PredictedPlayers would remove it");
 
-            Observers().Add(Returning);
+            Invoke(typeof(NetworkIdentity), _manager, "TryAddObserver", Returning);
             Assert.That(_manager.IsAwaitingMigrationRejoin(Returning), Is.False, "observing ends the wait");
 
-            Observers().Remove(Returning);
+            Invoke(typeof(NetworkIdentity), _manager, "TryRemoveObserver", Returning);
             Assert.That(_manager.IsAwaitingMigrationRejoin(Returning), Is.False,
                 "a later observer loss is an ordinary departure");
         }
@@ -103,9 +103,6 @@ namespace PurrNet.Prediction.Tests.Editor
 
         private void ReturnPlayer()
             => Invoke(typeof(NetworkManager), _networkManager, "NoteHostMigrationPlayerJoined", Returning);
-
-        private List<PlayerID> Observers()
-            => GetField<List<PlayerID>>(typeof(NetworkIdentity), _manager, "_observers");
 
         private static void Invoke(Type declaringType, object target, string methodName, params object[] args)
         {

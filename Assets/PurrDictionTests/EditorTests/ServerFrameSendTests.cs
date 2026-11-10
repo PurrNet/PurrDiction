@@ -323,6 +323,7 @@ namespace PurrNet.Prediction.Tests.Editor
                 frame.frameBits = (int)frameBits;
                 frame.body = new BitPacker();
                 frame.body.WriteBitDataWithoutConsumingIt(new BitData(payload.packer, 0, (int)frameBits));
+                payload.packer.SkipBytes(payload.originalLength);
                 payload.packer.ResetPositionAndMode(true);
                 frame.marker = Packer<uint>.Read(payload.packer);
                 sent.Add(frame);

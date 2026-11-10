@@ -4,6 +4,11 @@ using PurrNet.Prediction.StateMachine;
 using PurrNet.Recording;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.Scripting;
+
+// Nothing references this assembly: it adds itself to PurrNet's recorder at load. Without these the linker of a
+// stripped build (IL2CPP) drops the extension, and matches are recorded without predicted state.
+[assembly: AlwaysLinkAssembly]
 
 namespace PurrNet.Prediction.Recording
 {
@@ -14,8 +19,13 @@ namespace PurrNet.Prediction.Recording
     /// recordings run on its ticks: the row for tick T is the state before T was simulated and the input applied
     /// during T.
     /// </summary>
+    [Preserve]
     public sealed class PredictionRecording : RecorderExtension, IPredictedDataVisitor, IRecordingContext
     {
+        [Preserve]
+        public PredictionRecording() { }
+
+        [Preserve]
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         static void Register() => NetworkRecorder.RegisterExtension<PredictionRecording>();
 
