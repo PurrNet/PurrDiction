@@ -7,13 +7,14 @@ using System.Text;
 using NUnit.Framework;
 using PurrNet.Prediction.Profiler;
 using PurrNet.Prediction.Recording;
+using PurrNet.Recording;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
 namespace PurrNet.Prediction.Tests.Editor
 {
     /// <summary>
-    /// A server world (see <see cref="PooledSpawnAllocationTests.World"/>) with a <see cref="PredictionRecorder"/> fed by
+    /// A server world (see <see cref="PooledSpawnAllocationTests.World"/>) with a <see cref="NetworkRecorder"/> fed by
     /// hand: each <see cref="Tick"/> steps the server, records the tick and delivers the frame.
     /// </summary>
     internal sealed class RecorderHarness : IDisposable
@@ -21,7 +22,7 @@ namespace PurrNet.Prediction.Tests.Editor
         const BindingFlags Fields = BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.Public;
 
         public readonly PooledSpawnAllocationTests.World world;
-        public readonly PredictionRecorder recorder;
+        public readonly NetworkRecorder recorder;
         public readonly string directory;
         readonly Action<ulong> _record;
         readonly List<GameObject> _scene = new List<GameObject>();
@@ -31,15 +32,16 @@ namespace PurrNet.Prediction.Tests.Editor
         public RecorderHarness(int tickRate, Action<GameObject> decoratePrefab = null)
         {
             world = new PooledSpawnAllocationTests.World(tickRate, decoratePrefab: decoratePrefab);
-            recorder = world.server.gameObject.AddComponent<PredictionRecorder>();
+            // Edit mode runs no load-time registration.
+            NetworkRecorder.RegisterExtension<PredictionRecording>();
+            recorder = world.server.gameObject.AddComponent<NetworkRecorder>();
             directory = Path.GetFullPath(Path.Combine(Application.dataPath, "../test-results/recorder-tests"));
-            Set(recorder, "_predictionManager", world.server);
             Set(recorder, "_recordCamera", false);
             Set(recorder, "_upload", false);
             Set(recorder, "_directory", directory);
             Invoke(recorder, "Awake");
-            _record = (Action<ulong>)Delegate.CreateDelegate(typeof(Action<ulong>), recorder,
-                typeof(PredictionRecorder).GetMethod("OnServerTickReady", Fields));
+            recorder.GetExtension<PredictionRecording>().predictionManager = world.server;
+            _record = recorder.RecordTick;
         }
 
         /// <summary>A scene object destroyed with the harness.</summary>
@@ -89,7 +91,7 @@ namespace PurrNet.Prediction.Tests.Editor
         /// <summary>Sets a recorder field (an inspector setting, say) before <see cref="Start"/>.</summary>
         public void Configure(string name, object value) => Set(recorder, name, value);
 
-        public object Private(string name) => typeof(PredictionRecorder).GetField(name, Fields)!.GetValue(recorder);
+        public object Private(string name) => typeof(RecordingSession).GetField(name, Fields)!.GetValue(recorder.session);
 
         public void Dispose()
         {
@@ -129,7 +131,7 @@ namespace PurrNet.Prediction.Tests.Editor
         public string path => _path;
 
         /// <summary>The recorder's description of the last recording (it logs nothing itself).</summary>
-        public string Describe() => (string)typeof(PredictionRecorder).GetMethod("DescribeLastRecording", Fields)!.Invoke(recorder, null);
+        public string Describe() => recorder.DescribeLastRecording();
 
         static void Read(byte[] data, int pos, int end, bool topLevel, List<(RecordKind, string)> into,
             Action<RecordKind, byte[]> onRecord = null)

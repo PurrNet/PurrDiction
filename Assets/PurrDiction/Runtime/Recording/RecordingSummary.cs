@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using PurrNet.Prediction.StateMachine;
+using PurrNet.Recording;
 using UnityEngine;
 
 namespace PurrNet.Prediction.Recording

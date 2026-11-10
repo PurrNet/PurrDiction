@@ -3,6 +3,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using NUnit.Framework;
 using PurrNet.Prediction.Recording;
+using PurrNet.Recording;
 using UnityEngine;
 
 namespace PurrNet.Prediction.Tests.Editor

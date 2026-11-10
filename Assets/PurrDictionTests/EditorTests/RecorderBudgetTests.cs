@@ -8,6 +8,7 @@ using System.Text.RegularExpressions;
 using NUnit.Framework;
 using PurrNet.Prediction.Profiler;
 using PurrNet.Prediction.Recording;
+using PurrNet.Recording;
 using Unity.Profiling;
 using UnityEngine;
 
@@ -108,17 +109,17 @@ namespace PurrNet.Prediction.Tests.Editor
                 h.Tick();
             }
 
-            // The chunk being collected, with the stream table a flush gives it (see PredictionRecorder.FlushChunk).
+            // The chunk being collected, with the stream table a flush gives it (see RecordingSession.FlushChunk).
             const System.Reflection.BindingFlags Private = System.Reflection.BindingFlags.Instance |
                                                            System.Reflection.BindingFlags.NonPublic;
             object Field(object target, string name) => target.GetType().GetField(name, Private | System.Reflection.BindingFlags.Public)!.GetValue(target);
-            var job = Field(h.recorder, "_job");
+            var job = Field(h.recorder.session, "_job");
             var live = (ChunkLog)Field(job, "log");
             var log = new ChunkLog();
             log.bytes.WriteBytes(live.bytes.data, 0, live.bytes.length);
-            log.firstTick = (ulong)Field(h.recorder, "_chunkFirstTick");
+            log.firstTick = (ulong)Field(h.recorder.session, "_chunkFirstTick");
             log.tickCount = h.tick - log.firstTick;
-            foreach (var s in (List<StreamRows>)Field(h.recorder, "_slots"))
+            foreach (var s in (List<StreamRows>)Field(h.recorder.session, "_slots"))
             {
                 log.streams.Add(new ChunkStream
                 {
@@ -180,7 +181,7 @@ namespace PurrNet.Prediction.Tests.Editor
         [Test]
         public void NativeDeflateMatchesDeflateStreamAndDoesNotAllocate()
         {
-            var method = typeof(PredictionRecorder).Assembly.GetType("PurrNet.Prediction.Recording.NativeDeflate")!
+            var method = typeof(RecordingFile).Assembly.GetType("PurrNet.Recording.NativeDeflate")!
                 .GetMethod("TryCompress", System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.Public)!;
             var compress = (Func<byte[], int, IntPtr, bool>)Delegate.CreateDelegate(typeof(Func<byte[], int, IntPtr, bool>), method);
             var random = new System.Random(1);

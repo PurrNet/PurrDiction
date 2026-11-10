@@ -17,6 +17,7 @@ namespace PurrNet.Prediction
     [DefaultExecutionOrder(1000)]
     [AddComponentMenu("PurrDiction/Prediction Manager")]
     [PackerDependencies(typeof(NetworkID), typeof(SceneID))]
+    [PurrNet.Recording.DontRecord]
     public partial class PredictionManager : NetworkIdentity
     {
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterAssembliesLoaded)]

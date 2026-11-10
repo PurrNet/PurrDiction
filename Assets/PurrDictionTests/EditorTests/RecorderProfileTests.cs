@@ -6,6 +6,7 @@ using System.Text;
 using NUnit.Framework;
 using PurrNet.Prediction.Profiler;
 using PurrNet.Prediction.Recording;
+using PurrNet.Recording;
 using Unity.Profiling;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
@@ -13,7 +14,7 @@ using Debug = UnityEngine.Debug;
 namespace PurrNet.Prediction.Tests.Editor
 {
     /// <summary>
-    /// Main-thread cost of <see cref="PredictionRecorder"/> on a server with many moving entities, pooled churn and a
+    /// Main-thread cost of <see cref="NetworkRecorder"/> on a server with many moving entities, pooled churn and a
     /// scene full of static colliders, next to the server's own tick. Explicit: it is a profile, not a gate. Run it
     /// with -releaseCodeOptimization for timings that resemble a player; the recording lands in
     /// test-results/recorder-tests.
@@ -160,7 +161,7 @@ namespace PurrNet.Prediction.Tests.Editor
             var standing = new List<GameObject>();
             var bullets = new Queue<PredictedObjectID>();
             h.Start($"alloc-{tickRate}hz-{peakEntities}e.purrrec");
-            var chunksField = typeof(PredictionRecorder).GetField("_chunks", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
+            var chunksField = typeof(RecordingSession).GetField("_chunks", System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic);
 
             int ticks = tickRate * seconds, window = tickRate * 10;
             GC.Collect();
@@ -185,7 +186,7 @@ namespace PurrNet.Prediction.Tests.Editor
                     world.server.hierarchy.Delete(bullets.Dequeue());
 
                 world.StepServer(tick);
-                int chunksBefore = (int)chunksField!.GetValue(h.recorder);
+                int chunksBefore = (int)chunksField!.GetValue(h.recorder.session);
                 long heapBefore = GC.GetTotalMemory(false);
                 var gc = ProfilerRecorder.StartNew(ProfilerCategory.Internal, "GC.Alloc", 4096, ProfilerRecorderOptions.CollectOnlyOnCurrentThread);
                 if (record)
@@ -194,7 +195,7 @@ namespace PurrNet.Prediction.Tests.Editor
                 long bytes = Math.Max(0, GC.GetTotalMemory(false) - heapBefore);
                 long count = gc.Count;
                 gc.Dispose();
-                bool flushed = (int)chunksField.GetValue(h.recorder) != chunksBefore;
+                bool flushed = (int)chunksField.GetValue(h.recorder.session) != chunksBefore;
                 if (flushed) { flushCount += count; flushBytes += bytes; }
                 else { otherCount += count; otherBytes += bytes; }
                 winCount += count; winBytes += bytes;
