@@ -291,6 +291,7 @@ jobs:
           run_profile purrleague-immediate-rpc 37006 -tickRate 60 -mtuFragment -desyncPolicy Report -immediateRpcRegressionScenarioOnly
           run_profile webtransport-immediate-rpc 37007 -tickRate 60 -mtuFragment -desyncPolicy Report -webTransport -immediateRpcRegressionScenarioOnly
           run_profile purrleague-immediate-rpc-no-player 37008 -tickRate 60 -mtuFragment -desyncPolicy Report -immediateRpcRegressionScenarioOnly -immediateRpcRegressionWithoutPlayer
+          run_profile ownership-swap 37011 -latencyMin 40 -latencyMax 80 -packetLoss 5 -ownershipSwapScenarioOnly
 
           exit $FAIL
 

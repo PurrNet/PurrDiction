@@ -139,6 +139,7 @@ if [ $# -gt 0 ]; then
             high-jitter) run_profile high-jitter 37003 -latencyMin 120 -latencyMax 250 ;;
             loss)        run_profile loss 37004 -latencyMin 40 -latencyMax 80 -packetLoss 5 ;;
             heavy-loss)  run_profile heavy-loss 37005 -latencyMin 80 -latencyMax 160 -packetLoss 15 ;;
+            ownership-swap) run_profile ownership-swap 37011 -latencyMin 40 -latencyMax 80 -packetLoss 5 -ownershipSwapScenarioOnly ;;
             *) echo "unknown profile $p"; FAIL=1 ;;
         esac
     done
