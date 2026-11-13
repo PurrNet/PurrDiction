@@ -31,6 +31,7 @@ public sealed class OwnershipSwapPawn : PredictedIdentity<OwnershipSwapPawn.Swap
     }
 
     public long sum => currentState.sum;
+    public uint handledSwaps => currentState.handledSwaps;
 
     protected override void UpdateInput(ref SwapInput input) => input.swaps = swapClicks;
 
@@ -90,6 +91,24 @@ public static class OwnershipSwapSignals
             Reports.TryAdd(scenarioIndex, 0, reports);
         }
         reports[info.sender] = message;
+    }
+
+    [ObserversRpc(runLocally: true, bufferLast: true)]
+    public static void AssignShips(int scenarioIndex, ulong[] players, uint[] roots)
+    {
+        var map = new Dictionary<ulong, (uint, uint)>();
+        for (var i = 0; i < players.Length; i++)
+            map[players[i]] = (roots[i], roots[i]);
+        Pairs.TryAdd(scenarioIndex, 0, map);
+    }
+
+    public static Action<int, PlayerID, int> onTurretRequest;
+
+    [ServerRpc(requireOwnership: false)]
+    public static void RequestTurret(int scenarioIndex, int slot, RPCInfo info = default)
+    {
+        if (!ScenarioSynchronization.IsOpen(scenarioIndex)) return;
+        onTurretRequest?.Invoke(scenarioIndex, info.sender, slot);
     }
 
     public static bool TryGetReports(int scenarioIndex, out Dictionary<PlayerID, string> reports)
@@ -276,6 +295,210 @@ public sealed class OwnershipSwapScenario : Scenario
     private static ScenarioResult Finish(ScenarioContext ctx, string message)
     {
         Debug.Log($"[OwnershipSwapScenario] client: {message}");
+        OwnershipSwapSignals.Report(ctx.scenarioIndex, message);
+        return message.StartsWith("ok") ? ScenarioResult.Ok(message) : ScenarioResult.Fail(message);
+    }
+}
+
+/// <summary>
+/// Discord report (Prakkus, 2026-11-13): a ship with two nested turret identities, all unowned. The
+/// server alone hands a turret to a client by setting <c>owner</c> from an RPC, outside the simulation.
+/// The first turret works; after moving to the second the client believes it owns it, but keeps
+/// uploading input for the first and the server rejects it. Every player hops between its two turrets
+/// and the server must simulate the input the player typed into each one.
+/// </summary>
+public sealed class ServerOwnershipSwapScenario : Scenario
+{
+    private const float Timeout = 20f;
+    private const float WatchSeconds = 2f;
+    private const int Rounds = 4;
+
+    private GameObject _shipPrefab;
+
+    public override void Setup(ScenarioContext ctx, NetworkManager manager)
+    {
+        _shipPrefab = PredictionTestUtils.CreatePrefab<OwnershipSwapPawn>("OwnershipSwapShip");
+        for (var i = 0; i < 2; i++)
+        {
+            var turret = new GameObject(i == 0 ? "Left Turret" : "Right Turret");
+            turret.transform.SetParent(_shipPrefab.transform, false);
+            turret.AddComponent<OwnershipSwapPawn>();
+        }
+        PredictionTestUtils.RegisterPrefab(ctx, _shipPrefab);
+    }
+
+    public override UniTask<ScenarioResult> RunScenario(ScenarioContext ctx)
+        => RunSplit(ctx, RunClient, RunServer);
+
+    private static bool TryGetTurrets(PredictionManager world, uint root, out OwnershipSwapPawn[] pawns)
+    {
+        pawns = null;
+        if (!new PredictedObjectID(root).TryGetComponent<OwnershipSwapPawn>(world, out var ship))
+            return false;
+        pawns = ship.transform.root.GetComponentsInChildren<OwnershipSwapPawn>(true);
+        return pawns.Length == 3;
+    }
+
+    private async UniTask<ScenarioResult> RunServer(ScenarioContext ctx)
+    {
+        var world = ctx.predictionManager;
+
+        var warnings = new List<string>();
+        void OnLog(string message, string stack, LogType type)
+        {
+            if (type == LogType.Warning && message.Contains("Ignoring input from"))
+                warnings.Add(message);
+        }
+
+        var players = ctx.networkManager.players;
+        var playerIds = new ulong[players.Count];
+        var roots = new uint[players.Count];
+        var ships = new Dictionary<PlayerID, OwnershipSwapPawn[]>();
+        for (var i = 0; i < players.Count; i++)
+        {
+            var ship = world.hierarchy.Create(_shipPrefab, new Vector3(170, 0, i * 2f), Quaternion.identity);
+            if (!ship.HasValue || !TryGetTurrets(world, ship.Value.instanceId.value, out var pawns))
+                return ScenarioResult.Fail("ship creation failed");
+            playerIds[i] = players[i].id.value;
+            roots[i] = ship.Value.instanceId.value;
+            ships[players[i]] = pawns;
+        }
+
+        int index = ctx.scenarioIndex;
+        void OnRequest(int scenarioIndex, PlayerID sender, int slot)
+        {
+            if (scenarioIndex != index || !ships.TryGetValue(sender, out var pawns))
+                return;
+            // Server only, outside the simulation, exactly like the report.
+            pawns[slot == 0 ? 2 : 1].owner = null;
+            pawns[slot == 0 ? 1 : 2].owner = sender;
+        }
+
+        var failures = new List<string>();
+        var lines = new List<string>();
+
+        Application.logMessageReceived += OnLog;
+        OwnershipSwapSignals.onTurretRequest += OnRequest;
+        try
+        {
+            OwnershipSwapSignals.AssignShips(index, playerIds, roots);
+
+            try
+            {
+                await UniTaskUtils.WaitWithTimeout(
+                    () => OwnershipSwapSignals.TryGetReports(index, out var reports) &&
+                          reports.Count >= ctx.expectedConnections,
+                    Timeout * (Rounds + 2), ctx.cancellationToken);
+            }
+            catch (TimeoutException)
+            {
+                return ScenarioResult.Fail("not every client reported");
+            }
+
+            OwnershipSwapSignals.TryGetReports(index, out var all);
+
+            for (var i = 0; i < players.Count; i++)
+            {
+                var player = players[i];
+                all.TryGetValue(player, out var report);
+                var pawns = ships[player];
+                var left = pawns[1];
+                var right = pawns[2];
+
+                string serverView = $"server left={left.id} owner={Owner(left)} typed={left.handledSwaps} right={right.id} owner={Owner(right)} typed={right.handledSwaps}";
+                lines.Add($"{player}: {report}; {serverView}");
+
+                if (report == null || !report.StartsWith("ok"))
+                    failures.Add($"{player}: {report}");
+                // The even rounds type into the left turret, the odd ones into the right.
+                if (left.owner.HasValue || right.owner != player ||
+                    left.handledSwaps != Rounds - 1 || right.handledSwaps != Rounds)
+                    failures.Add($"{player}: {serverView}");
+            }
+        }
+        finally
+        {
+            Application.logMessageReceived -= OnLog;
+            OwnershipSwapSignals.onTurretRequest -= OnRequest;
+        }
+
+        if (warnings.Count > 0)
+            failures.Add($"{warnings.Count} input warnings, first='{warnings[0]}'");
+
+        string summary = $"{string.Join(" | ", lines)} | server input warnings={warnings.Count}";
+        Debug.Log($"[ServerOwnershipSwapScenario] server: {summary}");
+
+        return failures.Count == 0
+            ? ScenarioResult.Ok(summary)
+            : ScenarioResult.Fail($"{string.Join(" | ", failures)} || {summary}");
+    }
+
+    private static string Owner(OwnershipSwapPawn pawn)
+        => !pawn ? "missing" : pawn.owner?.ToString() ?? "none";
+
+    private async UniTask<ScenarioResult> RunClient(ScenarioContext ctx)
+    {
+        var world = ctx.predictionManager;
+        var me = ctx.networkManager.localPlayer;
+        (uint a, uint b) pair = default;
+        OwnershipSwapPawn[] pawns = null;
+
+        try
+        {
+            await UniTaskUtils.WaitWithTimeout(
+                () => OwnershipSwapSignals.TryGetPair(ctx.scenarioIndex, me, out pair) &&
+                      TryGetTurrets(world, pair.a, out pawns),
+                Timeout, ctx.cancellationToken);
+        }
+        catch (TimeoutException)
+        {
+            return Finish(ctx, "no ship arrived");
+        }
+
+        await UniTask.Delay(TimeSpan.FromSeconds(0.5f), cancellationToken: ctx.cancellationToken);
+
+        var notes = new List<string>();
+        for (var round = 0; round < Rounds; round++)
+        {
+            var to = pawns[round % 2 == 0 ? 1 : 2];
+            var from = pawns[round % 2 == 0 ? 2 : 1];
+
+            OwnershipSwapSignals.RequestTurret(ctx.scenarioIndex, round % 2);
+
+            try
+            {
+                await UniTaskUtils.WaitWithTimeout(() => to.isOwner && !from.isOwner, 5f, ctx.cancellationToken);
+            }
+            catch (TimeoutException)
+            {
+                return Finish(ctx, $"round {round}: the turret never arrived: from.owner={Owner(from)} to.owner={Owner(to)}");
+            }
+
+            to.swapClicks = (uint)(round + 1);
+
+            int lostFrames = 0;
+            int frames = 0;
+            double until = Time.realtimeSinceStartupAsDouble + WatchSeconds;
+            while (Time.realtimeSinceStartupAsDouble < until)
+            {
+                frames++;
+                if (!to.isOwner || from.isOwner)
+                    lostFrames++;
+                await UniTask.Yield(ctx.cancellationToken);
+            }
+
+            notes.Add($"r{round} lost={lostFrames}/{frames} typed={to.handledSwaps}");
+
+            if (!to.isOwner || from.isOwner)
+                return Finish(ctx, $"round {round}: control lost: from.owner={Owner(from)} to.owner={Owner(to)} ({string.Join(", ", notes)})");
+        }
+
+        return Finish(ctx, $"ok {string.Join(", ", notes)}");
+    }
+
+    private static ScenarioResult Finish(ScenarioContext ctx, string message)
+    {
+        Debug.Log($"[ServerOwnershipSwapScenario] client: {message}");
         OwnershipSwapSignals.Report(ctx.scenarioIndex, message);
         return message.StartsWith("ok") ? ScenarioResult.Ok(message) : ScenarioResult.Fail(message);
     }

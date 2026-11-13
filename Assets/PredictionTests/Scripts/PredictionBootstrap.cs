@@ -264,7 +264,8 @@ public class PredictionBootstrap : Scenario
             _scenarios = new Scenario[]
             {
                 this,
-                gameObject.AddComponent<OwnershipSwapScenario>()
+                gameObject.AddComponent<OwnershipSwapScenario>(),
+                gameObject.AddComponent<ServerOwnershipSwapScenario>()
             };
             _results = new ScenarioDetails?[_scenarios.Length];
             return;
