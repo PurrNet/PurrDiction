@@ -122,6 +122,47 @@ namespace PurrNet.Prediction
                 RestoreDefaultPhysicsMode();
             _appliedKinematicPolicy = PredictionPolicy.FullPrediction;
             ApplyEffectiveKinematic();
+            SetOneWayHistory(!isServer);
+        }
+
+        private OneWayContactHistory2D _oneWayHistory;
+        private PredictionManager _oneWayManager;
+
+        // Only a client restores bodies into one-way platforms; the server never rolls back.
+        private void SetOneWayHistory(bool enabled)
+        {
+            if (_oneWayManager && (!enabled || _oneWayManager != predictionManager))
+            {
+                _oneWayManager.onAfterPhysicsPass -= OneWayAfterStep;
+                _oneWayManager = null;
+            }
+
+            if (!enabled || !predictionManager)
+            {
+                _oneWayHistory?.Clear();
+                return;
+            }
+
+            _oneWayHistory ??= new OneWayContactHistory2D(_rigidbody, Mathf.Max(1, predictionManager.tickRate * 10));
+            if (_oneWayManager)
+                return;
+            _oneWayManager = predictionManager;
+            _oneWayManager.onAfterPhysicsPass += OneWayAfterStep;
+        }
+
+        private void OneWayAfterStep() => _oneWayHistory?.AfterStep();
+
+        internal override void Rollback(ulong tick)
+        {
+            base.Rollback(tick);
+            if (_oneWayManager)
+                _oneWayHistory.Restore(tick);
+        }
+
+        internal override void ReleasePredictionStateForPool()
+        {
+            SetOneWayHistory(false);
+            base.ReleasePredictionStateForPool();
         }
 
         private void ApplyEffectiveKinematic()
@@ -152,6 +193,7 @@ namespace PurrNet.Prediction
 
             if (_replayFrozen)
                 ClearStaleFreeze();
+            SetOneWayHistory(false);
 
             // The server simulates every body; undo the client-only relay kinematic switch.
             if (_appliedKinematicPolicy == PredictionPolicy.ServerRelay)
@@ -215,6 +257,7 @@ namespace PurrNet.Prediction
         protected override void OnDestroy()
         {
             SetRelayVelocityGuard(false);
+            SetOneWayHistory(false);
             base.OnDestroy();
         }
 
@@ -326,6 +369,8 @@ namespace PurrNet.Prediction
         internal override void SaveStateInHistory(ulong tick)
         {
             base.SaveStateInHistory(tick);
+            if (_oneWayManager)
+                _oneWayHistory.Record(tick);
 
             if (isServer || !UsesSoftCorrectionTimeline())
                 return;

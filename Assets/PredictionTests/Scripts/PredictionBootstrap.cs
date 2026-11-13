@@ -293,6 +293,17 @@ public class PredictionBootstrap : Scenario
             return;
         }
 
+        if (CommandLineUtils.HasFlag("-oneWayPlatformScenarioOnly"))
+        {
+            _scenarios = new Scenario[]
+            {
+                this,
+                gameObject.AddComponent<OneWayPlatformScenario>()
+            };
+            _results = new ScenarioDetails?[_scenarios.Length];
+            return;
+        }
+
         if (CommandLineUtils.HasFlag("-preSpawnScenarioOnly"))
         {
             _scenarios = new Scenario[]
@@ -370,6 +381,7 @@ public class PredictionBootstrap : Scenario
         gameObject.AddComponent<MirroredTargetRpcScenario>();
         gameObject.AddComponent<OwnerSyncVarScenario>();
         gameObject.AddComponent<LocalPhysicsSmoothnessScenario>();
+        gameObject.AddComponent<OneWayPlatformScenario>();
         gameObject.AddComponent<PreSpawnHookScenario>();
         gameObject.AddComponent<TickAgreementScenario>();
         gameObject.AddComponent<DeterministicGauntletScenario>();
