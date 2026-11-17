@@ -116,6 +116,18 @@ namespace PurrNet.Prediction
             }
         }
 
+        internal override void DropPreviousOwnerInput()
+        {
+            _lastInput?.Dispose();
+            _lastInput = null;
+            if (_queuedInput.HasValue)
+            {
+                var queuedInput = _queuedInput.Value;
+                queuedInput.Dispose();
+                _queuedInput = null;
+            }
+        }
+
         internal override void OnPrepareSimulationInputs(ulong tick, float delta)
         {
             _currentInput.Dispose();
@@ -208,7 +220,7 @@ namespace PurrNet.Prediction
                     _queuedInput != null && _queuedInputUploaded && !sanitizesInput);
                 if (_queuedInput == null)
                 {
-                    if (!extrapolate)
+                    if (!extrapolate || !_lastInput.HasValue)
                     {
                         _lastInput?.Dispose();
                         _lastInput = GetDefaultInput();

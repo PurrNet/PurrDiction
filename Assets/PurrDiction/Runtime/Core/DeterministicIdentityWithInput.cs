@@ -90,6 +90,18 @@ namespace PurrNet.Prediction
             }
         }
 
+        internal override void DropPreviousOwnerInput()
+        {
+            _lastInput?.Dispose();
+            _lastInput = null;
+            if (_queuedInput.HasValue)
+            {
+                var queuedInput = _queuedInput.Value;
+                queuedInput.Dispose();
+                _queuedInput = null;
+            }
+        }
+
         internal override void SimulateTick(ulong tick, float delta)
         {
             using (simulateMarker.Auto())
@@ -166,7 +178,7 @@ namespace PurrNet.Prediction
                 ConsumeUploadedInputBits(tick, _queuedInput != null);
                 if (_queuedInput == null)
                 {
-                    if (!extrapolate)
+                    if (!extrapolate || !_lastInput.HasValue)
                     {
                         _lastInput?.Dispose();
                         _lastInput = GetDefaultInput();

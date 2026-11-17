@@ -717,6 +717,7 @@ namespace PurrNet.Prediction
 
             if (previousOwner != player && predictionManager)
             {
+                DropPreviousOwnerInput();
                 if (previousOwner.HasValue)
                     predictionManager.NoteInputControlEnded(this);
                 predictionManager.HandleVisibilityOwnershipChanged(
@@ -727,6 +728,12 @@ namespace PurrNet.Prediction
         }
 
         protected virtual void OnOwnerAssigned(PlayerID? player) { }
+
+        /// <summary>
+        /// The input the server repeats while uploads are missing, and any upload still queued,
+        /// came from the previous owner and must not be simulated for the next one.
+        /// </summary>
+        internal virtual void DropPreviousOwnerInput() { }
 
         private void AssignOwner(PlayerID? player)
         {

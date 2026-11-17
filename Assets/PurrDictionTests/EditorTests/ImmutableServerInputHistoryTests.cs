@@ -102,6 +102,43 @@ namespace PurrNet.Prediction.Tests.Editor
             fixture.AssertInput(10, 820, int.MinValue);
         }
 
+        // Discord report (Tekla, 2026-11-17): a body swap from Simulate ran twice on the host because the
+        // released body replayed the click that released it.
+        [Test]
+        public void MissingInputAfterAnOwnerChangeDoesNotRepeatThePreviousOwnersInput()
+        {
+            using var fixture = new Fixture();
+            var identity = fixture.Add(830);
+            identity.owner = new PlayerID(5, false);
+            fixture.Upload(identity, 77, new PlayerID(5, false));
+            identity.PrepareInput(true, false, 10, true);
+            fixture.Capture(10);
+            fixture.AssertInput(10, 830, 77);
+
+            identity.PrepareInput(true, false, 11, true);
+            fixture.Capture(11);
+            fixture.AssertInput(11, 830, 77);
+
+            identity.owner = new PlayerID(6, false);
+            identity.PrepareInput(true, false, 12, true);
+            fixture.Capture(12);
+            fixture.AssertInput(12, 830, 0);
+        }
+
+        [Test]
+        public void InputQueuedByThePreviousOwnerIsDroppedWhenTheOwnerChanges()
+        {
+            using var fixture = new Fixture();
+            var identity = fixture.Add(831);
+            identity.owner = new PlayerID(5, false);
+            fixture.Upload(identity, 77, new PlayerID(5, false));
+
+            identity.owner = new PlayerID(6, false);
+            identity.PrepareInput(true, false, 10, true);
+            fixture.Capture(10);
+            fixture.AssertInput(10, 831, 0);
+        }
+
         [Test]
         public void IdentityUploadedBufferGrowsAndIsReusedForLargerInputs()
         {
@@ -446,6 +483,15 @@ namespace PurrNet.Prediction.Tests.Editor
                 Packer<int>.Write(payload, value);
                 payload.ResetPositionAndMode(true);
                 input.ReadFirstInput(tick, payload);
+            }
+
+            internal void Upload(ImmutableHistoryInputProbe input, int value, PlayerID sender)
+            {
+                using var payload = BitPackerPool.Get();
+                Packer<bool>.Write(payload, true);
+                Packer<int>.Write(payload, value);
+                payload.ResetPositionAndMode(true);
+                input.QueueInput(payload, sender);
             }
 
             internal void Capture(ulong tick) => Invoke(manager, "CaptureInputHistory", tick);
