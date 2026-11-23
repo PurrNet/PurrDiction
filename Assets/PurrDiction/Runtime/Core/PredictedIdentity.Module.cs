@@ -102,6 +102,13 @@ namespace PurrNet.Prediction
         private int _staticModuleCount = -1;
         private bool _isApplyingModuleDiff;
         private bool _isRunningInitialModuleSetup;
+
+        // Where the modules LateAwake registers start in _modules, once LateAwake has run; -1 before.
+        private int _lateAwakeModuleStart = -1;
+
+        // While LateAwake runs again after a reset: the modules its previous run registered that it hasn't
+        // registered again yet.
+        private List<PredictedModule> _replaceableModules;
         private History<DisposableList<uint>> _moduleHistory;
 
         private History<DisposableList<uint>> moduleHistory =>
@@ -113,11 +120,58 @@ namespace PurrNet.Prediction
         private void BeginInitialModuleSetup()
         {
             _isRunningInitialModuleSetup = true;
+
+            if (_lateAwakeModuleStart < 0 || _lateAwakeModuleStart > _modules.Count)
+            {
+                _lateAwakeModuleStart = _modules.Count;
+                return;
+            }
+
+            // LateAwake runs again after a reset (a scene object registered again with reset, a pooled instance
+            // recycled for a new id), but the static modules its previous run registered are still here. A module
+            // it registers again replaces one of those instead of being added a second time.
+            _replaceableModules ??= new List<PredictedModule>();
+            _replaceableModules.Clear();
+            for (int i = _lateAwakeModuleStart; i < _modules.Count; i++)
+                _replaceableModules.Add(_modules[i]);
         }
 
         private void EndInitialModuleSetup()
         {
             _isRunningInitialModuleSetup = false;
+            _replaceableModules?.Clear();
+        }
+
+        /// <summary>
+        /// Puts <paramref name="module"/> in the place of the first module of the same type that the previous
+        /// LateAwake registered and this one hasn't registered again yet. Modules LateAwake doesn't register again
+        /// (creation guarded by a field or TryGetModule) stay as they are.
+        /// </summary>
+        private bool TryReplaceModuleFromPreviousLateAwake(PredictedModule module)
+        {
+            if (_replaceableModules == null || _replaceableModules.Count == 0)
+                return false;
+
+            for (int i = 0; i < _replaceableModules.Count; i++)
+            {
+                var previous = _replaceableModules[i];
+                if (previous.typeHash != module.typeHash)
+                    continue;
+
+                _replaceableModules.RemoveAt(i);
+
+                int index = previous.moduleIndex;
+                if (index < 0 || index >= _modules.Count || _modules[index] != previous)
+                    return false;
+
+                module.registeredAtTick = 0;
+                module.moduleIndex = index;
+                _modules[index] = module;
+                previous.OnRemovedInternal();
+                return true;
+            }
+
+            return false;
         }
 
         protected void ModuleSetup(NetworkManager manager, PredictionManager world, PredictedComponentID id, PlayerID? owner)
@@ -147,10 +201,13 @@ namespace PurrNet.Prediction
             if (isDynamic && _staticModuleCount < 0)
                 _staticModuleCount = _modules.Count;
 
-            module.registeredAtTick = isDynamic ? predictionManager.localTickInContext : 0;
-            module.moduleIndex = _modules.Count;
-            _modules.Add(module);
-            OnModulesChanged();
+            if (isDynamic || !_isRunningInitialModuleSetup || !TryReplaceModuleFromPreviousLateAwake(module))
+            {
+                module.registeredAtTick = isDynamic ? predictionManager.localTickInContext : 0;
+                module.moduleIndex = _modules.Count;
+                _modules.Add(module);
+                OnModulesChanged();
+            }
 
             if (predictionManager)
                 module.SetupInternal(this, predictionManager);
