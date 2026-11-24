@@ -168,8 +168,8 @@ namespace PurrNet.Prediction
             if (!HasViewBufferFor(world))
             {
                 _interpolatedState?.Teleport(0, default);
-                _interpolatedState = PredictionManager.CreateViewBuffer(
-                    FULLInterpolate, world.localTickInContext, fullPredictedState.DeepCopy(), world.tickRate);
+                _interpolatedState = new PredictedViewBuffer<FULL_STATE<STATE>>(
+                    FULLInterpolate, world.localTickInContext, fullPredictedState.DeepCopy(), ViewBufferCapacity(world));
                 RestartedView(world);
             }
             else if (!preserveInterpolation)
@@ -186,7 +186,7 @@ namespace PurrNet.Prediction
         }
 
         private static int ViewBufferCapacity(PredictionManager world)
-            => PredictionManager.GetViewBufferCapacity(world.tickRate);
+            => PredictionManager.GetViewInterpolationMaxBufferSize(world.tickRate) + 2;
 
         private bool HasViewBufferFor(PredictionManager world)
             => _interpolatedState != null && _interpolatedState.capacity == ViewBufferCapacity(world);
@@ -278,8 +278,8 @@ namespace PurrNet.Prediction
             if (!HasViewBufferFor(world))
             {
                 _interpolatedState?.Teleport(0, default);
-                _interpolatedState = PredictionManager.CreateViewBuffer<FULL_STATE<STATE>>(
-                    FULLInterpolate, 0, default, world.tickRate);
+                _interpolatedState = new PredictedViewBuffer<FULL_STATE<STATE>>(
+                    FULLInterpolate, 0, default, ViewBufferCapacity(world));
             }
 
             EnsureStateHistory(world);

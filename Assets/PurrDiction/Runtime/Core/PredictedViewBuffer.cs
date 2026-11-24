@@ -24,25 +24,17 @@ namespace PurrNet.Prediction
         private T _anchor;
         private ulong _anchorTick;
 
-        /// <summary>
-        /// Keeps up to <paramref name="capacity"/> pending samples. Room for
-        /// <paramref name="reserve"/> of them is allocated up front (all of them by default), the rest
-        /// the first time samples queue that deep.
-        /// </summary>
-        public PredictedViewBuffer(LerpFunction<T> lerp, ulong tick, T initial, int capacity,
-            int reserve = int.MaxValue)
+        public PredictedViewBuffer(LerpFunction<T> lerp, ulong tick, T initial, int capacity)
         {
             _lerp = lerp ?? throw new ArgumentNullException(nameof(lerp));
             _capacity = Math.Max(1, capacity);
-            _samples = new Entry[Math.Min(_capacity, reserve) + 1];
+            _samples = new Entry[_capacity + 1];
             _length = _samples.Length;
             _anchor = initial;
             _anchorTick = tick;
         }
 
         internal int capacity => _capacity;
-
-        internal int allocatedSlots => _length;
 
         /// <summary>
         /// Samples not yet reached by the presented tick.
@@ -132,10 +124,9 @@ namespace PurrNet.Prediction
             }
         }
 
-        // Add trims to the capacity after inserting, so one slot past it is all a buffer ever needs.
         private void Grow()
         {
-            var grown = new Entry[Math.Min(_samples.Length * 2, _capacity + 1)];
+            var grown = new Entry[_samples.Length * 2];
             for (int i = 0; i < _count; i++)
                 grown[i] = At(i);
             _samples = grown;
