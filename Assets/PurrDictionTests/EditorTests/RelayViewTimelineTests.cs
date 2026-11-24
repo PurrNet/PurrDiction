@@ -41,6 +41,17 @@ namespace PurrNet.Prediction.Tests.Editor
             Assert.That(Next(30d, 3d, 2d), Is.EqualTo(3d));
         }
 
+        [Test]
+        public void TheOffsetNeverRunsFurtherBehindTheLagThanTheViewBuffersServe()
+        {
+            double ceiling = 4d + PredictionManager.RelayViewMaxExcessTicks;
+
+            Assert.That(Next(150d, 4d, 150d), Is.EqualTo(ceiling), "an offset past the depth drops to it");
+            Assert.That(Next(ceiling - 1d, 4d, 150d), Is.LessThanOrEqualTo(ceiling),
+                "a window max past the depth is no target");
+            Assert.That(Next(30d, 4d, 30d), Is.EqualTo(30d), "an offset within the depth still holds the window's peak");
+        }
+
         /// <summary>
         /// Frames sent once per server tick arrive with jitter, so each local tick applies zero,
         /// one or several of them, and an earlier stall leaves the offset far too large. The
