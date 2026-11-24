@@ -203,14 +203,15 @@ namespace PurrNet.Prediction
                 }
             }
 
-            _modules.RemoveRange(start, _modules.Count - start);
-
+            // Work out the merged roster first: removal callbacks run while _modules is still the full roster,
+            // as on the other removal paths.
+            var merged = new List<PredictedModule>(previousCount + freshCount);
             var used = new bool[freshCount];
             for (int i = 0; i < previousCount; i++)
             {
                 if (keep[i])
                 {
-                    _modules.Add(previous[i]);
+                    merged.Add(previous[i]);
                     continue;
                 }
 
@@ -220,20 +221,26 @@ namespace PurrNet.Prediction
                         continue;
 
                     used[j] = true;
-                    _modules.Add(fresh[j]);
+                    merged.Add(fresh[j]);
                     break;
                 }
-
-                previous[i].OnRemovedInternal();
             }
 
             // New modules of a type the previous run didn't have (or more of it) follow, in registration order.
             for (int j = 0; j < freshCount; j++)
             {
                 if (!used[j])
-                    _modules.Add(fresh[j]);
+                    merged.Add(fresh[j]);
             }
 
+            for (int i = 0; i < previousCount; i++)
+            {
+                if (!keep[i])
+                    previous[i].OnRemovedInternal();
+            }
+
+            _modules.RemoveRange(start, _modules.Count - start);
+            _modules.AddRange(merged);
             ReindexModulesFrom(start);
             OnModulesChanged();
         }
