@@ -138,6 +138,48 @@ namespace PurrNet.Prediction.Tests.Editor
         }
 
         [Test]
+        public void SameTypeGuardedFirstKeepsItsSlotAfterAReset()
+        {
+            var go = Track(new GameObject("SameTypeGuardedFirst"));
+            var identity = go.AddComponent<SameTypeGuardedFirstIdentity>();
+
+            _manager.RegisterInstance(go, SceneObjectId, null, true, false);
+            var guarded = identity.timer;
+            var firstCooldown = identity.cooldown;
+
+            RegisterAgain(go);
+
+            Assert.That(identity.ModuleCount(), Is.EqualTo(2));
+            Assert.That(identity.timer, Is.SameAs(guarded));
+            Assert.That(identity.cooldown, Is.Not.SameAs(firstCooldown));
+            Assert.That(identity.ModuleAt(0), Is.SameAs(identity.timer), "the guarded module keeps its slot");
+            Assert.That(identity.ModuleAt(1), Is.SameAs(identity.cooldown), "the new module takes the slot of the one it replaces");
+            Assert.That(identity.timer.moduleIndex, Is.EqualTo(0));
+            Assert.That(identity.cooldown.moduleIndex, Is.EqualTo(1));
+        }
+
+        [Test]
+        public void SameTypeGuardedSecondKeepsItsSlotAfterAReset()
+        {
+            var go = Track(new GameObject("SameTypeGuardedSecond"));
+            var identity = go.AddComponent<SameTypeGuardedSecondIdentity>();
+
+            _manager.RegisterInstance(go, SceneObjectId, null, true, false);
+            var firstTimer = identity.timer;
+            var guarded = identity.cooldown;
+
+            RegisterAgain(go);
+
+            Assert.That(identity.ModuleCount(), Is.EqualTo(2));
+            Assert.That(identity.cooldown, Is.SameAs(guarded));
+            Assert.That(identity.timer, Is.Not.SameAs(firstTimer));
+            Assert.That(identity.ModuleAt(0), Is.SameAs(identity.timer), "the new module takes the slot of the one it replaces");
+            Assert.That(identity.ModuleAt(1), Is.SameAs(identity.cooldown), "the guarded module keeps its slot");
+            Assert.That(identity.timer.moduleIndex, Is.EqualTo(0));
+            Assert.That(identity.cooldown.moduleIndex, Is.EqualTo(1));
+        }
+
+        [Test]
         public void TryGetModuleGuardKeepsItsModuleAfterAReset()
         {
             var go = Track(new GameObject("TryGetGuarded"));
@@ -220,6 +262,34 @@ namespace PurrNet.Prediction.Tests.Editor
             if (guarded == null)
                 guarded = new TimerModule(this);
             unguarded = new OtherTimerModule(this);
+        }
+    }
+
+    public sealed class SameTypeGuardedFirstIdentity : ModuleProbeIdentity
+    {
+        public TimerModule timer;
+        public TimerModule cooldown;
+
+        protected override void LateAwake()
+        {
+            lateAwakeCalls++;
+            if (timer == null)
+                timer = new TimerModule(this);
+            cooldown = new TimerModule(this);
+        }
+    }
+
+    public sealed class SameTypeGuardedSecondIdentity : ModuleProbeIdentity
+    {
+        public TimerModule timer;
+        public TimerModule cooldown;
+
+        protected override void LateAwake()
+        {
+            lateAwakeCalls++;
+            timer = new TimerModule(this);
+            if (cooldown == null)
+                cooldown = new TimerModule(this);
         }
     }
 

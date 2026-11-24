@@ -106,9 +106,8 @@ namespace PurrNet.Prediction
         // Where the modules LateAwake registers start in _modules, once LateAwake has run; -1 before.
         private int _lateAwakeModuleStart = -1;
 
-        // While LateAwake runs again after a reset: the modules its previous run registered that it hasn't
-        // registered again yet.
-        private List<PredictedModule> _replaceableModules;
+        // While LateAwake runs again after a reset: where the modules its previous run registered end; -1 otherwise.
+        private int _previousLateAwakeModuleEnd = -1;
         private History<DisposableList<uint>> _moduleHistory;
 
         private History<DisposableList<uint>> moduleHistory =>
@@ -120,6 +119,7 @@ namespace PurrNet.Prediction
         private void BeginInitialModuleSetup()
         {
             _isRunningInitialModuleSetup = true;
+            _previousLateAwakeModuleEnd = -1;
 
             if (_lateAwakeModuleStart < 0 || _lateAwakeModuleStart > _modules.Count)
             {
@@ -128,50 +128,156 @@ namespace PurrNet.Prediction
             }
 
             // LateAwake runs again after a reset (a scene object registered again with reset, a pooled instance
-            // recycled for a new id), but the static modules its previous run registered are still here. A module
-            // it registers again replaces one of those instead of being added a second time.
-            _replaceableModules ??= new List<PredictedModule>();
-            _replaceableModules.Clear();
-            for (int i = _lateAwakeModuleStart; i < _modules.Count; i++)
-                _replaceableModules.Add(_modules[i]);
+            // recycled for a new id), but the static modules its previous run registered are still here. What it
+            // registers this time is appended, then merged into those slots once it returns, when the fields it
+            // assigned point at the new modules.
+            _previousLateAwakeModuleEnd = _modules.Count;
         }
 
         private void EndInitialModuleSetup()
         {
             _isRunningInitialModuleSetup = false;
-            _replaceableModules?.Clear();
+
+            int previousEnd = _previousLateAwakeModuleEnd;
+            _previousLateAwakeModuleEnd = -1;
+
+            if (previousEnd >= _lateAwakeModuleStart && previousEnd < _modules.Count)
+                MergeModulesFromRepeatedLateAwake(_lateAwakeModuleStart, previousEnd);
         }
 
         /// <summary>
-        /// Puts <paramref name="module"/> in the place of the first module of the same type that the previous
-        /// LateAwake registered and this one hasn't registered again yet. Modules LateAwake doesn't register again
-        /// (creation guarded by a field or TryGetModule) stay as they are.
+        /// LateAwake ran again and registered modules (appended from <paramref name="previousEnd"/>) while those its
+        /// previous run registered (<paramref name="start"/> to <paramref name="previousEnd"/>) are still here.
+        /// Each new module takes the slot of a previous module of the same type, so the roster is the one a fresh
+        /// LateAwake builds. Previous modules LateAwake didn't create again (guarded by a field or TryGetModule)
+        /// keep their slots: when a type has fewer new modules than previous ones, the previous ones a field of
+        /// this identity still points at are kept first, then the earliest ones (what TryGetModule finds).
         /// </summary>
-        private bool TryReplaceModuleFromPreviousLateAwake(PredictedModule module)
+        private void MergeModulesFromRepeatedLateAwake(int start, int previousEnd)
         {
-            if (_replaceableModules == null || _replaceableModules.Count == 0)
-                return false;
+            int previousCount = previousEnd - start;
+            int freshCount = _modules.Count - previousEnd;
 
-            for (int i = 0; i < _replaceableModules.Count; i++)
+            var previous = new PredictedModule[previousCount];
+            var fresh = new PredictedModule[freshCount];
+            _modules.CopyTo(start, previous, 0, previousCount);
+            _modules.CopyTo(previousEnd, fresh, 0, freshCount);
+
+            // Per type, as many previous modules stay as the new run didn't create again.
+            var keep = new bool[previousCount];
+            HashSet<PredictedModule> referenced = null;
+
+            for (int i = 0; i < previousCount; i++)
             {
-                var previous = _replaceableModules[i];
-                if (previous.typeHash != module.typeHash)
+                uint type = previous[i].typeHash;
+                if (IndexOfType(previous, type, 0, i) >= 0)
+                    continue; // type already handled
+
+                int oldOfType = CountOfType(previous, type, i, previousCount);
+                int newOfType = CountOfType(fresh, type, 0, freshCount);
+                int toKeep = oldOfType - newOfType;
+                if (toKeep <= 0)
                     continue;
 
-                _replaceableModules.RemoveAt(i);
+                if (newOfType > 0)
+                {
+                    // Partly created again: the guarded ones are those a field still points at.
+                    referenced ??= CollectModuleFieldReferences();
+                    for (int j = i; j < previousCount && toKeep > 0; j++)
+                    {
+                        if (previous[j].typeHash == type && referenced.Contains(previous[j]))
+                        {
+                            keep[j] = true;
+                            toKeep--;
+                        }
+                    }
+                }
 
-                int index = previous.moduleIndex;
-                if (index < 0 || index >= _modules.Count || _modules[index] != previous)
-                    return false;
-
-                module.registeredAtTick = 0;
-                module.moduleIndex = index;
-                _modules[index] = module;
-                previous.OnRemovedInternal();
-                return true;
+                for (int j = i; j < previousCount && toKeep > 0; j++)
+                {
+                    if (previous[j].typeHash == type && !keep[j])
+                    {
+                        keep[j] = true;
+                        toKeep--;
+                    }
+                }
             }
 
-            return false;
+            _modules.RemoveRange(start, _modules.Count - start);
+
+            var used = new bool[freshCount];
+            for (int i = 0; i < previousCount; i++)
+            {
+                if (keep[i])
+                {
+                    _modules.Add(previous[i]);
+                    continue;
+                }
+
+                for (int j = 0; j < freshCount; j++)
+                {
+                    if (used[j] || fresh[j].typeHash != previous[i].typeHash)
+                        continue;
+
+                    used[j] = true;
+                    _modules.Add(fresh[j]);
+                    break;
+                }
+
+                previous[i].OnRemovedInternal();
+            }
+
+            // New modules of a type the previous run didn't have (or more of it) follow, in registration order.
+            for (int j = 0; j < freshCount; j++)
+            {
+                if (!used[j])
+                    _modules.Add(fresh[j]);
+            }
+
+            ReindexModulesFrom(start);
+            OnModulesChanged();
+        }
+
+        private static int IndexOfType(PredictedModule[] modules, uint typeHash, int from, int to)
+        {
+            for (int i = from; i < to; i++)
+            {
+                if (modules[i].typeHash == typeHash)
+                    return i;
+            }
+
+            return -1;
+        }
+
+        private static int CountOfType(PredictedModule[] modules, uint typeHash, int from, int to)
+        {
+            int count = 0;
+            for (int i = from; i < to; i++)
+            {
+                if (modules[i].typeHash == typeHash)
+                    count++;
+            }
+
+            return count;
+        }
+
+        private HashSet<PredictedModule> CollectModuleFieldReferences()
+        {
+            var result = new HashSet<PredictedModule>();
+            const BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic |
+                                       BindingFlags.DeclaredOnly;
+
+            for (var type = GetType(); type != null && type != typeof(PredictedIdentity); type = type.BaseType)
+            {
+                foreach (var field in type.GetFields(flags))
+                {
+                    if (typeof(PredictedModule).IsAssignableFrom(field.FieldType) &&
+                        field.GetValue(this) is PredictedModule module)
+                        result.Add(module);
+                }
+            }
+
+            return result;
         }
 
         protected void ModuleSetup(NetworkManager manager, PredictionManager world, PredictedComponentID id, PlayerID? owner)
@@ -201,13 +307,10 @@ namespace PurrNet.Prediction
             if (isDynamic && _staticModuleCount < 0)
                 _staticModuleCount = _modules.Count;
 
-            if (isDynamic || !_isRunningInitialModuleSetup || !TryReplaceModuleFromPreviousLateAwake(module))
-            {
-                module.registeredAtTick = isDynamic ? predictionManager.localTickInContext : 0;
-                module.moduleIndex = _modules.Count;
-                _modules.Add(module);
-                OnModulesChanged();
-            }
+            module.registeredAtTick = isDynamic ? predictionManager.localTickInContext : 0;
+            module.moduleIndex = _modules.Count;
+            _modules.Add(module);
+            OnModulesChanged();
 
             if (predictionManager)
                 module.SetupInternal(this, predictionManager);
