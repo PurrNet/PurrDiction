@@ -311,10 +311,8 @@ namespace PurrNet.Prediction.Tests.Editor
         [Test]
         public void TheCatchUpNeverRunsFasterThanItsSettingAllows()
         {
-            var settings = RelayViewSettings.Default;
-            settings.maxCatchUp = 0.1f;
             // The frames sent during ticks 400..408 land together at 412.
-            var link = new Link(Bursts(400, Once, 9), clock: new RelayViewClock(TickRate, settings));
+            var link = new Link(Bursts(400, Once, 9), clock: new RelayViewClock(TickRate) { maxCatchUp = 0.1d });
             link.RunUntil(399);
             bool caughtUp = false;
 
@@ -328,46 +326,12 @@ namespace PurrNet.Prediction.Tests.Editor
             Assert.That(caughtUp, Is.True, "the backlog should still play through faster than real time");
         }
 
-        [TestCase(0d)]
-        [TestCase(1.5d)]
-        public void ACatchUpDeadbandLetsTheViewStayFurtherBackRatherThanSpeedUp(double deadband)
-        {
-            // Frames land 5 ticks late, then from tick 400 on 4: once the window forgets the 5s, the target moves a
-            // tick closer. Without a deadband the view speeds up to follow it; within one it keeps real time.
-            var settings = RelayViewSettings.Default;
-            settings.catchUpDeadbandTicks = (float)deadband;
-            var link = new Link(tick => tick < 400 ? tick + 5d : tick + 4d, clock: new RelayViewClock(TickRate, settings));
-            link.RunUntil(399);
-            double before = link.delay;
-            bool spedUp = false;
-
-            while (link.now < 400 + 12 * TickRate)
-            {
-                link.Step();
-                spedUp |= link.step > Frame + 1e-9;
-            }
-
-            if (deadband == 0d)
-            {
-                Assert.That(spedUp, Is.True);
-                Assert.That(link.delay, Is.LessThan(before - 0.8d), "the delay should follow the target down");
-            }
-            else
-            {
-                Assert.That(spedUp, Is.False, "a target moving closer by less than the deadband changes no speed");
-                Assert.That(link.delay, Is.GreaterThan(before - 0.1d), "the view keeps its place");
-            }
-        }
-
         [Test]
-        public void ACatchUpDeadbandNeverLetsTheViewRunCloserThanItsTarget()
+        public void WhenFramesStartLandingLaterTheViewSlowsToMakeRoomForThem()
         {
             // From tick 400 on frames land 1.5 ticks later. The target moves back; the view must slow down to it,
             // or it keeps running into frames that have not landed.
-            var settings = RelayViewSettings.Default;
-            settings.catchUpDeadbandTicks = 1.5f;
-            var link = new Link(tick => tick < 400 ? tick + NormalLateness : tick + NormalLateness + 1.5d,
-                clock: new RelayViewClock(TickRate, settings));
+            var link = new Link(tick => tick < 400 ? tick + NormalLateness : tick + NormalLateness + 1.5d);
             link.RunUntil(400 + 3 * TickRate);
 
             while (link.now < 400 + 6 * TickRate)
@@ -378,38 +342,18 @@ namespace PurrNet.Prediction.Tests.Editor
         }
 
         [Test]
-        public void ACatchUpDeadbandNeverHoldsTheViewPastTheRewindCap()
-        {
-            // As NeverAimsFurtherBackThanTheServerRewindsRelayedObjects, with a deadband wider than the cap's headroom:
-            // where the cap sets the target the view must still come all the way back inside it.
-            var settings = RelayViewSettings.Default;
-            settings.catchUpDeadbandTicks = 2f;
-            var link = new Link(Bursts(400, 90, 15), clock: new RelayViewClock(TickRate, settings)) { cap = 15d };
-            double worst = 0d;
-            for (ulong start = 400 + 90 * 4; start < 400 + 90 * 12; start += 90)
-            {
-                link.RunUntil(start);
-                worst = Math.Max(worst, link.viewTick - link.presented);
-            }
-
-            Assert.That(worst, Is.LessThanOrEqualTo(14.5d));
-        }
-
-        [Test]
         public void ACoverageOfEveryFrameRidesOutBurstsTheWindowHasSeen()
         {
             // A 6-tick burst every 200 ticks: 95 % coverage leaves them out, full coverage keeps a cushion for them.
-            int LaterWaits(float coverage)
+            int LaterWaits(double coverage)
             {
-                var settings = RelayViewSettings.Default;
-                settings.coverage = coverage;
-                var link = new Link(Bursts(400, 200, 6), clock: new RelayViewClock(TickRate, settings));
+                var link = new Link(Bursts(400, 200, 6), clock: new RelayViewClock(TickRate) { coverage = coverage });
                 link.RunUntil(600);
                 return CountWaits(link, 1400);
             }
 
-            Assert.That(LaterWaits(0.95f), Is.GreaterThan(10), "95 % coverage should still stop for each burst");
-            Assert.That(LaterWaits(1f), Is.Zero);
+            Assert.That(LaterWaits(0.95d), Is.GreaterThan(10), "95 % coverage should still stop for each burst");
+            Assert.That(LaterWaits(1d), Is.Zero);
         }
 
         [Test]
