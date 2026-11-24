@@ -12,6 +12,23 @@ namespace PurrNet.Prediction
         internal const int RelayViewLagWindow = 64;
 
         /// <summary>
+        /// Most ticks the relayed view may run behind the lag. After a stall the window holds the
+        /// stall's peak lag while the frames catch up, so relayed objects trail their newest state by
+        /// about the stall's length; this caps that at about 2 s at 30 Hz, and a longer stall's excess
+        /// is dropped at once. Independent of <see cref="RelayViewLagWindow"/>, which sets how long the
+        /// excess is held. View buffers are sized from it (<see cref="GetViewBufferCapacity"/>).
+        /// </summary>
+        internal const int RelayViewMaxExcessTicks = 64;
+
+        /// <summary>
+        /// Most pending samples a view buffer keeps. A relayed view is presented at most
+        /// <see cref="RelayViewMaxExcessTicks"/> behind its newest sample, so it needs that many, plus
+        /// the sample <c>Add</c> queues before the next <c>Sample</c>, plus one tick of slack.
+        /// </summary>
+        internal static int GetViewBufferCapacity(int tickRate)
+            => Math.Max(GetPredictedViewBufferSize(tickRate), RelayViewMaxExcessTicks + 2);
+
+        /// <summary>
         /// Largest share by which a relayed view may run fast or slow while its offset settles
         /// toward the recent lag. Small enough to read as steady motion.
         /// </summary>
@@ -84,7 +101,9 @@ namespace PurrNet.Prediction
         /// offset moves toward the largest recent lag by at most
         /// <see cref="RelayViewOffsetGlideRate"/> of the elapsed ticks, so relayed objects speed
         /// up or slow down by that share at most; an excess above <paramref name="snapTicks"/>
-        /// is dropped at once.
+        /// is dropped at once. The offset never runs more than <see cref="RelayViewMaxExcessTicks"/>
+        /// behind the lag: view buffers hold no older samples, and a view further back would stop on
+        /// the last one it reached.
         /// </summary>
         internal static double NextRelayViewOffset(double offset, double lag, double windowMax, double elapsedTicks,
             double snapTicks)
@@ -92,7 +111,11 @@ namespace PurrNet.Prediction
             if (lag >= offset)
                 return lag;
 
-            double target = Math.Max(lag, windowMax);
+            double ceiling = lag + RelayViewMaxExcessTicks;
+            if (offset > ceiling)
+                return ceiling;
+
+            double target = Math.Max(lag, Math.Min(windowMax, ceiling));
             if (offset - target > snapTicks)
                 return target;
 

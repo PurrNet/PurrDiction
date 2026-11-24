@@ -3052,6 +3052,22 @@ namespace PurrNet.Prediction
                 (int)(tickRate * ViewInterpolationMaxBufferSeconds));
         }
 
+        /// <summary>
+        /// Pending samples a view buffer holds while it is presented at <see cref="viewTick"/>.
+        /// Allocated up front.
+        /// </summary>
+        internal static int GetPredictedViewBufferSize(int tickRate)
+            => GetViewInterpolationMaxBufferSize(tickRate) + 2;
+
+        /// <summary>
+        /// The view buffer of an identity or module: room for the predicted view up front, grown up
+        /// to <see cref="GetViewBufferCapacity"/> only when samples queue that deep.
+        /// </summary>
+        internal static PredictedViewBuffer<T> CreateViewBuffer<T>(LerpFunction<T> lerp, ulong tick, T initial,
+            int tickRate) where T : struct, IDisposable
+            => new PredictedViewBuffer<T>(lerp, tick, initial, GetViewBufferCapacity(tickRate),
+                GetPredictedViewBufferSize(tickRate));
+
         internal bool refreshViewLatchOnly { get; private set; }
 
         /// <summary>
