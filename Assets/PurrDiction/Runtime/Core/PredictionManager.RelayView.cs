@@ -7,16 +7,11 @@ namespace PurrNet.Prediction
     public partial class PredictionManager
     {
         /// <summary>
-        /// Local ticks of view-lag history the relayed view offset is sized against.
-        /// </summary>
-        internal const int RelayViewLagWindow = 64;
-
-        /// <summary>
-        /// Most ticks the relayed view may run behind the lag. After a stall the window holds the
-        /// stall's peak lag while the frames catch up, so relayed objects trail their newest state by
-        /// about the stall's length; this caps that at about 2 s at 30 Hz, and a longer stall's excess
-        /// is dropped at once. Independent of <see cref="RelayViewLagWindow"/>, which sets how long the
-        /// excess is held. View buffers are sized from it (<see cref="GetViewBufferCapacity"/>).
+        /// Most ticks the relay clock may trail the newest relayed state. After a stall the clock
+        /// plays the backlog through rather than jumping it, so relayed objects trail their newest
+        /// state by up to the stall's length; this caps that at about 2 s at 30 Hz, and a longer
+        /// stall's excess is dropped at once. View buffers are sized from it
+        /// (<see cref="GetViewBufferCapacity"/>).
         /// </summary>
         internal const int RelayViewMaxExcessTicks = 64;
 
@@ -28,34 +23,32 @@ namespace PurrNet.Prediction
         internal static int GetViewBufferCapacity(int tickRate)
             => Math.Max(GetPredictedViewBufferSize(tickRate), RelayViewMaxExcessTicks + 2);
 
-        /// <summary>
-        /// Largest share by which a relayed view may run fast or slow while its offset settles
-        /// toward the recent lag. Small enough to read as steady motion.
-        /// </summary>
-        internal const double RelayViewOffsetGlideRate = 0.05d;
-
-        /// <summary>
-        /// Excess over the target the offset glides away; a larger excess (left by a stall)
-        /// snaps, since gliding it off would keep relayed objects seconds behind.
-        /// </summary>
-        internal const double RelayViewOffsetSnapSeconds = 0.1d;
-
-        private readonly double[] _relayViewLags = new double[RelayViewLagWindow];
-        private int _relayViewLagCursor;
-        private ulong _relayViewLagTick;
+        private RelayViewClock _relayViewClock;
         private double _relayViewOffset;
-        private bool _hasRelayViewOffset;
+
+        // Made on first use; the inspector's settings are applied each time, so they can be tuned in play mode.
+        private RelayViewClock relayViewClock
+        {
+            get
+            {
+                _relayViewClock ??= new RelayViewClock(Math.Max(1, tickRate));
+                _relayViewClock.coverage = _relayViewCoverage;
+                _relayViewClock.maxCatchUp = _relayViewMaxCatchUp;
+                return _relayViewClock;
+            }
+        }
 
         // A relayed identity on a client does not simulate: its state is the newest verified one.
         // Stamping that state with the local tick it was latched on ties the view to when frames
         // happened to arrive, so a burst of two frames then a gap moves it two ticks, then none.
         // Relayed samples are instead stamped with the server tick they show and presented at
-        // relayViewTick, a steady distance behind the view clock, so they move one tick per tick.
+        // relayViewTick, on a clock of their own (RelayViewClock) that runs in real time a cushion
+        // behind the newest verified state, so they move one tick per tick.
 
         /// <summary>
-        /// Ticks the relayed timeline is presented behind <see cref="viewTick"/>. Follows the
-        /// largest recent distance between the view clock and the newest verified tick, so
-        /// verified frames arrive before the view reaches them. Diagnostic only.
+        /// Ticks the relayed timeline is presented behind <see cref="viewTick"/>: the relay clock
+        /// keeps a cushion behind the newest verified state that most recent frames landed within,
+        /// so they arrive before the view reaches them. Diagnostic only.
         /// </summary>
         public double relayViewOffset => _relayViewOffset;
 
@@ -70,61 +63,20 @@ namespace PurrNet.Prediction
             if (cachedIsServer || _verifiedServerTick == 0)
                 return;
 
-            // How far the view clock is past the newest relayed state. Presenting relayed states
-            // further back than this keeps the sample being lerped toward already received.
-            double lag = Math.Max(0d, viewTick - RelayedStateTick(_verifiedServerTick));
-
-            if (localTick != _relayViewLagTick)
-            {
-                _relayViewLagTick = localTick;
-                _relayViewLagCursor = _relayViewLagCursor + 1 == RelayViewLagWindow ? 0 : _relayViewLagCursor + 1;
-                _relayViewLags[_relayViewLagCursor] = lag;
-            }
-            else if (lag > _relayViewLags[_relayViewLagCursor])
-            {
-                _relayViewLags[_relayViewLagCursor] = lag;
-            }
-
-            double windowMax = 0d;
-            for (var i = 0; i < RelayViewLagWindow; i++)
-                windowMax = Math.Max(windowMax, _relayViewLags[i]);
-
-            int rate = Math.Max(1, tickRate);
-            _relayViewOffset = NextRelayViewOffset(_hasRelayViewOffset ? _relayViewOffset : lag, lag, windowMax,
-                deltaTime * (double)rate, Math.Max(2d, RelayViewOffsetSnapSeconds * rate));
-            _hasRelayViewOffset = true;
+            var clock = relayViewClock;
+            clock.Advance(deltaTime * (double)Math.Max(1, tickRate), RelayedStateTick(_verifiedServerTick), viewTick,
+                maxRelayLagCompensationTicks);
+            _relayViewOffset = viewTick - clock.presentedTick;
         }
 
-        /// <summary>
-        /// A verified frame later than the offset allows holds the relayed view where it is (the
-        /// offset grows to the lag) rather than presenting a state not received yet. Otherwise the
-        /// offset moves toward the largest recent lag by at most
-        /// <see cref="RelayViewOffsetGlideRate"/> of the elapsed ticks, so relayed objects speed
-        /// up or slow down by that share at most; an excess above <paramref name="snapTicks"/>
-        /// is dropped at once. The offset never runs more than <see cref="RelayViewMaxExcessTicks"/>
-        /// behind the lag: view buffers hold no older samples, and a view further back would stop on
-        /// the last one it reached.
-        /// </summary>
-        internal static double NextRelayViewOffset(double offset, double lag, double windowMax, double elapsedTicks,
-            double snapTicks)
+        // A verified frame for serverTick was applied on this client: the relay clock measures how
+        // late frames land from it.
+        private void RecordRelayedFrameArrival(ulong serverTick)
         {
-            if (lag >= offset)
-                return lag;
+            if (cachedIsServer)
+                return;
 
-            double ceiling = lag + RelayViewMaxExcessTicks;
-            if (offset > ceiling)
-                return ceiling;
-
-            double target = Math.Max(lag, Math.Min(windowMax, ceiling));
-            if (offset - target > snapTicks)
-                return target;
-
-            double step = RelayViewOffsetGlideRate * Math.Max(0d, elapsedTicks);
-            if (offset > target)
-                return Math.Max(target, offset - step);
-            if (offset < target)
-                return Math.Min(target, offset + step);
-            return offset;
+            relayViewClock.RecordArrival(RelayedStateTick(serverTick));
         }
 
         // Applying the verified frame for server tick S simulates S, so a relayed identity then
@@ -154,11 +106,8 @@ namespace PurrNet.Prediction
 
         private void ResetRelayViewTimeline()
         {
-            Array.Clear(_relayViewLags, 0, _relayViewLags.Length);
-            _relayViewLagCursor = 0;
-            _relayViewLagTick = 0;
+            _relayViewClock?.Reset();
             _relayViewOffset = 0;
-            _hasRelayViewOffset = false;
         }
 
         // Lag compensation for relayed objects. A client sees predicted objects at viewTick and
