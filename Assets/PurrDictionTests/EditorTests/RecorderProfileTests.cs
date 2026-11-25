@@ -1,3 +1,4 @@
+#if PURRNET_RECORDING_LEGACY || PURRSERVICES_RECORDER
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -278,3 +279,4 @@ namespace PurrNet.Prediction.Tests.Editor
         }
     }
 }
+#endif

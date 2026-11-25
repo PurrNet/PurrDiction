@@ -14,7 +14,7 @@ namespace PurrNet.Prediction.Recording
 {
     /// <summary>
     /// PurrDiction's part of a match recording (see PurrNet's recording/FORMAT.md): every predicted component's state
-    /// and input per tick, the predicted players, and the match summary. PurrNet's <see cref="NetworkRecorder"/>
+    /// and input per tick, the predicted players, and the match summary. PurrNet's recorder
     /// carries one automatically; there is no component to add. While a <see cref="PredictionManager"/> is spawned,
     /// recordings run on its ticks: the row for tick T is the state before T was simulated and the input applied
     /// during T.
@@ -27,7 +27,11 @@ namespace PurrNet.Prediction.Recording
 
         [Preserve]
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+#if PURRNET_RECORDING_LEGACY
         static void Register() => NetworkRecorder.RegisterExtension<PredictionRecording>();
+#else
+        static void Register() => NetworkRecording.RegisterExtension<PredictionRecording>();
+#endif
 
         /// <summary>What the recorder keeps about an entity's predicted object.</summary>
         sealed class EntityData
