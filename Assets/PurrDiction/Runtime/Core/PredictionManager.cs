@@ -58,6 +58,12 @@ namespace PurrNet.Prediction
         [Tooltip("Forward every player's view offset in verified frames so clients replay other players' lag-compensated hits with the exact rewind. Costs about 10 bits per player per transcript tick downstream. Off, clients predict other players' hits with an estimated rewind; the server's result is unaffected either way.")]
         [SerializeField] private bool _forwardViewOffsets = true;
 
+        [Header("Relay View")]
+        [Tooltip("Share of recent server frames a client's relayed view waits for, 0.5 to 1. Relayed objects are drawn behind the newest server state by the lateness this share of the last 8 s of frames arrived within. Higher means fewer stops when frames come late, and more delay.")]
+        [SerializeField] private float _relayViewCoverage = (float)RelayViewClock.DefaultCoverage;
+        [Tooltip("Largest share by which relayed objects run faster to play back frames that arrived late, 0 to 1 (0.25 = up to a quarter faster). Higher catches up sooner; lower looks gentler.")]
+        [SerializeField] private float _relayViewMaxCatchUp = (float)RelayViewClock.DefaultMaxCatchUp;
+
         [Header("Determinism")]
         [Tooltip("How the server responds when a client's deterministic state diverges. Per-identity overrides on DeterministicIdentity take precedence. Ignore has zero overhead.")]
         [SerializeField] private DesyncPolicy _desyncPolicy = DesyncPolicy.Ignore;
@@ -3052,6 +3058,22 @@ namespace PurrNet.Prediction
                 (int)(tickRate * ViewInterpolationMaxBufferSeconds));
         }
 
+        /// <summary>
+        /// Pending samples a view buffer holds while it is presented at <see cref="viewTick"/>.
+        /// Allocated up front.
+        /// </summary>
+        internal static int GetPredictedViewBufferSize(int tickRate)
+            => GetViewInterpolationMaxBufferSize(tickRate) + 2;
+
+        /// <summary>
+        /// The view buffer of an identity or module: room for the predicted view up front, grown up
+        /// to <see cref="GetViewBufferCapacity"/> only when samples queue that deep.
+        /// </summary>
+        internal static PredictedViewBuffer<T> CreateViewBuffer<T>(LerpFunction<T> lerp, ulong tick, T initial,
+            int tickRate) where T : struct, IDisposable
+            => new PredictedViewBuffer<T>(lerp, tick, initial, GetViewBufferCapacity(tickRate),
+                GetPredictedViewBufferSize(tickRate));
+
         internal bool refreshViewLatchOnly { get; private set; }
 
         /// <summary>
@@ -3181,6 +3203,7 @@ namespace PurrNet.Prediction
                             _savedEnteringStateTick = frame.serverTick + 1;
                             CaptureRelayedColliders(frame.serverTick + 1);
                             _verifiedServerTick = frame.serverTick;
+                            RecordRelayedFrameArrival(frame.serverTick);
                             CarryVerifiedInputs(frame.serverTick);
                         }
                         catch (Exception error)
@@ -3205,6 +3228,7 @@ namespace PurrNet.Prediction
                             continue;
                         }
                         _verifiedServerTick = frame.serverTick;
+                        RecordRelayedFrameArrival(frame.serverTick);
                         CarryVerifiedInputs(frame.serverTick);
                     }
 
