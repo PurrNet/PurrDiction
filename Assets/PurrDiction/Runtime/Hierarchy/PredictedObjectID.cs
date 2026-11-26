@@ -55,6 +55,16 @@ namespace PurrNet.Prediction
             return obj is PredictedObjectID other && Equals(other);
         }
 
+        public static bool operator ==(PredictedObjectID a, PredictedObjectID b)
+        {
+            return a.Equals(b);
+        }
+
+        public static bool operator !=(PredictedObjectID a, PredictedObjectID b)
+        {
+            return !a.Equals(b);
+        }
+
         public override int GetHashCode()
         {
             return (int)instanceId.value;
